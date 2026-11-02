@@ -1905,7 +1905,7 @@ export default function AdminAcademyPage() {
                   <table className="w-full text-left text-sm">
                     <thead className="bg-gray-50 text-xs font-bold uppercase text-gray-400 border-b border-gray-200">
                       <tr>
-                        <th className="px-4 py-3">ID / Data</th>
+                        <th className="px-4 py-3">ID / Data & Hora</th>
                         <th className="px-4 py-3">Lead / Aluno</th>
                         <th className="px-4 py-3">Curso & Valor</th>
                         <th className="px-4 py-3">Método & Status</th>
@@ -1931,9 +1931,19 @@ export default function AdminAcademyPage() {
                             <tr key={order.id || order._id} className="hover:bg-gray-50/80 transition">
                               <td className="px-4 py-3 whitespace-nowrap">
                                 <span className="font-mono text-xs font-bold text-gray-800 block">{order.id}</span>
-                                <span className="text-[11px] text-gray-400">
-                                  {order.createdAt ? new Date(order.createdAt).toLocaleDateString('pt-MZ') : 'Hoje'}
-                                </span>
+                                <div className="text-[11px] text-gray-400 flex items-center gap-1.5 mt-0.5 font-mono">
+                                  <span>
+                                    {order.createdAt ? new Date(order.createdAt).toLocaleDateString('pt-MZ') : 'Hoje'}
+                                  </span>
+                                  {order.createdAt && (
+                                    <>
+                                      <span className="text-gray-300">•</span>
+                                      <span className="text-indigo-600 font-bold">
+                                        {new Date(order.createdAt).toLocaleTimeString('pt-MZ', { hour: '2-digit', minute: '2-digit' })}
+                                      </span>
+                                    </>
+                                  )}
+                                </div>
                               </td>
                               <td className="px-4 py-3">
                                 <p className="font-bold text-gray-900">{order.clientName || 'Lead Visitante'}</p>

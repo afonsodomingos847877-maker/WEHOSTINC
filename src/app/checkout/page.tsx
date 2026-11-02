@@ -170,7 +170,8 @@ function CheckoutContent() {
             serviceName: `Curso: ${courseNameParam || 'Curso WEHOSTHERE'}`,
             amount: courseAmountParam,
             paymentMethod: paymentMethod || 'mpesa',
-            status: 'pending'
+            status: 'pending',
+            createdAt: new Date().toISOString()
           }
         })
       }).catch(() => {});
