@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
-import { Menu, X, LayoutDashboard, LogOut, User as UserIcon } from 'lucide-react';
+import { Menu, X, LayoutDashboard, LogOut, User as UserIcon, GraduationCap } from 'lucide-react';
 import BrandLogo from '@/components/BrandLogo';
 import PageLoader from '@/components/PageLoader';
 import LanguageSelector from '@/components/LanguageSelector';
@@ -120,6 +120,14 @@ export default function Navbar() {
               className="text-xs lg:text-sm font-semibold text-primary-600 hover:text-primary-700 transition whitespace-nowrap shrink-0"
             >
               {t('nav.sites_compact')}
+            </Link>
+            <Link 
+              href="/academy" 
+              className="text-xs lg:text-sm font-semibold text-emerald-600 hover:text-emerald-700 transition whitespace-nowrap shrink-0 flex items-center gap-1.5"
+            >
+              <GraduationCap className="w-3.5 h-3.5" />
+              <span>Cursos</span>
+              <span className="text-[9px] bg-emerald-100 text-emerald-800 font-extrabold px-1.5 py-0.5 rounded-full uppercase leading-none">Novo</span>
             </Link>
             <Link 
               href="/systems" 
@@ -238,6 +246,17 @@ export default function Navbar() {
               className="px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl text-sm sm:text-base font-semibold text-primary-700 bg-primary-50/80 border border-primary-100 flex items-center justify-between transition"
             >
               <span>{t('nav.sites')}</span>
+            </Link>
+            <Link
+              href="/academy"
+              onClick={closeMobileMenu}
+              className="px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl text-sm sm:text-base font-semibold text-emerald-800 bg-emerald-50/80 border border-emerald-200/80 hover:bg-emerald-100/70 transition flex items-center justify-between"
+            >
+              <div className="flex items-center gap-2">
+                <GraduationCap className="w-4 h-4 text-emerald-600" />
+                <span>Cursos & Academia</span>
+              </div>
+              <span className="text-[10px] bg-emerald-200/80 text-emerald-900 font-extrabold px-2 py-0.5 rounded-full uppercase">Novo</span>
             </Link>
             <Link
               href="/systems"
