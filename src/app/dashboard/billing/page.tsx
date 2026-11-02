@@ -203,8 +203,8 @@ export default function BillingPage() {
                   </h2>
                   <p className="text-blue-100 text-sm">
                     {hasActiveService
-                      ? 'Plano Básico de Hospedagem & E-mail Corporativo Ativo'
-                      : 'Adquira um plano de hospedagem ou solicite a criação de um website'}
+                      ? 'Hospedagem & Email corporativo ativos'
+                      : 'Nenhum plano ativo no momento'}
                   </p>
                 </div>
                 <div className="sm:text-right">
@@ -234,29 +234,29 @@ export default function BillingPage() {
             </div>
 
             {/* Banner de Ação Rápida no Faturamento */}
-            <div className="bg-white rounded-2xl p-6 border-2 border-emerald-500 shadow-md">
-              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="bg-white rounded-2xl p-4 sm:p-5 border border-emerald-500/80 shadow-sm">
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 sm:gap-4">
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900 flex items-center space-x-2">
+                  <h3 className="text-base sm:text-lg font-bold text-gray-900 flex items-center space-x-2">
                     <CreditCard className="w-5 h-5 text-emerald-600" />
-                    <span>Deseja Contratar um Plano de Hospedagem ou Pagar a sua Conta?</span>
+                    <span>Contratar ou Renovar Plano</span>
                   </h3>
-                  <p className="text-xs text-gray-600 mt-1">
-                    Escolha um dos planos abaixo ou aceda diretamente ao checkout para efetuar o pagamento via M-Pesa, E-Mola ou Transferência Bancária.
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Escolha um plano abaixo ou pague diretamente no checkout.
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2 shrink-0">
                   <Link
                     href="/checkout"
-                    className="px-5 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow transition flex items-center space-x-2"
+                    className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow-sm transition flex items-center space-x-1.5"
                   >
-                    <span>🛒 Ir para o Checkout / Pagamento →</span>
+                    <span>Ir ao Checkout →</span>
                   </Link>
                   <Link
                     href="/site-quote"
-                    className="px-4 py-3 bg-amber-400 hover:bg-amber-300 text-gray-950 font-bold text-xs sm:text-sm rounded-xl transition flex items-center space-x-1.5"
+                    className="px-3.5 py-2.5 bg-amber-400 hover:bg-amber-300 text-gray-950 font-bold text-xs sm:text-sm rounded-xl transition flex items-center space-x-1.5"
                   >
-                    <span>✨ Criar Website</span>
+                    <span>✨ Solicitar Site</span>
                   </Link>
                 </div>
               </div>
@@ -543,7 +543,7 @@ export default function BillingPage() {
             <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
               <h3 className="text-xl font-bold text-gray-900 mb-2">Enviar Comprovativo de Pagamento</h3>
               <p className="text-gray-500 text-sm mb-6">
-                Efetue a transferência para uma de nossas contas oficiais abaixo e anexe o comprovativo em PDF ou imagem para validação rápida.
+                Efetue a transferência para uma das contas abaixo e anexe o comprovativo.
               </p>
 
               <div className="grid md:grid-cols-2 sm:grid-cols-4 gap-3 bg-gray-50 p-4 rounded-xl border border-gray-200 mb-6 font-mono text-xs text-gray-800">
