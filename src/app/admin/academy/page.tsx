@@ -1993,65 +1993,77 @@ export default function AdminAcademyPage() {
                               </td>
                               <td className="px-4 py-3">
                                 <span className="text-xs font-bold uppercase text-gray-500 block mb-1">{order.paymentMethod || 'mpesa'}</span>
-                                {isPaid && (
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
-                                    ✓ Pago
-                                  </span>
-                                )}
-                                {isPending && (
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800">
-                                    ⏳ Pendente
-                                  </span>
-                                )}
-                                {!isPaid && !isPending && (
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-800">
-                                    ✕ Cancelado
-                                  </span>
-                                )}
-                                {order.proofUrl && (
-                                  <div className="mt-1">
+                                <div className="flex flex-col gap-1 items-start">
+                                  {isPaid && (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
+                                      ✓ Pago
+                                    </span>
+                                  )}
+                                  {isPending && (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800">
+                                      ⏳ Pendente
+                                    </span>
+                                  )}
+                                  {!isPaid && !isPending && (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-800">
+                                      ✕ Cancelado
+                                    </span>
+                                  )}
+                                  {(order.paymentMethod === 'bank_transfer' || order.proofUrl) && (
                                     <button
                                       type="button"
                                       onClick={() => setPreviewReceipt(order)}
-                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200 transition cursor-pointer"
-                                      title="Visualizar Comprovativo de Pagamento"
+                                      className="mt-1 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-sky-600 hover:bg-sky-700 text-white shadow-xs transition cursor-pointer"
+                                      title="Visualizar e analisar comprovativo de pagamento"
                                     >
-                                      <FileText className="w-3 h-3 text-sky-600" />
-                                      <span>Comprovativo</span>
+                                      <Eye className="w-3.5 h-3.5" />
+                                      <span>{order.proofUrl ? 'Ver Comprovativo' : 'Comprovativo'}</span>
                                     </button>
-                                  </div>
-                                )}
+                                  )}
+                                </div>
                               </td>
                               <td className="px-4 py-3 text-right whitespace-nowrap">
                                 <div className="inline-flex items-center justify-end gap-1.5 flex-nowrap">
-                                  {/* WhatsApp Recovery Button */}
-                                  {waLink && (
-                                    <a
-                                      href={waLink}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="h-7 px-2.5 inline-flex items-center justify-center gap-1 rounded-lg text-[11px] font-bold whitespace-nowrap leading-none bg-emerald-500 hover:bg-emerald-600 text-white transition shadow-xs cursor-pointer select-none shrink-0"
-                                      title="Recuperar pelo WhatsApp"
-                                    >
-                                      <MessageCircle className="h-3.5 w-3.5 shrink-0" />
-                                      <span>WhatsApp</span>
-                                    </a>
-                                  )}
-
-                                  {/* Ver Comprovativo Button */}
-                                  {order.proofUrl && (
+                                  {/* 1. Botão Ver Comprovativo (SEMPRE visível para Transferência Bancária ou quando há comprovativo) */}
+                                  {(order.paymentMethod === 'bank_transfer' || order.proofUrl) && (
                                     <button
                                       type="button"
                                       onClick={() => setPreviewReceipt(order)}
-                                      className="h-7 px-2.5 inline-flex items-center justify-center gap-1 rounded-lg text-[11px] font-bold whitespace-nowrap leading-none bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 transition shadow-xs cursor-pointer select-none shrink-0"
+                                      className="h-7 px-2.5 inline-flex items-center justify-center gap-1 rounded-lg text-[11px] font-bold whitespace-nowrap leading-none bg-sky-600 hover:bg-sky-700 text-white transition shadow-xs cursor-pointer select-none shrink-0"
                                       title="Visualizar e analisar comprovativo de pagamento"
                                     >
-                                      <FileText className="h-3.5 w-3.5 shrink-0 text-sky-600" />
+                                      <Eye className="h-3.5 w-3.5 shrink-0" />
                                       <span>Comprovativo</span>
                                     </button>
                                   )}
 
-                                  {/* Re-send USSD Push Button (APENAS M-PESA) */}
+                                  {/* 2. Botão Aprovar Pagamento */}
+                                  {!isPaid && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleApproveOrder(order.id)}
+                                      className="h-7 px-2.5 inline-flex items-center justify-center gap-1 rounded-lg text-[11px] font-bold whitespace-nowrap leading-none bg-emerald-700 hover:bg-emerald-800 text-white transition shadow-xs cursor-pointer select-none shrink-0"
+                                      title="Aprovar Pagamento Manualmente"
+                                    >
+                                      <Check className="h-3.5 w-3.5 shrink-0" />
+                                      <span>Aprovar</span>
+                                    </button>
+                                  )}
+
+                                  {/* 3. Botão Rejeitar Pagamento */}
+                                  {isPending && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleRejectOrder(order.id)}
+                                      className="h-7 px-2.5 inline-flex items-center justify-center gap-1 rounded-lg text-[11px] font-bold whitespace-nowrap leading-none bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition shadow-xs cursor-pointer select-none shrink-0"
+                                      title="Rejeitar Pagamento"
+                                    >
+                                      <X className="h-3.5 w-3.5 shrink-0 text-rose-600" />
+                                      <span>Rejeitar</span>
+                                    </button>
+                                  )}
+
+                                  {/* 4. Re-send USSD Push Button (APENAS M-PESA) */}
                                   {!isPaid && order.clientPhone && (order.paymentMethod === 'mpesa' || !order.paymentMethod) && (
                                     <button
                                       type="button"
@@ -2067,7 +2079,21 @@ export default function AdminAcademyPage() {
                                     </button>
                                   )}
 
-                                  {/* Email Recovery Button */}
+                                  {/* 5. WhatsApp Recovery Button */}
+                                  {waLink && (
+                                    <a
+                                      href={waLink}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="h-7 px-2.5 inline-flex items-center justify-center gap-1 rounded-lg text-[11px] font-bold whitespace-nowrap leading-none bg-emerald-500 hover:bg-emerald-600 text-white transition shadow-xs cursor-pointer select-none shrink-0"
+                                      title="Recuperar pelo WhatsApp"
+                                    >
+                                      <MessageCircle className="h-3.5 w-3.5 shrink-0" />
+                                      <span>WhatsApp</span>
+                                    </a>
+                                  )}
+
+                                  {/* 6. Email Recovery Button */}
                                   {!isPaid && (
                                     <button
                                       type="button"
@@ -2080,32 +2106,6 @@ export default function AdminAcademyPage() {
                                       <span>
                                         {recoverySending === order.id ? 'A enviar...' : 'E-mail'}
                                       </span>
-                                    </button>
-                                  )}
-
-                                  {/* Manual Approval Button */}
-                                  {!isPaid && (
-                                    <button
-                                      type="button"
-                                      onClick={() => handleApproveOrder(order.id)}
-                                      className="h-7 px-2.5 inline-flex items-center justify-center gap-1 rounded-lg text-[11px] font-bold whitespace-nowrap leading-none bg-emerald-700 hover:bg-emerald-800 text-white transition shadow-xs cursor-pointer select-none shrink-0"
-                                      title="Aprovar Pagamento Manualmente"
-                                    >
-                                      <Check className="h-3.5 w-3.5 shrink-0" />
-                                      <span>Aprovar</span>
-                                    </button>
-                                  )}
-
-                                  {/* Manual Rejection Button */}
-                                  {isPending && (
-                                    <button
-                                      type="button"
-                                      onClick={() => handleRejectOrder(order.id)}
-                                      className="h-7 px-2.5 inline-flex items-center justify-center gap-1 rounded-lg text-[11px] font-bold whitespace-nowrap leading-none bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition shadow-xs cursor-pointer select-none shrink-0"
-                                      title="Rejeitar Pagamento"
-                                    >
-                                      <X className="h-3.5 w-3.5 shrink-0 text-rose-600" />
-                                      <span>Rejeitar</span>
                                     </button>
                                   )}
                                 </div>
@@ -3326,10 +3326,54 @@ export default function AdminAcademyPage() {
                     )}
                   </div>
                 ) : (
-                  <div className="p-8 text-center bg-gray-50 rounded-xl border border-dashed border-gray-300 text-gray-500 text-xs">
-                    <AlertTriangle className="w-8 h-8 text-amber-500 mx-auto mb-2 opacity-80" />
-                    <p className="font-bold text-gray-700">Nenhum ficheiro anexado neste pedido.</p>
-                    <p className="text-gray-400 mt-1">O cliente selecionou transferência bancária mas ainda não enviou o comprovativo pelo checkout.</p>
+                  <div className="p-6 text-center bg-gray-50 rounded-xl border border-dashed border-gray-300 text-gray-600 text-xs space-y-3">
+                    <AlertTriangle className="w-8 h-8 text-amber-500 mx-auto opacity-80" />
+                    <div>
+                      <p className="font-bold text-gray-800 text-sm">Nenhum ficheiro anexado pelo cliente no checkout</p>
+                      <p className="text-gray-500 text-xs mt-1">O cliente selecionou transferência bancária mas não carregou o comprovativo pelo formulário.</p>
+                    </div>
+
+                    <div className="pt-2">
+                      <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition shadow-sm">
+                        <Upload className="w-4 h-4" />
+                        <span>Anexar Comprovativo Recebido (WhatsApp/E-mail)</span>
+                        <input
+                          type="file"
+                          accept="image/*,application/pdf"
+                          className="hidden"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            try {
+                              showToast('A carregar comprovativo...', 'info', 'Upload');
+                              const fd = new FormData();
+                              fd.append('file', file);
+                              const upRes = await fetch('/api/upload', { method: 'POST', body: fd });
+                              const upData = await upRes.json();
+                              if (upData.url) {
+                                await fetch('/api/orders', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({
+                                    order: {
+                                      ...previewReceipt,
+                                      proofUrl: upData.url,
+                                      proofName: upData.name || file.name
+                                    }
+                                  })
+                                });
+                                setPreviewReceipt((prev: any) => ({ ...prev, proofUrl: upData.url, proofName: upData.name || file.name }));
+                                fetchSalesData();
+                                showToast('Comprovativo anexado ao pedido com sucesso!', 'success', 'Concluído');
+                              }
+                            } catch (err: any) {
+                              showToast('Erro ao carregar comprovativo: ' + err.message, 'error', 'Erro');
+                            }
+                          }}
+                        />
+                      </label>
+                      <p className="text-[11px] text-gray-400 mt-2">Formatos suportados: Imagens (JPG, PNG) e documentos PDF</p>
+                    </div>
                   </div>
                 )}
               </div>
