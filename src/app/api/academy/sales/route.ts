@@ -151,6 +151,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, order: updated });
     }
 
+    // Manual Reject Order (e.g. invalid bank transfer receipt)
+    if (action === 'manual_reject' && orderId) {
+      const order = await OrderModel.findOne({ id: orderId });
+      if (!order) {
+        return NextResponse.json({ success: false, error: 'Pedido não encontrado' }, { status: 404 });
+      }
+
+      order.status = 'cancelled';
+      order.valorPorFaturar = 0;
+      await order.save();
+
+      // Deactivate any enrollment associated with this order
+      await EnrollmentModel.updateMany({ orderId: order.id }, { $set: { status: 'cancelled' } });
+
+      return NextResponse.json({ success: true, message: 'Pedido rejeitado e cancelado com sucesso.', order });
+    }
+
     // Send Recovery Email to Lead
     if (action === 'send_recovery_email' && orderId) {
       const order = await OrderModel.findOne({ id: orderId });

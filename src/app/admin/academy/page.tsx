@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Toast from '@/components/Toast';
 import { formatVideoEmbedUrl } from '@/lib/videoEmbed';
-import { Plus, Edit, Trash2, Eye, BookOpen, DollarSign, Clock, ArrowLeft, Home, GraduationCap, Loader2, CheckCircle, XCircle, Save, X, CheckSquare, Upload, AlertTriangle, MessageCircle, Send, Check, RefreshCw, Mail, ExternalLink, Filter, Smartphone, Zap, ImageIcon } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, BookOpen, DollarSign, Clock, ArrowLeft, Home, GraduationCap, Loader2, CheckCircle, XCircle, Save, X, CheckSquare, Upload, AlertTriangle, MessageCircle, Send, Check, RefreshCw, Mail, ExternalLink, Filter, Smartphone, Zap, ImageIcon, FileText, Paperclip } from 'lucide-react';
 
 interface Course {
   id: string;
@@ -113,6 +113,7 @@ export default function AdminAcademyPage() {
     active: true
   });
   const [savingCoupon, setSavingCoupon] = useState(false);
+  const [previewReceipt, setPreviewReceipt] = useState<any | null>(null);
 
   // Confirmation modal state
   const [confirmModal, setConfirmModal] = useState<{
@@ -244,6 +245,40 @@ export default function AdminAcademyPage() {
           }
         } catch (e: any) {
           showToast(e.message || 'Erro na aprovação do pagamento.', 'error', 'Erro');
+        }
+      }
+    });
+  };
+
+  const handleRejectOrder = (orderId: string) => {
+    setConfirmModal({
+      show: true,
+      title: 'Rejeitar Pagamento',
+      message: 'Tem certeza que deseja rejeitar este pagamento? O pedido será marcado como Cancelado e o acesso ao curso não será libertado.',
+      confirmText: '✕ Rejeitar Pagamento',
+      cancelText: 'Voltar',
+      variant: 'danger',
+      iconType: 'trash',
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, show: false }));
+        try {
+          const res = await fetch('/api/academy/sales', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'manual_reject', orderId })
+          });
+          const data = await res.json();
+          if (data.success) {
+            showToast('Pagamento rejeitado e pedido cancelado.', 'info', 'Pagamento Rejeitado');
+            if (previewReceipt && (previewReceipt.id === orderId || previewReceipt._id === orderId)) {
+              setPreviewReceipt(null);
+            }
+            fetchSalesData();
+          } else {
+            showToast(data.error || 'Erro ao rejeitar pagamento.', 'error', 'Falha na Rejeição');
+          }
+        } catch (e: any) {
+          showToast(e.message || 'Erro ao processar rejeição.', 'error', 'Erro');
         }
       }
     });
@@ -1973,6 +2008,19 @@ export default function AdminAcademyPage() {
                                     ✕ Cancelado
                                   </span>
                                 )}
+                                {order.proofUrl && (
+                                  <div className="mt-1">
+                                    <button
+                                      type="button"
+                                      onClick={() => setPreviewReceipt(order)}
+                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200 transition cursor-pointer"
+                                      title="Visualizar Comprovativo de Pagamento"
+                                    >
+                                      <FileText className="w-3 h-3 text-sky-600" />
+                                      <span>Comprovativo</span>
+                                    </button>
+                                  </div>
+                                )}
                               </td>
                               <td className="px-4 py-3 text-right whitespace-nowrap">
                                 <div className="inline-flex items-center justify-end gap-1.5 flex-nowrap">
@@ -1990,8 +2038,21 @@ export default function AdminAcademyPage() {
                                     </a>
                                   )}
 
-                                  {/* Re-send USSD Push Button (M-Pesa) */}
-                                  {!isPaid && order.clientPhone && (
+                                  {/* Ver Comprovativo Button */}
+                                  {order.proofUrl && (
+                                    <button
+                                      type="button"
+                                      onClick={() => setPreviewReceipt(order)}
+                                      className="h-7 px-2.5 inline-flex items-center justify-center gap-1 rounded-lg text-[11px] font-bold whitespace-nowrap leading-none bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 transition shadow-xs cursor-pointer select-none shrink-0"
+                                      title="Visualizar e analisar comprovativo de pagamento"
+                                    >
+                                      <FileText className="h-3.5 w-3.5 shrink-0 text-sky-600" />
+                                      <span>Comprovativo</span>
+                                    </button>
+                                  )}
+
+                                  {/* Re-send USSD Push Button (APENAS M-PESA) */}
+                                  {!isPaid && order.clientPhone && (order.paymentMethod === 'mpesa' || !order.paymentMethod) && (
                                     <button
                                       type="button"
                                       onClick={() => handleResendUssd(order.id, order.clientPhone)}
@@ -2035,15 +2096,16 @@ export default function AdminAcademyPage() {
                                     </button>
                                   )}
 
-                                  {/* Mark Failed Button */}
+                                  {/* Manual Rejection Button */}
                                   {isPending && (
                                     <button
                                       type="button"
-                                      onClick={() => handleMarkFailed(order.id)}
-                                      className="h-7 w-7 inline-flex items-center justify-center rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition cursor-pointer select-none shrink-0"
-                                      title="Marcar como Perdido / Cancelado"
+                                      onClick={() => handleRejectOrder(order.id)}
+                                      className="h-7 px-2.5 inline-flex items-center justify-center gap-1 rounded-lg text-[11px] font-bold whitespace-nowrap leading-none bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition shadow-xs cursor-pointer select-none shrink-0"
+                                      title="Rejeitar Pagamento"
                                     >
-                                      <XCircle className="h-4 w-4 shrink-0" />
+                                      <X className="h-3.5 w-3.5 shrink-0 text-rose-600" />
+                                      <span>Rejeitar</span>
                                     </button>
                                   )}
                                 </div>
@@ -3169,6 +3231,154 @@ export default function AdminAcademyPage() {
       )}
 
       {/* Modern Confirmation Modal */}
+      {/* Modal de Visualização & Análise de Comprovativo */}
+      {previewReceipt && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-gray-200 overflow-hidden">
+            {/* Cabeçalho */}
+            <div className="px-6 py-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
+                  <FileText className="w-5 h-5 text-sky-400" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base leading-tight">Análise de Comprovativo</h3>
+                  <p className="text-xs text-slate-300 font-mono mt-0.5">
+                    {previewReceipt.id} • {previewReceipt.paymentMethod?.toUpperCase() || 'TRANSFERÊNCIA'}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPreviewReceipt(null)}
+                className="text-white/70 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Conteúdo / Detalhes */}
+            <div className="p-6 overflow-y-auto space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-slate-50 p-4 rounded-xl border border-slate-200">
+                <div>
+                  <p className="text-gray-400 font-bold uppercase text-[10px]">Aluno / Lead</p>
+                  <p className="font-bold text-gray-900 text-sm mt-0.5">{previewReceipt.clientName || 'Lead'}</p>
+                  <p className="text-gray-600 font-mono mt-0.5">{previewReceipt.clientEmail}</p>
+                  {previewReceipt.clientPhone && (
+                    <p className="text-emerald-700 font-bold mt-0.5">{previewReceipt.clientPhone}</p>
+                  )}
+                </div>
+                <div>
+                  <p className="text-gray-400 font-bold uppercase text-[10px]">Curso & Valor</p>
+                  <p className="font-bold text-indigo-950 text-sm mt-0.5 truncate">{previewReceipt.serviceName}</p>
+                  <p className="text-emerald-700 font-black text-base mt-0.5">{previewReceipt.amount || 0} MT</p>
+                  <div className="mt-1">
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                      previewReceipt.status === 'completed'
+                        ? 'bg-emerald-100 text-emerald-800'
+                        : previewReceipt.status === 'cancelled'
+                        ? 'bg-red-100 text-red-800'
+                        : 'bg-amber-100 text-amber-800'
+                    }`}>
+                      {previewReceipt.status === 'completed' ? '✓ Pago / Aprovado' : previewReceipt.status === 'cancelled' ? '✕ Cancelado / Rejeitado' : '⏳ Pendente de Validação'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Área do Documento */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-bold uppercase text-gray-500 flex items-center gap-1.5">
+                    <Paperclip className="w-3.5 h-3.5 text-indigo-600" />
+                    <span>Ficheiro do Comprovativo</span>
+                    {previewReceipt.proofName && (
+                      <span className="text-gray-400 font-mono text-[11px] font-normal">({previewReceipt.proofName})</span>
+                    )}
+                  </span>
+                  {previewReceipt.proofUrl && (
+                    <a
+                      href={previewReceipt.proofUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs font-bold text-indigo-600 hover:text-indigo-800 inline-flex items-center gap-1 cursor-pointer"
+                    >
+                      <span>Abrir em Nova Aba</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  )}
+                </div>
+
+                {previewReceipt.proofUrl ? (
+                  <div className="bg-slate-900/5 rounded-xl border border-dashed border-slate-300 p-2 flex items-center justify-center min-h-[260px] max-h-[460px] overflow-auto">
+                    {previewReceipt.proofUrl.toLowerCase().includes('.pdf') ? (
+                      <iframe
+                        src={previewReceipt.proofUrl}
+                        className="w-full h-[420px] rounded-lg bg-white"
+                        title="Comprovativo PDF"
+                      />
+                    ) : (
+                      <img
+                        src={previewReceipt.proofUrl}
+                        alt="Comprovativo de Pagamento"
+                        className="max-h-[420px] max-w-full object-contain rounded-lg shadow-sm"
+                      />
+                    )}
+                  </div>
+                ) : (
+                  <div className="p-8 text-center bg-gray-50 rounded-xl border border-dashed border-gray-300 text-gray-500 text-xs">
+                    <AlertTriangle className="w-8 h-8 text-amber-500 mx-auto mb-2 opacity-80" />
+                    <p className="font-bold text-gray-700">Nenhum ficheiro anexado neste pedido.</p>
+                    <p className="text-gray-400 mt-1">O cliente selecionou transferência bancária mas ainda não enviou o comprovativo pelo checkout.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Rodapé de Ações */}
+            <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={() => setPreviewReceipt(null)}
+                className="h-8 px-4 rounded-xl text-xs font-bold text-gray-700 bg-white hover:bg-gray-100 border border-gray-300 transition cursor-pointer"
+              >
+                Fechar
+              </button>
+
+              {previewReceipt.status !== 'completed' && (
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const id = previewReceipt.id;
+                      setPreviewReceipt(null);
+                      handleRejectOrder(id);
+                    }}
+                    className="h-8 px-3.5 rounded-xl text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-300 transition cursor-pointer flex items-center gap-1.5 shadow-xs"
+                  >
+                    <X className="w-3.5 h-3.5 text-rose-600" />
+                    <span>Rejeitar Pagamento</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const id = previewReceipt.id;
+                      setPreviewReceipt(null);
+                      handleApproveOrder(id);
+                    }}
+                    className="h-8 px-4 rounded-xl text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 transition cursor-pointer flex items-center gap-1.5 shadow-sm"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                    <span>Aprovar Pagamento</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {confirmModal.show && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 max-w-md w-full p-6 animate-in zoom-in-95 duration-200 relative overflow-hidden">
