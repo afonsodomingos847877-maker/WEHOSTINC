@@ -155,6 +155,27 @@ function CheckoutContent() {
       if (!phonePayment && whatsapp.trim()) setPhonePayment(whatsapp.trim());
     }
 
+    // Capturar Lead Imediato no Início do Checkout para Recuperação
+    if (isCoursePayment && email && name) {
+      const leadOrderId = 'LEAD_' + Date.now().toString().slice(-6);
+      fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          order: {
+            id: leadOrderId,
+            clientName: name,
+            clientEmail: email.toLowerCase().trim(),
+            clientPhone: `${ddi} ${phonePayment || whatsapp}`,
+            serviceName: `Curso: ${courseNameParam || 'Curso WEHOSTHERE'}`,
+            amount: courseAmountParam,
+            paymentMethod: paymentMethod || 'mpesa',
+            status: 'pending'
+          }
+        })
+      }).catch(() => {});
+    }
+
     setFieldErrors({});
     setCheckoutStep(2);
     if (typeof window !== 'undefined') {

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { formatVideoEmbedUrl } from '@/lib/videoEmbed';
-import { Plus, Edit, Trash2, Eye, BookOpen, DollarSign, Clock, ArrowLeft, Home, GraduationCap, Loader2, CheckCircle, XCircle, Save, X, CheckSquare, Upload, AlertTriangle } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, BookOpen, DollarSign, Clock, ArrowLeft, Home, GraduationCap, Loader2, CheckCircle, XCircle, Save, X, CheckSquare, Upload, AlertTriangle, MessageCircle, Send, Check, RefreshCw, Mail, ExternalLink, Filter } from 'lucide-react';
 
 interface Course {
   id: string;
@@ -78,6 +78,14 @@ export default function AdminAcademyPage() {
   const [selectedModuleForLesson, setSelectedModuleForLesson] = useState<Module | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [salesOrders, setSalesOrders] = useState<any[]>([]);
+  const [salesStats, setSalesStats] = useState({ totalRevenue: 0, lostRevenue: 0, pendingRevenue: 0, completedCount: 0, pendingCount: 0, failedCount: 0, totalLeads: 0 });
+  const [salesFilter, setSalesFilter] = useState<'all' | 'completed' | 'pending' | 'failed'>('all');
+  const [salesLoading, setSalesLoading] = useState(false);
+  const [recoverySending, setRecoverySending] = useState<string | null>(null);
+  const [priceModal, setPriceModal] = useState<{ show: boolean; courseId: string; courseTitle: string; price: number; originalPrice: number; accessType: 'paid' | 'free' }>({
+    show: false, courseId: '', courseTitle: '', price: 199, originalPrice: 500, accessType: 'paid'
+  });
   const [filter, setFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [activeTab, setActiveTab] = useState<'courses' | 'modules' | 'lessons' | 'enrollments' | 'coupons'>('courses');
   const [enrollments, setEnrollments] = useState<any[]>([]);
@@ -131,6 +139,110 @@ export default function AdminAcademyPage() {
     content: ''
   });
 
+  const fetchSalesData = useCallback(async () => {
+    try {
+      setSalesLoading(true);
+      const res = await fetch('/api/academy/sales');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setSalesOrders(data.orders || []);
+          if (data.stats) setSalesStats(data.stats);
+        }
+      }
+    } catch (e) {
+      console.warn('Erro ao carregar vendas de cursos:', e);
+    } finally {
+      setSalesLoading(false);
+    }
+  }, []);
+
+  const handleSavePrice = async () => {
+    try {
+      setIsSaving(true);
+      const res = await fetch('/api/academy/sales', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'update_price',
+          courseId: priceModal.courseId,
+          price: priceModal.price,
+          originalPrice: priceModal.originalPrice,
+          accessType: priceModal.accessType
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCourses(prev => prev.map(c => c.id === priceModal.courseId ? { ...c, price: priceModal.price, accessType: priceModal.accessType, originalPrice: priceModal.originalPrice } as any : c));
+        setPriceModal(prev => ({ ...prev, show: false }));
+        alert('Preço do curso atualizado com sucesso!');
+      } else {
+        alert(data.error || 'Erro ao atualizar preço.');
+      }
+    } catch (e: any) {
+      alert(e.message || 'Erro ao salvar preço.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleApproveOrder = async (orderId: string) => {
+    if (!confirm('Deseja aprovar manualmente este pagamento e libertar o curso para o aluno?')) return;
+    try {
+      const res = await fetch('/api/academy/sales', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'manual_approve', orderId })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('Pagamento aprovado! Matrícula ativada e instruções enviadas por e-mail.');
+        fetchSalesData();
+        fetchCourses();
+      } else {
+        alert(data.error || 'Erro ao aprovar.');
+      }
+    } catch (e: any) {
+      alert(e.message || 'Erro na aprovação.');
+    }
+  };
+
+  const handleSendRecoveryEmail = async (orderId: string) => {
+    try {
+      setRecoverySending(orderId);
+      const res = await fetch('/api/academy/sales', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'send_recovery_email', orderId })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('E-mail de recuperação enviado com sucesso ao lead!');
+        fetchSalesData();
+      } else {
+        alert(data.error || 'Erro ao enviar e-mail.');
+      }
+    } catch (e: any) {
+      alert(e.message || 'Erro no envio do e-mail.');
+    } finally {
+      setRecoverySending(null);
+    }
+  };
+
+  const handleMarkFailed = async (orderId: string) => {
+    if (!confirm('Marcar este pedido como cancelado / perdido?')) return;
+    try {
+      await fetch('/api/academy/sales', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'mark_failed', orderId })
+      });
+      fetchSalesData();
+    } catch (e) {
+      console.warn('Erro ao cancelar pedido:', e);
+    }
+  };
+
   const fetchCourses = useCallback(async () => {
     try {
       setLoading(true);
@@ -173,7 +285,8 @@ export default function AdminAcademyPage() {
 
   useEffect(() => {
     fetchCourses();
-  }, [fetchCourses]);
+    fetchSalesData();
+  }, [fetchCourses, fetchSalesData]);
 
   // Clear selection when switching tabs or changing filters
   useEffect(() => {
@@ -878,88 +991,124 @@ export default function AdminAcademyPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-xs">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-500">Total de Cursos</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">{courses.length}</p>
+                <p className="text-xs font-bold uppercase text-gray-400">Total de Cursos</p>
+                <p className="text-2xl font-black text-gray-900 mt-1">{courses.length}</p>
               </div>
-              <BookOpen className="h-8 w-8 text-indigo-600" />
+              <BookOpen className="h-7 w-7 text-indigo-600" />
             </div>
           </div>
-          <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+          <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-xs">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-500">Cursos Ativos</p>
-                <p className="text-2xl font-bold text-emerald-600 mt-1">{courses.filter(c => c.active).length}</p>
+                <p className="text-xs font-bold uppercase text-gray-400">Cursos Pagos</p>
+                <p className="text-2xl font-black text-blue-600 mt-1">
+                  {courses.filter(c => c.accessType === 'paid' || (Number(c.price || 0) > 0)).length}
+                </p>
               </div>
-              <CheckCircle className="h-8 w-8 text-emerald-600" />
+              <DollarSign className="h-7 w-7 text-blue-600" />
             </div>
           </div>
-          <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+          <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-xs">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-500">Cursos Pagos</p>
-                <p className="text-2xl font-bold text-blue-600 mt-1">{courses.filter(c => c.accessType === 'paid').length}</p>
+                <p className="text-xs font-bold uppercase text-gray-400">Faturamento Vendas</p>
+                <p className="text-2xl font-black text-emerald-600 mt-1">
+                  {(salesStats.totalRevenue || 0).toLocaleString('pt-MZ')} <span className="text-xs font-bold">MT</span>
+                </p>
               </div>
-              <DollarSign className="h-8 w-8 text-blue-600" />
+              <CheckCircle className="h-7 w-7 text-emerald-600" />
             </div>
           </div>
-          <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+          <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-xs">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-500">Cursos Gratuitos</p>
-                <p className="text-2xl font-bold text-green-600 mt-1">{courses.filter(c => c.accessType === 'free').length}</p>
+                <p className="text-xs font-bold uppercase text-gray-400">Vendas a Recuperar</p>
+                <p className="text-2xl font-black text-amber-600 mt-1">
+                  {salesStats.failedCount + salesStats.pendingCount}
+                </p>
               </div>
-              <BookOpen className="h-8 w-8 text-green-600" />
+              <AlertTriangle className="h-7 w-7 text-amber-500" />
             </div>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm mb-6">
-          <div className="flex border-b border-gray-200">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm mb-6 overflow-hidden">
+          <div className="flex border-b border-gray-200 overflow-x-auto">
             <button
               onClick={() => setActiveTab('courses')}
-              className={`flex-1 px-6 py-4 font-medium text-sm transition ${
+              className={`px-6 py-4 font-bold text-xs sm:text-sm transition whitespace-nowrap ${
                 activeTab === 'courses'
-                  ? 'text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50'
+                  ? 'text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50/50'
                   : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
               }`}
             >
               <div className="flex items-center justify-center space-x-2">
                 <BookOpen className="h-4 w-4" />
                 <span>Cursos</span>
-                <span className="bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full text-xs">{courses.length}</span>
+                <span className="bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full text-xs font-semibold">{courses.length}</span>
               </div>
             </button>
             <button
               onClick={() => setActiveTab('modules')}
-              className={`flex-1 px-6 py-4 font-medium text-sm transition ${
+              className={`px-6 py-4 font-bold text-xs sm:text-sm transition whitespace-nowrap ${
                 activeTab === 'modules'
-                  ? 'text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50'
+                  ? 'text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50/50'
                   : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
               }`}
             >
               <div className="flex items-center justify-center space-x-2">
                 <BookOpen className="h-4 w-4" />
                 <span>Módulos</span>
-                <span className="bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full text-xs">{modules.length}</span>
+                <span className="bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full text-xs font-semibold">{modules.length}</span>
               </div>
             </button>
             <button
               onClick={() => setActiveTab('lessons')}
-              className={`flex-1 px-6 py-4 font-medium text-sm transition ${
+              className={`px-6 py-4 font-bold text-xs sm:text-sm transition whitespace-nowrap ${
                 activeTab === 'lessons'
-                  ? 'text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50'
+                  ? 'text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50/50'
                   : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
               }`}
             >
               <div className="flex items-center justify-center space-x-2">
                 <BookOpen className="h-4 w-4" />
-                <span>Liçãoões</span>
-                <span className="bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full text-xs">{lessons.length}</span>
+                <span>Lições</span>
+                <span className="bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full text-xs font-semibold">{lessons.length}</span>
+              </div>
+            </button>
+            <button
+              onClick={() => setActiveTab('enrollments')}
+              className={`px-6 py-4 font-bold text-xs sm:text-sm transition whitespace-nowrap ${
+                activeTab === 'enrollments'
+                  ? 'text-emerald-700 border-b-2 border-emerald-600 bg-emerald-50/70'
+                  : 'text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50/40'
+              }`}
+            >
+              <div className="flex items-center justify-center space-x-2">
+                <DollarSign className="h-4 w-4 text-emerald-600" />
+                <span>Vendas, Pagamentos & Leads</span>
+                <span className="bg-emerald-200 text-emerald-950 font-black px-2 py-0.5 rounded-full text-xs">
+                  {salesOrders.length || 0}
+                </span>
+              </div>
+            </button>
+            <button
+              onClick={() => setActiveTab('coupons')}
+              className={`px-6 py-4 font-bold text-xs sm:text-sm transition whitespace-nowrap ${
+                activeTab === 'coupons'
+                  ? 'text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50/50'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+              }`}
+            >
+              <div className="flex items-center justify-center space-x-2">
+                <CheckSquare className="h-4 w-4" />
+                <span>Cupões</span>
+                <span className="bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full text-xs font-semibold">{coupons.length}</span>
               </div>
             </button>
           </div>
@@ -1180,6 +1329,22 @@ export default function AdminAcademyPage() {
                           <td className="px-4 py-3 text-sm text-gray-600">{course.order}</td>
                           <td className="px-4 py-3 text-right">
                             <div className="flex items-center justify-end space-x-1">
+                              <button
+                                onClick={() => {
+                                  setPriceModal({
+                                    show: true,
+                                    courseId: course.id,
+                                    courseTitle: course.title,
+                                    price: course.price || 199,
+                                    originalPrice: (course as any).originalPrice || 500,
+                                    accessType: course.accessType === 'free' ? 'free' : 'paid'
+                                  });
+                                }}
+                                className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition"
+                                title="Alterar Preço e Promoção"
+                              >
+                                <DollarSign className="h-3.5 w-3.5" />
+                              </button>
                               <button
                                 onClick={() => handleEdit(course, 'course')}
                                 className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition"
@@ -1420,8 +1585,330 @@ export default function AdminAcademyPage() {
               )}
             </>
           )}
+
+
+          {/* TAB: VENDAS, PAGAMENTOS & LEADS (RECUPERAÇÃO) */}
+          {activeTab === 'enrollments' && (
+            <div className="p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">Gestão de Vendas & Leads da Academia</h3>
+                  <p className="text-xs text-gray-500 mt-0.5">Recupere vendas pendentes/canceladas diretamente por WhatsApp ou E-mail.</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setSalesFilter('all')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${salesFilter === 'all' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                  >
+                    Todos ({salesOrders.length})
+                  </button>
+                  <button
+                    onClick={() => setSalesFilter('completed')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${salesFilter === 'completed' ? 'bg-emerald-600 text-white' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'}`}
+                  >
+                    Pagos ({salesStats.completedCount})
+                  </button>
+                  <button
+                    onClick={() => setSalesFilter('pending')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${salesFilter === 'pending' ? 'bg-amber-500 text-white' : 'bg-amber-50 text-amber-700 hover:bg-amber-100'}`}
+                  >
+                    Pendentes ({salesStats.pendingCount})
+                  </button>
+                  <button
+                    onClick={() => setSalesFilter('failed')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${salesFilter === 'failed' ? 'bg-red-600 text-white' : 'bg-red-50 text-red-700 hover:bg-red-100'}`}
+                  >
+                    Falhados / Cancelados ({salesStats.failedCount})
+                  </button>
+                  <button
+                    onClick={fetchSalesData}
+                    className="p-1.5 text-gray-500 hover:bg-gray-100 rounded-lg transition"
+                    title="Atualizar Vendas"
+                  >
+                    <RefreshCw className={`h-4 w-4 ${salesLoading ? 'animate-spin' : ''}`} />
+                  </button>
+                </div>
+              </div>
+
+              {salesOrders.length === 0 ? (
+                <div className="p-12 text-center">
+                  <DollarSign className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500 font-medium">Nenhuma tentativa de compra ou lead registada ainda.</p>
+                  <p className="text-gray-400 text-xs mt-1">Quando os alunos visitarem o checkout público, aparecerão aqui automaticamente.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-sm">
+                    <thead className="bg-gray-50 text-xs font-bold uppercase text-gray-400 border-b border-gray-200">
+                      <tr>
+                        <th className="px-4 py-3">ID / Data</th>
+                        <th className="px-4 py-3">Lead / Aluno</th>
+                        <th className="px-4 py-3">Curso & Valor</th>
+                        <th className="px-4 py-3">Método & Status</th>
+                        <th className="px-4 py-3 text-right">Ações de Recuperação</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {salesOrders
+                        .filter(order => {
+                          if (salesFilter === 'completed') return order.status === 'completed';
+                          if (salesFilter === 'pending') return order.status === 'pending' || order.status === 'in_progress';
+                          if (salesFilter === 'failed') return order.status === 'cancelled' || order.status === 'suspended' || order.status === 'failed';
+                          return true;
+                        })
+                        .map(order => {
+                          const isPaid = order.status === 'completed';
+                          const isPending = order.status === 'pending' || order.status === 'in_progress';
+                          const phoneClean = (order.clientPhone || '').replace(/\D/g, '');
+                          const waText = encodeURIComponent(`Olá ${order.clientName || ''}, tudo bem? Sou da equipa WeHostHere. Notámos que iniciou o pedido para o ${order.serviceName || 'Curso'}, mas não chegou a concluir. Teve alguma dúvida ou gostaria de finalizar com M-Pesa / e-Mola?`);
+                          const waLink = phoneClean ? `https://wa.me/${phoneClean.startsWith('258') ? phoneClean : '258' + phoneClean}?text=${waText}` : null;
+
+                          return (
+                            <tr key={order.id || order._id} className="hover:bg-gray-50/80 transition">
+                              <td className="px-4 py-3 whitespace-nowrap">
+                                <span className="font-mono text-xs font-bold text-gray-800 block">{order.id}</span>
+                                <span className="text-[11px] text-gray-400">
+                                  {order.createdAt ? new Date(order.createdAt).toLocaleDateString('pt-MZ') : 'Hoje'}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3">
+                                <p className="font-bold text-gray-900">{order.clientName || 'Lead Visitante'}</p>
+                                <p className="text-xs text-gray-500 font-mono">{order.clientEmail}</p>
+                                {order.clientPhone && (
+                                  <p className="text-xs text-emerald-600 font-semibold">{order.clientPhone}</p>
+                                )}
+                              </td>
+                              <td className="px-4 py-3">
+                                <p className="font-medium text-gray-900 truncate max-w-[220px]">{order.serviceName}</p>
+                                <p className="text-xs font-bold text-indigo-700">{order.amount || 0} MT</p>
+                              </td>
+                              <td className="px-4 py-3">
+                                <span className="text-xs font-bold uppercase text-gray-500 block mb-1">{order.paymentMethod || 'mpesa'}</span>
+                                {isPaid && (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
+                                    ✓ Pago
+                                  </span>
+                                )}
+                                {isPending && (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800">
+                                    ⏳ Pendente
+                                  </span>
+                                )}
+                                {!isPaid && !isPending && (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-800">
+                                    ✕ Cancelado
+                                  </span>
+                                )}
+                              </td>
+                              <td className="px-4 py-3 text-right">
+                                <div className="flex items-center justify-end gap-1.5">
+                                  {/* WhatsApp Recovery Button */}
+                                  {waLink && (
+                                    <a
+                                      href={waLink}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-500 hover:bg-emerald-600 text-white transition shadow-xs"
+                                      title="Recuperar pelo WhatsApp"
+                                    >
+                                      <MessageCircle className="h-3.5 w-3.5" />
+                                      <span className="hidden md:inline">WhatsApp</span>
+                                    </a>
+                                  )}
+
+                                  {/* Email Recovery Button */}
+                                  {!isPaid && (
+                                    <button
+                                      onClick={() => handleSendRecoveryEmail(order.id)}
+                                      disabled={recoverySending === order.id}
+                                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition"
+                                      title="Enviar E-mail de Recuperação"
+                                    >
+                                      <Mail className="h-3.5 w-3.5" />
+                                      <span className="hidden md:inline">
+                                        {recoverySending === order.id ? 'A enviar...' : 'E-mail'}
+                                      </span>
+                                    </button>
+                                  )}
+
+                                  {/* Manual Approval Button */}
+                                  {!isPaid && (
+                                    <button
+                                      onClick={() => handleApproveOrder(order.id)}
+                                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-700 hover:bg-emerald-800 text-white transition"
+                                      title="Aprovar Pagamento Manualmente"
+                                    >
+                                      <Check className="h-3.5 w-3.5" />
+                                      <span className="hidden md:inline">Aprovar</span>
+                                    </button>
+                                  )}
+
+                                  {/* Mark Failed Button */}
+                                  {isPending && (
+                                    <button
+                                      onClick={() => handleMarkFailed(order.id)}
+                                      className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                                      title="Marcar como Perdido / Cancelado"
+                                    >
+                                      <XCircle className="h-3.5 w-3.5" />
+                                    </button>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB: CUPÕES */}
+          {activeTab === 'coupons' && (
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">Cupões de Desconto</h3>
+                  <p className="text-xs text-gray-500">Crie códigos promocionais para campanhas de marketing dos cursos.</p>
+                </div>
+                <button
+                  onClick={() => setShowCouponModal(true)}
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-bold hover:bg-indigo-700 transition"
+                >
+                  + Novo Cupom
+                </button>
+              </div>
+
+              {coupons.length === 0 ? (
+                <div className="p-12 text-center border-2 border-dashed border-gray-200 rounded-xl">
+                  <CheckSquare className="h-10 w-10 text-gray-300 mx-auto mb-2" />
+                  <p className="text-gray-500 text-sm font-semibold">Nenhum cupom ativo no momento.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {coupons.map((cp, idx) => (
+                    <div key={idx} className="p-4 border border-gray-200 rounded-xl bg-gray-50/50">
+                      <p className="font-mono font-black text-indigo-700 text-base">{cp.code}</p>
+                      <p className="text-xs text-gray-600 mt-1 font-semibold">
+                        Desconto: {cp.discountValue}{cp.discountType === 'percentage' ? '%' : ' MT'}
+                      </p>
+                      <p className="text-[11px] text-gray-400 mt-0.5">Usos: {cp.usedCount || 0} / {cp.maxUses || 'Ilimitado'}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
         </div>
       </div>
+
+      {/* Price & Access Management Modal */}
+      {priceModal.show && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-gray-100 animate-in fade-in zoom-in duration-150">
+            <div className="p-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-emerald-100 text-emerald-800 rounded-lg">
+                  <DollarSign className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="font-black text-gray-900 text-base">Alterar Preço do Curso</h3>
+                  <p className="text-xs text-gray-500 truncate max-w-[260px]">{priceModal.courseTitle}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setPriceModal(prev => ({ ...prev, show: false }))}
+                className="p-1.5 text-gray-400 hover:text-gray-700 rounded-lg"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Tipo de Acesso</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPriceModal(prev => ({ ...prev, accessType: 'paid' }))}
+                    className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition ${priceModal.accessType === 'paid' ? 'bg-emerald-50 border-emerald-500 text-emerald-900 ring-2 ring-emerald-500/20' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+                  >
+                    💰 Curso Pago
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPriceModal(prev => ({ ...prev, accessType: 'free' }))}
+                    className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition ${priceModal.accessType === 'free' ? 'bg-indigo-50 border-indigo-500 text-indigo-900 ring-2 ring-indigo-500/20' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+                  >
+                    🎁 100% Gratuito
+                  </button>
+                </div>
+              </div>
+
+              {priceModal.accessType === 'paid' && (
+                <>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
+                      Preço de Venda Atual (MT) *
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        min="1"
+                        value={priceModal.price}
+                        onChange={(e) => setPriceModal(prev => ({ ...prev, price: Number(e.target.value) }))}
+                        className="w-full px-3 py-2.5 border border-gray-300 rounded-xl font-black text-gray-900 text-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                        placeholder="Ex: 199"
+                      />
+                      <span className="absolute right-3 top-3 text-xs font-black text-gray-400">MZN / MT</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
+                      Preço Original Riscado (Promoção)
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        min="1"
+                        value={priceModal.originalPrice}
+                        onChange={(e) => setPriceModal(prev => ({ ...prev, originalPrice: Number(e.target.value) }))}
+                        className="w-full px-3 py-2.5 border border-gray-300 rounded-xl font-bold text-gray-500 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="Ex: 500"
+                      />
+                      <span className="absolute right-3 top-3 text-xs font-bold text-gray-400">MZN / MT</span>
+                    </div>
+                    <p className="text-[11px] text-gray-400 mt-1">Aparece riscado na página do curso para dar sensação de desconto aos alunos.</p>
+                  </div>
+                </>
+              )}
+
+              <div className="pt-2 flex items-center justify-end gap-2 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setPriceModal(prev => ({ ...prev, show: false }))}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 transition"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  disabled={isSaving}
+                  onClick={handleSavePrice}
+                  className="px-5 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition flex items-center gap-1.5 shadow-sm"
+                >
+                  {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  <span>Salvar Preço</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal */}
       {showModal && (
