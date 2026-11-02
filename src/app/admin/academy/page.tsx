@@ -102,6 +102,18 @@ export default function AdminAcademyPage() {
   const [uploadingMaterial, setUploadingMaterial] = useState(false);
   const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
   
+  // Coupon form & handlers state
+  const [couponForm, setCouponForm] = useState({
+    code: '',
+    discountType: 'percentage' as 'percentage' | 'fixed',
+    discountValue: '',
+    courseId: 'all',
+    maxUses: '',
+    expiresAt: '',
+    active: true
+  });
+  const [savingCoupon, setSavingCoupon] = useState(false);
+
   // Confirmation modal state
   const [confirmModal, setConfirmModal] = useState<{
     show: boolean;
@@ -322,6 +334,103 @@ export default function AdminAcademyPage() {
         }
       }
     });
+  };
+
+  const handleSaveCoupon = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const codeTrimmed = couponForm.code.trim().toUpperCase();
+    if (!codeTrimmed) {
+      showToast('Por favor, defina um código para o cupom.', 'warning', 'Código Obrigatório');
+      return;
+    }
+    const val = parseFloat(couponForm.discountValue);
+    if (isNaN(val) || val <= 0) {
+      showToast('Informe um valor de desconto válido e maior que zero.', 'warning', 'Valor Inválido');
+      return;
+    }
+    if (couponForm.discountType === 'percentage' && val > 100) {
+      showToast('A percentagem de desconto não pode ser superior a 100%.', 'warning', 'Percentagem Máxima 100%');
+      return;
+    }
+
+    try {
+      setSavingCoupon(true);
+      const res = await fetch('/api/academy/coupons', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'create',
+          coupon: {
+            code: codeTrimmed,
+            discountType: couponForm.discountType,
+            discountValue: val,
+            courseIds: couponForm.courseId === 'all' ? [] : [couponForm.courseId],
+            maxUses: parseInt(couponForm.maxUses) || 0,
+            expiresAt: couponForm.expiresAt || undefined,
+            active: couponForm.active
+          }
+        })
+      });
+      const data = await res.json();
+      if (data.success && data.coupon) {
+        setCoupons(prev => [data.coupon, ...prev]);
+        setShowCouponModal(false);
+        setCouponForm({
+          code: '',
+          discountType: 'percentage',
+          discountValue: '',
+          courseId: 'all',
+          maxUses: '',
+          expiresAt: '',
+          active: true
+        });
+        showToast(`Cupom ${codeTrimmed} criado e ativado com sucesso!`, 'success', 'Cupom Criado');
+      } else {
+        showToast(data.error || 'Erro ao criar cupom.', 'error', 'Erro');
+      }
+    } catch (err: any) {
+      showToast(err.message || 'Erro ao salvar cupom.', 'error', 'Erro');
+    } finally {
+      setSavingCoupon(false);
+    }
+  };
+
+  const handleDeleteCoupon = (couponId: string, code: string) => {
+    setConfirmModal({
+      show: true,
+      title: 'Excluir Cupom de Desconto',
+      message: `Tem certeza que deseja apagar o cupom ${code}? Ele deixará de ser aceito imediatamente no checkout.`,
+      confirmText: 'Excluir Cupom',
+      cancelText: 'Voltar',
+      variant: 'danger',
+      iconType: 'trash',
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, show: false }));
+        try {
+          const res = await fetch('/api/academy/coupons', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'delete', id: couponId })
+          });
+          const data = await res.json();
+          if (data.success) {
+            setCoupons(prev => prev.filter(c => c.id !== couponId && c._id !== couponId));
+            showToast(`Cupom ${code} excluído com sucesso.`, 'success', 'Cupom Removido');
+          } else {
+            showToast(data.error || 'Erro ao remover cupom.', 'error', 'Erro');
+          }
+        } catch (err: any) {
+          showToast(err.message || 'Erro na exclusão do cupom.', 'error', 'Erro');
+        }
+      }
+    });
+  };
+
+  const handleCopyCoupon = (code: string) => {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(code);
+      showToast(`Código ${code} copiado para a área de transferência!`, 'success', 'Copiado');
+    }
   };
 
   const fetchCourses = useCallback(async () => {
@@ -1232,6 +1341,7 @@ export default function AdminAcademyPage() {
         </div>
 
         {/* Actions Bar */}
+        {['courses', 'modules', 'lessons'].includes(activeTab) && (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm mb-6">
           <div className="p-4 flex flex-col gap-4">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
@@ -1365,6 +1475,7 @@ export default function AdminAcademyPage() {
             </div>
           </div>
         </div>
+        )}
 
         {/* Content List */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
@@ -1940,35 +2051,134 @@ export default function AdminAcademyPage() {
           {/* TAB: CUPÕES */}
           {activeTab === 'coupons' && (
             <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900">Cupões de Desconto</h3>
-                  <p className="text-xs text-gray-500">Crie códigos promocionais para campanhas de marketing dos cursos.</p>
+                  <h3 className="text-xl font-black text-gray-900 tracking-tight flex items-center gap-2">
+                    <CheckSquare className="h-5 w-5 text-indigo-600" />
+                    Cupões de Desconto
+                  </h3>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Crie códigos promocionais (% ou MT) para campanhas de marketing, parcerias e promoções nos cursos.
+                  </p>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setShowCouponModal(true)}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-bold hover:bg-indigo-700 transition"
+                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition shadow-md shadow-indigo-100 cursor-pointer shrink-0"
                 >
-                  + Novo Cupom
+                  <Plus className="h-4 w-4" />
+                  <span>+ Novo Cupom</span>
                 </button>
               </div>
 
               {coupons.length === 0 ? (
-                <div className="p-12 text-center border-2 border-dashed border-gray-200 rounded-xl">
-                  <CheckSquare className="h-10 w-10 text-gray-300 mx-auto mb-2" />
-                  <p className="text-gray-500 text-sm font-semibold">Nenhum cupom ativo no momento.</p>
+                <div className="p-12 text-center border-2 border-dashed border-gray-200 rounded-3xl bg-gray-50/50">
+                  <div className="w-16 h-16 rounded-2xl bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center mx-auto mb-3 shadow-xs">
+                    <CheckSquare className="h-8 w-8" />
+                  </div>
+                  <h4 className="text-base font-bold text-gray-900 mb-1">Nenhum cupom ativo no momento</h4>
+                  <p className="text-xs text-gray-500 max-w-sm mx-auto mb-4">
+                    Crie cupões de percentagem (ex: 20%) ou valor fixo (ex: 300 MT) para aumentar as suas conversões.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setShowCouponModal(true)}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    <span>Criar Primeiro Cupom</span>
+                  </button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {coupons.map((cp, idx) => (
-                    <div key={idx} className="p-4 border border-gray-200 rounded-xl bg-gray-50/50">
-                      <p className="font-mono font-black text-indigo-700 text-base">{cp.code}</p>
-                      <p className="text-xs text-gray-600 mt-1 font-semibold">
-                        Desconto: {cp.discountValue}{cp.discountType === 'percentage' ? '%' : ' MT'}
-                      </p>
-                      <p className="text-[11px] text-gray-400 mt-0.5">Usos: {cp.usedCount || 0} / {cp.maxUses || 'Ilimitado'}</p>
-                    </div>
-                  ))}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {coupons.map((cp) => {
+                    const couponCourse = courses.find(c => c.id === (cp.courseIds?.[0]));
+                    const isExpired = cp.expiresAt && new Date(cp.expiresAt) < new Date();
+                    const isLimitReached = cp.maxUses > 0 && cp.usedCount >= cp.maxUses;
+                    const isActive = cp.active !== false && !isExpired && !isLimitReached;
+
+                    return (
+                      <div
+                        key={cp.id || cp._id}
+                        className={`relative rounded-2xl border p-4.5 bg-white transition shadow-xs hover:shadow-md ${
+                          isActive ? 'border-gray-200' : 'border-gray-200/60 bg-gray-50/50 opacity-75'
+                        }`}
+                      >
+                        {/* Header: Code + Copy + Delete */}
+                        <div className="flex items-center justify-between gap-2 mb-3">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-mono font-black text-sm tracking-wider px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-900 border border-indigo-200 select-all">
+                              {cp.code}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleCopyCoupon(cp.code)}
+                              className="p-1 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+                              title="Copiar código do cupom"
+                            >
+                              <ExternalLink className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+
+                          <div className="flex items-center gap-1">
+                            <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
+                              isActive
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : isExpired
+                                ? 'bg-amber-100 text-amber-800'
+                                : 'bg-red-100 text-red-800'
+                            }`}>
+                              {isActive ? 'Ativo' : isExpired ? 'Expirado' : isLimitReached ? 'Esgotado' : 'Inativo'}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteCoupon(cp.id || cp._id, cp.code)}
+                              className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition cursor-pointer"
+                              title="Remover Cupom"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Discount Banner */}
+                        <div className="mb-3">
+                          <div className="flex items-baseline gap-1.5">
+                            <span className="text-2xl font-black text-gray-900 tracking-tight">
+                              {cp.discountType === 'percentage' ? `${cp.discountValue}%` : `${cp.discountValue} MT`}
+                            </span>
+                            <span className="text-xs font-bold text-emerald-600 uppercase">
+                              {cp.discountType === 'percentage' ? 'DE DESCONTO' : 'DESCONTO DIRETO'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Details */}
+                        <div className="space-y-1.5 text-xs text-gray-600 border-t border-gray-100 pt-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-gray-400">Aplicável a:</span>
+                            <span className="font-semibold text-gray-800 truncate max-w-[170px]" title={couponCourse ? couponCourse.title : 'Todos os Cursos'}>
+                              {couponCourse ? couponCourse.title : 'Todos os Cursos'}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <span className="text-gray-400">Utilizações:</span>
+                            <span className="font-semibold text-gray-800">
+                              {cp.usedCount || 0} / {cp.maxUses > 0 ? cp.maxUses : 'Ilimitado'}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <span className="text-gray-400">Validade:</span>
+                            <span className="font-semibold text-gray-800">
+                              {cp.expiresAt ? new Date(cp.expiresAt).toLocaleDateString('pt-MZ') : 'Sem expiração'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -1976,6 +2186,174 @@ export default function AdminAcademyPage() {
 
         </div>
       </div>
+
+      {/* Create Coupon Modal */}
+      {showCouponModal && (
+        <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden border border-gray-100 animate-in zoom-in-95 duration-200">
+            <div className="p-5 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-indigo-50/50 to-white">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2.5 bg-indigo-100 text-indigo-700 rounded-xl">
+                  <CheckSquare className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="font-black text-gray-900 text-base">Novo Cupom de Desconto</h3>
+                  <p className="text-xs text-gray-500">Crie um código promocional para os seus alunos</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowCouponModal(false)}
+                className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-full transition cursor-pointer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveCoupon} className="p-6 space-y-4">
+              {/* Código */}
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                  Código do Cupom *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ex: PROMO20, WEHOST50, IA2026"
+                  value={couponForm.code}
+                  onChange={(e) => setCouponForm(prev => ({ ...prev, code: e.target.value.toUpperCase().replace(/\s+/g, '') }))}
+                  className="w-full px-3.5 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm font-mono font-bold tracking-wider uppercase"
+                />
+                <span className="text-[11px] text-gray-400 mt-1 block">O código será digitado pelos alunos na finalização do pedido.</span>
+              </div>
+
+              {/* Tipo de Desconto */}
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                  Tipo de Desconto *
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setCouponForm(prev => ({ ...prev, discountType: 'percentage' }))}
+                    className={`py-2 px-3 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                      couponForm.discountType === 'percentage'
+                        ? 'bg-indigo-50 border-indigo-500 text-indigo-900 ring-2 ring-indigo-500/20'
+                        : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    <span>% Percentagem</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCouponForm(prev => ({ ...prev, discountType: 'fixed' }))}
+                    className={`py-2 px-3 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                      couponForm.discountType === 'fixed'
+                        ? 'bg-indigo-50 border-indigo-500 text-indigo-900 ring-2 ring-indigo-500/20'
+                        : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    <span>MT Valor Fixo</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Valor do Desconto */}
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                  Valor do Desconto {couponForm.discountType === 'percentage' ? '(%)' : '(MT)'} *
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max={couponForm.discountType === 'percentage' ? 100 : undefined}
+                  required
+                  placeholder={couponForm.discountType === 'percentage' ? 'Ex: 20 para 20% de desconto' : 'Ex: 250 para 250 MT de desconto'}
+                  value={couponForm.discountValue}
+                  onChange={(e) => setCouponForm(prev => ({ ...prev, discountValue: e.target.value }))}
+                  className="w-full px-3.5 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm font-semibold"
+                />
+              </div>
+
+              {/* Aplicar a Curso */}
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                  Aplicável a
+                </label>
+                <select
+                  value={couponForm.courseId}
+                  onChange={(e) => setCouponForm(prev => ({ ...prev, courseId: e.target.value }))}
+                  className="w-full px-3.5 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm font-medium"
+                >
+                  <option value="all">Todos os Cursos da Academia</option>
+                  {courses.map(course => (
+                    <option key={course.id} value={course.id}>{course.title}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Limite de Usos e Expiração */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                    Limite de Usos
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="0 = Ilimitado"
+                    value={couponForm.maxUses}
+                    onChange={(e) => setCouponForm(prev => ({ ...prev, maxUses: e.target.value }))}
+                    className="w-full px-3.5 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm font-medium"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                    Expira em
+                  </label>
+                  <input
+                    type="date"
+                    value={couponForm.expiresAt}
+                    onChange={(e) => setCouponForm(prev => ({ ...prev, expiresAt: e.target.value }))}
+                    className="w-full px-3.5 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm font-medium"
+                  />
+                </div>
+              </div>
+
+              {/* Checkbox Ativo */}
+              <div className="pt-2">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={couponForm.active}
+                    onChange={(e) => setCouponForm(prev => ({ ...prev, active: e.target.checked }))}
+                    className="h-4 w-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500"
+                  />
+                  <span className="text-xs font-bold text-gray-800">Cupom ativo e pronto para uso</span>
+                </label>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setShowCouponModal(false)}
+                  className="px-4 py-2.5 rounded-xl border border-gray-300 text-xs font-bold text-gray-700 hover:bg-gray-50 transition cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingCoupon}
+                  className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-bold transition shadow-md shadow-indigo-100 cursor-pointer"
+                >
+                  {savingCoupon ? 'A guardar...' : 'Criar Cupom'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Price & Access Management Modal */}
       {priceModal.show && (

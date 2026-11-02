@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { 
-  Server, ShieldCheck, Lock, Check, CreditCard, 
+  Tag, Server, ShieldCheck, Lock, Check, CreditCard, 
   Smartphone, Bitcoin, ArrowLeft, CheckCircle2, AlertCircle, RefreshCw, XCircle,
   Landmark, Paperclip, FileText, Image as ImageIcon, Upload, Loader2, Lock as LockIcon,
   Globe, MessageCircle, Copy, ArrowRight, User, Mail, Edit3, Sparkles, Clock
@@ -214,9 +214,57 @@ function CheckoutContent() {
   };
 
   const basePrice = calculatePlanCost();
-  const grandTotal = isCoursePayment 
+  const rawTotal = isCoursePayment 
     ? courseAmountParam 
     : (isAffiliateVerification ? verificationAmount : (basePrice + domainCost));
+
+  // Coupon state
+  const [couponInput, setCouponInput] = useState('');
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    code: string;
+    discountType: 'percentage' | 'fixed';
+    discountValue: number;
+    discountAmount: number;
+    finalAmount: number;
+  } | null>(null);
+
+  const couponDiscount = appliedCoupon ? appliedCoupon.discountAmount : 0;
+  const grandTotal = Math.max(0, rawTotal - couponDiscount);
+
+  const handleApplyCoupon = async () => {
+    if (!couponInput.trim()) return;
+    setCouponLoading(true);
+    setCouponError('');
+    try {
+      const courseIdToValidate = isCoursePayment ? (courseIdParam || '') : '';
+      const res = await fetch(`/api/academy/coupons?code=${encodeURIComponent(couponInput.trim())}&amount=${rawTotal}&courseId=${encodeURIComponent(courseIdToValidate)}`);
+      const data = await res.json();
+      if (data.valid) {
+        setAppliedCoupon({
+          code: data.code,
+          discountType: data.discountType,
+          discountValue: data.discountValue,
+          discountAmount: data.discountAmount,
+          finalAmount: data.finalAmount
+        });
+        setCouponError('');
+      } else {
+        setCouponError(data.message || 'Cupom inválido ou expirado.');
+      }
+    } catch (e: any) {
+      setCouponError('Erro ao validar cupom.');
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponInput('');
+    setCouponError('');
+  };
 
   useEffect(() => {
     const user = auth.getCurrentUser();
@@ -2349,7 +2397,7 @@ function CheckoutContent() {
               {!summaryOpen && (
                 <div className="flex justify-between items-center text-sm font-bold text-gray-900 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200">
                   <span className="text-xs text-gray-500 font-normal">Total a Pagar</span>
-                  <span className="text-base text-emerald-600 font-black">{(isCoursePayment ? courseAmountParam : (isAffiliateVerification ? verificationAmount : grandTotal)).toLocaleString('pt-MZ')} MT</span>
+                  <span className="text-base text-emerald-600 font-black">{grandTotal.toLocaleString('pt-MZ')} MT</span>
                 </div>
               )}
 
@@ -2429,9 +2477,75 @@ function CheckoutContent() {
                     </>
                   )}
 
+                  {appliedCoupon && (
+                    <div className="flex justify-between items-center text-emerald-700 font-bold text-xs pt-2 border-t border-dashed border-gray-200">
+                      <span className="flex items-center gap-1">
+                        <Tag className="h-3 w-3" />
+                        Desconto Cupom ({appliedCoupon.code})
+                      </span>
+                      <span>-{appliedCoupon.discountAmount.toLocaleString('pt-MZ')} MT</span>
+                    </div>
+                  )}
+
+                  {/* Cupom de Desconto Input */}
+                  <div className="pt-2.5 border-t border-gray-200 mt-2.5">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-[11px] font-bold text-gray-700 flex items-center gap-1">
+                        <Tag className="h-3.5 w-3.5 text-primary-600" />
+                        Tem um cupom de desconto?
+                      </span>
+                      {appliedCoupon && (
+                        <span className="text-[10px] font-black text-emerald-700 bg-emerald-100 px-1.5 py-0.2 rounded-full">
+                          ATIVO
+                        </span>
+                      )}
+                    </div>
+
+                    {!appliedCoupon ? (
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="Inserir código..."
+                          value={couponInput}
+                          onChange={(e) => setCouponInput(e.target.value.toUpperCase().replace(/\s+/g, ''))}
+                          className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg text-xs font-mono font-bold uppercase tracking-wider focus:ring-2 focus:ring-primary-500 bg-white"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleApplyCoupon}
+                          disabled={couponLoading || !couponInput.trim()}
+                          className="px-3.5 py-1.5 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-lg text-xs font-bold transition cursor-pointer shrink-0"
+                        >
+                          {couponLoading ? 'Validando...' : 'Aplicar'}
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded-lg p-2.5">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono font-black text-xs text-emerald-900 bg-white px-2 py-0.5 rounded border border-emerald-300">
+                            {appliedCoupon.code}
+                          </span>
+                          <span className="text-xs font-bold text-emerald-700">
+                            (-{appliedCoupon.discountType === 'percentage' ? `${appliedCoupon.discountValue}%` : `${appliedCoupon.discountAmount} MT`})
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleRemoveCoupon}
+                          className="text-xs text-red-600 hover:text-red-800 font-bold hover:underline cursor-pointer"
+                        >
+                          Remover
+                        </button>
+                      </div>
+                    )}
+                    {couponError && (
+                      <p className="text-[11px] text-red-600 mt-1 font-semibold">{couponError}</p>
+                    )}
+                  </div>
+
                   <div className="flex justify-between items-center border-t border-gray-200 pt-3 mt-3 font-bold text-base text-gray-900">
                     <span>Total a Pagar</span>
-                    <span className="text-xl text-emerald-600 font-black">{(isCoursePayment ? courseAmountParam : (isAffiliateVerification ? verificationAmount : grandTotal)).toLocaleString('pt-MZ')} MT</span>
+                    <span className="text-xl text-emerald-600 font-black">{grandTotal.toLocaleString('pt-MZ')} MT</span>
                   </div>
                 </div>
               )}
@@ -2463,7 +2577,7 @@ function CheckoutContent() {
                   ) : (
                     <>
                       <Lock className="h-4 w-4" />
-                      <span>Finalizar Pagamento ({(isCoursePayment ? courseAmountParam : (isAffiliateVerification ? verificationAmount : grandTotal)).toLocaleString('pt-MZ')} MT)</span>
+                      <span>Finalizar Pagamento ({grandTotal.toLocaleString('pt-MZ')} MT)</span>
                       <ArrowRight className="h-4 w-4" />
                     </>
                   )}
