@@ -4,6 +4,7 @@ import OrderModel from '@/lib/models/Order';
 import EnrollmentModel from '@/lib/models/Enrollment';
 import { CourseModel } from '@/lib/models/CourseModel';
 import { sendCoursePurchaseEmail, sendEmail } from '@/lib/sendgrid';
+import { kivora } from '@/lib/kivora';
 import crypto from 'crypto';
 
 export const dynamic = 'force-dynamic';
@@ -171,9 +172,63 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, message: 'E-mail de recuperação enviado com sucesso!' });
     }
 
+    // Re-enviar USSD Push (M-Pesa) para o telemóvel do cliente digitar o PIN
+    if (action === 'resend_ussd' && orderId) {
+      const order = await OrderModel.findOne({ id: orderId });
+      if (!order) {
+        return NextResponse.json({ success: false, error: 'Pedido não encontrado' }, { status: 404 });
+      }
+
+      let phone = (order.clientPhone || '').replace(/\D/g, '');
+      if (phone.startsWith('258')) {
+        phone = phone.substring(3);
+      }
+
+      if (!phone || phone.length < 8) {
+        return NextResponse.json(
+          { success: false, error: 'Número de telefone do cliente inválido ou não fornecido.' },
+          { status: 400 }
+        );
+      }
+
+      const paymentRef = `RETRY_${Date.now()}`;
+      const result = await kivora.createC2BPayment({
+        phone,
+        amount: order.amount || 199,
+        currency: 'MZN',
+        reference: paymentRef,
+        description: `Recuperação: ${order.serviceName || 'Curso'}`,
+        senderName: 'WEHOSTHERE',
+        customer: {
+          name: order.clientName,
+          email: order.clientEmail,
+          phone: order.clientPhone
+        },
+        metadata: {
+          orderId: order.id,
+          clientName: order.clientName,
+          clientEmail: order.clientEmail,
+          clientPhone: order.clientPhone,
+          serviceName: order.serviceName,
+          isRecovery: true
+        }
+      });
+
+      order.kivoraPaymentId = result.id;
+      order.reference = paymentRef;
+      order.status = 'pending';
+      await order.save();
+
+      return NextResponse.json({
+        success: true,
+        message: `Prompt USSD enviado para +258 ${phone}! O cliente tem 60s para digitar o PIN no telemóvel.`
+      });
+    }
+
     return NextResponse.json({ success: false, error: 'Ação inválida' }, { status: 400 });
   } catch (error: any) {
     console.error('[API Academy Sales POST Error]:', error);
     return NextResponse.json({ success: false, error: error.message || 'Erro ao processar ação' }, { status: 500 });
   }
 }
+

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { formatVideoEmbedUrl } from '@/lib/videoEmbed';
-import { Plus, Edit, Trash2, Eye, BookOpen, DollarSign, Clock, ArrowLeft, Home, GraduationCap, Loader2, CheckCircle, XCircle, Save, X, CheckSquare, Upload, AlertTriangle, MessageCircle, Send, Check, RefreshCw, Mail, ExternalLink, Filter } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, BookOpen, DollarSign, Clock, ArrowLeft, Home, GraduationCap, Loader2, CheckCircle, XCircle, Save, X, CheckSquare, Upload, AlertTriangle, MessageCircle, Send, Check, RefreshCw, Mail, ExternalLink, Filter, Smartphone, Zap } from 'lucide-react';
 
 interface Course {
   id: string;
@@ -83,6 +83,7 @@ export default function AdminAcademyPage() {
   const [salesFilter, setSalesFilter] = useState<'all' | 'completed' | 'pending' | 'failed'>('all');
   const [salesLoading, setSalesLoading] = useState(false);
   const [recoverySending, setRecoverySending] = useState<string | null>(null);
+  const [ussdSending, setUssdSending] = useState<string | null>(null);
   const [priceModal, setPriceModal] = useState<{ show: boolean; courseId: string; courseTitle: string; price: number; originalPrice: number; accessType: 'paid' | 'free' }>({
     show: false, courseId: '', courseTitle: '', price: 199, originalPrice: 500, accessType: 'paid'
   });
@@ -240,6 +241,35 @@ export default function AdminAcademyPage() {
       fetchSalesData();
     } catch (e) {
       console.warn('Erro ao cancelar pedido:', e);
+    }
+  };
+
+  const handleResendUssd = async (orderId: string, phone: string) => {
+    if (!phone) {
+      alert('Este pedido não tem número de telefone associado.');
+      return;
+    }
+    if (!confirm(`Deseja reenviar o prompt USSD (M-Pesa) para o telemóvel ${phone}? O telemóvel do cliente vai acender para digitar o PIN.`)) {
+      return;
+    }
+    try {
+      setUssdSending(orderId);
+      const res = await fetch('/api/academy/sales', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'resend_ussd', orderId })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert(data.message || 'Prompt USSD enviado! O cliente recebeu a solicitação de PIN.');
+        fetchSalesData();
+      } else {
+        alert(data.error || 'Erro ao disparar prompt USSD.');
+      }
+    } catch (e: any) {
+      alert(e.message || 'Erro ao comunicar com gateway de pagamento.');
+    } finally {
+      setUssdSending(null);
     }
   };
 
@@ -1714,6 +1744,21 @@ export default function AdminAcademyPage() {
                                       <MessageCircle className="h-3.5 w-3.5" />
                                       <span className="hidden md:inline">WhatsApp</span>
                                     </a>
+                                  )}
+
+                                  {/* Re-send USSD Push Button (M-Pesa) */}
+                                  {!isPaid && order.clientPhone && (
+                                    <button
+                                      onClick={() => handleResendUssd(order.id, order.clientPhone)}
+                                      disabled={ussdSending === order.id}
+                                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white transition shadow-xs"
+                                      title="Reenviar USSD Push para o telemóvel do cliente digitar o PIN do M-Pesa"
+                                    >
+                                      <Smartphone className={`h-3.5 w-3.5 ${ussdSending === order.id ? 'animate-pulse' : ''}`} />
+                                      <span className="hidden md:inline">
+                                        {ussdSending === order.id ? 'A enviar...' : 'Reenviar PIN'}
+                                      </span>
+                                    </button>
                                   )}
 
                                   {/* Email Recovery Button */}
