@@ -554,62 +554,58 @@ export default function ChapterViewPage() {
 
             {/* Paywall Screen se o módulo atual estiver bloqueado */}
             {!hasAccess && (currentModule.order > (course?.freeLessonsCount || 1)) ? (
-              <div className="bg-white rounded-3xl border-2 border-amber-200/90 shadow-2xl p-6 sm:p-12 text-center max-w-2xl mx-auto animate-in zoom-in-95 duration-300">
-                <div className="w-20 h-20 bg-gradient-to-br from-amber-100 to-orange-100 text-amber-600 rounded-3xl flex items-center justify-center mx-auto mb-5 shadow-inner border border-amber-200">
-                  <Lock className="h-10 w-10 text-amber-700" />
+              <div className="bg-white rounded-2xl border border-amber-200/90 shadow-xl p-5 sm:p-7 text-center max-w-md mx-auto animate-in zoom-in-95 duration-200">
+                <div className="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mx-auto mb-3 border border-amber-200">
+                  <Lock className="h-6 w-6 text-amber-600" />
                 </div>
 
-                <span className="inline-flex items-center space-x-1.5 px-3.5 py-1 bg-amber-100 text-amber-900 border border-amber-300 text-xs font-black rounded-full mb-4 uppercase tracking-widest">
-                  <Sparkles className="h-3.5 w-3.5 text-amber-600" />
-                  <span>Conteúdo Exclusivo do Curso</span>
+                <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 bg-amber-100 text-amber-900 border border-amber-200 text-[10px] font-bold rounded-full mb-2 uppercase tracking-wider">
+                  <Sparkles className="h-3 w-3 text-amber-600" />
+                  <span>Conteúdo Exclusivo</span>
                 </span>
 
-                <h3 className="text-2xl sm:text-3xl font-black text-gray-950 mb-3 tracking-tight">
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-950 mb-1 tracking-tight">
                   Desbloqueie o Curso Completo
                 </h3>
 
-                <p className="text-gray-600 text-sm sm:text-base leading-relaxed mb-6">
-                  Você teve acesso gratuito a {course?.freeLessonsCount || 1} {course?.freeLessonsCount === 1 ? 'aula' : 'aulas'}! Para continuar a assistir aos restantes módulos práticos, descarregar ficheiros de apoio, modelos de código e receber o seu <strong>Certificado Oficial de Conclusão</strong>, adquira o acesso vitalício.
+                <p className="text-gray-500 text-xs mb-4">
+                  Acesso vitalício a todos os módulos práticos, modelos e certificado.
                 </p>
 
                 {/* Box de Preço e Benefícios */}
-                <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-2xl p-6 mb-8 text-left shadow-lg border border-indigo-500/30">
-                  <div className="flex items-center justify-between border-b border-indigo-400/20 pb-4 mb-4">
+                <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-xl p-4 mb-4 text-left shadow-md border border-indigo-500/20">
+                  <div className="flex items-center justify-between border-b border-indigo-400/20 pb-3 mb-3">
                     <div>
-                      <span className="text-xs font-bold text-amber-400 uppercase tracking-wider block">Acesso Vitalício Completo</span>
-                      <span className="text-3xl sm:text-4xl font-black text-white">{course.price || 500} MT</span>
+                      <span className="text-[10px] font-semibold text-amber-400 uppercase tracking-wider block">Acesso Vitalício</span>
+                      <span className="text-2xl sm:text-3xl font-black text-white">{course.price || 500} MT</span>
                     </div>
-                    <span className="px-3 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-bold rounded-lg">
+                    <span className="px-2.5 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[11px] font-bold rounded-md">
                       Pagamento Único
                     </span>
                   </div>
 
-                  <ul className="space-y-2 text-xs sm:text-sm text-gray-300">
+                  <ul className="space-y-1.5 text-xs text-gray-300">
                     <li className="flex items-center space-x-2">
                       <span className="text-emerald-400 font-bold">✓</span>
-                      <span>Acesso aos 13 módulos completos e lições passo a passo</span>
+                      <span>Todas as lições e projetos práticos</span>
                     </li>
                     <li className="flex items-center space-x-2">
                       <span className="text-emerald-400 font-bold">✓</span>
-                      <span>Modelos de código prontos e materiais de apoio em PDF</span>
+                      <span>Modelos de código e materiais em PDF</span>
                     </li>
                     <li className="flex items-center space-x-2">
                       <span className="text-emerald-400 font-bold">✓</span>
-                      <span>Certificado Oficial WEHOSTHERE com código de validação</span>
-                    </li>
-                    <li className="flex items-center space-x-2">
-                      <span className="text-emerald-400 font-bold">✓</span>
-                      <span>Liberação automática imediata via M-Pesa, eMola ou Cartão</span>
+                      <span>Certificado Oficial de Conclusão</span>
                     </li>
                   </ul>
                 </div>
 
                 <button
                   onClick={() => router.push(`/checkout?service=course&amount=${course.price || 500}&domain=academy&name=${encodeURIComponent(course.title)}`)}
-                  className="w-full sm:w-auto inline-flex items-center justify-center space-x-3 px-8 py-4 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold rounded-2xl shadow-xl hover:shadow-2xl transition transform hover:-translate-y-0.5 cursor-pointer text-base"
+                  className="w-full inline-flex items-center justify-center space-x-2 py-3 px-6 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold rounded-xl shadow-md transition transform hover:scale-[1.01] cursor-pointer text-sm"
                 >
-                  <CreditCard className="h-5 w-5" />
-                  <span>Desbloquear Curso Agora por {course.price || 500} MT</span>
+                  <CreditCard className="h-4 w-4" />
+                  <span>Desbloquear por {course.price || 500} MT</span>
                 </button>
               </div>
             ) : currentLessonData ? (

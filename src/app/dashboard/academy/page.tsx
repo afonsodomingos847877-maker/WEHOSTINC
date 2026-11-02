@@ -198,18 +198,18 @@ export default function DashboardAcademyPage() {
           <div className="lg:col-span-3 space-y-6">
             <main>
               {/* Welcome Banner */}
-              <div className="bg-gradient-to-r from-primary-600 via-primary-700 to-indigo-800 rounded-2xl p-6 sm:p-8 text-white shadow-lg relative overflow-hidden mb-8">
+              <div className="bg-gradient-to-r from-primary-600 via-primary-700 to-indigo-800 rounded-2xl p-5 sm:p-6 text-white shadow-md relative overflow-hidden mb-6">
                 <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-white/5 skew-x-12 pointer-events-none"></div>
                 <div className="relative z-10 max-w-xl">
-                  <div className="inline-flex items-center space-x-2 bg-white/10 backdrop-blur-md px-3 py-1 rounded-full text-xs font-semibold text-primary-100 mb-3 border border-white/10">
-                    <Sparkles className="h-3.5 w-3.5 text-amber-300" />
-                    <span>Academia Web WEHOSTHERE</span>
+                  <div className="inline-flex items-center space-x-1.5 bg-white/10 backdrop-blur-md px-2.5 py-0.5 rounded-full text-[11px] font-semibold text-primary-100 mb-2 border border-white/10">
+                    <Sparkles className="h-3 w-3 text-amber-300" />
+                    <span>Academia Web</span>
                   </div>
-                  <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight mb-2">
-                    Aprenda a Criar e Escalar Sites Profissionais
+                  <h2 className="text-xl sm:text-2xl font-bold tracking-tight mb-1">
+                    Crie e Escale Sites Profissionais
                   </h2>
-                  <p className="text-primary-100 text-sm leading-relaxed">
-                    Cursos práticos passo a passo para dominar desenvolvimento web, landing pages de alta conversão e infraestrutura de hospedagem.
+                  <p className="text-primary-100/90 text-xs sm:text-sm">
+                    Cursos práticos de desenvolvimento web e hospedagem.
                   </p>
                 </div>
               </div>
