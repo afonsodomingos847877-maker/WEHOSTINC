@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
   GraduationCap, BookOpen, Clock, Award, ShieldCheck, CheckCircle2, 
   Sparkles, ArrowRight, Star, Users, Play, ChevronRight, Lock, 
-  Smartphone, Zap, HelpCircle, Search, Laptop, Layers
+  Smartphone, Zap, HelpCircle, Search, Laptop, Layers, Loader2
 } from 'lucide-react';
 import AcademyNavbar from '@/components/academy/AcademyNavbar';
 import AcademyFooter from '@/components/academy/AcademyFooter';
@@ -34,78 +34,9 @@ interface Course {
   active: boolean;
 }
 
-const FALLBACK_PUBLIC_COURSES: Course[] = [
-  {
-    id: 'course-landing-page',
-    title: 'Criação de Página de Vendas Profissional',
-    slug: 'criacao-pagina-vendas-profissional',
-    description: 'Aprenda do zero a conceber, estruturar, programar e publicar páginas de alta conversão para o mercado moçambicano e internacional.',
-    shortDescription: 'Cria páginas de alta conversão com design moderno, integração M-Pesa e velocidade máxima.',
-    duration: '4h 30m',
-    outcome: 'Construir landing pages profissionais completas prontas para faturar.',
-    thumbnail: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&auto=format&fit=crop&q=80',
-    accessType: 'paid',
-    price: 199,
-    originalPrice: 500,
-    currency: 'MZN',
-    category: 'Desenvolvimento Web',
-    level: 'Iniciante a Intermédio',
-    freeLessonsCount: 1,
-    instructorName: 'Afonso Domingos',
-    instructorTitle: 'Engenheiro de Software & Fundador WEHOSTHERE',
-    rating: 4.9,
-    studentsCount: 184,
-    active: true
-  },
-  {
-    id: 'course-cloud-infrastructure',
-    title: 'Infraestrutura Cloud, cPanel & Gestão de Servidores',
-    slug: 'infraestrutura-cloud-cpanel-servidores',
-    description: 'Domina configuração de domínios .co.mz, zonas DNS, certificados SSL automáticos, contas corporativas e segurança de servidores Linux.',
-    shortDescription: 'Configuração profissional de servidores, domínios, e-mails empresariais e segurança web.',
-    duration: '6h 15m',
-    outcome: 'Gerir com confiança toda a infraestrutura web da sua empresa ou de clientes.',
-    thumbnail: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&auto=format&fit=crop&q=80',
-    accessType: 'paid',
-    price: 350,
-    originalPrice: 850,
-    currency: 'MZN',
-    category: 'Infraestrutura & Cloud',
-    level: 'Intermédio',
-    freeLessonsCount: 1,
-    instructorName: 'Equipa Técnica WEHOSTHERE',
-    instructorTitle: 'Especialistas em Redes & Datacenter',
-    rating: 4.8,
-    studentsCount: 96,
-    active: true
-  },
-  {
-    id: 'course-digital-business',
-    title: 'Vendas Online & E-commerce com M-Pesa Integrado',
-    slug: 'vendas-online-ecommerce-mpesa',
-    description: 'Como estruturar lojas e catálogos online automatizados que recebem cobranças PUSH instantâneas via M-Pesa e e-Mola em Moçambique.',
-    shortDescription: 'Automatiza cobranças de produtos e serviços digitais em Meticais sem intermediários.',
-    duration: '5h 00m',
-    outcome: 'Criar um negócio digital funcional com pagamentos móveis em tempo real.',
-    thumbnail: 'https://images.unsplash.com/photo-1556742049-0a67c5574f73?w=800&auto=format&fit=crop&q=80',
-    accessType: 'paid',
-    price: 250,
-    originalPrice: 600,
-    currency: 'MZN',
-    category: 'Negócios Digitais',
-    level: 'Todos os Níveis',
-    freeLessonsCount: 1,
-    instructorName: 'Consultoria WEHOSTHERE',
-    instructorTitle: 'Especialistas em Pagamentos Digitais',
-    rating: 4.9,
-    studentsCount: 142,
-    active: true
-  }
-];
-
 export default function PublicAcademyPage() {
   const router = useRouter();
-  const [courses, setCourses] = useState<Course[]>(FALLBACK_PUBLIC_COURSES);
+  const [courses, setCourses] = useState<Course[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('Todos');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
@@ -113,30 +44,18 @@ export default function PublicAcademyPage() {
   useEffect(() => {
     async function fetchCourses() {
       try {
+        setLoading(true);
         const res = await fetch('/api/courses');
         if (res.ok) {
           const data = await res.json();
-          if (Array.isArray(data.courses) && data.courses.length > 0) {
-            // Merge with public enriched defaults if some fields are missing
-            const merged = data.courses.map((c: any) => {
-              const fallbackMatch = FALLBACK_PUBLIC_COURSES.find(f => f.id === c.id || f.title.toLowerCase() === c.title.toLowerCase());
-              return {
-                ...fallbackMatch,
-                ...c,
-                price: c.price ?? fallbackMatch?.price ?? 199,
-                originalPrice: c.originalPrice ?? fallbackMatch?.originalPrice ?? 500,
-                rating: c.rating ?? fallbackMatch?.rating ?? 4.9,
-                studentsCount: c.studentsCount ?? fallbackMatch?.studentsCount ?? 120,
-                instructorName: c.instructorName || fallbackMatch?.instructorName || 'Formador WEHOSTHERE',
-                instructorTitle: c.instructorTitle || fallbackMatch?.instructorTitle || 'Especialista em Tecnologia',
-                freeLessonsCount: c.freeLessonsCount ?? 1
-              };
-            });
-            setCourses(merged);
+          if (Array.isArray(data.courses)) {
+            // Filtrar apenas cursos ativos criados na base de dados
+            const activeCourses = data.courses.filter((c: any) => c.active !== false);
+            setCourses(activeCourses);
           }
         }
       } catch (err) {
-        console.warn('Usando cursos padrão da academia:', err);
+        console.warn('Erro ao buscar cursos da base de dados:', err);
       } finally {
         setLoading(false);
       }
@@ -144,12 +63,22 @@ export default function PublicAcademyPage() {
     fetchCourses();
   }, []);
 
-  const categories = ['Todos', 'Desenvolvimento Web', 'Infraestrutura & Cloud', 'Negócios Digitais'];
+  const categories = useMemo(() => {
+    const list = ['Todos'];
+    courses.forEach(c => {
+      if (c.category && !list.includes(c.category)) {
+        list.push(c.category);
+      }
+    });
+    return list;
+  }, [courses]);
 
   const filteredCourses = courses.filter(course => {
     const matchesCategory = selectedCategory === 'Todos' || (course.category || '').toLowerCase() === selectedCategory.toLowerCase();
-    const matchesSearch = course.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          course.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = !searchQuery.trim() || 
+      (course.title && course.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (course.description && course.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (course.category && course.category.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchesCategory && matchesSearch;
   });
 
@@ -266,11 +195,27 @@ export default function PublicAcademyPage() {
         </div>
 
         {/* COURSES GRID */}
-        {filteredCourses.length === 0 ? (
-          <div className="bg-white rounded-3xl p-12 text-center border border-gray-200 max-w-md mx-auto">
-            <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-            <h3 className="text-base font-bold text-gray-900">Nenhum curso encontrado</h3>
-            <p className="text-xs text-gray-500 mt-1">Experimenta alterar o termo de pesquisa ou a categoria.</p>
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[1, 2, 3].map((n) => (
+              <div key={n} className="bg-white rounded-3xl border border-gray-200/80 p-5 animate-pulse space-y-4 shadow-xs">
+                <div className="h-48 bg-gray-100 rounded-2xl w-full"></div>
+                <div className="h-4 bg-gray-100 rounded w-1/3"></div>
+                <div className="h-6 bg-gray-100 rounded w-3/4"></div>
+                <div className="h-4 bg-gray-100 rounded w-full"></div>
+                <div className="h-11 bg-gray-100 rounded-xl w-full mt-4"></div>
+              </div>
+            ))}
+          </div>
+        ) : filteredCourses.length === 0 ? (
+          <div className="bg-white rounded-3xl p-12 text-center border border-gray-200 max-w-md mx-auto shadow-xs">
+            <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+            <h3 className="text-base font-bold text-gray-900">Nenhum curso disponível</h3>
+            <p className="text-xs text-gray-500 mt-1">
+              {searchQuery || selectedCategory !== 'Todos'
+                ? 'Nenhum curso corresponde à pesquisa ou categoria selecionada.'
+                : 'Os cursos da base de dados aparecerão aqui assim que forem ativados no painel.'}
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

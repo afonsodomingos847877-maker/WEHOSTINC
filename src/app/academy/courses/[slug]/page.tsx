@@ -56,95 +56,21 @@ interface Lesson {
   order: number;
 }
 
-const DEFAULT_COURSE: Course = {
-  id: 'course-landing-page',
-  title: 'Criação de Página de Vendas Profissional',
-  slug: 'criacao-pagina-vendas-profissional',
-  description: 'Aprenda do zero a conceber, estruturar, programar e publicar páginas de alta conversão para o mercado moçambicano e internacional. Do design ao código com integração direta a meios de pagamento como M-Pesa.',
-  shortDescription: 'Cria páginas de alta conversão com design moderno, integração M-Pesa e velocidade máxima.',
-  duration: '4h 30m',
-  outcome: 'Construir landing pages profissionais completas prontas para capturar clientes e gerar vendas.',
-  thumbnail: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&auto=format&fit=crop&q=80',
-  videoPreviewUrl: '',
-  accessType: 'paid',
-  price: 199,
-  originalPrice: 500,
-  currency: 'MZN',
-  category: 'Desenvolvimento Web',
-  level: 'Iniciante a Intermédio',
-  freeLessonsCount: 1,
-  instructorName: 'Afonso Domingos',
-  instructorTitle: 'Engenheiro de Software & Fundador WEHOSTHERE',
-  instructorBio: 'Mais de 8 anos de experiência em desenvolvimento web, sistemas de pagamentos distribuídos e infraestrutura de datacenter em Moçambique.',
-  skills: [
-    'Design de interfaces de alta conversão para dispositivos móveis',
-    'HTML5, TailwindCSS e arquitetura de componentes rápidos',
-    'Integração de pagamentos instantâneos M-Pesa e e-Mola',
-    'Otimização de velocidade, SEO e taxas de conversão (CRO)',
-    'Publicação em servidores de produção com SSL grátis'
-  ],
-  requirements: [
-    'Nenhum conhecimento prévio avançado de programação é obrigatório',
-    'Computador ou tablet com acesso à internet',
-    'Vontade de aprender e praticar com projetos reais'
-  ],
-  targetAudience: [
-    'Empreendedores que querem vender os seus produtos e serviços na internet',
-    'Designers e criadores de conteúdo que querem oferecer páginas completas a clientes',
-    'Desenvolvedores iniciantes à procura de projetos comerciais práticos'
-  ],
-  rating: 4.9,
-  studentsCount: 184
-};
-
-const DEFAULT_MODULES: Module[] = [
-  {
-    id: 'mod-1',
-    courseId: 'course-landing-page',
-    title: 'Módulo 1: Fundamentos de Páginas que Vendem',
-    description: 'Compreender a psicologia do comprador, hierarquia visual e copywriting voltado ao mercado moçambicano.',
-    objective: 'Definir a estrutura que converte antes de escrever a primeira linha de código.',
-    order: 1
-  },
-  {
-    id: 'mod-2',
-    courseId: 'course-landing-page',
-    title: 'Módulo 2: Estrutura, Design e Responsividade Mobile',
-    description: 'Criação da Hero Section, blocos de benefícios, prova social e prova de autoridade.',
-    objective: 'Construir um layout impecável que carrega em menos de 1 segundo.',
-    order: 2
-  },
-  {
-    id: 'mod-3',
-    courseId: 'course-landing-page',
-    title: 'Módulo 3: Integração de Checkout & M-Pesa PUSH',
-    description: 'Configurar botões de compra direta e formulários sem atrito para pagamento móvel.',
-    objective: 'Eliminar qualquer obstáculo entre o cliente e o pagamento final.',
-    order: 3
-  },
-  {
-    id: 'mod-4',
-    courseId: 'course-landing-page',
-    title: 'Módulo 4: Publicação no Domínio .co.mz & Certificação',
-    description: 'Hospedagem no cPanel da WEHOSTHERE, apontamento DNS, SSL e emissão do certificado.',
-    objective: 'Lançar a página publicamente na internet.',
-    order: 4
-  }
-];
-
 export default function CourseDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const slugOrId = params.slug as string;
 
-  const [course, setCourse] = useState<Course>(DEFAULT_COURSE);
-  const [modules, setModules] = useState<Module[]>(DEFAULT_MODULES);
-  const [openModules, setOpenModules] = useState<Record<string, boolean>>({ 'mod-1': true });
+  const [course, setCourse] = useState<Course | null>(null);
+  const [modules, setModules] = useState<Module[]>([]);
+  const [openModules, setOpenModules] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
     async function fetchCourseDetails() {
       try {
+        setLoading(true);
         const [cRes, mRes] = await Promise.all([
           fetch('/api/courses'),
           fetch('/api/modules')
@@ -153,28 +79,30 @@ export default function CourseDetailsPage() {
         if (cRes.ok) {
           const cData = await cRes.json();
           const found = (cData.courses || []).find((c: any) => 
-            c.id === slugOrId || c.slug === slugOrId || c.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').includes(slugOrId.toLowerCase())
+            c.id === slugOrId || 
+            c.slug === slugOrId || 
+            (c.title && c.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').includes(slugOrId.toLowerCase()))
           );
 
           if (found) {
-            setCourse({
-              ...DEFAULT_COURSE,
-              ...found,
-              price: found.price || 199,
-              originalPrice: found.originalPrice || 500
-            });
-
+            setCourse(found);
             if (mRes.ok) {
               const mData = await mRes.json();
               const courseModules = (mData.modules || []).filter((m: any) => m.courseId === found.id);
+              setModules(courseModules.sort((a: any, b: any) => (a.order || 0) - (b.order || 0)));
               if (courseModules.length > 0) {
-                setModules(courseModules.sort((a: any, b: any) => a.order - b.order));
+                setOpenModules({ [courseModules[0].id]: true });
               }
             }
+          } else {
+            setNotFound(true);
           }
+        } else {
+          setNotFound(true);
         }
       } catch (err) {
-        console.warn('Usando dados de curso locais:', err);
+        console.warn('Erro ao carregar curso:', err);
+        setNotFound(true);
       } finally {
         setLoading(false);
       }
@@ -188,6 +116,45 @@ export default function CourseDetailsPage() {
   const toggleModule = (modId: string) => {
     setOpenModules(prev => ({ ...prev, [modId]: !prev[modId] }));
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
+        <AcademyNavbar />
+        <div className="flex-1 flex items-center justify-center py-20">
+          <div className="text-center space-y-3">
+            <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+            <p className="text-xs text-slate-500 font-semibold">A carregar curso da base de dados...</p>
+          </div>
+        </div>
+        <AcademyFooter />
+      </div>
+    );
+  }
+
+  if (notFound || !course) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
+        <AcademyNavbar />
+        <div className="flex-1 flex items-center justify-center py-20 px-4">
+          <div className="max-w-md w-full bg-white rounded-3xl p-8 border border-gray-200 text-center shadow-xs">
+            <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+            <h2 className="text-lg font-black text-slate-900">Curso Não Encontrado</h2>
+            <p className="text-xs text-slate-500 mt-1">
+              O curso que procura não está disponível ou foi desativado no painel.
+            </p>
+            <Link
+              href="/academy"
+              className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-xs font-bold transition shadow-xs"
+            >
+              ← Voltar ao Catálogo de Cursos
+            </Link>
+          </div>
+        </div>
+        <AcademyFooter />
+      </div>
+    );
+  }
 
   const checkoutUrl = `/checkout?service=course&courseId=${course.id}&name=${encodeURIComponent(course.title)}&amount=${course.price || 199}`;
 
@@ -364,7 +331,12 @@ export default function CourseDetailsPage() {
               </h2>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                {(course.skills || DEFAULT_COURSE.skills || []).map((skill, idx) => (
+                {(course.skills && course.skills.length > 0 ? course.skills : [
+                  'Conteúdo prático estruturado passo a passo',
+                  'Acesso a materiais de apoio e ficheiros do curso',
+                  'Certificado oficial de conclusão emitido pela WEHOSTHERE',
+                  'Acesso vitalício aos módulos e atualizações'
+                ]).map((skill: string, idx: number) => (
                   <div key={idx} className="flex items-start gap-2.5 p-3 rounded-xl bg-slate-50 border border-slate-100 text-xs sm:text-sm text-slate-700">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                     <span>{skill}</span>
@@ -473,7 +445,7 @@ export default function CourseDetailsPage() {
                   <h3 className="text-lg font-black text-slate-900">{course.instructorName || 'Equipa WEHOSTHERE'}</h3>
                   <p className="text-xs font-semibold text-emerald-600">{course.instructorTitle || 'Especialistas em Engenharia & Cloud'}</p>
                   <p className="text-xs text-slate-600 leading-relaxed max-w-xl">
-                    {course.instructorBio || DEFAULT_COURSE.instructorBio}
+                    {course.instructorBio || 'Formação prática desenvolvida pelos especialistas de tecnologia e infraestrutura da WEHOSTHERE.'}
                   </p>
                 </div>
               </div>
@@ -483,7 +455,10 @@ export default function CourseDetailsPage() {
             <div className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-200/90 shadow-xs">
               <h2 className="text-lg sm:text-xl font-black text-slate-900 mb-4">Requisitos</h2>
               <ul className="space-y-2 text-xs sm:text-sm text-slate-600">
-                {(course.requirements || DEFAULT_COURSE.requirements || []).map((req, idx) => (
+                {(course.requirements && course.requirements.length > 0 ? course.requirements : [
+                  'Computador, tablet ou telemóvel com ligação à internet',
+                  'Vontade de aprender e colocar os ensinamentos em prática'
+                ]).map((req: string, idx: number) => (
                   <li key={idx} className="flex items-center gap-2">
                     <span className="w-1.5 h-1.5 rounded-full bg-primary-600 shrink-0"></span>
                     <span>{req}</span>
