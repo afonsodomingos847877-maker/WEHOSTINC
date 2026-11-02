@@ -254,12 +254,16 @@ export default function CourseDetailsPage() {
 
               {/* Instructor snippet */}
               <div className="pt-4 border-t border-slate-800/80 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-emerald-700 text-white font-black text-sm flex items-center justify-center shrink-0">
-                  {(course.instructorName || 'A').charAt(0)}
+                <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 p-1 overflow-hidden flex items-center justify-center shrink-0 shadow-sm backdrop-blur-xs">
+                  <img
+                    src="/icon-192.png"
+                    alt="WEHOSTHERE"
+                    className="w-full h-full object-contain"
+                  />
                 </div>
                 <div>
                   <p className="text-xs text-slate-400">Criado e lecionado por:</p>
-                  <p className="text-sm font-bold text-white">{course.instructorName}</p>
+                  <p className="text-sm font-bold text-white">{course.instructorName || 'Equipa WEHOSTHERE'}</p>
                 </div>
               </div>
             </div>
@@ -458,12 +462,16 @@ export default function CourseDetailsPage() {
               </h2>
 
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
-                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-600 to-primary-700 text-white font-black text-2xl flex items-center justify-center shrink-0 shadow-md">
-                  {(course.instructorName || 'A').charAt(0)}
+                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white border border-gray-200 p-2 flex items-center justify-center shrink-0 shadow-sm overflow-hidden">
+                  <img
+                    src="/icon-192.png"
+                    alt="WEHOSTHERE"
+                    className="w-full h-full object-contain"
+                  />
                 </div>
                 <div className="space-y-1.5">
-                  <h3 className="text-lg font-black text-slate-900">{course.instructorName}</h3>
-                  <p className="text-xs font-semibold text-emerald-600">{course.instructorTitle}</p>
+                  <h3 className="text-lg font-black text-slate-900">{course.instructorName || 'Equipa WEHOSTHERE'}</h3>
+                  <p className="text-xs font-semibold text-emerald-600">{course.instructorTitle || 'Especialistas em Engenharia & Cloud'}</p>
                   <p className="text-xs text-slate-600 leading-relaxed max-w-xl">
                     {course.instructorBio || DEFAULT_COURSE.instructorBio}
                   </p>

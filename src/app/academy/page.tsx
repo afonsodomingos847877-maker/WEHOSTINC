@@ -346,12 +346,16 @@ export default function PublicAcademyPage() {
 
                       {/* Instructor info */}
                       <div className="mt-4 pt-3 border-t border-gray-100 flex items-center gap-2.5">
-                        <div className="w-7 h-7 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-xs font-extrabold uppercase">
-                          {(course.instructorName || 'W').charAt(0)}
+                        <div className="w-8 h-8 rounded-full bg-white border border-gray-200 p-0.5 overflow-hidden flex items-center justify-center shrink-0 shadow-xs">
+                          <img
+                            src="/icon-192.png"
+                            alt="WEHOSTHERE"
+                            className="w-full h-full object-contain rounded-full"
+                          />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-xs font-bold text-gray-900 truncate">{course.instructorName || 'Formador WEHOSTHERE'}</p>
-                          <p className="text-[10px] text-gray-500 truncate">{course.instructorTitle || 'Especialista Web'}</p>
+                          <p className="text-xs font-bold text-gray-900 truncate">{course.instructorName || 'Equipa WEHOSTHERE'}</p>
+                          <p className="text-[10px] text-gray-500 truncate">{course.instructorTitle || 'Especialista em Engenharia & Cloud'}</p>
                         </div>
                       </div>
                     </div>
