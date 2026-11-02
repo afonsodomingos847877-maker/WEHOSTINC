@@ -70,10 +70,13 @@ export default function SocialProofToast() {
   if (isAppPage || newsletterVisible || proofs.length === 0 || dismissed) return null;
 
   const current = proofs[currentIndex] || proofs[0];
+  const isAcademy = pathname?.startsWith('/academy');
+  const isRevista = pathname?.startsWith('/revista');
+  const topPos = (isAcademy || isRevista) ? 'top-[118px] sm:top-[124px]' : 'top-20 sm:top-24 md:top-[90px]';
 
   return (
     <div
-      className={`fixed top-20 sm:top-24 md:top-[90px] left-3 sm:left-6 z-40 transition-all duration-500 ease-out transform ${
+      className={`fixed ${topPos} left-3 sm:left-6 z-[100] transition-all duration-500 ease-out transform ${
         visible
           ? 'translate-y-0 opacity-100 scale-100 pointer-events-auto'
           : '-translate-y-3 opacity-0 scale-95 pointer-events-none'

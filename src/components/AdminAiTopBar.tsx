@@ -526,17 +526,18 @@ export default function AdminAiTopBar({ isGlobalRoot = false }: AdminAiTopBarPro
       return null;
     }
 
-    const isRevista = pathname.startsWith('/revista');
-    // Na revista o header sticky inclui a barra roxa (~40px) + navbar (64px) = ~104px.
-    // Usamos top-[118px] na revista para ficar perfeitamente limpo abaixo da nav.
-    const topPos = isRevista ? 'top-[118px] sm:top-[124px]' : 'top-20 sm:top-24';
+    const isRevista = pathname?.startsWith('/revista');
+    const isAcademy = pathname?.startsWith('/academy');
+    // Na revista e na academia o header sticky inclui barra superior + navbar (~104px a ~112px).
+    // Usamos top-[118px] sm:top-[124px] para ficar perfeitamente limpo abaixo da nav, E z-[100] para estar SEMPRE por cima!
+    const topPos = isRevista || isAcademy ? 'top-[118px] sm:top-[124px]' : 'top-20 sm:top-24';
 
     // Se estiver oculto pelo utilizador: exibir mini aba discreta na lateral para reabrir
     if (!showOnPublicPages) {
       return (
         <div 
           onClick={togglePublicVisibility}
-          className={`fixed ${topPos} right-0 z-40 bg-gradient-to-l from-[#075985] to-[#0284c7] text-white py-1.5 px-2 rounded-l-2xl shadow-xl cursor-pointer hover:px-3 transition-all duration-300 flex items-center space-x-1.5 opacity-80 hover:opacity-100 group border-y border-l border-white/30`}
+          className={`fixed ${topPos} right-0 z-[100] bg-gradient-to-l from-[#075985] to-[#0284c7] text-white py-1.5 px-2 rounded-l-2xl shadow-xl cursor-pointer hover:px-3 transition-all duration-300 flex items-center space-x-1.5 opacity-80 hover:opacity-100 group border-y border-l border-white/30`}
           title="Exibir WEHOSTHERE AI Copilot"
         >
           <div className="w-5 h-5 rounded-full bg-white p-0.5 flex items-center justify-center overflow-hidden">
@@ -549,7 +550,7 @@ export default function AdminAiTopBar({ isGlobalRoot = false }: AdminAiTopBarPro
     }
 
     return (
-      <div className={`fixed ${topPos} right-4 sm:right-6 z-40 flex flex-col items-end`}>
+      <div className={`fixed ${topPos} right-4 sm:right-6 z-[100] flex flex-col items-end`}>
         {/* Botão Launcher Flutuante com Aurora Glow */}
         <div className="relative group">
           <div 
