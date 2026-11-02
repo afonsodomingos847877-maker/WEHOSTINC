@@ -1798,7 +1798,7 @@ export default function AdminAcademyPage() {
                         <th className="px-4 py-3">Lead / Aluno</th>
                         <th className="px-4 py-3">Curso & Valor</th>
                         <th className="px-4 py-3">Método & Status</th>
-                        <th className="px-4 py-3 text-right">Ações de Recuperação</th>
+                        <th className="px-4 py-3 text-right whitespace-nowrap">Ações de Recuperação</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
@@ -1853,32 +1853,33 @@ export default function AdminAcademyPage() {
                                   </span>
                                 )}
                               </td>
-                              <td className="px-4 py-3 text-right">
-                                <div className="flex items-center justify-end gap-1.5">
+                              <td className="px-4 py-3 text-right whitespace-nowrap">
+                                <div className="inline-flex items-center justify-end gap-1.5 flex-nowrap">
                                   {/* WhatsApp Recovery Button */}
                                   {waLink && (
                                     <a
                                       href={waLink}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-500 hover:bg-emerald-600 text-white transition shadow-xs"
+                                      className="h-7 px-2.5 inline-flex items-center justify-center gap-1 rounded-lg text-[11px] font-bold whitespace-nowrap leading-none bg-emerald-500 hover:bg-emerald-600 text-white transition shadow-xs cursor-pointer select-none shrink-0"
                                       title="Recuperar pelo WhatsApp"
                                     >
-                                      <MessageCircle className="h-3.5 w-3.5" />
-                                      <span className="hidden md:inline">WhatsApp</span>
+                                      <MessageCircle className="h-3.5 w-3.5 shrink-0" />
+                                      <span>WhatsApp</span>
                                     </a>
                                   )}
 
                                   {/* Re-send USSD Push Button (M-Pesa) */}
                                   {!isPaid && order.clientPhone && (
                                     <button
+                                      type="button"
                                       onClick={() => handleResendUssd(order.id, order.clientPhone)}
                                       disabled={ussdSending === order.id}
-                                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white transition shadow-xs"
+                                      className="h-7 px-2.5 inline-flex items-center justify-center gap-1 rounded-lg text-[11px] font-bold whitespace-nowrap leading-none bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white transition shadow-xs cursor-pointer select-none shrink-0"
                                       title="Reenviar USSD Push para o telemóvel do cliente digitar o PIN do M-Pesa"
                                     >
-                                      <Smartphone className={`h-3.5 w-3.5 ${ussdSending === order.id ? 'animate-pulse' : ''}`} />
-                                      <span className="hidden md:inline">
+                                      <Smartphone className={`h-3.5 w-3.5 shrink-0 ${ussdSending === order.id ? 'animate-pulse' : ''}`} />
+                                      <span>
                                         {ussdSending === order.id ? 'A enviar...' : 'Reenviar PIN'}
                                       </span>
                                     </button>
@@ -1887,13 +1888,14 @@ export default function AdminAcademyPage() {
                                   {/* Email Recovery Button */}
                                   {!isPaid && (
                                     <button
+                                      type="button"
                                       onClick={() => handleSendRecoveryEmail(order.id)}
                                       disabled={recoverySending === order.id}
-                                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition"
+                                      className="h-7 px-2.5 inline-flex items-center justify-center gap-1 rounded-lg text-[11px] font-bold whitespace-nowrap leading-none bg-indigo-50 hover:bg-indigo-100 disabled:opacity-50 text-indigo-700 border border-indigo-200 transition cursor-pointer select-none shrink-0"
                                       title="Enviar E-mail de Recuperação"
                                     >
-                                      <Mail className="h-3.5 w-3.5" />
-                                      <span className="hidden md:inline">
+                                      <Mail className="h-3.5 w-3.5 shrink-0" />
+                                      <span>
                                         {recoverySending === order.id ? 'A enviar...' : 'E-mail'}
                                       </span>
                                     </button>
@@ -1902,23 +1904,25 @@ export default function AdminAcademyPage() {
                                   {/* Manual Approval Button */}
                                   {!isPaid && (
                                     <button
+                                      type="button"
                                       onClick={() => handleApproveOrder(order.id)}
-                                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-700 hover:bg-emerald-800 text-white transition"
+                                      className="h-7 px-2.5 inline-flex items-center justify-center gap-1 rounded-lg text-[11px] font-bold whitespace-nowrap leading-none bg-emerald-700 hover:bg-emerald-800 text-white transition shadow-xs cursor-pointer select-none shrink-0"
                                       title="Aprovar Pagamento Manualmente"
                                     >
-                                      <Check className="h-3.5 w-3.5" />
-                                      <span className="hidden md:inline">Aprovar</span>
+                                      <Check className="h-3.5 w-3.5 shrink-0" />
+                                      <span>Aprovar</span>
                                     </button>
                                   )}
 
                                   {/* Mark Failed Button */}
                                   {isPending && (
                                     <button
+                                      type="button"
                                       onClick={() => handleMarkFailed(order.id)}
-                                      className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                                      className="h-7 w-7 inline-flex items-center justify-center rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition cursor-pointer select-none shrink-0"
                                       title="Marcar como Perdido / Cancelado"
                                     >
-                                      <XCircle className="h-3.5 w-3.5" />
+                                      <XCircle className="h-4 w-4 shrink-0" />
                                     </button>
                                   )}
                                 </div>
