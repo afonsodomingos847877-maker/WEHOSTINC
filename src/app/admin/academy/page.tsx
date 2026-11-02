@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import Toast from '@/components/Toast';
 import { formatVideoEmbedUrl } from '@/lib/videoEmbed';
 import { Plus, Edit, Trash2, Eye, BookOpen, DollarSign, Clock, ArrowLeft, Home, GraduationCap, Loader2, CheckCircle, XCircle, Save, X, CheckSquare, Upload, AlertTriangle, MessageCircle, Send, Check, RefreshCw, Mail, ExternalLink, Filter, Smartphone, Zap, ImageIcon } from 'lucide-react';
 
@@ -106,8 +107,24 @@ export default function AdminAcademyPage() {
     show: boolean;
     title: string;
     message: string;
+    confirmText?: string;
+    cancelText?: string;
+    variant?: 'danger' | 'warning' | 'info' | 'success';
+    iconType?: 'trash' | 'phone' | 'check' | 'alert' | 'mail';
     onConfirm: () => void;
   }>({ show: false, title: '', message: '', onConfirm: () => {} });
+
+  // Toast notification state
+  const [toast, setToast] = useState<{
+    show: boolean;
+    type: 'success' | 'error' | 'warning' | 'info';
+    title?: string;
+    message: string;
+  }>({ show: false, type: 'success', message: '' });
+
+  const showToast = (message: string, type: 'success' | 'error' | 'warning' | 'info' = 'success', title?: string) => {
+    setToast({ show: true, type, message, title });
+  };
 
   // Form state
   const [formData, setFormData] = useState({
@@ -177,36 +194,47 @@ export default function AdminAcademyPage() {
       if (data.success) {
         setCourses(prev => prev.map(c => c.id === priceModal.courseId ? { ...c, price: priceModal.price, accessType: priceModal.accessType, originalPrice: priceModal.originalPrice } as any : c));
         setPriceModal(prev => ({ ...prev, show: false }));
-        alert('Preço do curso atualizado com sucesso!');
+        showToast('Preço do curso atualizado com sucesso!', 'success', 'Preço Salvo');
       } else {
-        alert(data.error || 'Erro ao atualizar preço.');
+        showToast(data.error || 'Erro ao atualizar preço.', 'error', 'Erro no Preço');
       }
     } catch (e: any) {
-      alert(e.message || 'Erro ao salvar preço.');
+      showToast(e.message || 'Erro ao salvar preço.', 'error', 'Erro');
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleApproveOrder = async (orderId: string) => {
-    if (!confirm('Deseja aprovar manualmente este pagamento e libertar o curso para o aluno?')) return;
-    try {
-      const res = await fetch('/api/academy/sales', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'manual_approve', orderId })
-      });
-      const data = await res.json();
-      if (data.success) {
-        alert('Pagamento aprovado! Matrícula ativada e instruções enviadas por e-mail.');
-        fetchSalesData();
-        fetchCourses();
-      } else {
-        alert(data.error || 'Erro ao aprovar.');
+    setConfirmModal({
+      show: true,
+      title: 'Aprovar Pagamento Manualmente',
+      message: 'Deseja aprovar manualmente este pagamento e libertar imediatamente o acesso ao curso para o aluno?',
+      confirmText: '✓ Aprovar e Libertar Curso',
+      cancelText: 'Voltar',
+      variant: 'success',
+      iconType: 'check',
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, show: false }));
+        try {
+          const res = await fetch('/api/academy/sales', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'manual_approve', orderId })
+          });
+          const data = await res.json();
+          if (data.success) {
+            showToast('Pagamento aprovado! Matrícula ativada e instruções enviadas por e-mail.', 'success', 'Pagamento Aprovado');
+            fetchSalesData();
+            fetchCourses();
+          } else {
+            showToast(data.error || 'Erro ao aprovar pagamento.', 'error', 'Falha na Aprovação');
+          }
+        } catch (e: any) {
+          showToast(e.message || 'Erro na aprovação do pagamento.', 'error', 'Erro');
+        }
       }
-    } catch (e: any) {
-      alert(e.message || 'Erro na aprovação.');
-    }
+    });
   };
 
   const handleSendRecoveryEmail = async (orderId: string) => {
@@ -219,59 +247,81 @@ export default function AdminAcademyPage() {
       });
       const data = await res.json();
       if (data.success) {
-        alert('E-mail de recuperação enviado com sucesso ao lead!');
+        showToast('E-mail de recuperação enviado com sucesso ao lead!', 'success', 'E-mail Enviado');
         fetchSalesData();
       } else {
-        alert(data.error || 'Erro ao enviar e-mail.');
+        showToast(data.error || 'Erro ao enviar e-mail de recuperação.', 'error', 'Falha no Envio');
       }
     } catch (e: any) {
-      alert(e.message || 'Erro no envio do e-mail.');
+      showToast(e.message || 'Erro no envio do e-mail.', 'error', 'Erro');
     } finally {
       setRecoverySending(null);
     }
   };
 
   const handleMarkFailed = async (orderId: string) => {
-    if (!confirm('Marcar este pedido como cancelado / perdido?')) return;
-    try {
-      await fetch('/api/academy/sales', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'mark_failed', orderId })
-      });
-      fetchSalesData();
-    } catch (e) {
-      console.warn('Erro ao cancelar pedido:', e);
-    }
+    setConfirmModal({
+      show: true,
+      title: 'Cancelar Pedido / Lead',
+      message: 'Tem certeza que deseja marcar este pedido como cancelado ou perdido?',
+      confirmText: 'Marcar Cancelado',
+      cancelText: 'Voltar',
+      variant: 'danger',
+      iconType: 'trash',
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, show: false }));
+        try {
+          await fetch('/api/academy/sales', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'mark_failed', orderId })
+          });
+          showToast('Pedido marcado como cancelado.', 'info', 'Status Atualizado');
+          fetchSalesData();
+        } catch (e) {
+          console.warn('Erro ao cancelar pedido:', e);
+          showToast('Erro ao atualizar status do pedido.', 'error', 'Erro');
+        }
+      }
+    });
   };
 
   const handleResendUssd = async (orderId: string, phone: string) => {
     if (!phone) {
-      alert('Este pedido não tem número de telefone associado.');
+      showToast('Este pedido não tem número de telefone associado.', 'warning', 'Sem Telefone');
       return;
     }
-    if (!confirm(`Deseja reenviar o prompt USSD (M-Pesa) para o telemóvel ${phone}? O telemóvel do cliente vai acender para digitar o PIN.`)) {
-      return;
-    }
-    try {
-      setUssdSending(orderId);
-      const res = await fetch('/api/academy/sales', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'resend_ussd', orderId })
-      });
-      const data = await res.json();
-      if (data.success) {
-        alert(data.message || 'Prompt USSD enviado! O cliente recebeu a solicitação de PIN.');
-        fetchSalesData();
-      } else {
-        alert(data.error || 'Erro ao disparar prompt USSD.');
+    setConfirmModal({
+      show: true,
+      title: 'Reenviar Cobrança M-Pesa (USSD)',
+      message: `Deseja reenviar o prompt USSD (M-Pesa) para o telemóvel ${phone}? O telemóvel do cliente vai acender instantaneamente para digitar o PIN.`,
+      confirmText: '📲 Reenviar USSD Agora',
+      cancelText: 'Cancelar',
+      variant: 'warning',
+      iconType: 'phone',
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, show: false }));
+        try {
+          setUssdSending(orderId);
+          const res = await fetch('/api/academy/sales', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'resend_ussd', orderId })
+          });
+          const data = await res.json();
+          if (data.success) {
+            showToast(data.message || 'Prompt USSD enviado! O cliente recebeu a solicitação de PIN no telemóvel.', 'success', 'Prompt USSD Enviado');
+            fetchSalesData();
+          } else {
+            showToast(data.error || 'Erro ao disparar prompt USSD.', 'error', 'Falha no USSD');
+          }
+        } catch (e: any) {
+          showToast(e.message || 'Erro ao comunicar com gateway de pagamento.', 'error', 'Erro de Conexão');
+        } finally {
+          setUssdSending(null);
+        }
       }
-    } catch (e: any) {
-      alert(e.message || 'Erro ao comunicar com gateway de pagamento.');
-    } finally {
-      setUssdSending(null);
-    }
+    });
   };
 
   const fetchCourses = useCallback(async () => {
@@ -2716,55 +2766,77 @@ export default function AdminAcademyPage() {
         </div>
       )}
 
-      {/* Confirmation Modal */}
+      {/* Toast Notification */}
+      {toast.show && (
+        <Toast
+          type={toast.type}
+          title={toast.title}
+          message={toast.message}
+          onClose={() => setToast(prev => ({ ...prev, show: false }))}
+        />
+      )}
+
+      {/* Modern Confirmation Modal */}
       {confirmModal.show && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 animate-in zoom-in-95 duration-200">
-            <div className="p-6">
-              <div className="flex items-center justify-center mb-4">
-                <div className={`w-16 h-16 rounded-full flex items-center justify-center ${
-                  confirmModal.title.includes('Erro') || confirmModal.title.includes('Aviso')
-                    ? 'bg-amber-100'
-                    : confirmModal.title.includes('Exclusão')
-                    ? 'bg-red-100'
-                    : 'bg-blue-100'
-                }`}>
-                  <AlertTriangle className={`h-8 w-8 ${
-                    confirmModal.title.includes('Erro') || confirmModal.title.includes('Aviso')
-                      ? 'text-amber-600'
-                      : confirmModal.title.includes('Exclusão')
-                      ? 'text-red-600'
-                      : 'text-blue-600'
-                  }`} />
-                </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 max-w-md w-full p-6 animate-in zoom-in-95 duration-200 relative overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setConfirmModal(prev => ({ ...prev, show: false }))}
+              className="absolute top-4 right-4 p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition cursor-pointer"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <div className="flex items-start space-x-4 mb-4">
+              <div className={`p-3.5 rounded-2xl border shrink-0 ${
+                confirmModal.variant === 'danger' || confirmModal.title.includes('Exclusão') || confirmModal.title.includes('Cancelar')
+                  ? 'bg-red-100 text-red-600 border-red-200'
+                  : confirmModal.variant === 'success' || confirmModal.title.includes('Aprovar')
+                  ? 'bg-emerald-100 text-emerald-600 border-emerald-200'
+                  : confirmModal.iconType === 'phone' || confirmModal.title.includes('USSD') || confirmModal.title.includes('M-Pesa')
+                  ? 'bg-emerald-100 text-emerald-700 border-emerald-200'
+                  : 'bg-amber-100 text-amber-600 border-amber-200'
+              }`}>
+                {confirmModal.iconType === 'phone' || confirmModal.title.includes('USSD') || confirmModal.title.includes('M-Pesa') ? (
+                  <Smartphone className="h-6 w-6" />
+                ) : confirmModal.variant === 'danger' || confirmModal.title.includes('Exclusão') || confirmModal.title.includes('remover') ? (
+                  <Trash2 className="h-6 w-6" />
+                ) : confirmModal.variant === 'success' || confirmModal.title.includes('Aprovar') ? (
+                  <CheckCircle className="h-6 w-6" />
+                ) : (
+                  <AlertTriangle className="h-6 w-6" />
+                )}
               </div>
-              
-              <h3 className="text-xl font-bold text-gray-900 text-center mb-3">
-                {confirmModal.title}
-              </h3>
-              
-              <p className="text-gray-600 text-center mb-6">
-                {confirmModal.message}
-              </p>
-              
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setConfirmModal({ show: false, title: '', message: '', onConfirm: () => {} })}
-                  className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={confirmModal.onConfirm}
-                  className={`flex-1 px-4 py-2.5 rounded-xl font-medium transition ${
-                    confirmModal.title.includes('Exclusão')
-                      ? 'bg-red-600 hover:bg-red-700 text-white'
-                      : 'bg-indigo-600 hover:bg-indigo-700 text-white'
-                  }`}
-                >
-                  {confirmModal.title.includes('Exclusão') ? 'Confirmar Exclusão' : 'OK'}
-                </button>
+              <div className="flex-1 min-w-0 pr-6">
+                <h3 className="text-lg font-bold text-gray-900 leading-snug">{confirmModal.title}</h3>
+                <p className="text-sm text-gray-600 mt-1.5 leading-relaxed">{confirmModal.message}</p>
               </div>
+            </div>
+
+            <div className="flex items-center justify-end space-x-3 pt-4 border-t border-gray-100 mt-6">
+              <button
+                type="button"
+                onClick={() => setConfirmModal(prev => ({ ...prev, show: false }))}
+                className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs sm:text-sm rounded-xl transition cursor-pointer"
+              >
+                {confirmModal.cancelText || 'Cancelar'}
+              </button>
+              <button
+                type="button"
+                onClick={confirmModal.onConfirm}
+                className={`px-5 py-2.5 font-bold text-xs sm:text-sm rounded-xl transition cursor-pointer shadow-md ${
+                  confirmModal.variant === 'danger' || confirmModal.title.includes('Exclusão') || confirmModal.title.includes('Cancelar')
+                    ? 'bg-red-600 hover:bg-red-700 text-white shadow-red-200'
+                    : confirmModal.variant === 'success' || confirmModal.title.includes('Aprovar')
+                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-200'
+                    : confirmModal.iconType === 'phone' || confirmModal.title.includes('USSD') || confirmModal.title.includes('M-Pesa')
+                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-200'
+                    : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-200'
+                }`}
+              >
+                {confirmModal.confirmText || (confirmModal.title.includes('Exclusão') ? 'Confirmar Exclusão' : 'Confirmar')}
+              </button>
             </div>
           </div>
         </div>
