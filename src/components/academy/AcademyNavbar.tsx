@@ -12,11 +12,11 @@ export default function AcademyNavbar() {
 
   return (
     <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-xs">
-      {/* Top micro-bar for confidence */}
-      <div className="bg-gradient-to-r from-slate-900 via-primary-950 to-slate-900 text-white text-[11px] sm:text-xs py-1.5 px-4 text-center flex items-center justify-center gap-2">
-        <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
-        <span className="text-gray-300">
-          Formação Tecnológica Prática em Moçambique • <strong className="text-emerald-400 font-semibold">Certificação Oficial Incluída</strong>
+      {/* Top micro-bar for confidence — Azul Claro Oficial do Site WEHOSTHERE */}
+      <div className="bg-gradient-to-r from-[#0284c7] via-[#0ea5e9] to-[#0284c7] text-white text-[11px] sm:text-xs py-1.5 px-4 text-center flex items-center justify-center gap-2 shadow-xs">
+        <span className="flex h-2 w-2 rounded-full bg-white animate-pulse"></span>
+        <span className="text-white font-medium">
+          Formação Tecnológica Prática em Moçambique • <strong className="text-white font-bold underline underline-offset-2">Certificação Oficial Incluída</strong>
         </span>
       </div>
 
