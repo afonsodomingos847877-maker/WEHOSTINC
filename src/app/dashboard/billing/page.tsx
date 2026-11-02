@@ -452,55 +452,57 @@ export default function BillingPage() {
                 {hostingPlans.map((plan) => (
                   <div
                     key={plan.id}
-                    className={`border-2 rounded-xl p-6 ${
+                    className={`border-2 rounded-xl p-6 flex flex-col justify-between h-full transition-all duration-200 ${
                       plan.id === user.plan
                         ? 'border-primary-600 bg-primary-50'
                         : 'border-gray-200 hover:border-primary-300'
                     }`}
                   >
-                    {plan.id === user.plan && (
-                      <span className="inline-block bg-primary-600 text-white text-xs font-bold px-3 py-1 rounded-full mb-4">
-                        ATUAL
-                      </span>
-                    )}
-                    <h4 className="text-xl font-bold text-gray-900 mb-2">{plan.name}</h4>
-                    <div className="mb-4">
-                      <span className="text-3xl font-bold text-gray-900">{plan.price.toLocaleString('pt-MZ')} MT</span>
-                      <span className="text-gray-600">/mês</span>
+                    <div className="flex-1 flex flex-col">
+                      {plan.id === user.plan && (
+                        <span className="inline-block self-start bg-primary-600 text-white text-xs font-bold px-3 py-1 rounded-full mb-4">
+                          ATUAL
+                        </span>
+                      )}
+                      <h4 className="text-xl font-bold text-gray-900 mb-2">{plan.name}</h4>
+                      <div className="mb-4">
+                        <span className="text-3xl font-bold text-gray-900">{plan.price.toLocaleString('pt-MZ')} MT</span>
+                        <span className="text-gray-600">/mês</span>
+                      </div>
+                      <ul className="space-y-3 mb-6 flex-1">
+                        <li className="flex items-center text-gray-700">
+                          <Globe className="h-4 w-4 text-primary-600 mr-2 shrink-0" />
+                          <span>{plan.features.sites === -1 ? 'Sites ilimitados' : `${plan.features.sites} site${plan.features.sites > 1 ? 's' : ''}`}</span>
+                        </li>
+                        <li className="flex items-center text-gray-700">
+                          <Mail className="h-4 w-4 text-primary-600 mr-2 shrink-0" />
+                          <span>{plan.features.emails === -1 ? 'Emails ilimitados' : `${plan.features.emails} email${plan.features.emails > 1 ? 's' : ''}`}</span>
+                        </li>
+                        <li className="flex items-center text-gray-700">
+                          <Database className="h-4 w-4 text-primary-600 mr-2 shrink-0" />
+                          <span>{plan.features.storage} GB Armazenamento</span>
+                        </li>
+                        <li className="flex items-center text-gray-700">
+                          <Zap className="h-4 w-4 text-primary-600 mr-2 shrink-0" />
+                          <span>Tráfego {plan.features.bandwidth}</span>
+                        </li>
+                        {plan.features.ssl && (
+                          <li className="flex items-center text-gray-700">
+                            <Shield className="h-4 w-4 text-primary-600 mr-2 shrink-0" />
+                            <span>SSL Grátis</span>
+                          </li>
+                        )}
+                        {plan.features.cdn && (
+                          <li className="flex items-center text-gray-700">
+                            <TrendingUp className="h-4 w-4 text-primary-600 mr-2 shrink-0" />
+                            <span>CDN Grátis</span>
+                          </li>
+                        )}
+                      </ul>
                     </div>
-                    <ul className="space-y-3 mb-6">
-                      <li className="flex items-center text-gray-700">
-                        <Globe className="h-4 w-4 text-primary-600 mr-2" />
-                        {plan.features.sites === -1 ? 'Sites ilimitados' : `${plan.features.sites} site${plan.features.sites > 1 ? 's' : ''}`}
-                      </li>
-                      <li className="flex items-center text-gray-700">
-                        <Mail className="h-4 w-4 text-primary-600 mr-2" />
-                        {plan.features.emails === -1 ? 'Emails ilimitados' : `${plan.features.emails} email${plan.features.emails > 1 ? 's' : ''}`}
-                      </li>
-                      <li className="flex items-center text-gray-700">
-                        <Database className="h-4 w-4 text-primary-600 mr-2" />
-                        {plan.features.storage} GB Armazenamento
-                      </li>
-                      <li className="flex items-center text-gray-700">
-                        <Zap className="h-4 w-4 text-primary-600 mr-2" />
-                        Tráfego {plan.features.bandwidth}
-                      </li>
-                      {plan.features.ssl && (
-                        <li className="flex items-center text-gray-700">
-                          <Shield className="h-4 w-4 text-primary-600 mr-2" />
-                          SSL Grátis
-                        </li>
-                      )}
-                      {plan.features.cdn && (
-                        <li className="flex items-center text-gray-700">
-                          <TrendingUp className="h-4 w-4 text-primary-600 mr-2" />
-                          CDN Grátis
-                        </li>
-                      )}
-                    </ul>
                     <button
                       onClick={() => handleUpgrade(plan.id)}
-                      className="w-full py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition font-semibold flex items-center justify-center space-x-2 cursor-pointer shadow-sm"
+                      className="w-full mt-auto py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition font-semibold flex items-center justify-center space-x-2 cursor-pointer shadow-sm"
                     >
                       <span>Contratar {plan.name}</span>
                     </button>
