@@ -77,6 +77,15 @@ export default function DashboardAcademyPage() {
       dataManager.clearAcademyData();
       console.log('[Academy Dashboard] Dados do localStorage limpos');
 
+      // Sincronizar compras pendentes de visitante para este aluno
+      try {
+        await fetch('/api/auth/sync-enrollments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: currentUser.email, userId: currentUser.id })
+        });
+      } catch (_) {}
+
       // Carregar dados sequencialmente para evitar sobrecarga
       await Promise.all([
         dataManager.fetchCoursesAsync(),

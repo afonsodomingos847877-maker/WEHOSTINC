@@ -78,7 +78,12 @@ export default function AdminAcademyPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState<'all' | 'active' | 'inactive'>('all');
-  const [activeTab, setActiveTab] = useState<'courses' | 'modules' | 'lessons'>('courses');
+  const [activeTab, setActiveTab] = useState<'courses' | 'modules' | 'lessons' | 'enrollments' | 'coupons'>('courses');
+  const [enrollments, setEnrollments] = useState<any[]>([]);
+  const [coupons, setCoupons] = useState<any[]>([]);
+  const [showCouponModal, setShowCouponModal] = useState(false);
+  const [newCoupon, setNewCoupon] = useState({ code: '', discountType: 'percentage', discountValue: 20, maxUses: 50 });
+  const [copiedClaimId, setCopiedClaimId] = useState<string | null>(null);
   const [selectedCourseFilter, setSelectedCourseFilter] = useState<string>('all');
   const [selectedModules, setSelectedModules] = useState<Set<string>>(new Set());
   const [selectedModuleFilter, setSelectedModuleFilter] = useState<string>('all');
@@ -136,10 +141,12 @@ export default function AdminAcademyPage() {
         localStorage.removeItem('wehosthere_lessons');
       }
       
-      const [coursesRes, modulesRes, lessonsRes] = await Promise.all([
+      const [coursesRes, modulesRes, lessonsRes, enrRes, cpnRes] = await Promise.all([
         fetch('/api/courses'),
         fetch('/api/modules'),
-        fetch('/api/lessons')
+        fetch('/api/lessons'),
+        fetch('/api/academy/enrollments').catch(() => null),
+        fetch('/api/academy/coupons').catch(() => null)
       ]);
       
       const coursesData = await coursesRes.json();
@@ -154,6 +161,8 @@ export default function AdminAcademyPage() {
       if (coursesData.courses) setCourses(coursesData.courses);
       if (modulesData.modules) setModules(modulesData.modules);
       if (lessonsData.lessons) setLessons(lessonsData.lessons);
+      if (enrRes && enrRes.ok) { const ed = await enrRes.json(); if (ed.enrollments) setEnrollments(ed.enrollments); }
+      if (cpnRes && cpnRes.ok) { const cd = await cpnRes.json(); if (cd.coupons) setCoupons(cd.coupons); }
     } catch (error) {
       console.error('Erro ao buscar dados:', error);
     } finally {
@@ -846,13 +855,22 @@ export default function AdminAcademyPage() {
                 <h1 className="text-xl font-bold text-gray-900">Gestão de Cursos</h1>
               </div>
             </div>
-            <Link
-              href="/"
-              className="flex items-center space-x-2 text-gray-600 hover:text-primary-600 transition"
-            >
-              <Home className="h-5 w-5" />
-              <span className="font-medium">Ver Site</span>
-            </Link>
+            <div className="flex items-center gap-3">
+              <Link
+                href="/academy"
+                target="_blank"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 text-xs font-bold transition"
+              >
+                <span>Ver Academia Pública ↗</span>
+              </Link>
+              <Link
+                href="/"
+                className="flex items-center space-x-2 text-gray-600 hover:text-primary-600 transition text-sm font-medium"
+              >
+                <Home className="h-4 w-4" />
+                <span>Ver Site</span>
+              </Link>
+            </div>
           </div>
         </div>
       </header>

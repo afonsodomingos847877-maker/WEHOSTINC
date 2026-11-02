@@ -43,7 +43,9 @@ function CheckoutContent() {
 
   // Parâmetros para pagamento de curso
   const isCoursePayment = serviceParam === 'course';
+  const courseIdParam = searchParams.get('courseId');
   const courseNameParam = searchParams.get('name');
+  const [courseClaimToken, setCourseClaimToken] = useState<string>('');
   const courseAmountParam = Number(searchParams.get('amount')) || 500;
 
   // Parâmetro para continuar pagamento de encomenda existente
@@ -743,6 +745,37 @@ function CheckoutContent() {
         })
       }).catch(err => console.error('[Checkout] Erro ao notificar admin:', err));
 
+      // Se for compra de curso, gerar matrícula imediata no backend com claimToken
+      let generatedClaimToken = '';
+      if (isCoursePayment || serviceParam === 'course' || serviceName.toLowerCase().includes('curso')) {
+        try {
+          const enrRes = await fetch('/api/academy/enrollments', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'enroll',
+              courseId: courseIdParam || 'course-landing-page',
+              courseTitle: courseNameParam || serviceName,
+              studentEmail: email.trim().toLowerCase(),
+              studentName: name,
+              studentPhone: phoneFinal,
+              userId: currentUser?.id,
+              orderId: orderId,
+              paymentReference: paymentReference,
+              amountPaid: grandTotal,
+              paymentMethod: paymentMethod
+            })
+          });
+          const enrData = await enrRes.json();
+          if (enrData?.enrollment?.claimToken) {
+            generatedClaimToken = enrData.enrollment.claimToken;
+            setCourseClaimToken(generatedClaimToken);
+          }
+        } catch (enrErr) {
+          console.warn('[Checkout] Erro ao registrar matrícula preliminar:', enrErr);
+        }
+      }
+
       // Se o pedido for de curso, enviar e-mail de confirmação de curso ao aluno
       if (serviceParam === 'course' || serviceName.toLowerCase().includes('curso')) {
         fetch(apiEndpoint('/api/send-email'), {
@@ -753,7 +786,8 @@ function CheckoutContent() {
             to: email,
             userName: name,
             courseTitle: serviceName,
-            amount: grandTotal
+            amount: grandTotal,
+            claimToken: generatedClaimToken
           })
         }).catch(err => console.error('[Checkout] Erro ao enviar email de curso:', err));
       }
@@ -1302,22 +1336,34 @@ function CheckoutContent() {
           )}
 
           {checkoutAccountStatus === 'no_account' && (
-            <div className="space-y-3 bg-amber-50/80 border border-amber-200 p-4 rounded-2xl text-left">
+            <div className="space-y-3 bg-emerald-50/80 border border-emerald-200 p-4 rounded-2xl text-left">
               <div className="flex items-start space-x-2.5">
-                <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+                <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
                 <div>
-                  <strong className="block text-xs font-extrabold text-amber-950 uppercase tracking-wider">Criar Conta para Aceder ao Painel</strong>
-                  <p className="text-xs text-amber-900 mt-1">
-                    Registámos a compra para o e-mail <strong className="font-mono text-amber-950">{email}</strong>. Crie agora a sua conta usando este <strong>mesmo e-mail</strong> para que os seus domínios e serviços fiquem sincronizados no seu painel.
+                  <strong className="block text-xs font-extrabold text-emerald-950 uppercase tracking-wider">
+                    {isCoursePayment ? 'Matrícula Criada com Sucesso!' : 'Criar Conta para Aceder ao Painel'}
+                  </strong>
+                  <p className="text-xs text-emerald-900 mt-1">
+                    {isCoursePayment
+                      ? 'O teu curso está pronto. Define a tua senha em 1 passo para começares a assistir de imediato às tuas aulas!'
+                      : <>Registámos a compra para o e-mail <strong className="font-mono text-emerald-950">{email}</strong>. Crie a sua conta usando este mesmo e-mail.</>}
                   </p>
                 </div>
               </div>
               <button
                 type="button"
-                onClick={() => router.push(`/register?email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}`)}
-                className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow transition text-xs sm:text-sm flex items-center justify-center space-x-2 cursor-pointer"
+                onClick={() => {
+                  if (isCoursePayment && courseClaimToken) {
+                    router.push(`/academy/claim?token=${encodeURIComponent(courseClaimToken)}`);
+                  } else if (isCoursePayment) {
+                    router.push(`/register?email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}&redirect=/dashboard/academy`);
+                  } else {
+                    router.push(`/register?email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}`);
+                  }
+                }}
+                className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-xl shadow transition text-xs sm:text-sm flex items-center justify-center space-x-2 cursor-pointer"
               >
-                <span>Criar Conta Agora com este E-mail</span>
+                <span>{isCoursePayment ? 'Ativar Acesso & Começar Curso Agora →' : 'Criar Conta Agora com este E-mail'}</span>
               </button>
             </div>
           )}

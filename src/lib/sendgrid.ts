@@ -393,8 +393,8 @@ export async function sendCourseEnrollmentEmail(toEmail: string, userName: strin
 }
 
 /** Email de confirmação de pagamento do curso completo */
-export async function sendCoursePurchaseEmail(toEmail: string, userName: string, courseTitle: string, amount: number = 500) {
-  const academyUrl = `${SITE_URL}/dashboard/academy`;
+export async function sendCoursePurchaseEmail(toEmail: string, userName: string, courseTitle: string, amount: number = 500, claimToken?: string) {
+  const academyUrl = claimToken ? `${SITE_URL}/academy/claim?token=${claimToken}` : `${SITE_URL}/dashboard/academy`;
 
   return sendEmail({
     to: toEmail,
@@ -421,7 +421,7 @@ export async function sendCoursePurchaseEmail(toEmail: string, userName: string,
           </div>
           
           <div style="text-align:center;margin:32px 0;">
-            <a href="${academyUrl}" style="background:linear-gradient(135deg,#059669,#10b981);color:white;font-weight:700;padding:16px 36px;border-radius:10px;text-decoration:none;font-size:15px;display:inline-block;box-shadow:0 4px 12px rgba(16,185,129,0.25);">Acessar Todas as Aulas →</a>
+            <a href="${academyUrl}" style="background:linear-gradient(135deg,#059669,#10b981);color:white;font-weight:700;padding:16px 36px;border-radius:10px;text-decoration:none;font-size:15px;display:inline-block;box-shadow:0 4px 12px rgba(16,185,129,0.25);">${claimToken ? 'Ativar Acesso & Assistir Aulas →' : 'Acessar Todas as Aulas →'}</a>
           </div>
           
           <p style="color:#94a3b8;font-size:12px;margin:24px 0 0;text-align:center;">Equipa WEHOSTHERE — Academia de Desenvolvimento Web</p>

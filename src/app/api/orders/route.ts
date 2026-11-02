@@ -7,6 +7,8 @@ import Affiliate from '@/lib/models/Affiliate';
 import Commission from '@/lib/models/Commission';
 import AffiliateClick from '@/lib/models/AffiliateClick';
 import UserModel from '@/lib/models/User';
+import EnrollmentModel from '@/lib/models/Enrollment';
+import crypto from 'crypto';
 
 let FALLBACK_ORDERS: any[] = [];
 
@@ -167,27 +169,35 @@ export async function POST(req: Request) {
         return NextResponse.json({ hasPaid: false }, { status: 400 });
       }
 
+      const normalizedEmail = email.toLowerCase().trim();
+
       if (useMongo) {
-        // Filtro no servidor - muito mais eficiente
-        const hasPaid = await OrderModel.exists({
-          clientEmail: email.toLowerCase(),
-          status: 'completed',
+        // 1º Prioridade: Verificar Matrícula Ativa no Modelo Enrollment
+        const enrollmentExists = await EnrollmentModel.exists({
+          studentEmail: normalizedEmail,
+          status: 'active',
           $or: [
-            { serviceName: { $regex: 'curso', $options: 'i' } },
-            { serviceName: { $regex: courseTitle, $options: 'i' } }
+            { courseTitle: { $regex: courseTitle, $options: 'i' } },
+            { courseId: body.courseId || 'NONE' }
           ]
+        });
+        if (enrollmentExists) {
+          return NextResponse.json({ hasPaid: true });
+        }
+
+        // 2º Fallback para Pedido Concluído específico deste curso
+        const hasPaid = await OrderModel.exists({
+          clientEmail: normalizedEmail,
+          status: 'completed',
+          serviceName: { $regex: courseTitle, $options: 'i' }
         });
         return NextResponse.json({ hasPaid: !!hasPaid });
       }
 
-      // Fallback local
       const hasPaid = FALLBACK_ORDERS.some(o => 
-        o.clientEmail?.toLowerCase() === email.toLowerCase() &&
+        o.clientEmail?.toLowerCase() === normalizedEmail &&
         o.status === 'completed' &&
-        (
-          o.serviceName?.toLowerCase().includes('curso') || 
-          o.serviceName?.toLowerCase().includes(courseTitle.toLowerCase())
-        )
+        o.serviceName?.toLowerCase().includes(courseTitle.toLowerCase())
       );
       return NextResponse.json({ hasPaid });
     }
@@ -253,6 +263,44 @@ export async function POST(req: Request) {
               isAutomatic: true,
               eventType: `order_${status}`
             });
+
+            // 🎓 AUTO-MATRÍCULA DE CURSO AO CONFIRMAR PEDIDO
+            if (status === 'approved' || status === 'completed' || status === 'active') {
+              try {
+                const sName = (orderDoc.serviceName || '');
+                if (sName.toLowerCase().includes('curso')) {
+                  const targetEmail = (orderDoc.clientEmail || '').toLowerCase().trim();
+                  const cleanTitle = sName.replace(/^curso:\s*/i, '').trim();
+                  const existingEnr = await EnrollmentModel.findOne({
+                    studentEmail: targetEmail,
+                    courseTitle: { $regex: cleanTitle, $options: 'i' },
+                    status: 'active'
+                  });
+
+                  if (!existingEnr) {
+                    const claimToken = 'CLM_' + crypto.randomBytes(16).toString('hex');
+                    await EnrollmentModel.create({
+                      id: 'ENR_' + Date.now().toString().slice(-6) + '_' + Math.floor(100 + Math.random() * 900),
+                      courseId: 'COURSE_AUTO',
+                      courseTitle: cleanTitle || sName,
+                      studentEmail: targetEmail,
+                      studentName: orderDoc.clientName || 'Aluno',
+                      studentPhone: orderDoc.clientPhone || '',
+                      orderId: orderDoc.id,
+                      paymentReference: orderDoc.reference || orderDoc.kivoraPaymentId,
+                      amountPaid: orderDoc.amount || 0,
+                      paymentMethod: orderDoc.paymentMethod || 'mpesa',
+                      claimToken,
+                      claimed: false,
+                      status: 'active',
+                      enrolledAt: new Date().toISOString()
+                    });
+                  }
+                }
+              } catch (enrErr) {
+                console.warn('[Orders API] Erro ao criar matrícula automática:', enrErr);
+              }
+            }
 
             // 🚀 ATIVAR PLANO NO MODELO DE UTILIZADOR
             if (status === 'approved' || status === 'completed' || status === 'active') {
@@ -405,7 +453,7 @@ export async function POST(req: Request) {
             adminEmailsSet.add('info@wehosthere.com');
           }
 
-          for (const recipient of adminEmailsSet) {
+          for (const recipient of Array.from(adminEmailsSet)) {
             await sendEmail({
               to: recipient,
               subject: `🛒 Novo Pedido #${orderData.id}: ${orderData.clientName || 'Cliente'} - ${orderData.serviceName || 'Serviço'}`,

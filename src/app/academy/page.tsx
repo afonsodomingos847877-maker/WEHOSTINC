@@ -1,0 +1,596 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { 
+  GraduationCap, BookOpen, Clock, Award, ShieldCheck, CheckCircle2, 
+  Sparkles, ArrowRight, Star, Users, Play, ChevronRight, Lock, 
+  Smartphone, Zap, HelpCircle, Search, Laptop, Layers
+} from 'lucide-react';
+import AcademyNavbar from '@/components/academy/AcademyNavbar';
+import AcademyFooter from '@/components/academy/AcademyFooter';
+
+interface Course {
+  id: string;
+  title: string;
+  slug?: string;
+  description: string;
+  shortDescription: string;
+  duration: string;
+  outcome: string;
+  thumbnail?: string;
+  accessType: 'free' | 'paid' | 'preview';
+  price?: number;
+  originalPrice?: number;
+  currency?: string;
+  category?: string;
+  level?: string;
+  freeLessonsCount?: number;
+  instructorName?: string;
+  instructorTitle?: string;
+  rating?: number;
+  studentsCount?: number;
+  active: boolean;
+}
+
+const FALLBACK_PUBLIC_COURSES: Course[] = [
+  {
+    id: 'course-landing-page',
+    title: 'Criação de Página de Vendas Profissional',
+    slug: 'criacao-pagina-vendas-profissional',
+    description: 'Aprenda do zero a conceber, estruturar, programar e publicar páginas de alta conversão para o mercado moçambicano e internacional.',
+    shortDescription: 'Cria páginas de alta conversão com design moderno, integração M-Pesa e velocidade máxima.',
+    duration: '4h 30m',
+    outcome: 'Construir landing pages profissionais completas prontas para faturar.',
+    thumbnail: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&auto=format&fit=crop&q=80',
+    accessType: 'paid',
+    price: 199,
+    originalPrice: 500,
+    currency: 'MZN',
+    category: 'Desenvolvimento Web',
+    level: 'Iniciante a Intermédio',
+    freeLessonsCount: 1,
+    instructorName: 'Afonso Domingos',
+    instructorTitle: 'Engenheiro de Software & Fundador WEHOSTHERE',
+    rating: 4.9,
+    studentsCount: 184,
+    active: true
+  },
+  {
+    id: 'course-cloud-infrastructure',
+    title: 'Infraestrutura Cloud, cPanel & Gestão de Servidores',
+    slug: 'infraestrutura-cloud-cpanel-servidores',
+    description: 'Domina configuração de domínios .co.mz, zonas DNS, certificados SSL automáticos, contas corporativas e segurança de servidores Linux.',
+    shortDescription: 'Configuração profissional de servidores, domínios, e-mails empresariais e segurança web.',
+    duration: '6h 15m',
+    outcome: 'Gerir com confiança toda a infraestrutura web da sua empresa ou de clientes.',
+    thumbnail: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&auto=format&fit=crop&q=80',
+    accessType: 'paid',
+    price: 350,
+    originalPrice: 850,
+    currency: 'MZN',
+    category: 'Infraestrutura & Cloud',
+    level: 'Intermédio',
+    freeLessonsCount: 1,
+    instructorName: 'Equipa Técnica WEHOSTHERE',
+    instructorTitle: 'Especialistas em Redes & Datacenter',
+    rating: 4.8,
+    studentsCount: 96,
+    active: true
+  },
+  {
+    id: 'course-digital-business',
+    title: 'Vendas Online & E-commerce com M-Pesa Integrado',
+    slug: 'vendas-online-ecommerce-mpesa',
+    description: 'Como estruturar lojas e catálogos online automatizados que recebem cobranças PUSH instantâneas via M-Pesa e e-Mola em Moçambique.',
+    shortDescription: 'Automatiza cobranças de produtos e serviços digitais em Meticais sem intermediários.',
+    duration: '5h 00m',
+    outcome: 'Criar um negócio digital funcional com pagamentos móveis em tempo real.',
+    thumbnail: 'https://images.unsplash.com/photo-1556742049-0a67c5574f73?w=800&auto=format&fit=crop&q=80',
+    accessType: 'paid',
+    price: 250,
+    originalPrice: 600,
+    currency: 'MZN',
+    category: 'Negócios Digitais',
+    level: 'Todos os Níveis',
+    freeLessonsCount: 1,
+    instructorName: 'Consultoria WEHOSTHERE',
+    instructorTitle: 'Especialistas em Pagamentos Digitais',
+    rating: 4.9,
+    studentsCount: 142,
+    active: true
+  }
+];
+
+export default function PublicAcademyPage() {
+  const router = useRouter();
+  const [courses, setCourses] = useState<Course[]>(FALLBACK_PUBLIC_COURSES);
+  const [selectedCategory, setSelectedCategory] = useState<string>('Todos');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchCourses() {
+      try {
+        const res = await fetch('/api/courses');
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.courses) && data.courses.length > 0) {
+            // Merge with public enriched defaults if some fields are missing
+            const merged = data.courses.map((c: any) => {
+              const fallbackMatch = FALLBACK_PUBLIC_COURSES.find(f => f.id === c.id || f.title.toLowerCase() === c.title.toLowerCase());
+              return {
+                ...fallbackMatch,
+                ...c,
+                price: c.price ?? fallbackMatch?.price ?? 199,
+                originalPrice: c.originalPrice ?? fallbackMatch?.originalPrice ?? 500,
+                rating: c.rating ?? fallbackMatch?.rating ?? 4.9,
+                studentsCount: c.studentsCount ?? fallbackMatch?.studentsCount ?? 120,
+                instructorName: c.instructorName || fallbackMatch?.instructorName || 'Formador WEHOSTHERE',
+                instructorTitle: c.instructorTitle || fallbackMatch?.instructorTitle || 'Especialista em Tecnologia',
+                freeLessonsCount: c.freeLessonsCount ?? 1
+              };
+            });
+            setCourses(merged);
+          }
+        }
+      } catch (err) {
+        console.warn('Usando cursos padrão da academia:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchCourses();
+  }, []);
+
+  const categories = ['Todos', 'Desenvolvimento Web', 'Infraestrutura & Cloud', 'Negócios Digitais'];
+
+  const filteredCourses = courses.filter(course => {
+    const matchesCategory = selectedCategory === 'Todos' || (course.category || '').toLowerCase() === selectedCategory.toLowerCase();
+    const matchesSearch = course.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          course.description.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
+
+  return (
+    <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
+      <AcademyNavbar />
+
+      {/* HERO SECTION */}
+      <section className="relative overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-primary-950 text-white pt-16 pb-20 sm:pt-24 sm:pb-28">
+        {/* Glow ambient background circles */}
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-primary-600/20 blur-[130px] rounded-full pointer-events-none"></div>
+        <div className="absolute top-10 right-10 w-[350px] h-[350px] bg-emerald-500/15 blur-[120px] rounded-full pointer-events-none"></div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+          {/* Micro pill */}
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold mb-6 animate-in fade-in duration-300">
+            <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Educação Prática Sem Enrolação • Feita para o Mercado Real</span>
+          </div>
+
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white max-w-4xl mx-auto leading-[1.15]">
+            Aprende a Criar, Escalar e Monetizar na <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400">Era Digital</span>
+          </h1>
+
+          <p className="mt-5 text-base sm:text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed">
+            Formações orientadas à prática com especialistas do setor. Começa a assistir hoje mesmo, 
+            <strong className="text-white"> sem obrigatoriedade de criar conta antes de comprar</strong>, com pagamento instantâneo em Meticais.
+          </p>
+
+          {/* Quick Trust Highlights */}
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-xs sm:text-sm text-slate-300">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span>Acesso Vitalício Imediato</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Smartphone className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span>Pagamento M-Pesa & e-Mola</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Award className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span>Certificado Oficial com QR Code</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Play className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span>1ª Aula Grátis em Todos os Cursos</span>
+            </div>
+          </div>
+
+          {/* Search bar & filter pills */}
+          <div className="mt-10 max-w-xl mx-auto">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Pesquisar por assunto (ex: landing page, servidores, mpesa)..."
+                className="w-full pl-12 pr-4 py-3.5 bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 transition"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* DISCREET LOGIN CALLOUT FOR EXISTING STUDENTS */}
+      <section className="bg-emerald-500/10 border-y border-emerald-500/20 py-3">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs sm:text-sm">
+          <div className="flex items-center gap-2 text-emerald-900 font-medium">
+            <GraduationCap className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>Já és aluno matriculado na WeHostHere? Continua de onde paraste!</span>
+          </div>
+          <Link
+            href="/login?redirect=/dashboard/academy"
+            className="inline-flex items-center gap-1 font-bold text-emerald-700 hover:text-emerald-800 underline underline-offset-4"
+          >
+            <span>Iniciar Sessão na Área do Aluno</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+      </section>
+
+      {/* COURSE CATALOG SECTION */}
+      <section id="cursos" className="py-16 sm:py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+          <div>
+            <div className="flex items-center gap-2 text-emerald-600 text-xs font-bold uppercase tracking-wider mb-2">
+              <BookOpen className="w-4 h-4" />
+              <span>Catálogo Disponível</span>
+            </div>
+            <h2 className="text-2xl sm:text-4xl font-extrabold text-gray-950 tracking-tight">
+              Escolhe a Tua Próxima Formação
+            </h2>
+            <p className="mt-2 text-sm text-gray-600 max-w-xl">
+              Cursos práticos passo a passo. Aprende construindo projetos funcionais e aplica diretamente nos teus negócios ou carreira.
+            </p>
+          </div>
+
+          {/* Category Tabs */}
+          <div className="flex flex-wrap gap-2">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                  selectedCategory === cat
+                    ? 'bg-primary-600 text-white shadow-xs'
+                    : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* COURSES GRID */}
+        {filteredCourses.length === 0 ? (
+          <div className="bg-white rounded-3xl p-12 text-center border border-gray-200 max-w-md mx-auto">
+            <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+            <h3 className="text-base font-bold text-gray-900">Nenhum curso encontrado</h3>
+            <p className="text-xs text-gray-500 mt-1">Experimenta alterar o termo de pesquisa ou a categoria.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {filteredCourses.map((course) => {
+              const checkoutUrl = `/checkout?service=course&courseId=${course.id}&name=${encodeURIComponent(course.title)}&amount=${course.price || 199}`;
+              const courseDetailsUrl = `/academy/courses/${course.slug || course.id}`;
+
+              return (
+                <div
+                  key={course.id}
+                  className="bg-white rounded-3xl border border-gray-200/90 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden group hover:-translate-y-1"
+                >
+                  {/* Thumbnail / Header */}
+                  <div className="relative h-48 sm:h-52 w-full overflow-hidden bg-slate-900">
+                    <img
+                      src={course.thumbnail || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=80'}
+                      alt={course.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition duration-500 opacity-90"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent"></div>
+
+                    {/* Top Badges */}
+                    <div className="absolute top-3 left-3 flex flex-wrap gap-2">
+                      <span className="px-2.5 py-1 rounded-full bg-slate-900/80 backdrop-blur-md text-white text-[11px] font-bold border border-white/20">
+                        {course.category || 'Tecnologia'}
+                      </span>
+                      {course.freeLessonsCount && course.freeLessonsCount > 0 && (
+                        <span className="px-2.5 py-1 rounded-full bg-emerald-500/90 backdrop-blur-md text-white text-[11px] font-bold flex items-center gap-1 shadow-xs">
+                          <Play className="w-3 h-3 fill-current" />
+                          <span>1 Aula Grátis</span>
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Rating badge bottom right */}
+                    <div className="absolute bottom-3 right-3 flex items-center gap-1 px-2 py-0.5 rounded-lg bg-black/60 backdrop-blur-md text-amber-300 text-xs font-bold">
+                      <Star className="w-3.5 h-3.5 fill-current" />
+                      <span>{course.rating || 4.9}</span>
+                    </div>
+                  </div>
+
+                  {/* Body Content */}
+                  <div className="p-6 flex-1 flex flex-col justify-between">
+                    <div>
+                      {/* Meta info row */}
+                      <div className="flex items-center gap-3 text-xs text-gray-500 mb-2.5">
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3.5 h-3.5 text-gray-400" />
+                          {course.duration}
+                        </span>
+                        <span>•</span>
+                        <span className="flex items-center gap-1">
+                          <Award className="w-3.5 h-3.5 text-emerald-600" />
+                          Certificado Oficial
+                        </span>
+                        <span>•</span>
+                        <span className="text-gray-500 font-medium">
+                          {course.level || 'Todos os Níveis'}
+                        </span>
+                      </div>
+
+                      {/* Course Title */}
+                      <Link href={courseDetailsUrl}>
+                        <h3 className="text-lg font-black text-gray-950 group-hover:text-primary-600 transition leading-snug line-clamp-2">
+                          {course.title}
+                        </h3>
+                      </Link>
+
+                      {/* Short Description */}
+                      <p className="mt-2 text-xs text-gray-600 line-clamp-2 leading-relaxed">
+                        {course.shortDescription || course.description}
+                      </p>
+
+                      {/* Instructor info */}
+                      <div className="mt-4 pt-3 border-t border-gray-100 flex items-center gap-2.5">
+                        <div className="w-7 h-7 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-xs font-extrabold uppercase">
+                          {(course.instructorName || 'W').charAt(0)}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold text-gray-900 truncate">{course.instructorName || 'Formador WEHOSTHERE'}</p>
+                          <p className="text-[10px] text-gray-500 truncate">{course.instructorTitle || 'Especialista Web'}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Pricing & CTA */}
+                    <div className="mt-6 pt-4 border-t border-gray-100">
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block">Investimento</span>
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-2xl font-black text-gray-950">
+                              {(course.price || 199).toLocaleString('pt-MZ')} <span className="text-sm font-bold text-emerald-600">MT</span>
+                            </span>
+                            {course.originalPrice && course.originalPrice > (course.price || 0) && (
+                              <span className="text-xs text-gray-400 line-through">
+                                {course.originalPrice.toLocaleString('pt-MZ')} MT
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200/60">
+                          Acesso Imediato
+                        </span>
+                      </div>
+
+                      {/* Action buttons */}
+                      <div className="grid grid-cols-2 gap-2">
+                        <Link
+                          href={courseDetailsUrl}
+                          className="py-2.5 px-3 rounded-xl border border-gray-300 hover:border-gray-400 text-gray-700 text-xs font-bold text-center transition flex items-center justify-center gap-1"
+                        >
+                          <span>Ver Programa</span>
+                        </Link>
+                        <Link
+                          href={checkoutUrl}
+                          className="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black text-center shadow-sm hover:shadow transition flex items-center justify-center gap-1.5"
+                        >
+                          <Zap className="w-3.5 h-3.5 fill-current" />
+                          <span>Comprar Já</span>
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      {/* HOW IT WORKS: ZERO-BARRIER GUEST PURCHASE */}
+      <section className="bg-slate-900 text-white py-16 sm:py-20 border-y border-slate-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-14">
+            <span className="text-emerald-400 text-xs font-bold uppercase tracking-wider">Simplicidade & Respeito Pelo Teu Tempo</span>
+            <h2 className="text-2xl sm:text-4xl font-extrabold text-white mt-2">
+              Como Funciona a Compra Sem Barreiras
+            </h2>
+            <p className="mt-3 text-slate-400 text-sm">
+              Eliminámos formulários longos e cadastros obrigatórios antes da compra. Podes adquirir qualquer curso em menos de 1 minuto.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="bg-slate-800/60 border border-slate-700/80 p-6 rounded-2xl relative">
+              <div className="w-10 h-10 rounded-xl bg-primary-600 text-white font-black text-lg flex items-center justify-center mb-4">
+                1
+              </div>
+              <h3 className="font-bold text-base text-white mb-2">Escolhe o Teu Curso</h3>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Navega pela ementa detalhada, assiste à 1ª aula gratuita e conhece o instrutor.
+              </p>
+            </div>
+
+            <div className="bg-slate-800/60 border border-slate-700/80 p-6 rounded-2xl relative">
+              <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white font-black text-lg flex items-center justify-center mb-4">
+                2
+              </div>
+              <h3 className="font-bold text-base text-white mb-2">Dados Mínimos</h3>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                No checkout forneces apenas o teu Nome, E-mail e o número de telemóvel para pagamento.
+              </p>
+            </div>
+
+            <div className="bg-slate-800/60 border border-slate-700/80 p-6 rounded-2xl relative">
+              <div className="w-10 h-10 rounded-xl bg-amber-500 text-white font-black text-lg flex items-center justify-center mb-4">
+                3
+              </div>
+              <h3 className="font-bold text-base text-white mb-2">M-Pesa / e-Mola</h3>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Recebes o aviso PUSH no telemóvel, digitas o PIN e o sistema confirma em tempo real.
+              </p>
+            </div>
+
+            <div className="bg-slate-800/60 border border-slate-700/80 p-6 rounded-2xl relative">
+              <div className="w-10 h-10 rounded-xl bg-cyan-500 text-white font-black text-lg flex items-center justify-center mb-4">
+                4
+              </div>
+              <h3 className="font-bold text-base text-white mb-2">Acesso & Vinculação</h3>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                O curso é teu! Crias a tua senha num clique ou associas à tua conta existente sem perder nada.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CERTIFICATION PREVIEW */}
+      <section id="certificacao" className="py-16 sm:py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="bg-gradient-to-br from-emerald-900 via-primary-950 to-slate-950 text-white rounded-3xl p-8 sm:p-12 border border-emerald-500/20 shadow-2xl flex flex-col lg:flex-row items-center gap-10">
+          <div className="space-y-4 flex-1">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold uppercase">
+              <Award className="w-4 h-4" />
+              Certificado Oficial WEHOSTHERE
+            </span>
+            <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
+              Valoriza o Teu Currículo com Certificação Autêntica
+            </h2>
+            <p className="text-sm text-slate-300 leading-relaxed">
+              Ao concluir todas as lições e atividades do curso, recebes automaticamente o teu <strong>Certificado Oficial em PDF de Alta Resolução</strong> com:
+            </p>
+            <ul className="space-y-2 text-xs sm:text-sm text-slate-200">
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>Código único de autenticidade rastreável</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>QR Code para validação pública imediata no portal WEHOSTHERE</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>Carga horária e competências adquiridas discriminadas</span>
+              </li>
+            </ul>
+
+            <div className="pt-2">
+              <Link
+                href="/verify-certificate"
+                className="inline-flex items-center gap-2 text-xs font-bold text-emerald-400 hover:text-emerald-300 underline underline-offset-4"
+              >
+                <span>Testar Validador Público de Certificados →</span>
+              </Link>
+            </div>
+          </div>
+
+          {/* Certificate mock preview */}
+          <div className="w-full lg:w-96 shrink-0 bg-white text-slate-900 rounded-2xl p-6 shadow-2xl border-4 border-amber-400/40 transform rotate-1 hover:rotate-0 transition duration-300">
+            <div className="border border-slate-200 p-4 rounded-xl text-center">
+              <div className="text-[10px] tracking-widest text-slate-400 uppercase font-black">WEHOSTHERE ACADEMY</div>
+              <h4 className="text-base font-black text-primary-950 mt-1">CERTIFICADO DE CONCLUSÃO</h4>
+              <p className="text-[11px] text-slate-600 mt-2">Certificamos com distinção que</p>
+              <p className="text-sm font-black text-slate-900 border-b border-slate-200 pb-1 mt-1 font-serif">Afonso Domingos</p>
+              <p className="text-[10px] text-slate-500 mt-2">concluiu com êxito a formação em</p>
+              <p className="text-xs font-extrabold text-emerald-700">Criação de Páginas de Vendas Profissionais</p>
+              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[9px] text-slate-400">
+                <span>Cod: WH-2026-9915</span>
+                <span className="text-emerald-700 font-bold">100% VÁLIDO</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ SECTION */}
+      <section id="faq" className="py-16 sm:py-20 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+        <div className="text-center mb-10">
+          <span className="text-emerald-600 text-xs font-bold uppercase tracking-wider">Tira as Tuas Dúvidas</span>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-950 mt-1">
+            Perguntas Frequentes
+          </h2>
+        </div>
+
+        <div className="space-y-4">
+          <div className="bg-white rounded-2xl p-5 border border-gray-200 shadow-xs">
+            <h3 className="font-bold text-sm text-gray-900 flex items-center gap-2">
+              <HelpCircle className="w-4 h-4 text-primary-600 shrink-0" />
+              Preciso de ter conta antes de comprar um curso?
+            </h3>
+            <p className="mt-2 text-xs text-gray-600 leading-relaxed pl-6">
+              <strong>Não!</strong> Podes comprar qualquer curso como visitante. Basta forneceres o teu nome, e-mail e número de telefone para o pagamento. Assim que o pagamento é aprovado, tens a opção imediata de criar a tua senha ou vincular a uma conta existente.
+            </p>
+          </div>
+
+          <div className="bg-white rounded-2xl p-5 border border-gray-200 shadow-xs">
+            <h3 className="font-bold text-sm text-gray-900 flex items-center gap-2">
+              <HelpCircle className="w-4 h-4 text-primary-600 shrink-0" />
+              E se eu fechar o navegador após pagar via M-Pesa?
+            </h3>
+            <p className="mt-2 text-xs text-gray-600 leading-relaxed pl-6">
+              A tua compra fica 100% protegida na base de dados. Receberás um e-mail com a confirmação e um <strong>link seguro de resgate</strong> exclusivo. Ao clicares no link, o sistema reconhece a compra e direciona-te diretamente às aulas.
+            </p>
+          </div>
+
+          <div className="bg-white rounded-2xl p-5 border border-gray-200 shadow-xs">
+            <h3 className="font-bold text-sm text-gray-900 flex items-center gap-2">
+              <HelpCircle className="w-4 h-4 text-primary-600 shrink-0" />
+              Por quanto tempo terei acesso ao curso?
+            </h3>
+            <p className="mt-2 text-xs text-gray-600 leading-relaxed pl-6">
+              O acesso é <strong>vitalício</strong>. Podes assistir quantas vezes quiseres, no teu computador, tablet ou telemóvel, incluindo atualizações futuras do conteúdo.
+            </p>
+          </div>
+
+          <div className="bg-white rounded-2xl p-5 border border-gray-200 shadow-xs">
+            <h3 className="font-bold text-sm text-gray-900 flex items-center gap-2">
+              <HelpCircle className="w-4 h-4 text-primary-600 shrink-0" />
+              Quais métodos de pagamento são aceites?
+            </h3>
+            <p className="mt-2 text-xs text-gray-600 leading-relaxed pl-6">
+              Aceitamos <strong>M-Pesa PUSH</strong> (Vodacom), <strong>e-Mola</strong> (Movitel), e <strong>Transferência Bancária direta</strong> (Millennium BIM, BCI e Standard Bank).
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* BOTTOM CTA BANNER */}
+      <section className="bg-gradient-to-r from-emerald-600 to-teal-700 text-white py-12 px-4 sm:px-6 lg:px-8 text-center mt-auto">
+        <div className="max-w-3xl mx-auto space-y-4">
+          <h2 className="text-2xl sm:text-3xl font-black">Pronto para Elevar as Tuas Habilidades Digitais?</h2>
+          <p className="text-xs sm:text-sm text-emerald-100 max-w-xl mx-auto">
+            Junta-te a centenas de profissionais e empreendedores em Moçambique que já estão a transformar as suas carreiras com os nossos cursos práticos.
+          </p>
+          <div className="pt-2">
+            <a
+              href="#cursos"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-white text-emerald-900 font-extrabold rounded-2xl shadow-lg hover:bg-emerald-50 transition text-sm"
+            >
+              <span>Ver Cursos Disponíveis</span>
+              <ArrowRight className="w-4 h-4" />
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <AcademyFooter />
+    </div>
+  );
+}
+

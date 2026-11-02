@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { type, from, to, subject, body: msgBody, text, html, userName, courseTitle, amount, certificateNumber, verificationUrl, role, invoiceRef, plan } = body;
+    const { type, from, to, subject, body: msgBody, text, html, userName, courseTitle, amount, certificateNumber, verificationUrl, role, invoiceRef, plan, claimToken } = body;
 
     // Validação básica para tipos específicos ou genéricos
     if (!to) {
@@ -38,7 +38,7 @@ export async function POST(req: Request) {
     } else if (type === 'course_enrollment') {
       result = await sendCourseEnrollmentEmail(to, userName || 'Aluno', courseTitle || 'Curso');
     } else if (type === 'course_purchase') {
-      result = await sendCoursePurchaseEmail(to, userName || 'Aluno', courseTitle || 'Curso', amount || 500);
+      result = await sendCoursePurchaseEmail(to, userName || 'Aluno', courseTitle || 'Curso', amount || 500, claimToken);
     } else if (type === 'course_completion') {
       result = await sendCourseCompletionEmail(to, userName || 'Aluno', courseTitle || 'Curso', certificateNumber || 'WH-CERT', verificationUrl || '');
     } else if (type === 'role_change') {
