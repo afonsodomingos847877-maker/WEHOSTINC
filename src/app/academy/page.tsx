@@ -167,16 +167,15 @@ export default function PublicAcademyPage() {
           {/* Micro pill */}
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold mb-6 animate-in fade-in duration-300">
             <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Educação Prática Sem Enrolação • Feita para o Mercado Real</span>
+            <span>Formação Prática para o Mercado Real</span>
           </div>
 
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white max-w-4xl mx-auto leading-[1.15]">
             Aprende a Criar, Escalar e Monetizar na <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400">Era Digital</span>
           </h1>
 
-          <p className="mt-5 text-base sm:text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed">
-            Formações orientadas à prática com especialistas do setor. Começa a assistir hoje mesmo, 
-            <strong className="text-white"> sem obrigatoriedade de criar conta antes de comprar</strong>, com pagamento instantâneo em Meticais.
+          <p className="mt-4 text-sm sm:text-base text-slate-300 max-w-xl mx-auto leading-relaxed">
+            Cursos diretos ao ponto com especialistas. Compra sem login prévio e ativação imediata via M-Pesa e e-Mola.
           </p>
 
           {/* Quick Trust Highlights */}
@@ -207,7 +206,7 @@ export default function PublicAcademyPage() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Pesquisar por assunto (ex: landing page, servidores, mpesa)..."
+                placeholder="Pesquisar curso ou tecnologia..."
                 className="w-full pl-12 pr-4 py-3.5 bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 transition"
               />
             </div>
@@ -220,13 +219,13 @@ export default function PublicAcademyPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs sm:text-sm">
           <div className="flex items-center gap-2 text-emerald-900 font-medium">
             <GraduationCap className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span>Já és aluno matriculado na WeHostHere? Continua de onde paraste!</span>
+            <span>Já és aluno? Continua as tuas aulas de onde paraste.</span>
           </div>
           <Link
             href="/login?redirect=/dashboard/academy"
             className="inline-flex items-center gap-1 font-bold text-emerald-700 hover:text-emerald-800 underline underline-offset-4"
           >
-            <span>Iniciar Sessão na Área do Aluno</span>
+            <span>Entrar na Área do Aluno</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
@@ -243,8 +242,8 @@ export default function PublicAcademyPage() {
             <h2 className="text-2xl sm:text-4xl font-extrabold text-gray-950 tracking-tight">
               Escolhe a Tua Próxima Formação
             </h2>
-            <p className="mt-2 text-sm text-gray-600 max-w-xl">
-              Cursos práticos passo a passo. Aprende construindo projetos funcionais e aplica diretamente nos teus negócios ou carreira.
+            <p className="mt-1 text-xs sm:text-sm text-gray-500 max-w-lg">
+              Aprende com projetos reais e aplica imediatamente na tua carreira ou empresa.
             </p>
           </div>
 
@@ -412,8 +411,8 @@ export default function PublicAcademyPage() {
             <h2 className="text-2xl sm:text-4xl font-extrabold text-white mt-2">
               Como Funciona a Compra Sem Barreiras
             </h2>
-            <p className="mt-3 text-slate-400 text-sm">
-              Eliminámos formulários longos e cadastros obrigatórios antes da compra. Podes adquirir qualquer curso em menos de 1 minuto.
+            <p className="mt-2 text-slate-400 text-xs sm:text-sm">
+              Sem cadastros longos. Adquire qualquer formação em menos de 1 minuto.
             </p>
           </div>
 
@@ -424,7 +423,7 @@ export default function PublicAcademyPage() {
               </div>
               <h3 className="font-bold text-base text-white mb-2">Escolhe o Teu Curso</h3>
               <p className="text-xs text-slate-400 leading-relaxed">
-                Navega pela ementa detalhada, assiste à 1ª aula gratuita e conhece o instrutor.
+                Consulta o programa completo e assiste à 1ª aula grátis.
               </p>
             </div>
 
@@ -434,7 +433,7 @@ export default function PublicAcademyPage() {
               </div>
               <h3 className="font-bold text-base text-white mb-2">Dados Mínimos</h3>
               <p className="text-xs text-slate-400 leading-relaxed">
-                No checkout forneces apenas o teu Nome, E-mail e o número de telemóvel para pagamento.
+                Apenas nome, e-mail e telemóvel para o pagamento.
               </p>
             </div>
 
@@ -444,7 +443,7 @@ export default function PublicAcademyPage() {
               </div>
               <h3 className="font-bold text-base text-white mb-2">M-Pesa / e-Mola</h3>
               <p className="text-xs text-slate-400 leading-relaxed">
-                Recebes o aviso PUSH no telemóvel, digitas o PIN e o sistema confirma em tempo real.
+                Recebe o PUSH, digita o teu PIN e confirma em segundos.
               </p>
             </div>
 
@@ -454,7 +453,7 @@ export default function PublicAcademyPage() {
               </div>
               <h3 className="font-bold text-base text-white mb-2">Acesso & Vinculação</h3>
               <p className="text-xs text-slate-400 leading-relaxed">
-                O curso é teu! Crias a tua senha num clique ou associas à tua conta existente sem perder nada.
+                Acesso imediato. Cria a tua senha num clique ou associa à tua conta.
               </p>
             </div>
           </div>
@@ -472,8 +471,8 @@ export default function PublicAcademyPage() {
             <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
               Valoriza o Teu Currículo com Certificação Autêntica
             </h2>
-            <p className="text-sm text-slate-300 leading-relaxed">
-              Ao concluir todas as lições e atividades do curso, recebes automaticamente o teu <strong>Certificado Oficial em PDF de Alta Resolução</strong> com:
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+              Ao concluir o curso, recebes o teu <strong>Certificado Oficial em PDF</strong> autenticado:
             </p>
             <ul className="space-y-2 text-xs sm:text-sm text-slate-200">
               <li className="flex items-center gap-2">
@@ -482,11 +481,11 @@ export default function PublicAcademyPage() {
               </li>
               <li className="flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>QR Code para validação pública imediata no portal WEHOSTHERE</span>
+                <span>Validação online instantânea por QR Code</span>
               </li>
               <li className="flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>Carga horária e competências adquiridas discriminadas</span>
+                <span>Carga horária e competências descritas</span>
               </li>
             </ul>
 
@@ -533,8 +532,8 @@ export default function PublicAcademyPage() {
               <HelpCircle className="w-4 h-4 text-primary-600 shrink-0" />
               Preciso de ter conta antes de comprar um curso?
             </h3>
-            <p className="mt-2 text-xs text-gray-600 leading-relaxed pl-6">
-              <strong>Não!</strong> Podes comprar qualquer curso como visitante. Basta forneceres o teu nome, e-mail e número de telefone para o pagamento. Assim que o pagamento é aprovado, tens a opção imediata de criar a tua senha ou vincular a uma conta existente.
+            <p className="mt-1.5 text-xs text-gray-600 leading-relaxed pl-6">
+              <strong>Não.</strong> Podes comprar diretamente como visitante. Após o pagamento aprovado, defines a tua senha num clique ou vinculas à tua conta existente.
             </p>
           </div>
 
@@ -543,8 +542,8 @@ export default function PublicAcademyPage() {
               <HelpCircle className="w-4 h-4 text-primary-600 shrink-0" />
               E se eu fechar o navegador após pagar via M-Pesa?
             </h3>
-            <p className="mt-2 text-xs text-gray-600 leading-relaxed pl-6">
-              A tua compra fica 100% protegida na base de dados. Receberás um e-mail com a confirmação e um <strong>link seguro de resgate</strong> exclusivo. Ao clicares no link, o sistema reconhece a compra e direciona-te diretamente às aulas.
+            <p className="mt-1.5 text-xs text-gray-600 leading-relaxed pl-6">
+              Não perdes nada. A compra fica salva e recebes um e-mail com um <strong>link seguro de resgate</strong> para acederes quando quiseres.
             </p>
           </div>
 
@@ -553,8 +552,8 @@ export default function PublicAcademyPage() {
               <HelpCircle className="w-4 h-4 text-primary-600 shrink-0" />
               Por quanto tempo terei acesso ao curso?
             </h3>
-            <p className="mt-2 text-xs text-gray-600 leading-relaxed pl-6">
-              O acesso é <strong>vitalício</strong>. Podes assistir quantas vezes quiseres, no teu computador, tablet ou telemóvel, incluindo atualizações futuras do conteúdo.
+            <p className="mt-1.5 text-xs text-gray-600 leading-relaxed pl-6">
+              O acesso é <strong>vitalício</strong>. Estuda no teu próprio ritmo e revê as aulas sempre que precisares.
             </p>
           </div>
 
@@ -563,8 +562,8 @@ export default function PublicAcademyPage() {
               <HelpCircle className="w-4 h-4 text-primary-600 shrink-0" />
               Quais métodos de pagamento são aceites?
             </h3>
-            <p className="mt-2 text-xs text-gray-600 leading-relaxed pl-6">
-              Aceitamos <strong>M-Pesa PUSH</strong> (Vodacom), <strong>e-Mola</strong> (Movitel), e <strong>Transferência Bancária direta</strong> (Millennium BIM, BCI e Standard Bank).
+            <p className="mt-1.5 text-xs text-gray-600 leading-relaxed pl-6">
+              <strong>M-Pesa</strong> (Vodacom), <strong>e-Mola</strong> (Movitel) e <strong>Transferência Bancária</strong> (BIM, BCI e Standard Bank).
             </p>
           </div>
         </div>
@@ -574,8 +573,8 @@ export default function PublicAcademyPage() {
       <section className="bg-gradient-to-r from-emerald-600 to-teal-700 text-white py-12 px-4 sm:px-6 lg:px-8 text-center mt-auto">
         <div className="max-w-3xl mx-auto space-y-4">
           <h2 className="text-2xl sm:text-3xl font-black">Pronto para Elevar as Tuas Habilidades Digitais?</h2>
-          <p className="text-xs sm:text-sm text-emerald-100 max-w-xl mx-auto">
-            Junta-te a centenas de profissionais e empreendedores em Moçambique que já estão a transformar as suas carreiras com os nossos cursos práticos.
+          <p className="text-xs sm:text-sm text-emerald-100 max-w-lg mx-auto">
+            Junta-te a profissionais e empreendedores em Moçambique que já estão a evoluir com as nossas formações práticas.
           </p>
           <div className="pt-2">
             <a

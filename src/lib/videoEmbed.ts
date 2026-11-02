@@ -65,3 +65,4 @@ export function formatVideoEmbedUrl(rawUrl?: string): {
     isYouTube: trimmed.includes('youtube.com') || trimmed.includes('youtu.be')
   };
 }
+
