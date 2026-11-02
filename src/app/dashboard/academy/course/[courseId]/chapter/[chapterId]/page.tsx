@@ -39,85 +39,68 @@ export default function ChapterViewPage() {
         return;
       }
 
-      // Limpar dados mockados do localStorage para garantir dados frescos do servidor
-      dataManager.clearAcademyData();
-      console.log('[ChapterView] Dados do localStorage limpos');
+      // 1. Renderização Otimista Imediata se já existir em cache
+      const cachedCourse = dataManager.getCourses().find(c => c.id === courseId);
+      if (cachedCourse) {
+        setCourse(cachedCourse);
+        setModules(dataManager.getModules(courseId).sort((a, b) => a.order - b.order));
+        setLessons(dataManager.getLessons());
+        setLoading(false);
+      }
 
-      // Buscar dados do servidor primeiro para garantir dados atualizados
+      // 2. Buscar dados atualizados do servidor sem apagar o cache prévio
       await Promise.all([
         dataManager.fetchCoursesAsync(),
         dataManager.fetchModulesAsync(),
         dataManager.fetchLessonsAsync()
       ]);
 
-      // Agora buscar dados locais (atualizados do servidor)
       const courseData = dataManager.getCourses().find(c => c.id === courseId);
-      
-      if (!courseData) {
+      if (courseData) {
+        setCourse(courseData);
+        setModules(dataManager.getModules(courseId).sort((a, b) => a.order - b.order));
+        setLessons(dataManager.getLessons());
+      } else if (!cachedCourse) {
         console.error('[ChapterView] Curso não encontrado, redirecionando para academy');
         router.push('/dashboard/academy');
         return;
       }
 
-      const courseModules = dataManager.getModules(courseId).sort((a, b) => a.order - b.order);
-      const allLessons = dataManager.getLessons();
-      
-      setCourse(courseData);
-      setModules(courseModules);
-      setLessons(allLessons);
-      
-      // Verificar pagamento de forma otimizada (apenas para este curso específico)
+      // 3. Verificar permissão de pagamento
       const isAdmin = auth.isAdminUser(currentUser);
       const isProOrEnterprise = currentUser.plan === 'pro' || currentUser.plan === 'enterprise';
       
       if (isAdmin || isProOrEnterprise) {
         setIsPaidUser(true);
-      } else if (courseData.accessType === 'paid' || courseData.accessType === 'preview') {
-        // Verificar apenas se o curso for pago/preview
+      } else if (courseData && (courseData.accessType === 'paid' || courseData.accessType === 'preview')) {
         const hasPaid = await dataManager.hasPaidForCourse(currentUser.email, courseData.title);
         setIsPaidUser(hasPaid);
-        console.log('[ChapterView] Verificação de pagamento:', hasPaid);
       } else {
         setIsPaidUser(false);
       }
       
-      // Carregar progresso local primeiro
+      // Carregar progresso
       const localProgress = dataManager.getCourseProgress(currentUser.email, courseId);
       setProgress(localProgress);
-      
       setLoading(false);
 
-      // Buscar progresso do servidor em background
+      // Sincronizar progresso em background
       dataManager.fetchCourseProgressAsync(currentUser.email, courseId)
         .then(serverProgress => {
-          setProgress(serverProgress);
+          if (serverProgress) setProgress(serverProgress);
         })
-        .catch(e => {
-          console.error('[ChapterView] Erro ao buscar progresso do servidor:', e);
-        });
+        .catch(() => {});
     } catch (error) {
       console.error('[ChapterView] Erro em loadCourseData:', error);
       setLoading(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseId, chapterId, router]);
 
   useEffect(() => {
-    console.log('[ChapterView] useEffect iniciado');
-    console.log('[ChapterView] courseId:', courseId, 'chapterId:', chapterId);
-    console.log('[ChapterView] NextAuth status:', status);
-    
-    // Aguardar NextAuth carregar
-    if (status === 'loading') {
-      console.log('[ChapterView] Aguardando NextAuth carregar...');
-      return;
-    }
-    
     let currentUser: User | null = null;
     
-    // Tentar NextAuth primeiro
+    // 1. Tentar NextAuth se autenticado
     if (status === 'authenticated' && session?.user) {
-      console.log('[ChapterView] Usuário autenticado via NextAuth:', session.user.email);
       currentUser = {
         id: (session.user as any)?.id || session.user.email || '',
         name: session.user.name || '',
@@ -129,25 +112,23 @@ export default function ChapterViewPage() {
         dueDate: (session.user as any)?.dueDate,
         createdAt: (session.user as any)?.createdAt || new Date().toISOString()
       };
-    }
-    
-    // Fallback para sistema customizado (se NextAuth falhar ou não estiver autenticado)
-    if (!currentUser) {
-      console.log('[ChapterView] NextAuth não disponível, tentando auth customizado');
+    } else {
+      // 2. Fallback imediato para auth local (não espera o NextAuth se já tiver login local)
       currentUser = auth.getCurrentUser();
-      console.log('[ChapterView] Usuário do auth customizado:', currentUser?.email);
     }
-    
+
+    // Se não temos nenhum usuário e NextAuth ainda está a verificar na rede, aguardar
+    if (!currentUser && status === 'loading') {
+      return;
+    }
+
     if (!currentUser) {
-      console.error('[ChapterView] Nenhum usuário encontrado, redirecionando para login');
       router.push('/login');
       return;
     }
-    
-    console.log('[ChapterView] Chamando loadCourseData com usuário:', currentUser.email);
+
     loadCourseData(currentUser);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [courseId, router, session, status]);
+  }, [courseId, router, session, status, loadCourseData]);
 
   const getCurrentChapter = () => {
     const chapterIndex = modules.findIndex(m => m.id === currentChapterId);

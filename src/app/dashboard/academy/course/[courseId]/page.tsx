@@ -1,115 +1,76 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { useSession } from 'next-auth/react';
-import { auth, User } from '@/lib/auth';
-import { dataManager, Course, Module } from '@/lib/data';
 import PageLoader from '@/components/PageLoader';
 
 export default function CourseRedirectPage() {
   const router = useRouter();
   const params = useParams();
-  const courseId = params.courseId as string;
-  const { data: session, status } = useSession();
-  const [loading, setLoading] = useState(true);
+  const courseId = params?.courseId as string;
 
   useEffect(() => {
-    console.log('[CourseRedirect] useEffect iniciado, status:', status);
-    // Aguardar NextAuth carregar
-    if (status === 'loading') {
-      console.log('[CourseRedirect] Aguardando NextAuth carregar...');
-      return;
-    }
-    
-    let currentUser: User | null = null;
-    
-    // Tentar NextAuth primeiro
-    if (status === 'authenticated' && session?.user) {
-      console.log('[CourseRedirect] Usuário autenticado via NextAuth:', session.user.email);
-      currentUser = {
-        id: (session.user as any)?.id || session.user.email || '',
-        name: session.user.name || '',
-        email: session.user.email || '',
-        plan: (session.user as any)?.plan || 'none',
-        status: (session.user as any)?.status || 'active',
-        role: (session.user as any)?.role || 'user',
-        avatar: session.user.image || undefined,
-        dueDate: (session.user as any)?.dueDate,
-        createdAt: (session.user as any)?.createdAt || new Date().toISOString()
-      };
-    }
-    
-    // Fallback para sistema customizado (se NextAuth falhar ou não estiver autenticado)
-    if (!currentUser) {
-      console.log('[CourseRedirect] NextAuth não disponível, tentando auth customizado');
-      currentUser = auth.getCurrentUser();
-      console.log('[CourseRedirect] Usuário do auth customizado:', currentUser?.email);
-    }
-    
-    if (!currentUser) {
-      console.error('[CourseRedirect] Nenhum usuário encontrado, redirecionando para login');
-      router.push('/login');
-      return;
-    }
-    
-    const loadAndRedirect = async () => {
-      console.log('[CourseRedirect] Iniciando redirecionamento para curso:', courseId);
-      
+    let isMounted = true;
+
+    async function redirect() {
       try {
-        // Limpar dados mockados do localStorage para garantir dados frescos do servidor
-        dataManager.clearAcademyData();
-        console.log('[CourseRedirect] Dados do localStorage limpos');
-        
-        // Buscar dados do servidor primeiro para garantir que temos os dados
-        console.log('[CourseRedirect] Buscando dados do servidor...');
-        await Promise.all([
-          dataManager.fetchCoursesAsync(),
-          dataManager.fetchModulesAsync()
-        ]);
-        console.log('[CourseRedirect] Dados do servidor buscados com sucesso');
-        
-        // Agora buscar módulos locais (atualizados do servidor)
-        let modules = dataManager.getModules(courseId).sort((a, b) => a.order - b.order);
-        console.log('[CourseRedirect] Módulos para courseId:', courseId, '-', modules.length);
-        
-        // Buscar o curso para verificar se é gratuito ou preview
-        const courseData = dataManager.getCourses().find(c => c.id === courseId);
-        console.log('[CourseRedirect] Dados do curso:', courseData?.title, 'Tipo:', courseData?.accessType, 'Aulas grátis:', courseData?.freeLessonsCount);
-        
-        // Se ainda não encontrar, buscar todos os módulos
-        if (modules.length === 0) {
-          console.log('[CourseRedirect] Nenhum módulo encontrado para courseId, buscando todos');
-          const allModules = dataManager.getModules();
-          console.log('[CourseRedirect] Total de módulos disponíveis:', allModules.length);
-          if (allModules.length > 0) {
-            modules = allModules.sort((a, b) => a.order - b.order);
-            console.log('[CourseRedirect] Usando todos os módulos:', modules.map(m => ({ id: m.id, courseId: m.courseId })));
+        console.log('[CourseRedirect] Redirecionando para o primeiro módulo do curso:', courseId);
+
+        // 1. Tentar buscar módulos diretamente pela API do curso
+        const res = await fetch(`/api/modules?courseId=${encodeURIComponent(courseId)}`, {
+          cache: 'no-store'
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.modules) && data.modules.length > 0) {
+            const sorted = data.modules.sort((a: any, b: any) => (a.order || 0) - (b.order || 0));
+            const targetModuleId = sorted[0].id;
+            console.log('[CourseRedirect] Redirecionando para:', targetModuleId);
+            if (isMounted) {
+              router.replace(`/dashboard/academy/course/${courseId}/chapter/${targetModuleId}`);
+              return;
+            }
           }
         }
-        
-        if (modules.length === 0) {
-          console.error('[CourseRedirect] Nenhum módulo encontrado, curso pode não existir');
-          router.push('/dashboard/academy');
-          return;
-        }
-        
-        const targetChapterId = modules[0].id;
-        console.log('[CourseRedirect] Redirecionando para capítulo:', targetChapterId);
-        console.log('[CourseRedirect] URL completa:', `/dashboard/academy/course/${courseId}/chapter/${targetChapterId}`);
-        router.replace(`/dashboard/academy/course/${courseId}/chapter/${targetChapterId}`);
-        setLoading(false);
-      } catch (error) {
-        console.error('[CourseRedirect] Erro em loadAndRedirect:', error);
-        setLoading(false);
-      }
-    };
 
-    loadAndRedirect();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // 2. Fallback: buscar todos os módulos
+        const allRes = await fetch('/api/modules', { cache: 'no-store' });
+        if (allRes.ok) {
+          const allData = await allRes.json();
+          if (Array.isArray(allData.modules) && allData.modules.length > 0) {
+            const matching = allData.modules
+              .filter((m: any) => m.courseId === courseId)
+              .sort((a: any, b: any) => (a.order || 0) - (b.order || 0));
+
+            const target = matching[0] || allData.modules[0];
+            if (target && isMounted) {
+              router.replace(`/dashboard/academy/course/${courseId}/chapter/${target.id}`);
+              return;
+            }
+          }
+        }
+
+        // Se não encontrar nenhum módulo, volta para a academia
+        if (isMounted) {
+          router.replace('/dashboard/academy');
+        }
+      } catch (err) {
+        console.error('[CourseRedirect] Erro ao buscar módulos:', err);
+        if (isMounted) {
+          router.replace('/dashboard/academy');
+        }
+      }
+    }
+
+    if (courseId) {
+      redirect();
+    }
+
+    return () => {
+      isMounted = false;
+    };
   }, [courseId, router]);
 
-  if (loading) return <PageLoader text="A carregar curso..." />;
-
-  return null;
+  return <PageLoader text="A carregar curso..." />;
 }
