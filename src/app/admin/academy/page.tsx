@@ -2196,7 +2196,14 @@ export default function AdminAcademyPage() {
                                 ✓ Pré-visualização do Vídeo (YouTube Embed Seguro)
                               </span>
                               <div className="aspect-video w-full rounded-lg overflow-hidden bg-black">
-                                <iframe src={embed.embedUrl} className="w-full h-full" allowFullScreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" />
+                                <iframe
+                                  src={embed.embedUrl}
+                                  className="w-full h-full border-0"
+                                  title="Pré-visualização do Vídeo"
+                                  allowFullScreen
+                                  referrerPolicy="strict-origin-when-cross-origin"
+                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                />
                               </div>
                             </div>
                           );
@@ -2395,7 +2402,14 @@ export default function AdminAcademyPage() {
                                 ✓ Pré-visualização do Vídeo (YouTube Embed Seguro)
                               </span>
                               <div className="aspect-video w-full rounded-lg overflow-hidden bg-black">
-                                <iframe src={embed.embedUrl} className="w-full h-full" allowFullScreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" />
+                                <iframe
+                                  src={embed.embedUrl}
+                                  className="w-full h-full border-0"
+                                  title="Pré-visualização do Vídeo"
+                                  allowFullScreen
+                                  referrerPolicy="strict-origin-when-cross-origin"
+                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                />
                               </div>
                             </div>
                           );

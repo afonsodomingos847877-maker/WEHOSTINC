@@ -55,7 +55,7 @@ const nextConfig = {
               "img-src 'self' data: https: blob: https://res.cloudinary.com",
               "font-src 'self' data: https://fonts.gstatic.com",
               "connect-src 'self' https://api.resend.com https://ipapi.co https://wehosthere.com https://res.cloudinary.com https://www.google-analytics.com https://analytics.google.com https://www.googletagmanager.com",
-              "frame-src 'self' blob: data: https://accounts.google.com https://www.googletagmanager.com",
+              "frame-src 'self' blob: data: https://accounts.google.com https://www.googletagmanager.com https://www.youtube.com https://youtube.com https://www.youtube-nocookie.com https://player.vimeo.com https://drive.google.com",
               "frame-ancestors 'self'",
               "base-uri 'self'",
               "form-action 'self' https://accounts.google.com",

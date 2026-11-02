@@ -641,8 +641,9 @@ export default function ChapterViewPage() {
                           ) : (
                             <iframe
                               src={videoEmbed.embedUrl}
-                              className="w-full h-full"
+                              className="w-full h-full border-0"
                               allowFullScreen
+                              referrerPolicy="strict-origin-when-cross-origin"
                               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                               title={currentLessonData.videoTitle || 'Vídeo da aula'}
                             />
