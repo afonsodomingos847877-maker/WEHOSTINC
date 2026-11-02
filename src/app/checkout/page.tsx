@@ -1359,17 +1359,9 @@ function CheckoutContent() {
                   A enviar pedido PUSH para o telemóvel <strong className="text-gray-900 font-mono">{phonePayment || whatsapp}</strong>
                 </p>
 
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4 text-left space-y-1.5 text-xs text-amber-900">
-                  <div className="flex items-center space-x-1.5 font-bold text-amber-900">
-                    <Clock className="w-4 h-4 text-amber-600 shrink-0" />
-                    <span>Tempo de resposta das operadoras:</span>
-                  </div>
-                  <p className="text-[11px] text-amber-800 leading-relaxed">
-                    A rede Vodacom M-Pesa leva habitualmente entre <strong>10 a 30 segundos</strong> a emitir a mensagem USSD no seu telemóvel.
-                  </p>
-                  <p className="text-[11px] text-amber-950 font-bold">
-                    💡 Mantenha o seu telemóvel desbloqueado.
-                  </p>
+                <div className="bg-amber-50 border border-amber-200 rounded-xl py-2 px-3 mb-3 flex items-center justify-center gap-1.5 text-amber-900 shadow-2xs">
+                  <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                  <span className="text-xs font-medium">Mantenha o telemóvel desbloqueado (10 a 30s)</span>
                 </div>
 
                 <div className="flex items-center justify-center space-x-2 text-xs text-gray-500 py-1">
