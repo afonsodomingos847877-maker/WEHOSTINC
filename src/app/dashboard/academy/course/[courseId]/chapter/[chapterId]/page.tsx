@@ -9,6 +9,7 @@ import { dataManager, Course, Module, Lesson, CourseProgress } from '@/lib/data'
 import BrandLogo from '@/components/BrandLogo';
 import PageLoader from '@/components/PageLoader';
 import Toast from '@/components/Toast';
+import { formatVideoEmbedUrl } from '@/lib/videoEmbed';
 
 export default function ChapterViewPage() {
   const router = useRouter();
@@ -626,24 +627,36 @@ export default function ChapterViewPage() {
                   </div>
 
                   {/* Video */}
-                  {currentLessonData.hasVideo && currentLessonData.videoUrl && (
-                    <div className="mb-8">
-                      <div className="aspect-video bg-gray-900 rounded-xl overflow-hidden shadow-md">
-                        <iframe
-                          src={currentLessonData.videoUrl}
-                          className="w-full h-full"
-                          allowFullScreen
-                          title={currentLessonData.videoTitle || 'Vídeo da aula'}
-                        />
+                  {currentLessonData.hasVideo && currentLessonData.videoUrl && (() => {
+                    const videoEmbed = formatVideoEmbedUrl(currentLessonData.videoUrl);
+                    return (
+                      <div className="mb-8">
+                        <div className="aspect-video bg-gray-950 rounded-2xl overflow-hidden shadow-xl border border-gray-800">
+                          {videoEmbed.type === 'video' ? (
+                            <video
+                              controls
+                              className="w-full h-full"
+                              src={videoEmbed.embedUrl}
+                            />
+                          ) : (
+                            <iframe
+                              src={videoEmbed.embedUrl}
+                              className="w-full h-full"
+                              allowFullScreen
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                              title={currentLessonData.videoTitle || 'Vídeo da aula'}
+                            />
+                          )}
+                        </div>
+                        {currentLessonData.videoTitle && (
+                          <h4 className="font-semibold text-gray-900 mt-3">{currentLessonData.videoTitle}</h4>
+                        )}
+                        {currentLessonData.videoDescription && (
+                          <p className="text-sm text-gray-600 mt-1">{currentLessonData.videoDescription}</p>
+                        )}
                       </div>
-                      {currentLessonData.videoTitle && (
-                        <h4 className="font-semibold text-gray-900 mt-3">{currentLessonData.videoTitle}</h4>
-                      )}
-                      {currentLessonData.videoDescription && (
-                        <p className="text-sm text-gray-600 mt-1">{currentLessonData.videoDescription}</p>
-                      )}
-                    </div>
-                  )}
+                    );
+                  })()}
 
                   {/* Content */}
                   <div className="prose prose-lg max-w-none mb-8">

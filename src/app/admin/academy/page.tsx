@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { formatVideoEmbedUrl } from '@/lib/videoEmbed';
 import { Plus, Edit, Trash2, Eye, BookOpen, DollarSign, Clock, ArrowLeft, Home, GraduationCap, Loader2, CheckCircle, XCircle, Save, X, CheckSquare, Upload, AlertTriangle } from 'lucide-react';
 
 interface Course {
@@ -1647,14 +1648,27 @@ export default function AdminAcademyPage() {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">URL do Vídeo</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">URL do Vídeo (YouTube, Vimeo, MP4)</label>
                         <input
                           type="url"
                           value={formData.videoUrl}
                           onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                          placeholder="https://youtube.com/..."
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                          placeholder="Ex: https://www.youtube.com/watch?v=... ou https://youtu.be/..."
                         />
+                        {formData.videoUrl && (() => {
+                          const embed = formatVideoEmbedUrl(formData.videoUrl);
+                          return (
+                            <div className="mt-2.5 p-3 bg-gray-900 rounded-xl border border-gray-700">
+                              <span className="text-[11px] font-bold text-emerald-400 block mb-1.5 flex items-center gap-1">
+                                ✓ Pré-visualização do Vídeo (YouTube Embed Seguro)
+                              </span>
+                              <div className="aspect-video w-full rounded-lg overflow-hidden bg-black">
+                                <iframe src={embed.embedUrl} className="w-full h-full" allowFullScreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" />
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Descrição do Vídeo</label>
@@ -1833,14 +1847,27 @@ export default function AdminAcademyPage() {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">URL do Vídeo</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">URL do Vídeo (YouTube, Vimeo, MP4)</label>
                         <input
                           type="url"
                           value={formData.videoUrl}
                           onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                          placeholder="https://youtube.com/..."
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                          placeholder="Ex: https://www.youtube.com/watch?v=... ou https://youtu.be/..."
                         />
+                        {formData.videoUrl && (() => {
+                          const embed = formatVideoEmbedUrl(formData.videoUrl);
+                          return (
+                            <div className="mt-2.5 p-3 bg-gray-900 rounded-xl border border-gray-700">
+                              <span className="text-[11px] font-bold text-emerald-400 block mb-1.5 flex items-center gap-1">
+                                ✓ Pré-visualização do Vídeo (YouTube Embed Seguro)
+                              </span>
+                              <div className="aspect-video w-full rounded-lg overflow-hidden bg-black">
+                                <iframe src={embed.embedUrl} className="w-full h-full" allowFullScreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" />
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Descrição do Vídeo</label>
