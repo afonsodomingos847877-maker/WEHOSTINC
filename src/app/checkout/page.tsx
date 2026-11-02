@@ -1345,28 +1345,23 @@ function CheckoutContent() {
           <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-5 sm:p-6 text-center border border-gray-100 animate-in fade-in zoom-in duration-200">
             {pushStatus === 'initiating' ? (
               <div className="py-2">
-                <div className="relative w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                <div className="relative w-14 h-14 mx-auto mb-3 flex items-center justify-center">
                   <div className="absolute inset-0 bg-red-100 rounded-full animate-ping opacity-75"></div>
-                  <div className="relative w-14 h-14 bg-gradient-to-tr from-red-600 to-rose-500 text-white rounded-full flex items-center justify-center shadow-lg">
-                    <Smartphone className="h-7 w-7 animate-pulse" />
+                  <div className="relative w-12 h-12 bg-gradient-to-tr from-red-600 to-rose-500 text-white rounded-full flex items-center justify-center shadow-md">
+                    <Smartphone className="h-6 w-6 animate-pulse" />
                   </div>
                 </div>
 
-                <h3 id="modal-title" className="text-lg font-bold text-gray-900 mb-1">
-                  A Contactar a Rede M-Pesa...
+                <h3 id="modal-title" className="text-base sm:text-lg font-bold text-gray-900 leading-tight">
+                  A Enviar Pedido M-Pesa
                 </h3>
-                <p className="text-xs text-gray-600 mb-3">
-                  A enviar pedido PUSH para o telemóvel <strong className="text-gray-900 font-mono">{phonePayment || whatsapp}</strong>
+                <p className="text-xs text-gray-500 font-mono mt-0.5">
+                  {phonePayment || whatsapp}
                 </p>
 
-                <div className="bg-amber-50 border border-amber-200 rounded-xl py-2 px-3 mb-3 flex items-center justify-center gap-1.5 text-amber-900 shadow-2xs">
-                  <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                  <span className="text-xs font-medium">Mantenha o telemóvel desbloqueado (10 a 30s)</span>
-                </div>
-
-                <div className="flex items-center justify-center space-x-2 text-xs text-gray-500 py-1">
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-red-600 border-t-transparent"></div>
-                  <span>Aguardando sinal da rede Vodacom...</span>
+                <div className="my-3.5 py-2 px-3 bg-amber-50/80 border border-amber-200/80 rounded-xl text-xs text-amber-900 flex items-center justify-center gap-2">
+                  <div className="animate-spin rounded-full h-3.5 w-3.5 border-2 border-amber-600 border-t-transparent shrink-0"></div>
+                  <span className="font-medium text-[11px] sm:text-xs">Mantenha o ecrã desbloqueado</span>
                 </div>
 
                 <button
@@ -1375,13 +1370,13 @@ function CheckoutContent() {
                     setPushModal(false);
                     setLoading(false);
                   }}
-                  className="mt-3 w-full py-1.5 text-xs text-gray-400 hover:text-gray-700 transition cursor-pointer"
+                  className="w-full py-1 text-xs text-gray-400 hover:text-gray-700 transition cursor-pointer"
                 >
                   Cancelar
                 </button>
               </div>
             ) : pushStatus === 'waiting' ? (
-              <>
+              <div className="py-2">
                 <div className="relative w-14 h-14 mx-auto mb-3 flex items-center justify-center">
                   <div className="absolute inset-0 bg-red-100 rounded-full animate-ping opacity-75"></div>
                   <div className="relative w-12 h-12 bg-red-600 text-white rounded-full flex items-center justify-center shadow-md">
@@ -1389,16 +1384,12 @@ function CheckoutContent() {
                   </div>
                 </div>
 
-                <h3 id="modal-title" className="text-lg font-bold text-gray-900 mb-1">
-                  Autorize no seu Telemóvel
+                <h3 id="modal-title" className="text-base sm:text-lg font-bold text-gray-900 leading-tight">
+                  Introduza o PIN
                 </h3>
-                <p className="text-xs text-gray-500 mb-3">
-                  Insira o PIN no telemóvel <span className="font-semibold text-gray-800">{ddi} {phonePayment || whatsapp}</span>
+                <p className="text-xs text-gray-500 font-mono mt-0.5 mb-3">
+                  {phonePayment || whatsapp} • <strong className="text-gray-900">{grandTotal.toLocaleString('pt-MZ')} MT</strong>
                 </p>
-
-                <div className="bg-gray-50 border border-gray-200/80 rounded-xl py-2 px-3 mb-4 text-xs text-gray-700 font-medium">
-                  Confirmar valor de: <strong className="text-gray-900 font-bold">{grandTotal.toLocaleString('pt-MZ')} MT</strong>
-                </div>
 
                 <div className="mb-4">
                   <div className="text-2xl font-mono font-bold text-gray-800 tracking-wider">
@@ -1412,7 +1403,7 @@ function CheckoutContent() {
                   </div>
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <button
                     type="button"
                     onClick={() => setIsPollingPayment(true)}
@@ -1422,10 +1413,10 @@ function CheckoutContent() {
                     {isPollingPayment ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                        <span>A verificar pagamento...</span>
+                        <span>A verificar...</span>
                       </>
                     ) : (
-                      <span>Já confirmei o PIN (Verificar)</span>
+                      <span>Já confirmei o PIN</span>
                     )}
                   </button>
                   <button
@@ -1435,12 +1426,12 @@ function CheckoutContent() {
                       setIsPollingPayment(false);
                       setLoading(false);
                     }}
-                    className="w-full py-1.5 text-xs text-gray-400 hover:text-gray-700 transition"
+                    className="w-full py-1 text-xs text-gray-400 hover:text-gray-700 transition"
                   >
-                    Cancelar ou Alterar número
+                    Cancelar
                   </button>
                 </div>
-              </>
+              </div>
             ) : (
               <>
                 <div className="w-12 h-12 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto mb-3 border border-red-100">
