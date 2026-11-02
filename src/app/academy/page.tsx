@@ -409,31 +409,34 @@ export default function PublicAcademyPage() {
         </div>
       </section>
 
-      {/* CERTIFICATION PREVIEW */}
+      {/* CERTIFICATION PREVIEW — Azul Oficial Branding WEHOSTHERE */}
       <section id="certificacao" className="py-16 sm:py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-gradient-to-br from-emerald-900 via-primary-950 to-slate-950 text-white rounded-3xl p-8 sm:p-12 border border-emerald-500/20 shadow-2xl flex flex-col lg:flex-row items-center gap-10">
-          <div className="space-y-4 flex-1">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold uppercase">
-              <Award className="w-4 h-4" />
+        <div className="bg-gradient-to-br from-[#075985] via-[#0369a1] to-[#0c4a6e] text-white rounded-3xl p-8 sm:p-12 border border-sky-400/30 shadow-[0_20px_60px_-15px_rgba(2,132,199,0.35)] flex flex-col lg:flex-row items-center gap-10 relative overflow-hidden">
+          {/* Subtle glow effect */}
+          <div className="absolute top-0 right-1/4 w-96 h-96 bg-sky-400/10 rounded-full blur-3xl pointer-events-none" />
+
+          <div className="space-y-4 flex-1 relative z-10">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 text-sky-200 border border-white/20 backdrop-blur-xs text-xs font-bold uppercase tracking-wider">
+              <Award className="w-4 h-4 text-sky-300" />
               Certificado Oficial WEHOSTHERE
             </span>
-            <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
+            <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white">
               Valoriza o Teu Currículo com Certificação Autêntica
             </h2>
-            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+            <p className="text-xs sm:text-sm text-sky-100 leading-relaxed">
               Ao concluir o curso, recebes o teu <strong>Certificado Oficial em PDF</strong> autenticado:
             </p>
-            <ul className="space-y-2 text-xs sm:text-sm text-slate-200">
+            <ul className="space-y-2 text-xs sm:text-sm text-sky-50">
               <li className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <CheckCircle2 className="w-4 h-4 text-sky-300 shrink-0" />
                 <span>Código único de autenticidade rastreável</span>
               </li>
               <li className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <CheckCircle2 className="w-4 h-4 text-sky-300 shrink-0" />
                 <span>Validação online instantânea por QR Code</span>
               </li>
               <li className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <CheckCircle2 className="w-4 h-4 text-sky-300 shrink-0" />
                 <span>Carga horária e competências descritas</span>
               </li>
             </ul>
@@ -441,7 +444,7 @@ export default function PublicAcademyPage() {
             <div className="pt-2">
               <Link
                 href="/verify-certificate"
-                className="inline-flex items-center gap-2 text-xs font-bold text-emerald-400 hover:text-emerald-300 underline underline-offset-4"
+                className="inline-flex items-center gap-2 text-xs font-bold text-sky-200 hover:text-white underline underline-offset-4 transition"
               >
                 <span>Testar Validador Público de Certificados →</span>
               </Link>
@@ -449,17 +452,17 @@ export default function PublicAcademyPage() {
           </div>
 
           {/* Certificate mock preview */}
-          <div className="w-full lg:w-96 shrink-0 bg-white text-slate-900 rounded-2xl p-6 shadow-2xl border-4 border-amber-400/40 transform rotate-1 hover:rotate-0 transition duration-300">
+          <div className="w-full lg:w-96 shrink-0 bg-white text-slate-900 rounded-2xl p-6 shadow-2xl border-4 border-amber-400/40 transform rotate-1 hover:rotate-0 transition duration-300 relative z-10">
             <div className="border border-slate-200 p-4 rounded-xl text-center">
               <div className="text-[10px] tracking-widest text-slate-400 uppercase font-black">WEHOSTHERE ACADEMY</div>
               <h4 className="text-base font-black text-primary-950 mt-1">CERTIFICADO DE CONCLUSÃO</h4>
               <p className="text-[11px] text-slate-600 mt-2">Certificamos com distinção que</p>
               <p className="text-sm font-black text-slate-900 border-b border-slate-200 pb-1 mt-1 font-serif">Afonso Domingos</p>
               <p className="text-[10px] text-slate-500 mt-2">concluiu com êxito a formação em</p>
-              <p className="text-xs font-extrabold text-emerald-700">Criação de Páginas de Vendas Profissionais</p>
+              <p className="text-xs font-extrabold text-primary-700">Criação de Páginas de Vendas Profissionais</p>
               <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[9px] text-slate-400">
                 <span>Cod: WH-2026-9915</span>
-                <span className="text-emerald-700 font-bold">100% VÁLIDO</span>
+                <span className="text-primary-700 font-bold bg-sky-50 px-1.5 py-0.5 rounded border border-sky-200">100% VÁLIDO</span>
               </div>
             </div>
           </div>
