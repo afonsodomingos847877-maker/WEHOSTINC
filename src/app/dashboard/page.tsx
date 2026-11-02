@@ -539,7 +539,7 @@ export default function DashboardPage() {
               <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-900/90 to-primary-950/80" />
 
               <div className="relative z-10">
-                <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-1 sm:mb-2">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
                   <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white">{t('dash.welcome_title')}, {user.name}!</h1>
                   <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] sm:text-xs font-extrabold uppercase tracking-wider ${
                     user.plan === 'enterprise' ? 'bg-purple-500/25 text-purple-200 border border-purple-400/40 shadow-sm' :
@@ -551,9 +551,6 @@ export default function DashboardPage() {
                     <span>Plano {planInfo.name}</span>
                   </span>
                 </div>
-                <p className="text-slate-300/80 mb-3 sm:mb-4 text-xs sm:text-sm max-w-xl font-medium">
-                  {t('dash.welcome_subtitle')}
-                </p>
               <div className="flex flex-wrap gap-2 sm:gap-3">
                 <Link
                   href="/dashboard/sites"
