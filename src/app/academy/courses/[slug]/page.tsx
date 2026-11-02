@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { 
   BookOpen, Clock, Award, ShieldCheck, CheckCircle2, Play, Sparkles, 
   Lock, Star, Users, ArrowRight, ArrowLeft, ChevronDown, 
-  ChevronUp, Zap, HelpCircle, FileText, Video, Smartphone
+  ChevronUp, Zap, HelpCircle, FileText, Video, Smartphone, Tag, Ticket
 } from 'lucide-react';
 import AcademyNavbar from '@/components/academy/AcademyNavbar';
 import AcademyFooter from '@/components/academy/AcademyFooter';
@@ -66,6 +66,46 @@ export default function CourseDetailsPage() {
   const [openModules, setOpenModules] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+
+  // Cupom de Desconto na Página do Curso
+  const [couponCode, setCouponCode] = useState('');
+  const [showCouponInput, setShowCouponInput] = useState(false);
+  const [validatingCoupon, setValidatingCoupon] = useState(false);
+  const [couponError, setCouponError] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    code: string;
+    discountType: 'percentage' | 'fixed';
+    discountValue: number;
+    discountAmount: number;
+    finalAmount: number;
+  } | null>(null);
+
+  const handleApplyCourseCoupon = async () => {
+    if (!couponCode.trim() || !course) return;
+    setValidatingCoupon(true);
+    setCouponError('');
+    try {
+      const coursePrice = course.price || 199;
+      const res = await fetch(`/api/academy/coupons?code=${encodeURIComponent(couponCode.trim().toUpperCase())}&amount=${coursePrice}&courseId=${encodeURIComponent(course.id)}`);
+      const data = await res.json();
+      if (data.valid) {
+        setAppliedCoupon({
+          code: data.code,
+          discountType: data.discountType,
+          discountValue: data.discountValue,
+          discountAmount: data.discountAmount,
+          finalAmount: data.finalAmount
+        });
+        setCouponError('');
+      } else {
+        setCouponError(data.message || 'Cupom inválido ou expirado.');
+      }
+    } catch (e: any) {
+      setCouponError('Erro ao validar cupom.');
+    } finally {
+      setValidatingCoupon(false);
+    }
+  };
 
   useEffect(() => {
     async function fetchCourseDetails() {
@@ -156,7 +196,10 @@ export default function CourseDetailsPage() {
     );
   }
 
-  const checkoutUrl = `/checkout?service=course&courseId=${course.id}&name=${encodeURIComponent(course.title)}&amount=${course.price || 199}`;
+  const currentPrice = appliedCoupon ? appliedCoupon.finalAmount : (course?.price || 199);
+  const checkoutUrl = course 
+    ? `/checkout?service=course&courseId=${course.id}&name=${encodeURIComponent(course.title)}&amount=${currentPrice}${appliedCoupon ? `&coupon=${appliedCoupon.code}` : ''}`
+    : '#';
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
@@ -255,31 +298,118 @@ export default function CourseDetailsPage() {
               </div>
 
               {/* Price Row */}
-              <div className="mb-5">
+              <div className="mb-4">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Preço Promocional</span>
-                <div className="flex items-baseline gap-2.5">
-                  <span className="text-3xl font-black text-slate-950">
-                    {(course.price || 199).toLocaleString('pt-MZ')} <span className="text-base font-bold text-emerald-600">MT</span>
-                  </span>
-                  {course.originalPrice && (
-                    <span className="text-sm text-slate-400 line-through">
-                      {course.originalPrice.toLocaleString('pt-MZ')} MT
-                    </span>
+                <div className="flex items-baseline gap-2.5 flex-wrap">
+                  {appliedCoupon ? (
+                    <>
+                      <span className="text-3xl font-black text-emerald-600">
+                        {appliedCoupon.finalAmount.toLocaleString('pt-MZ')} <span className="text-base font-bold">MT</span>
+                      </span>
+                      <span className="text-sm text-slate-400 line-through font-bold">
+                        {(course.price || 199).toLocaleString('pt-MZ')} MT
+                      </span>
+                      <span className="text-xs font-bold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full border border-emerald-300">
+                        Cupom -{appliedCoupon.discountAmount} MT
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-3xl font-black text-slate-950">
+                        {(course.price || 199).toLocaleString('pt-MZ')} <span className="text-base font-bold text-emerald-600">MT</span>
+                      </span>
+                      {course.originalPrice && (
+                        <span className="text-sm text-slate-400 line-through">
+                          {course.originalPrice.toLocaleString('pt-MZ')} MT
+                        </span>
+                      )}
+                      <span className="ml-auto text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                        -60% OFF
+                      </span>
+                    </>
                   )}
-                  <span className="ml-auto text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                    -60% OFF
-                  </span>
                 </div>
               </div>
 
-              {/* Primary CTA: Buy Now without login */}
+              {/* Cupom de Desconto Interativo no Card do Curso */}
+              <div className="mb-4 pt-3 border-t border-slate-100">
+                {!appliedCoupon ? (
+                  <div>
+                    {!showCouponInput ? (
+                      <button
+                        type="button"
+                        onClick={() => setShowCouponInput(true)}
+                        className="text-xs font-bold text-emerald-700 hover:text-emerald-800 inline-flex items-center gap-1.5 transition cursor-pointer"
+                      >
+                        <Tag className="w-3.5 h-3.5" />
+                        <span>Tem um cupom de desconto? Inserir aqui</span>
+                      </button>
+                    ) : (
+                      <div className="space-y-1.5 animate-in fade-in duration-150">
+                        <div className="flex gap-1.5">
+                          <input
+                            type="text"
+                            placeholder="Código (ex: IA2026)"
+                            value={couponCode}
+                            onChange={(e) => {
+                              setCouponCode(e.target.value.toUpperCase().replace(/\s+/g, ''));
+                              setCouponError('');
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleApplyCourseCoupon();
+                              }
+                            }}
+                            className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 focus:border-emerald-500 rounded-xl text-xs font-mono font-bold uppercase tracking-wider outline-hidden"
+                          />
+                          <button
+                            type="button"
+                            onClick={handleApplyCourseCoupon}
+                            disabled={validatingCoupon || !couponCode.trim()}
+                            className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-bold rounded-xl transition cursor-pointer shrink-0"
+                          >
+                            {validatingCoupon ? 'A validar...' : 'Aplicar'}
+                          </button>
+                        </div>
+                        {couponError && (
+                          <p className="text-[11px] text-rose-600 font-semibold">{couponError}</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-xs animate-in zoom-in-95 duration-150">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <div>
+                        <span className="font-bold text-emerald-950 font-mono">{appliedCoupon.code}</span>
+                        <span className="text-emerald-700 font-semibold ml-1.5">(-{appliedCoupon.discountAmount} MT)</span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAppliedCoupon(null);
+                        setCouponCode('');
+                        setCouponError('');
+                      }}
+                      className="text-[11px] text-slate-400 hover:text-rose-600 font-bold transition cursor-pointer"
+                    >
+                      Remover
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Primary CTA: Buy Now with dynamic discounted price */}
               <div className="space-y-3">
                 <Link
                   href={checkoutUrl}
                   className="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-2xl shadow-lg transition flex items-center justify-center gap-2 text-sm cursor-pointer"
                 >
                   <Zap className="w-4 h-4 fill-current" />
-                  <span>Comprar Curso por {(course.price || 199).toLocaleString('pt-MZ')} MT</span>
+                  <span>Comprar Curso por {currentPrice.toLocaleString('pt-MZ')} MT</span>
                 </Link>
 
                 <p className="text-[11px] text-center text-slate-500">

@@ -220,7 +220,7 @@ function CheckoutContent() {
     : (isAffiliateVerification ? verificationAmount : (basePrice + domainCost));
 
   // Coupon state
-  const [couponInput, setCouponInput] = useState('');
+  const [couponInput, setCouponInput] = useState(searchParams.get('coupon') || '');
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponError, setCouponError] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<{
@@ -266,6 +266,32 @@ function CheckoutContent() {
     setCouponInput('');
     setCouponError('');
   };
+
+  // Auto-apply coupon passed in URL query param (?coupon=CODE)
+  useEffect(() => {
+    const urlCoupon = searchParams.get('coupon');
+    if (urlCoupon && rawTotal > 0 && !appliedCoupon) {
+      const autoValidate = async () => {
+        try {
+          const courseIdToValidate = isCoursePayment ? (courseIdParam || '') : '';
+          const res = await fetch(`/api/academy/coupons?code=${encodeURIComponent(urlCoupon.trim().toUpperCase())}&amount=${rawTotal}&courseId=${encodeURIComponent(courseIdToValidate)}`);
+          const data = await res.json();
+          if (data.valid) {
+            setAppliedCoupon({
+              code: data.code,
+              discountType: data.discountType,
+              discountValue: data.discountValue,
+              discountAmount: data.discountAmount,
+              finalAmount: data.finalAmount
+            });
+            setCouponInput(data.code);
+            setCouponError('');
+          }
+        } catch (_) {}
+      };
+      autoValidate();
+    }
+  }, [searchParams, rawTotal, isCoursePayment, courseIdParam]);
 
   useEffect(() => {
     const user = auth.getCurrentUser();
