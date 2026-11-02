@@ -426,21 +426,19 @@ export default function DashboardPage() {
           <div className="lg:col-span-3 space-y-4 sm:space-y-6">
             {/* Banner de Status Pendente - Só mostra se não tiver plano ativo E não tiver sites/emails */}
             {user.status === 'pending' && user.plan === 'none' && siteCount === 0 && emailCount === 0 && (
-              <div className="bg-amber-50 border-2 border-amber-300 rounded-xl sm:rounded-2xl p-3 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 text-amber-900 shadow-sm">
-                <div className="flex items-start gap-2 sm:gap-3">
-                  <span className="text-xl sm:text-2xl">⏳</span>
-                  <div>
-                    <h3 className="font-bold text-amber-950 text-xs sm:text-base">Conta Registada (Aguardando Escolha de Plano)</h3>
-                    <p className="text-[10px] sm:text-sm text-amber-800 mt-0.5">
-                      O seu registo foi concluído com sucesso! Para escolher o seu plano de hospedagem e serviços, aceda à área de Faturamento.
-                    </p>
+              <div className="bg-amber-50/90 border border-amber-300/80 rounded-xl p-2.5 sm:p-3.5 flex items-center justify-between gap-2.5 text-amber-950 shadow-sm">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-base sm:text-lg flex-shrink-0">⏳</span>
+                  <div className="min-w-0">
+                    <h3 className="font-bold text-xs sm:text-sm text-amber-950 truncate">Ative a sua hospedagem</h3>
+                    <p className="text-[11px] text-amber-800 hidden sm:block">Aceda à faturação para escolher o seu plano.</p>
                   </div>
                 </div>
                 <Link
                   href="/dashboard/billing"
-                  className="px-3 sm:px-4 py-2 sm:py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-bold whitespace-nowrap shadow transition"
+                  className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-[11px] sm:text-xs font-bold whitespace-nowrap shadow-sm transition flex-shrink-0"
                 >
-                  Escolher Plano em Faturamento →
+                  Ver Planos →
                 </Link>
               </div>
             )}
@@ -468,30 +466,30 @@ export default function DashboardPage() {
 
             {/* Banner de Incentivo para Ativar Notificações Push */}
             {showPushBanner && (
-              <div className="bg-blue-50 border-2 border-blue-300 rounded-xl sm:rounded-2xl p-3 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 text-blue-900 shadow-sm">
-                <div className="flex items-start gap-2 sm:gap-3">
-                  <div className="bg-blue-100 p-2 rounded-lg">
-                    <Bell className="h-5 w-5 text-blue-600" />
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-2.5 sm:p-3.5 flex items-center justify-between gap-2.5 text-blue-950 shadow-sm">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="bg-blue-100 p-1.5 rounded-lg flex-shrink-0">
+                    <Bell className="h-4 w-4 text-blue-600" />
                   </div>
-                  <div>
-                    <h3 className="font-bold text-blue-950 text-xs sm:text-base">{t('dash.push_title')}</h3>
-                    <p className="text-[10px] sm:text-sm text-blue-800 mt-0.5">
+                  <div className="min-w-0">
+                    <h3 className="font-bold text-xs sm:text-sm text-blue-950 truncate">{t('dash.push_title')}</h3>
+                    <p className="text-[11px] text-blue-800 hidden sm:block truncate">
                       {t('dash.push_desc')}
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 flex-shrink-0">
                   <button
                     onClick={handleActivatePush}
-                    className="px-3 sm:px-4 py-2 sm:py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-bold whitespace-nowrap shadow transition cursor-pointer"
+                    className="px-2.5 sm:px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[11px] sm:text-xs font-bold whitespace-nowrap shadow-sm transition cursor-pointer"
                   >
                     {t('dash.push_btn')}
                   </button>
                   <button
                     onClick={handleDismissPushBanner}
-                    className="p-2 hover:bg-blue-200 rounded-lg transition cursor-pointer"
+                    className="p-1 hover:bg-blue-200 rounded-lg transition cursor-pointer text-blue-600"
                   >
-                    <X className="h-4 w-4 text-blue-600" />
+                    <X className="h-3.5 w-3.5" />
                   </button>
                 </div>
               </div>
@@ -499,34 +497,34 @@ export default function DashboardPage() {
 
             {/* Banner de Instalação PWA */}
             {showPWAInstallBanner && (
-              <div className="bg-purple-50 border-2 border-purple-300 rounded-xl sm:rounded-2xl p-3 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 text-purple-900 shadow-sm">
-                <div className="flex items-start gap-3">
-                  <div className="w-11 h-11 sm:w-12 sm:h-12 flex-shrink-0 bg-white rounded-xl p-1 shadow-sm border border-purple-200 flex items-center justify-center">
+              <div className="bg-purple-50 border border-purple-200 rounded-xl p-2.5 sm:p-3.5 flex items-center justify-between gap-2.5 text-purple-950 shadow-sm">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-8 h-8 flex-shrink-0 bg-white rounded-lg p-0.5 shadow-sm border border-purple-200 flex items-center justify-center">
                     <img 
                       src="/mascote-transparent.png" 
                       alt="WEHOSTHERE App" 
-                      className="w-9 h-9 sm:w-10 sm:h-10 object-contain drop-shadow" 
+                      className="w-6 h-6 object-contain drop-shadow" 
                     />
                   </div>
-                  <div>
-                    <h3 className="font-bold text-purple-950 text-xs sm:text-base">{t('dash.pwa_title')}</h3>
-                    <p className="text-[10px] sm:text-sm text-purple-800 mt-0.5">
+                  <div className="min-w-0">
+                    <h3 className="font-bold text-xs sm:text-sm text-purple-950 truncate">{t('dash.pwa_title')}</h3>
+                    <p className="text-[11px] text-purple-800 hidden sm:block truncate">
                       {t('dash.pwa_desc')}
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 flex-shrink-0">
                   <button
                     onClick={handleInstallPWA}
-                    className="px-3 sm:px-4 py-2 sm:py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-bold whitespace-nowrap shadow transition cursor-pointer"
+                    className="px-2.5 sm:px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-[11px] sm:text-xs font-bold whitespace-nowrap shadow-sm transition cursor-pointer"
                   >
                     {t('dash.pwa_btn')}
                   </button>
                   <button
                     onClick={handleDismissPWAInstallBanner}
-                    className="p-2 hover:bg-purple-200 rounded-lg transition cursor-pointer"
+                    className="p-1 hover:bg-purple-200 rounded-lg transition cursor-pointer text-purple-600"
                   >
-                    <X className="h-4 w-4 text-purple-600" />
+                    <X className="h-3.5 w-3.5" />
                   </button>
                 </div>
               </div>
@@ -553,7 +551,7 @@ export default function DashboardPage() {
                     <span>Plano {planInfo.name}</span>
                   </span>
                 </div>
-                <p className="text-slate-300 mb-4 sm:mb-6 text-xs sm:text-sm md:text-base max-w-xl font-medium">
+                <p className="text-slate-300/80 mb-3 sm:mb-4 text-xs sm:text-sm max-w-xl font-medium">
                   {t('dash.welcome_subtitle')}
                 </p>
               <div className="flex flex-wrap gap-2 sm:gap-3">
