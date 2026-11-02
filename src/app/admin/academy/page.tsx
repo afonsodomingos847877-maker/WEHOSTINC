@@ -1452,10 +1452,10 @@ export default function AdminAcademyPage() {
                   <table className="w-full min-w-[900px]">
                     <thead className="bg-gray-50 border-b border-gray-200">
                       <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-10">
+                        <th className="px-4 py-3 text-center text-xs font-bold text-gray-400 uppercase tracking-wider w-12">
                           <input
                             type="checkbox"
-                            checked={modules.filter(m => {
+                            checked={modules.length > 0 && modules.filter(m => {
                               const matchesSearch = m.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                                                     m.description.toLowerCase().includes(searchTerm.toLowerCase());
                               const matchesCourse = selectedCourseFilter === 'all' || m.courseId === selectedCourseFilter;
@@ -1465,12 +1465,12 @@ export default function AdminAcademyPage() {
                             className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                           />
                         </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Módulo</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Curso</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Objetivo</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Conteúdo</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-wider w-[30%] min-w-[220px]">Módulo</th>
+                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-wider w-[25%] min-w-[200px]">Curso</th>
+                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-wider w-[25%] min-w-[200px]">Objetivo</th>
+                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-wider w-28 min-w-[100px]">Conteúdo</th>
+                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-wider w-24 min-w-[90px]">Status</th>
+                        <th className="px-4 py-3 text-right text-xs font-bold text-gray-400 uppercase tracking-wider w-24 min-w-[90px]">Ações</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
@@ -1482,55 +1482,74 @@ export default function AdminAcademyPage() {
                       }).map((module) => {
                         const course = courses.find(c => c.id === module.courseId);
                         return (
-                          <tr key={module.id} className="hover:bg-gray-50 transition">
-                            <td className="px-4 py-3">
+                          <tr key={module.id} className="hover:bg-gray-50/80 transition">
+                            <td className="px-4 py-3.5 text-center">
                               <input
                                 type="checkbox"
                                 checked={selectedModules.has(module.id)}
                                 onChange={() => handleToggleModule(module.id)}
-                                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"
                               />
                             </td>
-                            <td className="px-4 py-3">
-                              <p className="font-medium text-gray-900 text-sm">{module.title}</p>
-                              <p className="text-xs text-gray-500 truncate">{module.description}</p>
+                            <td className="px-4 py-3.5">
+                              <p className="font-bold text-gray-900 text-sm">{module.title}</p>
+                              {module.description && (
+                                <p className="text-xs text-gray-500 line-clamp-2 mt-0.5 leading-relaxed" title={module.description}>
+                                  {module.description}
+                                </p>
+                              )}
                             </td>
-                            <td className="px-4 py-3 text-xs text-gray-600">
-                              {course?.title || 'N/A'}
+                            <td className="px-4 py-3.5">
+                              <div className="min-w-[180px]">
+                                <span className="font-semibold text-gray-800 text-xs line-clamp-2 leading-relaxed" title={course?.title}>
+                                  {course?.title || '—'}
+                                </span>
+                              </div>
                             </td>
-                            <td className="px-4 py-3 text-xs text-gray-600 truncate max-w-xs">
-                              {module.objective}
+                            <td className="px-4 py-3.5">
+                              <div className="min-w-[180px]">
+                                <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed" title={module.objective}>
+                                  {module.objective || '—'}
+                                </p>
+                              </div>
                             </td>
-                            <td className="px-4 py-3">
+                            <td className="px-4 py-3.5 whitespace-nowrap">
                               <div className="flex flex-wrap gap-1">
-                                {module.hasVideo && (
-                                  <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-xs">Vídeo</span>
-                                )}
-                                {module.hasMaterial && (
-                                  <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs">Material</span>
+                                {module.hasVideo ? (
+                                  <span className="bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-md text-xs font-semibold">
+                                    🎥 Vídeo
+                                  </span>
+                                ) : null}
+                                {module.hasMaterial ? (
+                                  <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-md text-xs font-semibold">
+                                    📄 Material
+                                  </span>
+                                ) : null}
+                                {!module.hasVideo && !module.hasMaterial && (
+                                  <span className="text-gray-400 text-xs">Texto</span>
                                 )}
                               </div>
                             </td>
-                            <td className="px-4 py-3">
-                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            <td className="px-4 py-3.5 whitespace-nowrap">
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
                                 module.active ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'
                               }`}>
-                                {module.active ? 'Ativo' : 'Inativo'}
+                                {module.active ? '✓ Ativo' : '✕ Inativo'}
                               </span>
                             </td>
-                            <td className="px-4 py-3 text-right">
+                            <td className="px-4 py-3.5 text-right whitespace-nowrap">
                               <div className="flex items-center justify-end space-x-1">
                                 <button
                                   onClick={() => handleEdit(module, 'module')}
                                   className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition"
-                                  title="Editar"
+                                  title="Editar Módulo"
                                 >
                                   <Edit className="h-3.5 w-3.5" />
                                 </button>
                                 <button
                                   onClick={() => handleDelete(module.id, 'module')}
                                   className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition"
-                                  title="Excluir"
+                                  title="Excluir Módulo"
                                 >
                                   <Trash2 className="h-3.5 w-3.5" />
                                 </button>
@@ -1561,10 +1580,10 @@ export default function AdminAcademyPage() {
                   <table className="w-full min-w-[900px]">
                     <thead className="bg-gray-50 border-b border-gray-200">
                       <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-10">
+                        <th className="px-4 py-3 text-center text-xs font-bold text-gray-400 uppercase tracking-wider w-12">
                           <input
                             type="checkbox"
-                            checked={lessons.filter(l => {
+                            checked={lessons.length > 0 && lessons.filter(l => {
                               const matchesSearch = l.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                                                     l.content.toLowerCase().includes(searchTerm.toLowerCase());
                               const matchesModule = selectedModuleFilter === 'all' || l.moduleId === selectedModuleFilter;
@@ -1574,11 +1593,11 @@ export default function AdminAcademyPage() {
                             className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                           />
                         </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lição</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Módulo</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Conteúdo</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-wider w-[35%] min-w-[220px]">Lição</th>
+                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-wider w-[28%] min-w-[200px]">Módulo & Curso</th>
+                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-wider w-28 min-w-[100px]">Conteúdo</th>
+                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-wider w-24 min-w-[90px]">Status</th>
+                        <th className="px-4 py-3 text-right text-xs font-bold text-gray-400 uppercase tracking-wider w-24 min-w-[90px]">Ações</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
@@ -1591,53 +1610,70 @@ export default function AdminAcademyPage() {
                         const parentModule = modules.find(m => m.id === lesson.moduleId);
                         const course = parentModule ? courses.find(c => c.id === parentModule.courseId) : null;
                         return (
-                          <tr key={lesson.id} className="hover:bg-gray-50 transition">
-                            <td className="px-4 py-3">
+                          <tr key={lesson.id} className="hover:bg-gray-50/80 transition">
+                            <td className="px-4 py-3.5 text-center">
                               <input
                                 type="checkbox"
                                 checked={selectedLessons.has(lesson.id)}
                                 onChange={() => handleToggleLesson(lesson.id)}
-                                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"
                               />
                             </td>
-                            <td className="px-4 py-3">
-                              <p className="font-medium text-gray-900 text-sm">{lesson.title}</p>
-                              <p className="text-xs text-gray-500 truncate max-w-xs">{lesson.content}</p>
+                            <td className="px-4 py-3.5">
+                              <p className="font-bold text-gray-900 text-sm">{lesson.title}</p>
+                              {lesson.content && (
+                                <p className="text-xs text-gray-500 line-clamp-2 mt-0.5 leading-relaxed" title={lesson.content}>
+                                  {lesson.content}
+                                </p>
+                              )}
                             </td>
-                            <td className="px-4 py-3 text-xs text-gray-600">
-                              {parentModule?.title || 'N/A'}
-                              {course && <span className="text-xs text-gray-400 block">{course.title}</span>}
-                            </td>
-                            <td className="px-4 py-3">
-                              <div className="flex flex-wrap gap-1">
-                                {lesson.hasVideo && (
-                                  <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-xs">Vídeo</span>
-                                )}
-                                {lesson.hasMaterial && (
-                                  <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs">Material</span>
+                            <td className="px-4 py-3.5">
+                              <div className="min-w-[180px]">
+                                <span className="font-semibold text-gray-800 text-xs block">{parentModule?.title || '—'}</span>
+                                {course && (
+                                  <span className="text-[11px] text-indigo-600 font-medium line-clamp-1 block mt-0.5" title={course.title}>
+                                    {course.title}
+                                  </span>
                                 )}
                               </div>
                             </td>
-                            <td className="px-4 py-3">
-                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            <td className="px-4 py-3.5 whitespace-nowrap">
+                              <div className="flex flex-wrap gap-1">
+                                {lesson.hasVideo ? (
+                                  <span className="bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-md text-xs font-semibold">
+                                    🎥 Vídeo
+                                  </span>
+                                ) : null}
+                                {lesson.hasMaterial ? (
+                                  <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-md text-xs font-semibold">
+                                    📄 Material
+                                  </span>
+                                ) : null}
+                                {!lesson.hasVideo && !lesson.hasMaterial && (
+                                  <span className="text-gray-400 text-xs">Texto</span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3.5 whitespace-nowrap">
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
                                 lesson.active ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'
                               }`}>
-                                {lesson.active ? 'Ativo' : 'Inativo'}
+                                {lesson.active ? '✓ Ativo' : '✕ Inativo'}
                               </span>
                             </td>
-                            <td className="px-4 py-3 text-right">
+                            <td className="px-4 py-3.5 text-right whitespace-nowrap">
                               <div className="flex items-center justify-end space-x-1">
                                 <button
                                   onClick={() => handleEdit(lesson, 'lesson')}
                                   className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition"
-                                  title="Editar"
+                                  title="Editar Lição"
                                 >
                                   <Edit className="h-3.5 w-3.5" />
                                 </button>
                                 <button
                                   onClick={() => handleDelete(lesson.id, 'lesson')}
                                   className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition"
-                                  title="Excluir"
+                                  title="Excluir Lição"
                                 >
                                   <Trash2 className="h-3.5 w-3.5" />
                                 </button>
