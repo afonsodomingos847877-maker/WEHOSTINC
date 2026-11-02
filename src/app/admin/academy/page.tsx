@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { formatVideoEmbedUrl } from '@/lib/videoEmbed';
-import { Plus, Edit, Trash2, Eye, BookOpen, DollarSign, Clock, ArrowLeft, Home, GraduationCap, Loader2, CheckCircle, XCircle, Save, X, CheckSquare, Upload, AlertTriangle, MessageCircle, Send, Check, RefreshCw, Mail, ExternalLink, Filter, Smartphone, Zap } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, BookOpen, DollarSign, Clock, ArrowLeft, Home, GraduationCap, Loader2, CheckCircle, XCircle, Save, X, CheckSquare, Upload, AlertTriangle, MessageCircle, Send, Check, RefreshCw, Mail, ExternalLink, Filter, Smartphone, Zap, ImageIcon } from 'lucide-react';
 
 interface Course {
   id: string;
@@ -99,6 +99,7 @@ export default function AdminAcademyPage() {
   const [selectedModuleFilter, setSelectedModuleFilter] = useState<string>('all');
   const [selectedLessons, setSelectedLessons] = useState<Set<string>>(new Set());
   const [uploadingMaterial, setUploadingMaterial] = useState(false);
+  const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
   
   // Confirmation modal state
   const [confirmModal, setConfirmModal] = useState<{
@@ -613,6 +614,42 @@ export default function AdminAcademyPage() {
       return null;
     } finally {
       setUploadingMaterial(false);
+    }
+  };
+
+  const handleThumbnailUpload = async (file: File) => {
+    try {
+      setUploadingThumbnail(true);
+      const uploadFormData = new FormData();
+      uploadFormData.append('file', file);
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: uploadFormData
+      });
+
+      if (!response.ok) {
+        throw new Error('Falha no upload da capa');
+      }
+
+      const data = await response.json();
+      if (data.success && data.url) {
+        setFormData(prev => ({ ...prev, thumbnail: data.url }));
+        return data.url;
+      } else {
+        throw new Error(data.error || 'Upload falhou');
+      }
+    } catch (error: any) {
+      console.error('Erro no upload da capa:', error);
+      setConfirmModal({
+        show: true,
+        title: 'Erro no Upload da Capa',
+        message: 'Não foi possível carregar a imagem selecionada: ' + (error.message || 'Tente novamente.'),
+        onConfirm: () => setConfirmModal({ show: false, title: '', message: '', onConfirm: () => {} })
+      });
+      return null;
+    } finally {
+      setUploadingThumbnail(false);
     }
   };
 
@@ -2092,15 +2129,73 @@ export default function AdminAcademyPage() {
                     </div>
                   )}
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">URL da Imagem (Thumbnail)</label>
-                    <input
-                      type="url"
-                      value={formData.thumbnail}
-                      onChange={(e) => setFormData({ ...formData, thumbnail: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                      placeholder="https://..."
-                    />
+                  <div className="space-y-2">
+                    <label className="block text-sm font-semibold text-gray-800">
+                      Capa do Curso (Thumbnail / Imagem de Destaque)
+                    </label>
+
+                    {/* Preview da Capa Selecionada */}
+                    {formData.thumbnail && (
+                      <div className="relative w-full h-44 rounded-xl overflow-hidden border border-gray-200 bg-gray-900 group shadow-inner">
+                        <img
+                          src={formData.thumbnail}
+                          alt="Pré-visualização da Capa"
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setFormData(prev => ({ ...prev, thumbnail: '' }))}
+                            className="px-3.5 py-1.5 bg-red-600 text-white text-xs font-bold rounded-lg hover:bg-red-700 transition flex items-center gap-1.5 shadow-md"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                            <span>Remover Capa</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Opções de Upload ou URL */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      {/* Botão de Upload Local */}
+                      <label className={`flex items-center justify-center gap-2 p-3 border-2 border-dashed rounded-xl cursor-pointer transition text-xs font-bold shadow-xs ${uploadingThumbnail ? 'bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed' : 'border-indigo-300 hover:border-indigo-500 bg-indigo-50/60 hover:bg-indigo-50 text-indigo-700'}`}>
+                        {uploadingThumbnail ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin text-indigo-600" />
+                            <span>A carregar imagem...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="h-4 w-4 text-indigo-600" />
+                            <span>📁 Fazer Upload do Computador</span>
+                          </>
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          disabled={uploadingThumbnail}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleThumbnailUpload(file);
+                          }}
+                          className="hidden"
+                        />
+                      </label>
+
+                      {/* Campo de URL alternativo */}
+                      <div className="relative flex items-center">
+                        <input
+                          type="url"
+                          value={formData.thumbnail}
+                          onChange={(e) => setFormData({ ...formData, thumbnail: e.target.value })}
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-xs"
+                          placeholder="Ou cole link direto (https://...)"
+                        />
+                      </div>
+                    </div>
+                    <p className="text-[11px] text-gray-500">
+                      Suporta JPG, PNG, WEBP. A imagem é guardada de forma segura na nuvem (Cloudinary CDN).
+                    </p>
                   </div>
 
                   <div>
