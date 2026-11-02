@@ -509,82 +509,78 @@ export default function BillingPage() {
               </div>
             </div>
 
-            {/* Payment Method */}
-            <div className="bg-white rounded-xl shadow-sm p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Métodos de Pagamento Suportados</h3>
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="flex items-center justify-between p-4 border rounded-xl bg-gray-50">
-                  <div className="flex items-center space-x-4">
-                    <div className="bg-primary-100 p-3 rounded-lg">
-                      <CreditCard className="h-6 w-6 text-primary-600" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-gray-900">M-Pesa / eMola / Cartão</p>
-                      <p className="text-sm text-gray-600">Cobrança automática em Meticais (MT)</p>
-                    </div>
+            {/* Métodos de Pagamento */}
+            <div className="bg-white rounded-xl shadow-sm p-4 sm:p-5 border border-gray-100">
+              <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-3">Métodos de Pagamento</h3>
+              <div className="grid md:grid-cols-2 gap-3">
+                <div className="flex items-center space-x-3 p-3 border rounded-xl bg-gray-50">
+                  <div className="bg-primary-100 p-2 rounded-lg shrink-0">
+                    <CreditCard className="h-5 w-5 text-primary-600" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-xs sm:text-sm text-gray-900">M-Pesa / e-Mola / Cartão</p>
+                    <p className="text-[11px] text-gray-500">Cobrança e ativação instantânea</p>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between p-4 border rounded-xl bg-emerald-50/60 border-emerald-200">
-                  <div className="flex items-center space-x-4">
-                    <div className="bg-emerald-100 p-3 rounded-lg">
-                      <CheckCircle className="h-6 w-6 text-emerald-600" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-emerald-950">Transferência Bancária</p>
-                      <p className="text-sm text-emerald-700">Comprovativo com ativação pelo admin</p>
-                    </div>
+                <div className="flex items-center space-x-3 p-3 border rounded-xl bg-emerald-50/60 border-emerald-200">
+                  <div className="bg-emerald-100 p-2 rounded-lg shrink-0">
+                    <CheckCircle className="h-5 w-5 text-emerald-600" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-xs sm:text-sm text-emerald-950">Transferência Bancária</p>
+                    <p className="text-[11px] text-emerald-700">Ativação manual por comprovativo</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Banco & Envio de Comprovativo Manual */}
-            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Enviar Comprovativo de Pagamento</h3>
-              <p className="text-gray-500 text-sm mb-6">
-                Efetue a transferência para uma das contas abaixo e anexe o comprovativo.
-              </p>
+            {/* Banco & Envio de Comprovativo */}
+            <div className="bg-white rounded-xl shadow-sm p-4 sm:p-5 border border-gray-100">
+              <div className="mb-3">
+                <h3 className="text-base sm:text-lg font-bold text-gray-900">Contas para Transferência</h3>
+                <p className="text-xs text-gray-400">Transfira para uma das contas e anexe o comprovativo.</p>
+              </div>
 
-              <div className="grid md:grid-cols-2 sm:grid-cols-4 gap-3 bg-gray-50 p-4 rounded-xl border border-gray-200 mb-6 font-mono text-xs text-gray-800">
-                <div className="p-2.5 bg-white rounded-lg border border-gray-200">
-                  <strong className="text-gray-900 block font-sans font-bold text-sm">Millennium BIM</strong>
-                  NIB: 433372004293948
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5 bg-gray-50 p-3 rounded-xl border border-gray-200 mb-3.5 text-xs">
+                <div className="p-2 bg-white rounded-lg border border-gray-200">
+                  <strong className="text-gray-900 block font-bold text-xs">Millennium BIM</strong>
+                  <span className="font-mono text-[11px] text-gray-700">433372004293948</span>
                 </div>
-                <div className="p-2.5 bg-white rounded-lg border border-gray-200">
-                  <strong className="text-gray-900 block font-sans font-bold text-sm">BCI</strong>
-                  <span className="text-gray-400 italic font-sans">NIB em breve</span>
+                <div className="p-2 bg-white rounded-lg border border-gray-200">
+                  <strong className="text-gray-900 block font-bold text-xs">BCI</strong>
+                  <span className="text-gray-400 italic text-[11px]">Em breve</span>
                 </div>
-                <div className="p-2.5 bg-white rounded-lg border border-gray-200">
-                  <strong className="text-gray-900 block font-sans font-bold text-sm">Standard Bank</strong>
-                  <span className="text-gray-400 italic font-sans">NIB em breve</span>
+                <div className="p-2 bg-white rounded-lg border border-gray-200">
+                  <strong className="text-gray-900 block font-bold text-xs">Standard Bank</strong>
+                  <span className="text-gray-400 italic text-[11px]">Em breve</span>
                 </div>
-                <div className="p-2.5 bg-white rounded-lg border border-gray-200">
-                  <strong className="text-gray-900 block font-sans font-bold text-sm">M-Pesa Manual</strong>
+                <div className="p-2 bg-white rounded-lg border border-gray-200">
+                  <strong className="text-gray-900 block font-bold text-xs">M-Pesa Manual</strong>
                   <a
                     href="https://wa.me/258848335618?text=Olá%2C%20quero%20confirmar%20o%20meu%20pagamento%20via%20M-Pesa"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-emerald-600 hover:text-emerald-700 font-bold transition"
-                  >+258 84 833 5618</a>
+                    className="text-emerald-600 hover:text-emerald-700 font-bold text-[11px] transition"
+                  >84 833 5618</a>
                 </div>
-                <div className="p-2.5 bg-white rounded-lg border border-gray-200">
-                  <strong className="text-gray-900 block font-sans font-bold text-sm">E-Mola Manual</strong>
-                  <span className="text-gray-400 italic font-sans">Indisponível de momento</span>
+                <div className="p-2 bg-white rounded-lg border border-gray-200">
+                  <strong className="text-gray-900 block font-bold text-xs">e-Mola Manual</strong>
+                  <span className="text-gray-400 italic text-[11px]">Indisponível</span>
                 </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 bg-primary-50/50 rounded-xl border border-primary-100">
-                <div className="text-xs text-gray-600">
-                  <span className="font-bold text-gray-900 block text-sm">Carregar Novo Comprovativo:</span>
-                  <span>Aceites ficheiros em formato PDF, PNG ou JPG (máx. 10MB)</span>
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3 bg-primary-50/60 rounded-xl border border-primary-100">
+                <div className="text-xs text-gray-600 text-center sm:text-left">
+                  <span className="font-bold text-gray-900 text-xs">Anexar Comprovativo</span>
+                  <span className="text-gray-400 text-[11px] block sm:inline sm:ml-2">PDF, PNG ou JPG (máx. 10MB)</span>
                 </div>
                 <Link
                   href="/checkout?plan=pro"
-                  className="px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-bold text-xs rounded-xl shadow transition flex items-center space-x-2"
+                  className="w-full sm:w-auto px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center justify-center space-x-1.5"
                 >
-                  <Download className="w-4 h-4 rotate-180" />
-                  <span>Submeter Comprovativo no Checkout</span>
+                  <Download className="w-3.5 h-3.5 rotate-180" />
+                  <span>Submeter Comprovativo</span>
                 </Link>
               </div>
             </div>
