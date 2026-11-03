@@ -23,6 +23,7 @@ export interface ICourse {
   instructorTitle?: string;
   instructorBio?: string;
   instructorAvatar?: string;
+  instructorGallery?: string[];
   skills?: string[];
   requirements?: string[];
   targetAudience?: string[];
@@ -56,6 +57,7 @@ const CourseSchema = new Schema<ICourse>({
   instructorTitle: { type: String, default: 'Especialista em Engenharia & Cloud' },
   instructorBio: { type: String, default: 'Profissional com vasta experiência em infraestrutura, desenvolvimento web e sistemas de alta performance.' },
   instructorAvatar: { type: String },
+  instructorGallery: { type: [String], default: [] },
   skills: { type: [String], default: [] },
   requirements: { type: [String], default: [] },
   targetAudience: { type: [String], default: [] },

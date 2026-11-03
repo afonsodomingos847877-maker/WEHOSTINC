@@ -24,6 +24,7 @@ interface Course {
   instructorTitle?: string;
   instructorBio?: string;
   instructorAvatar?: string;
+  instructorGallery?: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -106,6 +107,7 @@ export default function AdminAcademyPage() {
   const [uploadingMaterial, setUploadingMaterial] = useState(false);
   const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
   const [uploadingInstructorAvatar, setUploadingInstructorAvatar] = useState(false);
+  const [uploadingGalleryPhoto, setUploadingGalleryPhoto] = useState(false);
   
   // Coupon form & handlers state
   const [couponForm, setCouponForm] = useState({
@@ -163,6 +165,7 @@ export default function AdminAcademyPage() {
     instructorTitle: '',
     instructorBio: '',
     instructorAvatar: '',
+    instructorGallery: [] as string[],
     // Module fields
     courseId: '',
     objective: '',
@@ -552,6 +555,7 @@ export default function AdminAcademyPage() {
         instructorTitle: '',
         instructorBio: '',
         instructorAvatar: '',
+        instructorGallery: [],
         courseId: '',
         objective: '',
         hasVideo: false,
@@ -585,6 +589,7 @@ export default function AdminAcademyPage() {
         instructorTitle: '',
         instructorBio: '',
         instructorAvatar: '',
+        instructorGallery: [],
         courseId: parentItem.id,
         objective: '',
         hasVideo: false,
@@ -618,6 +623,7 @@ export default function AdminAcademyPage() {
         instructorTitle: '',
         instructorBio: '',
         instructorAvatar: '',
+        instructorGallery: [],
         courseId: '',
         objective: '',
         hasVideo: false,
@@ -660,6 +666,7 @@ export default function AdminAcademyPage() {
         instructorTitle: (course as any).instructorTitle || '',
         instructorBio: (course as any).instructorBio || '',
         instructorAvatar: (course as any).instructorAvatar || '',
+        instructorGallery: (course as any).instructorGallery || [],
         courseId: '',
         objective: '',
         hasVideo: false,
@@ -694,6 +701,7 @@ export default function AdminAcademyPage() {
         instructorTitle: '',
         instructorBio: '',
         instructorAvatar: '',
+        instructorGallery: [],
         courseId: moduleItem.courseId,
         objective: moduleItem.objective,
         hasVideo: moduleItem.hasVideo,
@@ -728,6 +736,7 @@ export default function AdminAcademyPage() {
         instructorTitle: '',
         instructorBio: '',
         instructorAvatar: '',
+        instructorGallery: [],
         courseId: '',
         objective: '',
         hasVideo: lesson.hasVideo,
@@ -845,6 +854,46 @@ export default function AdminAcademyPage() {
   };
 
   
+  
+  const handleGalleryPhotoUpload = async (file: File) => {
+    try {
+      setUploadingGalleryPhoto(true);
+      const uploadFormData = new FormData();
+      uploadFormData.append('file', file);
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: uploadFormData
+      });
+
+      if (!response.ok) {
+        throw new Error('Falha no upload da foto da galeria');
+      }
+
+      const data = await response.json();
+      if (data.success && data.url) {
+        setFormData(prev => ({
+          ...prev,
+          instructorGallery: [...(prev.instructorGallery || []), data.url]
+        }));
+        return data.url;
+      } else {
+        throw new Error(data.error || 'Upload falhou');
+      }
+    } catch (error: any) {
+      console.error('Erro no upload da foto da galeria:', error);
+      setConfirmModal({
+        show: true,
+        title: 'Erro no Upload da Foto',
+        message: 'Não foi possível carregar a foto para a galeria: ' + (error.message || 'Tente novamente.'),
+        onConfirm: () => setConfirmModal({ show: false, title: '', message: '', onConfirm: () => {} })
+      });
+      return null;
+    } finally {
+      setUploadingGalleryPhoto(false);
+    }
+  };
+
   const handleInstructorAvatarUpload = async (file: File) => {
     try {
       setUploadingInstructorAvatar(true);
@@ -1158,7 +1207,8 @@ export default function AdminAcademyPage() {
           instructorName: formData.instructorName || undefined,
           instructorTitle: formData.instructorTitle || undefined,
           instructorBio: formData.instructorBio || undefined,
-          instructorAvatar: formData.instructorAvatar || undefined
+          instructorAvatar: formData.instructorAvatar || undefined,
+          instructorGallery: formData.instructorGallery || []
         };
 
         action = editingCourse ? 'update' : 'create';
@@ -1275,7 +1325,7 @@ export default function AdminAcademyPage() {
 
   
   // Lista única de formadores já registados em outros cursos para reutilização rápida
-  const existingInstructors: { name: string; title: string; bio: string; avatar: string }[] = Array.from(
+  const existingInstructors: { name: string; title: string; bio: string; avatar: string; gallery: string[] }[] = Array.from(
     new Map(
       courses
         .filter(c => c.instructorName && c.instructorName.trim() !== '')
@@ -1285,7 +1335,8 @@ export default function AdminAcademyPage() {
             name: c.instructorName!.trim(),
             title: c.instructorTitle || '',
             bio: c.instructorBio || '',
-            avatar: c.instructorAvatar || ''
+            avatar: c.instructorAvatar || '',
+            gallery: (c as any).instructorGallery || []
           }
         ])
     ).values()
@@ -2877,7 +2928,8 @@ export default function AdminAcademyPage() {
                                 instructorName: selected.name,
                                 instructorTitle: selected.title,
                                 instructorBio: selected.bio,
-                                instructorAvatar: selected.avatar
+                                instructorAvatar: selected.avatar,
+                                instructorGallery: selected.gallery || []
                               }));
                             }
                           }}
@@ -2991,6 +3043,121 @@ export default function AdminAcademyPage() {
                         placeholder="Breve biografia com a experiência, projetos e credenciais do formador..."
                       />
                     </div>
+
+                    {/* Galeria de Fotos do Formador (Prova Social & Eventos) */}
+                    <div className="space-y-2.5 pt-3 border-t border-gray-100">
+                      <div className="flex items-center justify-between">
+                        <label className="block text-xs font-bold text-gray-800 flex items-center gap-1.5">
+                          <ImageIcon className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>Galeria de Fotos do Formador (Prova Social & Eventos)</span>
+                        </label>
+                        <span className="text-[11px] text-gray-500 font-medium">
+                          {(formData.instructorGallery || []).length} foto(s)
+                        </span>
+                      </div>
+
+                      <p className="text-[11px] text-gray-500 leading-relaxed">
+                        Adicione fotos reais do formador em palestras, workshops ou formações. Elas aparecerão ao lado da bio na página do curso e poderão ser abertas em tela cheia pelos alunos.
+                      </p>
+
+                      {/* Grade de Fotos da Galeria */}
+                      {formData.instructorGallery && formData.instructorGallery.length > 0 && (
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-2.5 bg-gray-50 rounded-xl border border-gray-200">
+                          {formData.instructorGallery.map((imgUrl, idx) => (
+                            <div key={idx} className="relative group rounded-lg overflow-hidden border border-gray-300 bg-gray-900 aspect-video shadow-2xs">
+                              <img
+                                src={imgUrl}
+                                alt={`Foto ${idx + 1}`}
+                                className="w-full h-full object-cover group-hover:scale-105 transition"
+                              />
+                              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setFormData(prev => ({
+                                      ...prev,
+                                      instructorGallery: prev.instructorGallery.filter((_, i) => i !== idx)
+                                    }));
+                                  }}
+                                  className="p-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg transition shadow-xs cursor-pointer"
+                                  title="Remover foto"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Controles de Upload e Adição por URL */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <label className={`flex items-center justify-center gap-2 p-2.5 border-2 border-dashed rounded-xl cursor-pointer transition text-xs font-bold shadow-xs ${uploadingGalleryPhoto ? 'bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed' : 'border-emerald-300 hover:border-emerald-500 bg-emerald-50/60 hover:bg-emerald-50 text-emerald-700'}`}>
+                          {uploadingGalleryPhoto ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin text-emerald-600" />
+                              <span>A carregar foto...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="h-4 w-4 text-emerald-600" />
+                              <span>+ Upload de Foto para Galeria</span>
+                            </>
+                          )}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            disabled={uploadingGalleryPhoto}
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleGalleryPhotoUpload(file);
+                              e.target.value = '';
+                            }}
+                            className="hidden"
+                          />
+                        </label>
+
+                        <div className="flex gap-1.5">
+                          <input
+                            type="url"
+                            id="gallery-input-url"
+                            placeholder="Ou cole link da foto (https://...)"
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-xs"
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                const input = e.currentTarget;
+                                const val = input.value.trim();
+                                if (val) {
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    instructorGallery: [...(prev.instructorGallery || []), val]
+                                  }));
+                                  input.value = '';
+                                }
+                              }
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const input = document.getElementById('gallery-input-url') as HTMLInputElement | null;
+                              if (input && input.value.trim()) {
+                                setFormData(prev => ({
+                                  ...prev,
+                                  instructorGallery: [...(prev.instructorGallery || []), input.value.trim()]
+                                }));
+                                input.value = '';
+                              }
+                            }}
+                            className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition cursor-pointer"
+                          >
+                            + Add
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
                   </div>
 
                   <div>
