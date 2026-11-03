@@ -309,114 +309,110 @@ export default function CourseDetailsPage() {
               </div>
             </div>
 
-            {/* Right Col: Sticky Purchase Card */}
-            <div className="lg:col-span-1 bg-white text-slate-900 rounded-3xl p-6 sm:p-7 shadow-2xl border border-gray-200 sticky top-24">
-              {/* Media Preview Box */}
-              <div className="relative h-44 rounded-2xl overflow-hidden mb-5 bg-slate-900 group">
+            {/* Right Col: Sticky Purchase Card (Compacto & Cores da Marca) */}
+            <div className="lg:col-span-1 bg-white text-slate-900 rounded-2xl p-4 sm:p-5 shadow-xl border border-slate-200 sticky top-20 space-y-3">
+              {/* Media Preview Box Compacto */}
+              <div className="relative h-28 sm:h-32 rounded-xl overflow-hidden bg-slate-900 group">
                 <img
                   src={course.thumbnail || 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&auto=format&fit=crop&q=80'}
                   alt={course.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition duration-500 opacity-90"
                 />
                 <div className="absolute inset-0 bg-slate-950/40 flex items-center justify-center">
-                  <div className="w-14 h-14 rounded-full bg-emerald-500/90 text-white flex items-center justify-center shadow-lg transform group-hover:scale-110 transition">
-                    <Play className="w-6 h-6 fill-current ml-1" />
+                  <div className="w-9 h-9 rounded-full bg-primary-600/90 hover:bg-primary-600 text-white flex items-center justify-center shadow-md transform group-hover:scale-110 transition cursor-pointer">
+                    <Play className="w-4 h-4 fill-current ml-0.5" />
                   </div>
                 </div>
-                <div className="absolute bottom-2 left-2 right-2 text-center text-[10px] text-white/90 bg-black/60 backdrop-blur-xs py-1 rounded-lg">
+                <div className="absolute bottom-1.5 left-2 right-2 text-center text-[9px] text-white/90 bg-black/60 backdrop-blur-xs py-0.5 rounded-md font-medium">
                   Aula 1 Liberada Gratuitamente
                 </div>
               </div>
 
               {/* Price Row */}
-              <div className="mb-4">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Preço Promocional</span>
-                <div className="flex items-baseline gap-2.5 flex-wrap">
-                  {appliedCoupon ? (
-                    <>
-                      <span className="text-3xl font-black text-emerald-600">
-                        {appliedCoupon.finalAmount.toLocaleString('pt-MZ')} <span className="text-base font-bold">MT</span>
+              <div className="flex items-baseline justify-between gap-2 flex-wrap">
+                {appliedCoupon ? (
+                  <div className="flex items-baseline gap-2 flex-wrap">
+                    <span className="text-2xl sm:text-3xl font-black text-slate-950">
+                      {appliedCoupon.finalAmount.toLocaleString('pt-MZ')} <span className="text-xs font-bold text-primary-600">MT</span>
+                    </span>
+                    <span className="text-xs text-slate-400 line-through font-semibold">
+                      {(course.price || 199).toLocaleString('pt-MZ')} MT
+                    </span>
+                    <span className="text-[10px] font-bold text-primary-700 bg-primary-50 px-2 py-0.5 rounded-full border border-primary-200">
+                      Cupom -{appliedCoupon.discountAmount} MT
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex items-baseline justify-between w-full">
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-2xl sm:text-3xl font-black text-slate-950">
+                        {(course.price || 199).toLocaleString('pt-MZ')}
                       </span>
-                      <span className="text-sm text-slate-400 line-through font-bold">
-                        {(course.price || 199).toLocaleString('pt-MZ')} MT
-                      </span>
-                      <span className="text-xs font-bold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full border border-emerald-300">
-                        Cupom -{appliedCoupon.discountAmount} MT
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="text-3xl font-black text-slate-950">
-                        {(course.price || 199).toLocaleString('pt-MZ')} <span className="text-base font-bold text-emerald-600">MT</span>
-                      </span>
+                      <span className="text-xs font-bold text-primary-600">MT</span>
                       {course.originalPrice && (
-                        <span className="text-sm text-slate-400 line-through">
+                        <span className="text-xs text-slate-400 line-through ml-1 font-semibold">
                           {course.originalPrice.toLocaleString('pt-MZ')} MT
                         </span>
                       )}
-                      <span className="ml-auto text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                        -60% OFF
-                      </span>
-                    </>
-                  )}
-                </div>
+                    </div>
+                    <span className="text-[10px] font-bold text-primary-700 bg-primary-50 px-2 py-0.5 rounded-full border border-primary-200">
+                      -60% OFF
+                    </span>
+                  </div>
+                )}
               </div>
 
-              {/* Cupom de Desconto Interativo no Card do Curso */}
-              <div className="mb-4 pt-3 border-t border-slate-100">
+              {/* Cupom de Desconto Interativo */}
+              <div>
                 {!appliedCoupon ? (
                   <div>
                     {!showCouponInput ? (
                       <button
                         type="button"
                         onClick={() => setShowCouponInput(true)}
-                        className="text-xs font-bold text-emerald-700 hover:text-emerald-800 inline-flex items-center gap-1.5 transition cursor-pointer"
+                        className="text-[11px] font-bold text-primary-600 hover:text-primary-700 inline-flex items-center gap-1 transition cursor-pointer"
                       >
-                        <Tag className="w-3.5 h-3.5" />
-                        <span>Tem um cupom de desconto? Inserir aqui</span>
+                        <Tag className="w-3 h-3" />
+                        <span>Tem cupom de desconto? Inserir aqui</span>
                       </button>
                     ) : (
-                      <div className="space-y-1.5 animate-in fade-in duration-150">
-                        <div className="flex gap-1.5">
-                          <input
-                            type="text"
-                            placeholder="Código (ex: IA2026)"
-                            value={couponCode}
-                            onChange={(e) => {
-                              setCouponCode(e.target.value.toUpperCase().replace(/\s+/g, ''));
-                              setCouponError('');
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                e.preventDefault();
-                                handleApplyCourseCoupon();
-                              }
-                            }}
-                            className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 focus:border-emerald-500 rounded-xl text-xs font-mono font-bold uppercase tracking-wider outline-hidden"
-                          />
-                          <button
-                            type="button"
-                            onClick={handleApplyCourseCoupon}
-                            disabled={validatingCoupon || !couponCode.trim()}
-                            className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-bold rounded-xl transition cursor-pointer shrink-0"
-                          >
-                            {validatingCoupon ? 'A validar...' : 'Aplicar'}
-                          </button>
-                        </div>
-                        {couponError && (
-                          <p className="text-[11px] text-rose-600 font-semibold">{couponError}</p>
-                        )}
+                      <div className="flex gap-1.5 animate-in fade-in duration-150">
+                        <input
+                          type="text"
+                          placeholder="CÓDIGO (EX: IA2026)"
+                          value={couponCode}
+                          onChange={(e) => {
+                            setCouponCode(e.target.value.toUpperCase().replace(/\s+/g, ''));
+                            setCouponError('');
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleApplyCourseCoupon();
+                            }
+                          }}
+                          className="flex-1 px-2.5 py-1.5 bg-slate-50 border border-slate-200 focus:border-primary-500 rounded-lg text-xs font-mono font-bold uppercase outline-hidden"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleApplyCourseCoupon}
+                          disabled={validatingCoupon || !couponCode.trim()}
+                          className="px-3 py-1.5 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white text-xs font-bold rounded-lg transition cursor-pointer shrink-0"
+                        >
+                          {validatingCoupon ? '...' : 'Aplicar'}
+                        </button>
                       </div>
+                    )}
+                    {couponError && (
+                      <p className="text-[10px] text-rose-600 font-semibold mt-1">{couponError}</p>
                     )}
                   </div>
                 ) : (
-                  <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-xs animate-in zoom-in-95 duration-150">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <div>
-                        <span className="font-bold text-emerald-950 font-mono">{appliedCoupon.code}</span>
-                        <span className="text-emerald-700 font-semibold ml-1.5">(-{appliedCoupon.discountAmount} MT)</span>
-                      </div>
+                  <div className="p-1.5 bg-primary-50 border border-primary-200 rounded-lg flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-1.5">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-primary-600 shrink-0" />
+                      <span className="font-bold text-primary-950 font-mono text-[11px]">{appliedCoupon.code}</span>
+                      <span className="text-primary-700 font-semibold text-[10px]">(-{appliedCoupon.discountAmount} MT)</span>
                     </div>
                     <button
                       type="button"
@@ -425,7 +421,7 @@ export default function CourseDetailsPage() {
                         setCouponCode('');
                         setCouponError('');
                       }}
-                      className="text-[11px] text-slate-400 hover:text-rose-600 font-bold transition cursor-pointer"
+                      className="text-[10px] text-slate-400 hover:text-rose-600 font-bold transition cursor-pointer"
                     >
                       Remover
                     </button>
@@ -433,116 +429,98 @@ export default function CourseDetailsPage() {
                 )}
               </div>
 
-              {/* Opções de Pagamento: Integral ou em 2 Parcelas */}
+              {/* Opções de Pagamento Compactas: À Vista ou em 2 Parcelas */}
               {allowInstallments && (
-                <div className="space-y-2 pt-1 pb-1">
-                  <div className="flex items-center justify-between text-[11px] font-bold text-slate-700 px-0.5">
-                    <span>Opção de Pagamento:</span>
-                    <span className="text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full font-bold text-[10px]">
-                      {paymentPlan === 'installments_2x' ? '2x Parcelas' : '1x Integral'}
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1.5">
+                  <div className="grid grid-cols-2 gap-1.5">
                     <button
                       type="button"
                       onClick={() => setPaymentPlan('full')}
-                      className={`p-2.5 rounded-2xl border text-left transition cursor-pointer flex flex-col justify-between ${
+                      className={`p-2 rounded-xl border text-left transition cursor-pointer flex flex-col justify-between ${
                         paymentPlan === 'full'
-                          ? 'border-emerald-500 bg-emerald-50/60 ring-2 ring-emerald-500/20 text-slate-900 shadow-2xs'
+                          ? 'border-primary-500 bg-primary-50/70 ring-2 ring-primary-500/20 text-slate-900 shadow-2xs'
                           : 'border-slate-200 bg-slate-50 hover:bg-slate-100/70 text-slate-600'
                       }`}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-black uppercase tracking-wider text-slate-800">À Vista (1x)</span>
-                        <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${paymentPlan === 'full' ? 'border-emerald-600 bg-emerald-600' : 'border-slate-300'}`}>
-                          {paymentPlan === 'full' && <span className="w-1.5 h-1.5 bg-white rounded-full"></span>}
+                        <span className="text-[10px] font-black uppercase tracking-wider text-slate-800">À Vista (1x)</span>
+                        <div className={`w-3 h-3 rounded-full border flex items-center justify-center ${paymentPlan === 'full' ? 'border-primary-600 bg-primary-600' : 'border-slate-300'}`}>
+                          {paymentPlan === 'full' && <span className="w-1 h-1 bg-white rounded-full"></span>}
                         </div>
                       </div>
-                      <div className="mt-1">
-                        <span className="text-sm font-black text-slate-900">{currentPrice.toLocaleString('pt-MZ')} MT</span>
-                        <span className="block text-[9px] text-emerald-700 font-semibold">Acesso vitalício</span>
+                      <div className="mt-0.5">
+                        <span className="text-xs sm:text-sm font-black text-slate-900">{currentPrice.toLocaleString('pt-MZ')} MT</span>
                       </div>
                     </button>
 
                     <button
                       type="button"
                       onClick={() => setPaymentPlan('installments_2x')}
-                      className={`p-2.5 rounded-2xl border text-left transition cursor-pointer flex flex-col justify-between ${
+                      className={`p-2 rounded-xl border text-left transition cursor-pointer flex flex-col justify-between ${
                         paymentPlan === 'installments_2x'
-                          ? 'border-emerald-500 bg-emerald-50/60 ring-2 ring-emerald-500/20 text-slate-900 shadow-2xs'
+                          ? 'border-primary-500 bg-primary-50/70 ring-2 ring-primary-500/20 text-slate-900 shadow-2xs'
                           : 'border-slate-200 bg-slate-50 hover:bg-slate-100/70 text-slate-600'
                       }`}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-black uppercase tracking-wider text-emerald-800">2x Parcelas</span>
-                        <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${paymentPlan === 'installments_2x' ? 'border-emerald-600 bg-emerald-600' : 'border-slate-300'}`}>
-                          {paymentPlan === 'installments_2x' && <span className="w-1.5 h-1.5 bg-white rounded-full"></span>}
+                        <span className="text-[10px] font-black uppercase tracking-wider text-primary-800">2x Parcelas</span>
+                        <div className={`w-3 h-3 rounded-full border flex items-center justify-center ${paymentPlan === 'installments_2x' ? 'border-primary-600 bg-primary-600' : 'border-slate-300'}`}>
+                          {paymentPlan === 'installments_2x' && <span className="w-1 h-1 bg-white rounded-full"></span>}
                         </div>
                       </div>
-                      <div className="mt-1">
-                        <span className="text-sm font-black text-emerald-700">{installmentPrice.toLocaleString('pt-MZ')} MT</span>
-                        <span className="block text-[9px] text-emerald-600 font-semibold">1ª parcela hoje</span>
+                      <div className="mt-0.5">
+                        <span className="text-xs sm:text-sm font-black text-primary-700">{installmentPrice.toLocaleString('pt-MZ')} MT</span>
                       </div>
                     </button>
                   </div>
 
                   {paymentPlan === 'installments_2x' && (
-                    <div className="p-2.5 rounded-xl bg-emerald-50/80 border border-emerald-200/80 text-[11px] text-emerald-950 space-y-1 animate-in fade-in duration-200">
-                      <div className="flex items-center justify-between font-bold">
-                        <span>1ª Parcela a pagar hoje:</span>
-                        <span className="text-emerald-700 font-black">{installmentPrice.toLocaleString('pt-MZ')} MT</span>
-                      </div>
-                      <p className="text-[10px] text-emerald-800 leading-tight">
-                        ⚡ Dá acesso imediato ao curso e às aulas práticas. A 2ª parcela ({installmentPrice.toLocaleString('pt-MZ')} MT) só é necessária para emissão do certificado e conclusão.
-                      </p>
+                    <div className="p-1.5 rounded-lg bg-primary-50/80 border border-primary-200/80 text-[10px] text-primary-950 flex items-center justify-between font-semibold animate-in fade-in duration-150">
+                      <span>1ª Parcela hoje: {installmentPrice.toLocaleString('pt-MZ')} MT</span>
+                      <span className="text-primary-700 text-[9px]">2ª só na conclusão</span>
                     </div>
                   )}
                 </div>
               )}
 
-              {/* Primary CTA: Buy Now with dynamic discounted price */}
-              <div className="space-y-3">
+              {/* Botão de Compra em Destaque */}
+              <div>
                 <Link
                   href={checkoutUrl}
-                  className="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-2xl shadow-lg transition flex items-center justify-center gap-2 text-sm cursor-pointer"
+                  className="w-full py-2.5 sm:py-3 px-4 bg-primary-600 hover:bg-primary-700 text-white font-black rounded-xl shadow-md shadow-primary-600/20 transition flex items-center justify-center gap-1.5 text-xs sm:text-sm cursor-pointer"
                 >
                   <Zap className="w-4 h-4 fill-current" />
                   <span>
                     {paymentPlan === 'installments_2x' 
-                      ? `Pagar 1ª Parcela de ${installmentPrice.toLocaleString('pt-MZ')} MT`
+                      ? `Pagar 1ª Parcela (${installmentPrice.toLocaleString('pt-MZ')} MT)`
                       : `Comprar Curso por ${currentPrice.toLocaleString('pt-MZ')} MT`}
                   </span>
                 </Link>
-
-                <p className="text-[11px] text-center text-slate-500">
-                  ⚡ <strong>Sem formulários complexos.</strong> Pagas e começas a assistir em seguida.
-                </p>
               </div>
 
-              {/* Guarantee bullets */}
-              <div className="mt-6 pt-5 border-t border-slate-100 space-y-2 text-xs text-slate-600">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                  <span>Acesso vitalício com atualizações</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                  <span>Certificado oficial reconhecido</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Smartphone className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                  <span>M-Pesa PUSH & e-Mola automático</span>
-                </div>
+              {/* Garantias em Linha Compacta */}
+              <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500 font-medium">
+                <span className="flex items-center gap-1">
+                  <CheckCircle2 className="w-3 h-3 text-primary-600" />
+                  Vitalício
+                </span>
+                <span className="flex items-center gap-1">
+                  <CheckCircle2 className="w-3 h-3 text-primary-600" />
+                  Certificado
+                </span>
+                <span className="flex items-center gap-1">
+                  <Smartphone className="w-3 h-3 text-primary-600" />
+                  M-Pesa / e-Mola
+                </span>
               </div>
 
-              {/* Discreet login suggestion */}
-              <div className="mt-5 pt-4 border-t border-slate-100 text-center">
+              {/* Link Direto de Login */}
+              <div className="text-center pt-0.5">
                 <Link
                   href={`/login?redirect=/dashboard/academy/course/${course.id}`}
-                  className="text-xs text-slate-600 hover:text-primary-600 font-semibold transition"
+                  className="text-[10px] text-slate-500 hover:text-primary-600 font-medium transition"
                 >
-                  Já és aluno deste curso? <span className="text-primary-600 underline">Inicia sessão aqui</span>
+                  Já és aluno deste curso? <span className="text-primary-600 font-bold underline">Entrar aqui</span>
                 </Link>
               </div>
             </div>
