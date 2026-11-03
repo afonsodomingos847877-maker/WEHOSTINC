@@ -471,11 +471,37 @@ function WebmailContent() {
     return matches || [];
   };
 
+  // Open Change Password Modal safely from anywhere
+  const handleOpenChangePassword = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    const currentActiveEmail = selectedAccountEmail || accounts[0]?.email || '';
+    if (currentActiveEmail && !selectedAccountEmail) {
+      setSelectedAccountEmail(currentActiveEmail);
+    }
+    setShowWebmailLogin(false);
+    setShowMobileMenu(false);
+    setPasswordError('');
+    setPasswordSuccess('');
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+    setShowChangePasswordModal(true);
+  };
+
   // Function to handle password change
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setPasswordError('');
     setPasswordSuccess('');
+
+    const targetEmail = selectedAccountEmail || accounts[0]?.email;
+    if (!targetEmail || !targetEmail.includes('@')) {
+      setPasswordError('Selecione uma conta de e-mail válida para alterar a senha.');
+      return;
+    }
 
     if (!newPassword || !confirmPassword) {
       setPasswordError('Por favor, preencha a nova senha e a confirmação.');
@@ -489,11 +515,6 @@ function WebmailContent() {
 
     if (newPassword.length < 6) {
       setPasswordError('A nova senha deve ter pelo menos 6 caracteres.');
-      return;
-    }
-
-    if (!selectedAccountEmail || !selectedAccountEmail.includes('@')) {
-      setPasswordError('Nenhuma caixa de e-mail selecionada.');
       return;
     }
 
@@ -513,7 +534,7 @@ function WebmailContent() {
             const authRes = await fetch('/api/webmail/auth', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ email: selectedAccountEmail, password: currentPassword })
+              body: JSON.stringify({ email: targetEmail, password: currentPassword })
             });
             if (authRes.ok) {
               isVerified = true;
@@ -540,7 +561,7 @@ function WebmailContent() {
       }
 
       // 2. Sincronizar nova senha diretamente com o servidor Migadu
-      const [localPart, domain] = selectedAccountEmail.split('@');
+      const [localPart, domain] = targetEmail.split('@');
       const res = await fetch(`/api/email-providers/migadu/domains/${domain}/mailboxes/${localPart}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -555,18 +576,18 @@ function WebmailContent() {
       // 3. Atualizar estado e credenciais locais do Webmail
       setMailboxPassword(newPassword);
       try {
-        localStorage.setItem(`webmail_auth_${selectedAccountEmail}`, newPassword);
+        localStorage.setItem(`webmail_auth_${targetEmail}`, newPassword);
       } catch (e) {}
 
       // Atualizar também na conta local do dataManager
-      const existingAcc = accounts.find(a => a.email.toLowerCase() === selectedAccountEmail.toLowerCase());
+      const existingAcc = accounts.find(a => a.email.toLowerCase() === targetEmail.toLowerCase());
       if (existingAcc) {
         dataManager.updateEmail(existingAcc.id, { password: newPassword } as any);
       }
 
       // Se utilizador do portal for igual a este email, atualizar também
       const currentUser = auth.getCurrentUser();
-      if (currentUser && currentUser.email.toLowerCase() === selectedAccountEmail.toLowerCase()) {
+      if (currentUser && currentUser.email.toLowerCase() === targetEmail.toLowerCase()) {
         auth.updatePassword(currentUser.email, newPassword);
       }
 
@@ -606,16 +627,10 @@ function WebmailContent() {
       if (initialEmailParam) {
         setSelectedAccountEmail(initialEmailParam);
         setWebmailLoginEmail(initialEmailParam);
-        if (!mailboxPassword) {
-          setShowWebmailLogin(true);
-        }
       } else if (emailList.length > 0) {
         const firstEmail = emailList[0].email;
         setSelectedAccountEmail(prev => prev || firstEmail);
         setWebmailLoginEmail(prev => prev || firstEmail);
-        if (!mailboxPassword) {
-          setShowWebmailLogin(true);
-        }
       }
     };
 
@@ -1380,11 +1395,7 @@ function WebmailContent() {
           {/* Botão Rápido: Mudar Senha */}
           <button
             type="button"
-            onClick={() => {
-              setPasswordError('');
-              setPasswordSuccess('');
-              setShowChangePasswordModal(true);
-            }}
+            onClick={handleOpenChangePassword}
             className="flex items-center space-x-1.5 px-3 py-1.5 bg-gray-900 hover:bg-black text-white rounded-xl transition cursor-pointer text-xs font-bold shadow-xs shrink-0 active:scale-95"
             title="Alterar senha desta conta de e-mail"
           >
@@ -1501,11 +1512,11 @@ function WebmailContent() {
 
           <button
             type="button"
-            onClick={() => setShowChangePasswordModal(true)}
-            className="hidden sm:flex p-2 hover:bg-primary-50 text-primary-600 rounded-xl transition cursor-pointer shrink-0"
+            onClick={handleOpenChangePassword}
+            className="hidden sm:flex p-2 hover:bg-gray-100 text-gray-700 rounded-xl transition cursor-pointer shrink-0"
             title="Alterar Senha"
           >
-            <ShieldCheck className="h-4 w-4" />
+            <Key className="h-4 w-4" />
           </button>
 
           <button
@@ -1838,11 +1849,7 @@ function WebmailContent() {
             {/* Botão Rápido de Mudar Senha na Barra Lateral */}
             <button
               type="button"
-              onClick={() => {
-                setPasswordError('');
-                setPasswordSuccess('');
-                setShowChangePasswordModal(true);
-              }}
+              onClick={handleOpenChangePassword}
               className="w-full h-9 flex items-center justify-center space-x-2 px-3 bg-gray-900 hover:bg-black text-white rounded-xl transition cursor-pointer text-xs font-bold shadow-xs mt-2.5 active:scale-98"
               title="Alterar senha desta conta de e-mail"
             >
@@ -2050,6 +2057,17 @@ function WebmailContent() {
                       </>
                     )}
                   </button>
+
+                  <div className="pt-2 text-center border-t border-gray-100">
+                    <button
+                      type="button"
+                      onClick={handleOpenChangePassword}
+                      className="text-[11px] font-bold text-gray-700 hover:text-black underline cursor-pointer inline-flex items-center space-x-1"
+                    >
+                      <Key className="h-3 w-3 text-gray-500" />
+                      <span>Esqueceu ou deseja alterar a senha? Mudar Senha</span>
+                    </button>
+                  </div>
                 </form>
               </div>
             ) : displayMessages.length === 0 ? (
@@ -2550,6 +2568,17 @@ function WebmailContent() {
                       </>
                     )}
                   </button>
+
+                  <div className="pt-2 text-center border-t border-gray-100 flex items-center justify-center">
+                    <button
+                      type="button"
+                      onClick={handleOpenChangePassword}
+                      className="text-xs font-bold text-gray-700 hover:text-black underline cursor-pointer inline-flex items-center space-x-1.5"
+                    >
+                      <Key className="h-3.5 w-3.5 text-gray-500" />
+                      <span>Esqueceu ou deseja alterar a senha? Mudar Senha</span>
+                    </button>
+                  </div>
                 </form>
 
                 <p className="text-[11px] text-gray-400 text-center pt-1">
@@ -2612,11 +2641,11 @@ function WebmailContent() {
               </button>
               <button
                 type="button"
-                onClick={() => { setShowChangePasswordModal(true); setShowMobileMenu(false); }}
-                className="flex items-center space-x-3 p-4 bg-blue-50 hover:bg-blue-100 rounded-2xl transition cursor-pointer border border-blue-200 active:scale-95"
+                onClick={handleOpenChangePassword}
+                className="flex items-center space-x-3 p-4 bg-gray-900 hover:bg-black text-white rounded-2xl transition cursor-pointer active:scale-95 shadow-sm"
               >
-                <ShieldCheck className="h-5 w-5 text-blue-600 shrink-0" />
-                <span className="text-sm font-bold text-blue-700">Alterar Senha</span>
+                <Key className="h-5 w-5 text-gray-300 shrink-0" />
+                <span className="text-sm font-bold text-white">Alterar Senha</span>
               </button>
               <button
                 type="button"
@@ -3347,10 +3376,18 @@ function WebmailContent() {
               </button>
             </form>
 
-            <div className="mt-4 text-center">
+            <div className="mt-4 pt-3 border-t border-gray-100 text-center flex flex-col items-center gap-2">
               <p className="text-xs text-gray-500">
                 Use o e-mail e a palavra-passe da sua conta de e-mail
               </p>
+              <button
+                type="button"
+                onClick={handleOpenChangePassword}
+                className="text-xs font-bold text-gray-800 hover:text-black underline cursor-pointer inline-flex items-center space-x-1"
+              >
+                <Key className="h-3.5 w-3.5 text-gray-500" />
+                <span>Alterar senha desta conta</span>
+              </button>
             </div>
           </div>
         </div>
@@ -3358,16 +3395,24 @@ function WebmailContent() {
 
       {/* MODAL: Alterar Senha de E-mail (Sincronizado com Migadu) */}
       {showChangePasswordModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-2 sm:p-4">
-          <div className="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl max-w-md w-full p-5 sm:p-6 animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 max-h-[92vh] overflow-y-auto">
+        <div 
+          className="fixed inset-0 bg-black/75 backdrop-blur-md flex items-center justify-center z-[99999] p-3 sm:p-4 animate-in fade-in duration-150"
+          onClick={() => setShowChangePasswordModal(false)}
+        >
+          <div 
+            className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-5 sm:p-6 animate-in zoom-in-95 duration-150 max-h-[92vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 sm:w-11 sm:h-11 bg-blue-100 text-blue-700 rounded-2xl flex items-center justify-center font-bold shrink-0">
-                  <Key className="h-5 w-5 text-blue-600" />
+                <div className="w-10 h-10 sm:w-11 sm:h-11 bg-gray-900 text-white rounded-2xl flex items-center justify-center font-bold shrink-0 shadow-sm">
+                  <Key className="h-5 w-5 text-white" />
                 </div>
                 <div>
                   <h3 className="text-base sm:text-lg font-black text-gray-900">Alterar Senha do E-mail</h3>
-                  <p className="text-xs font-mono font-semibold text-blue-600 truncate max-w-[220px] sm:max-w-none">{selectedAccountEmail}</p>
+                  <p className="text-xs font-mono font-bold text-gray-600 truncate max-w-[220px] sm:max-w-none">
+                    {selectedAccountEmail || accounts[0]?.email || 'admin@primesourceps.co.mz'}
+                  </p>
                 </div>
               </div>
               <button

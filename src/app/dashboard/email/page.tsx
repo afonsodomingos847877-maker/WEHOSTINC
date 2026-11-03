@@ -846,17 +846,17 @@ export default function EmailPage() {
                       <button
                         onClick={handleSyncMigaduBidirectional}
                         disabled={isSyncingMigadu}
-                        className="flex items-center justify-center space-x-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-xl transition cursor-pointer disabled:opacity-60 shadow-xs"
+                        className="h-9 flex items-center justify-center space-x-1.5 bg-gray-900 hover:bg-black text-white font-bold text-xs px-3.5 rounded-xl transition cursor-pointer disabled:opacity-50 shadow-xs active:scale-98"
                         title="Forçar sincronização em tempo real de caixas de correio"
                       >
-                        <RefreshCw className={`h-4 w-4 ${isSyncingMigadu ? 'animate-spin text-emerald-600' : 'text-emerald-700'}`} />
+                        <RefreshCw className={`h-3.5 w-3.5 ${isSyncingMigadu ? 'animate-spin' : ''}`} />
                         <span>{isSyncingMigadu ? 'A Sincronizar...' : 'Sincronizar'}</span>
                       </button>
                       <button
                         onClick={() => setShowCreateModal(true)}
-                        className="flex items-center justify-center space-x-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow-xs transition cursor-pointer"
+                        className="h-9 flex items-center justify-center space-x-1.5 bg-gray-900 hover:bg-black text-white font-bold text-xs px-3.5 rounded-xl transition cursor-pointer shadow-xs active:scale-98"
                       >
-                        <Plus className="h-4 w-4" />
+                        <Plus className="h-3.5 w-3.5" />
                         <span>Nova Conta</span>
                       </button>
                     </div>
@@ -865,9 +865,9 @@ export default function EmailPage() {
                   {activeTab === 'aliases' && (
                     <button
                       onClick={() => setShowCreateAliasModal(true)}
-                      className="flex items-center justify-center space-x-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow-xs transition cursor-pointer shrink-0"
+                      className="h-9 flex items-center justify-center space-x-1.5 bg-gray-900 hover:bg-black text-white font-bold text-xs px-3.5 rounded-xl transition cursor-pointer shadow-xs active:scale-98 shrink-0"
                     >
-                      <Plus className="h-4 w-4" />
+                      <Plus className="h-3.5 w-3.5" />
                       <span>Novo Alias</span>
                     </button>
                   )}
@@ -876,9 +876,9 @@ export default function EmailPage() {
                     <button
                       onClick={() => runDNSCheck(currentActiveDomain, true)}
                       disabled={isCheckingDNS}
-                      className="flex items-center justify-center space-x-2 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow-xs transition cursor-pointer shrink-0 disabled:opacity-50"
+                      className="h-9 flex items-center justify-center space-x-1.5 bg-gray-900 hover:bg-black text-white font-bold text-xs px-3.5 rounded-xl transition cursor-pointer shadow-xs active:scale-98 shrink-0 disabled:opacity-50"
                     >
-                      <RefreshCw className={`h-4 w-4 ${isCheckingDNS ? 'animate-spin' : ''}`} />
+                      <RefreshCw className={`h-3.5 w-3.5 ${isCheckingDNS ? 'animate-spin' : ''}`} />
                       <span>{isCheckingDNS ? 'A Verificar...' : 'Verificar DNS'}</span>
                     </button>
                   )}
@@ -963,17 +963,17 @@ export default function EmailPage() {
                           <button
                             onClick={handleSyncMigaduBidirectional}
                             disabled={isSyncingMigadu}
-                            className="inline-flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl font-bold text-xs shadow-sm hover:shadow transition cursor-pointer disabled:opacity-60"
+                            className="h-9 inline-flex items-center space-x-1.5 bg-gray-900 hover:bg-black text-white px-3.5 rounded-xl font-bold text-xs shadow-xs transition cursor-pointer disabled:opacity-50 active:scale-98"
                           >
-                            <RefreshCw className={`h-4 w-4 ${isSyncingMigadu ? 'animate-spin' : ''}`} />
-                            <span>{isSyncingMigadu ? 'A Sincronizar...' : 'Sincronizar em Tempo Real'}</span>
+                            <RefreshCw className={`h-3.5 w-3.5 ${isSyncingMigadu ? 'animate-spin' : ''}`} />
+                            <span>{isSyncingMigadu ? 'A Sincronizar...' : 'Sincronizar'}</span>
                           </button>
                           <button
                             onClick={() => setShowCreateModal(true)}
-                            className="inline-flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2.5 rounded-xl font-bold text-xs shadow-sm hover:shadow transition cursor-pointer"
+                            className="h-9 inline-flex items-center space-x-1.5 bg-gray-900 hover:bg-black text-white px-3.5 rounded-xl font-bold text-xs shadow-xs transition cursor-pointer active:scale-98"
                           >
-                            <Plus className="h-4 w-4" />
-                            <span>Criar Primeira Conta</span>
+                            <Plus className="h-3.5 w-3.5" />
+                            <span>Nova Conta</span>
                           </button>
                         </div>
                       </div>
