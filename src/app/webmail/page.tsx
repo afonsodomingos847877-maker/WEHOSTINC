@@ -1333,12 +1333,12 @@ function WebmailContent() {
       {/* Webmail Header Bar - Mobile First */}
       <header className="bg-white text-gray-800 px-3 sm:px-4 py-2.5 sm:py-3 border-b border-gray-200 flex flex-wrap items-center justify-between gap-2 shadow-xs">
         <div className="flex items-center space-x-2.5 min-w-0">
-          <Link href="/dashboard/email" className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500 transition shrink-0" title="Voltar ao Painel">
+          <Link href="/dashboard/email" className="p-1.5 hover:bg-neutral-100 rounded-lg text-neutral-500 hover:text-neutral-900 transition shrink-0" title="Voltar ao Painel">
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div className="flex items-center space-x-2 shrink-0">
             <BrandLogo />
-            <span className="hidden sm:inline-block text-primary-600 font-bold text-xs uppercase tracking-wider bg-primary-50 px-2 py-0.5 rounded-full border border-primary-100">Email Corporativo</span>
+            <span className="hidden sm:inline-block text-neutral-900 font-bold text-xs uppercase tracking-wider bg-neutral-100 px-2.5 py-0.5 rounded-full border border-neutral-200">Email Corporativo</span>
           </div>
         </div>
 
@@ -1346,8 +1346,8 @@ function WebmailContent() {
         <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
           {/* Account Switcher */}
           {accounts.length > 0 ? (
-            <div className="flex items-center space-x-1.5 bg-gray-100 px-2 sm:px-3 py-1.5 rounded-xl border border-gray-200 max-w-[130px] sm:max-w-xs">
-              <User className="h-3.5 w-3.5 text-primary-500 shrink-0" />
+            <div className="flex items-center space-x-1.5 bg-neutral-100 hover:bg-neutral-200/60 px-2.5 sm:px-3 py-1.5 rounded-xl border border-neutral-200 max-w-[130px] sm:max-w-xs transition">
+              <User className="h-3.5 w-3.5 text-neutral-600 shrink-0" />
               <select
                 value={selectedAccountEmail}
                 onChange={(e) => {
@@ -1361,7 +1361,7 @@ function WebmailContent() {
                     setShowWebmailLogin(true);
                   }, 50);
                 }}
-                className="bg-transparent text-xs font-bold text-gray-700 outline-none cursor-pointer truncate w-full"
+                className="bg-transparent text-xs font-bold text-neutral-800 outline-none cursor-pointer truncate w-full"
               >
                 {accounts.map(acc => {
                   const pending = acc.status === 'pending' || !acc.status;
@@ -1374,34 +1374,34 @@ function WebmailContent() {
               </select>
             </div>
           ) : (
-            <span className="text-xs text-gray-600 font-mono font-bold bg-gray-100 px-2 py-1.5 rounded-xl border border-gray-200 truncate max-w-[110px] sm:max-w-[180px]">
+            <span className="text-xs text-neutral-700 font-mono font-bold bg-neutral-100 px-2.5 py-1.5 rounded-xl border border-neutral-200 truncate max-w-[110px] sm:max-w-[180px]">
               {selectedAccountEmail}
             </span>
           )}
 
-          {/* Botão Rápido: Instalar Webmail App */}
+          {/* Botão Rápido: Mudar Senha (Tesla Dark Primary) */}
+          <button
+            type="button"
+            onClick={handleOpenChangePassword}
+            className="flex items-center space-x-1.5 px-3 py-1.5 bg-neutral-900 hover:bg-black text-white rounded-xl transition cursor-pointer text-xs font-bold shadow-xs shrink-0 active:scale-95"
+            title="Alterar senha desta conta de e-mail"
+          >
+            <Key className="h-3.5 w-3.5 text-neutral-300 shrink-0" />
+            <span>Mudar Senha</span>
+          </button>
+
+          {/* Botão Rápido: Instalar Webmail App (Tesla White Secondary) */}
           {!isAppInstalled && (
             <button
               type="button"
               onClick={handleTriggerInstall}
-              className="flex items-center space-x-1.5 px-3 py-1.5 bg-gray-900 hover:bg-black text-white rounded-xl transition cursor-pointer text-xs font-bold shadow-xs shrink-0 active:scale-95"
+              className="flex items-center space-x-1.5 px-3 py-1.5 bg-white hover:bg-neutral-100 text-neutral-900 border border-neutral-300 rounded-xl transition cursor-pointer text-xs font-bold shadow-2xs shrink-0 active:scale-95"
               title="Instalar o Webmail no Computador ou Telemóvel"
             >
-              <Download className="h-3.5 w-3.5 text-gray-300 shrink-0" />
+              <Download className="h-3.5 w-3.5 text-neutral-700 shrink-0" />
               <span>Instalar App</span>
             </button>
           )}
-
-          {/* Botão Rápido: Mudar Senha */}
-          <button
-            type="button"
-            onClick={handleOpenChangePassword}
-            className="flex items-center space-x-1.5 px-3 py-1.5 bg-gray-900 hover:bg-black text-white rounded-xl transition cursor-pointer text-xs font-bold shadow-xs shrink-0 active:scale-95"
-            title="Alterar senha desta conta de e-mail"
-          >
-            <Key className="h-3.5 w-3.5 text-gray-300 shrink-0" />
-            <span>Mudar Senha</span>
-          </button>
 
           {/* Refresh */}
           <button
@@ -1410,52 +1410,45 @@ function WebmailContent() {
               refreshMessages();
               setTimeout(() => setIsRefreshingWebmail(false), 800);
             }}
-            className="p-2 hover:bg-gray-100 rounded-xl text-gray-500 transition cursor-pointer shrink-0"
+            className="p-2 hover:bg-neutral-100 rounded-xl text-neutral-500 hover:text-neutral-900 transition cursor-pointer shrink-0"
             title="Sincronizar caixa de entrada"
           >
-            {isRefreshingWebmail ? <Loader2 className="h-4 w-4 animate-spin text-primary-600" /> : <RefreshCw className="h-4 w-4" />}
+            {isRefreshingWebmail ? <Loader2 className="h-4 w-4 animate-spin text-neutral-900" /> : <RefreshCw className="h-4 w-4" />}
           </button>
 
-          {/* Link Ajuda Outlook & Telemóvel */}
+          {/* Link Ajuda Outlook & Telemóvel (Tesla White Secondary) */}
           <Link
             href="/ajuda/configurar-email"
             target="_blank"
-            className="hidden md:flex items-center space-x-1.5 px-3 py-1.5 bg-gray-900 hover:bg-black text-white rounded-xl transition cursor-pointer text-xs font-bold shadow-xs shrink-0 active:scale-95"
+            className="hidden md:flex items-center space-x-1.5 px-3 py-1.5 bg-white hover:bg-neutral-100 text-neutral-900 border border-neutral-300 rounded-xl transition cursor-pointer text-xs font-bold shadow-2xs shrink-0 active:scale-95"
             title="Abrir guia de configuração para Outlook e Celular"
           >
-            <HelpCircle className="h-3.5 w-3.5 text-gray-300 shrink-0" />
-            <span>Guia Outlook/Celular</span>
+            <HelpCircle className="h-3.5 w-3.5 text-neutral-700 shrink-0" />
+            <span>Guia Configuração</span>
           </Link>
 
           {/* Mailbox Logout */}
           {mailboxPassword && (
             <button
               onClick={handleWebmailLogout}
-              className="p-2 hover:bg-gray-100 rounded-xl text-gray-500 transition cursor-pointer shrink-0"
+              className="p-2 hover:bg-neutral-100 rounded-xl text-neutral-500 hover:text-neutral-900 transition cursor-pointer shrink-0"
               title="Sair do Webmail"
             >
               <LogOut className="h-4 w-4" />
             </button>
           )}
 
-          {/* Live Connection & Sync Status Pill */}
-          <div 
-            className="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold shrink-0 transition-all duration-300"
-            style={{
-              backgroundColor: !isOnline ? '#FEF2F2' : (isLoadingMessages || isRefreshingWebmail) ? '#EFF6FF' : mailboxPassword ? '#ECFDF5' : '#FFFBEB',
-              borderColor: !isOnline ? '#FECACA' : (isLoadingMessages || isRefreshingWebmail) ? '#BFDBFE' : mailboxPassword ? '#A7F3D0' : '#FDE68A',
-              color: !isOnline ? '#991B1B' : (isLoadingMessages || isRefreshingWebmail) ? '#1E40AF' : mailboxPassword ? '#065F46' : '#92400E'
-            }}
-          >
+          {/* Live Connection & Sync Status Pill (Sleek Tesla Minimalist) */}
+          <div className="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border border-neutral-200 bg-neutral-100 text-xs font-semibold text-neutral-700 shrink-0 transition-all duration-300">
             {!isOnline ? (
               <>
                 <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping shrink-0" />
-                <span className="text-[11px] font-bold">Offline</span>
+                <span className="text-[11px] font-bold text-rose-700">Offline</span>
               </>
             ) : (isLoadingMessages || isRefreshingWebmail) ? (
               <>
-                <Loader2 className="h-3.5 w-3.5 animate-spin text-primary-600 shrink-0" />
-                <span className="text-[11px] font-bold">A sincronizar...</span>
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-neutral-700 shrink-0" />
+                <span className="text-[11px] font-bold text-neutral-700">A sincronizar...</span>
               </>
             ) : mailboxPassword ? (
               <>
@@ -1463,29 +1456,29 @@ function WebmailContent() {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                 </span>
-                <span className="text-[11px] font-bold">IMAP Ativo</span>
+                <span className="text-[11px] font-bold text-neutral-800">IMAP Ativo</span>
                 {lastSyncedTime && (
-                  <span className="text-[10px] opacity-75 font-normal">
+                  <span className="text-[10px] text-neutral-400 font-normal">
                     ({lastSyncedTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})
                   </span>
                 )}
               </>
             ) : (
               <>
-                <Lock className="h-3 w-3 text-amber-600 shrink-0" />
-                <span className="text-[11px] font-bold">Sessão Fechada</span>
+                <Lock className="h-3 w-3 text-neutral-500 shrink-0" />
+                <span className="text-[11px] font-bold text-neutral-600">Sessão Fechada</span>
               </>
             )}
           </div>
 
           {/* Desktop-only: Date/Time */}
           {currentDateTime && (
-            <div className="hidden lg:flex items-center space-x-1.5 px-3 py-1.5 bg-gradient-to-r from-primary-50 to-indigo-50 rounded-xl border border-primary-200 shrink-0">
-              <Clock className="h-3.5 w-3.5 text-primary-600" />
-              <span className="text-xs font-bold text-gray-700">
+            <div className="hidden lg:flex items-center space-x-1.5 px-3 py-1.5 bg-neutral-100 rounded-xl border border-neutral-200 shrink-0 text-neutral-600">
+              <Clock className="h-3.5 w-3.5 text-neutral-500" />
+              <span className="text-xs font-bold text-neutral-700">
                 {currentDateTime.toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })}
               </span>
-              <span className="text-[10px] text-gray-500">
+              <span className="text-[10px] text-neutral-400">
                 {currentDateTime.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
               </span>
             </div>
@@ -1495,7 +1488,7 @@ function WebmailContent() {
           <button
             type="button"
             onClick={handleOpenCompose}
-            className="hidden sm:flex p-2 hover:bg-primary-50 text-primary-600 rounded-xl transition cursor-pointer shrink-0"
+            className="hidden sm:flex p-2 hover:bg-neutral-100 text-neutral-600 hover:text-neutral-900 rounded-xl transition cursor-pointer shrink-0"
             title="Escrever E-mail"
           >
             <Edit3 className="h-4 w-4" />
@@ -1504,7 +1497,7 @@ function WebmailContent() {
           <button
             type="button"
             onClick={() => setShowSignatureModal(true)}
-            className="hidden sm:flex p-2 hover:bg-purple-50 text-purple-600 rounded-xl transition cursor-pointer shrink-0"
+            className="hidden sm:flex p-2 hover:bg-neutral-100 text-neutral-600 hover:text-neutral-900 rounded-xl transition cursor-pointer shrink-0"
             title="Configurar Assinatura Profissional"
           >
             <FileSignature className="h-4 w-4" />
@@ -1513,7 +1506,7 @@ function WebmailContent() {
           <button
             type="button"
             onClick={handleOpenChangePassword}
-            className="hidden sm:flex p-2 hover:bg-gray-100 text-gray-700 rounded-xl transition cursor-pointer shrink-0"
+            className="hidden sm:flex p-2 hover:bg-neutral-100 text-neutral-600 hover:text-neutral-900 rounded-xl transition cursor-pointer shrink-0"
             title="Alterar Senha"
           >
             <Key className="h-4 w-4" />
@@ -1525,7 +1518,7 @@ function WebmailContent() {
               auth.logout();
               router.push('/login');
             }}
-            className="hidden sm:flex p-2 hover:bg-rose-50 text-rose-600 rounded-xl transition cursor-pointer shrink-0"
+            className="hidden sm:flex p-2 hover:bg-neutral-100 text-neutral-500 hover:text-neutral-900 rounded-xl transition cursor-pointer shrink-0"
             title="Sair"
           >
             <LogOut className="h-4 w-4" />
@@ -1609,19 +1602,19 @@ function WebmailContent() {
       )}
 
       {/* Mobile Folder Selector Tabs (Visível em Telas Pequenas) */}
-      <div className="md:hidden bg-white border-b border-gray-200 px-2 py-2 flex items-center space-x-1 overflow-x-auto text-xs shrink-0">
+      <div className="md:hidden bg-white border-b border-neutral-200 px-2 py-2 flex items-center space-x-1.5 overflow-x-auto text-xs shrink-0">
         <button
           onClick={() => { soundEffects.playFolderSwitchSound(); setCurrentFolder('inbox'); setSelectedMessage(null); }}
-          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg whitespace-nowrap font-black transition-all duration-200 shrink-0 border ${
+          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl whitespace-nowrap font-bold transition-all duration-200 shrink-0 border ${
             currentFolder === 'inbox' 
-              ? 'bg-primary-600 text-white shadow-md border-primary-700' 
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-200'
+              ? 'bg-neutral-900 text-white shadow-xs border-neutral-900' 
+              : 'bg-neutral-100 text-neutral-600 hover:text-neutral-900 hover:bg-neutral-200/70 border-neutral-200/80'
           }`}
         >
           <Inbox className="h-3.5 w-3.5" />
           <span>Entrada</span>
           {unreadInboxCount > 0 && (
-            <span className="bg-white text-primary-600 text-[10px] px-1.5 py-0.2 rounded-full font-black ml-1 shadow-sm">
+            <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ml-1 ${currentFolder === 'inbox' ? 'bg-white text-neutral-900' : 'bg-neutral-200 text-neutral-700'}`}>
               {unreadInboxCount}
             </span>
           )}
@@ -1629,16 +1622,16 @@ function WebmailContent() {
 
         <button
           onClick={() => { soundEffects.playFolderSwitchSound(); setCurrentFolder('starred'); setSelectedMessage(null); }}
-          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg whitespace-nowrap font-black transition-all duration-200 shrink-0 border ${
+          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl whitespace-nowrap font-bold transition-all duration-200 shrink-0 border ${
             currentFolder === 'starred' 
-              ? 'bg-amber-500 text-white shadow-md border-amber-600' 
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-200'
+              ? 'bg-neutral-900 text-white shadow-xs border-neutral-900' 
+              : 'bg-neutral-100 text-neutral-600 hover:text-neutral-900 hover:bg-neutral-200/70 border-neutral-200/80'
           }`}
         >
           <Star className="h-3.5 w-3.5" />
           <span>Com Estrela</span>
           {starredCount > 0 && (
-            <span className="bg-white text-amber-600 text-[10px] px-1.5 py-0.2 rounded-full font-black ml-1 shadow-sm">
+            <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ml-1 ${currentFolder === 'starred' ? 'bg-white text-neutral-900' : 'bg-neutral-200 text-neutral-700'}`}>
               {starredCount}
             </span>
           )}
@@ -1646,16 +1639,16 @@ function WebmailContent() {
 
         <button
           onClick={() => { soundEffects.playFolderSwitchSound(); setCurrentFolder('sent'); setSelectedMessage(null); }}
-          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg whitespace-nowrap font-black transition-all duration-200 shrink-0 border ${
+          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl whitespace-nowrap font-bold transition-all duration-200 shrink-0 border ${
             currentFolder === 'sent' 
-              ? 'bg-emerald-600 text-white shadow-md border-emerald-700' 
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-200'
+              ? 'bg-neutral-900 text-white shadow-xs border-neutral-900' 
+              : 'bg-neutral-100 text-neutral-600 hover:text-neutral-900 hover:bg-neutral-200/70 border-neutral-200/80'
           }`}
         >
           <Send className="h-3.5 w-3.5" />
           <span>Enviados</span>
           {sentCount > 0 && (
-            <span className="bg-white text-emerald-600 text-[10px] px-1.5 py-0.2 rounded-full font-black ml-1 shadow-sm">
+            <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ml-1 ${currentFolder === 'sent' ? 'bg-white text-neutral-900' : 'bg-neutral-200 text-neutral-700'}`}>
               {sentCount}
             </span>
           )}
@@ -1663,10 +1656,10 @@ function WebmailContent() {
 
         <button
           onClick={() => { soundEffects.playFolderSwitchSound(); setCurrentFolder('trash'); setSelectedMessage(null); }}
-          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg whitespace-nowrap font-black transition-all duration-200 shrink-0 border ${
+          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl whitespace-nowrap font-bold transition-all duration-200 shrink-0 border ${
             currentFolder === 'trash' 
-              ? 'bg-rose-600 text-white shadow-md border-rose-700' 
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-200'
+              ? 'bg-neutral-900 text-white shadow-xs border-neutral-900' 
+              : 'bg-neutral-100 text-neutral-600 hover:text-neutral-900 hover:bg-neutral-200/70 border-neutral-200/80'
           }`}
         >
           <Trash2 className="h-3.5 w-3.5" />
@@ -1675,16 +1668,16 @@ function WebmailContent() {
 
         <button
           onClick={() => { soundEffects.playFolderSwitchSound(); setCurrentFolder('drafts'); setSelectedMessage(null); }}
-          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg whitespace-nowrap font-black transition-all duration-200 shrink-0 border ${
+          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl whitespace-nowrap font-bold transition-all duration-200 shrink-0 border ${
             currentFolder === 'drafts' 
-              ? 'bg-purple-600 text-white shadow-md border-purple-700' 
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-200'
+              ? 'bg-neutral-900 text-white shadow-xs border-neutral-900' 
+              : 'bg-neutral-100 text-neutral-600 hover:text-neutral-900 hover:bg-neutral-200/70 border-neutral-200/80'
           }`}
         >
           <FileText className="h-3.5 w-3.5" />
           <span>Rascunhos</span>
           {draftsCount > 0 && (
-            <span className="bg-white text-purple-600 text-[10px] px-1.5 py-0.2 rounded-full font-black ml-1 shadow-sm">
+            <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ml-1 ${currentFolder === 'drafts' ? 'bg-white text-neutral-900' : 'bg-neutral-200 text-neutral-700'}`}>
               {draftsCount}
             </span>
           )}
@@ -1719,16 +1712,18 @@ function WebmailContent() {
               onClick={() => { soundEffects.playFolderSwitchSound(); setCurrentFolder('inbox'); }}
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 cursor-pointer border ${
                 currentFolder === 'inbox' 
-                  ? 'bg-primary-50 text-primary-700 border-primary-200 font-black shadow-sm' 
-                  : 'hover:bg-gray-100 text-gray-600 border-transparent hover:border-gray-200'
+                  ? 'bg-neutral-900 text-white border-neutral-900 font-bold shadow-xs' 
+                  : 'hover:bg-neutral-100 text-neutral-600 hover:text-neutral-900 border-transparent'
               }`}
             >
               <div className="flex items-center space-x-2.5">
-                <Inbox className="h-4 w-4 text-primary-500" />
-                <span className="font-bold">Entrada</span>
+                <Inbox className={`h-4 w-4 ${currentFolder === 'inbox' ? 'text-white' : 'text-neutral-500'}`} />
+                <span>Entrada</span>
               </div>
               {unreadInboxCount > 0 && (
-                <span className="bg-primary-600 text-white text-[10px] px-2 py-0.5 rounded-full font-black shadow-sm">
+                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold shadow-2xs ${
+                  currentFolder === 'inbox' ? 'bg-white text-neutral-900' : 'bg-neutral-200 text-neutral-700'
+                }`}>
                   {unreadInboxCount}
                 </span>
               )}
@@ -1738,16 +1733,18 @@ function WebmailContent() {
               onClick={() => { soundEffects.playFolderSwitchSound(); setCurrentFolder('starred'); }}
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 cursor-pointer border ${
                 currentFolder === 'starred' 
-                  ? 'bg-amber-50 text-amber-700 border-amber-200 font-black shadow-sm' 
-                  : 'hover:bg-gray-100 text-gray-600 border-transparent hover:border-gray-200'
+                  ? 'bg-neutral-900 text-white border-neutral-900 font-bold shadow-xs' 
+                  : 'hover:bg-neutral-100 text-neutral-600 hover:text-neutral-900 border-transparent'
               }`}
             >
               <div className="flex items-center space-x-2.5">
-                <Star className="h-4 w-4 text-amber-400" />
-                <span className="font-bold">Com Estrela</span>
+                <Star className={`h-4 w-4 ${currentFolder === 'starred' ? 'text-white' : 'text-neutral-500'}`} />
+                <span>Com Estrela</span>
               </div>
               {starredCount > 0 && (
-                <span className="bg-amber-500 text-white text-[10px] px-2 py-0.5 rounded-full font-black shadow-sm">
+                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold shadow-2xs ${
+                  currentFolder === 'starred' ? 'bg-white text-neutral-900' : 'bg-neutral-200 text-neutral-700'
+                }`}>
                   {starredCount}
                 </span>
               )}
@@ -1757,16 +1754,18 @@ function WebmailContent() {
               onClick={() => { soundEffects.playFolderSwitchSound(); setCurrentFolder('sent'); }}
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 cursor-pointer border ${
                 currentFolder === 'sent' 
-                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200 font-black shadow-sm' 
-                  : 'hover:bg-gray-100 text-gray-600 border-transparent hover:border-gray-200'
+                  ? 'bg-neutral-900 text-white border-neutral-900 font-bold shadow-xs' 
+                  : 'hover:bg-neutral-100 text-neutral-600 hover:text-neutral-900 border-transparent'
               }`}
             >
               <div className="flex items-center space-x-2.5">
-                <Send className="h-4 w-4 text-emerald-500" />
-                <span className="font-bold">Enviados</span>
+                <Send className={`h-4 w-4 ${currentFolder === 'sent' ? 'text-white' : 'text-neutral-500'}`} />
+                <span>Enviados</span>
               </div>
               {sentCount > 0 && (
-                <span className="bg-emerald-600 text-white text-[10px] px-2 py-0.5 rounded-full font-black shadow-sm">
+                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold shadow-2xs ${
+                  currentFolder === 'sent' ? 'bg-white text-neutral-900' : 'bg-neutral-200 text-neutral-700'
+                }`}>
                   {sentCount}
                 </span>
               )}
@@ -1776,96 +1775,92 @@ function WebmailContent() {
               onClick={() => { soundEffects.playFolderSwitchSound(); setCurrentFolder('trash'); }}
               className={`w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl transition-all duration-200 cursor-pointer border ${
                 currentFolder === 'trash' 
-                  ? 'bg-rose-50 text-rose-700 border-rose-200 font-black shadow-sm' 
-                  : 'hover:bg-gray-100 text-gray-600 border-transparent hover:border-gray-200'
+                  ? 'bg-neutral-900 text-white border-neutral-900 font-bold shadow-xs' 
+                  : 'hover:bg-neutral-100 text-neutral-600 hover:text-neutral-900 border-transparent'
               }`}
             >
-              <Trash2 className="h-4 w-4 text-rose-400" />
-              <span className="font-bold">Lixeira</span>
+              <Trash2 className={`h-4 w-4 ${currentFolder === 'trash' ? 'text-white' : 'text-neutral-500'}`} />
+              <span>Lixeira</span>
             </button>
 
             <button
               onClick={() => { soundEffects.playFolderSwitchSound(); setCurrentFolder('drafts'); }}
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 cursor-pointer border ${
                 currentFolder === 'drafts' 
-                  ? 'bg-purple-50 text-purple-700 border-purple-200 font-black shadow-sm' 
-                  : 'hover:bg-gray-100 text-gray-600 border-transparent hover:border-gray-200'
+                  ? 'bg-neutral-900 text-white border-neutral-900 font-bold shadow-xs' 
+                  : 'hover:bg-neutral-100 text-neutral-600 hover:text-neutral-900 border-transparent'
               }`}
             >
               <div className="flex items-center space-x-2.5">
-                <FileText className="h-4 w-4 text-purple-400" />
-                <span className="font-bold">Rascunhos</span>
+                <FileText className={`h-4 w-4 ${currentFolder === 'drafts' ? 'text-white' : 'text-neutral-500'}`} />
+                <span>Rascunhos</span>
               </div>
               {draftsCount > 0 && (
-                <span className="bg-purple-600 text-white text-[10px] px-2 py-0.5 rounded-full font-black shadow-sm">
+                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold shadow-2xs ${
+                  currentFolder === 'drafts' ? 'bg-white text-neutral-900' : 'bg-neutral-200 text-neutral-700'
+                }`}>
                   {draftsCount}
                 </span>
               )}
             </button>
           </nav>
 
-          <div className={`mt-auto pt-4 border-t border-gray-200 text-[11px] text-gray-400 space-y-2 ${isSidebarCollapsed ? 'hidden' : ''}`}>
+          <div className={`mt-auto pt-4 border-t border-neutral-200 text-[11px] text-neutral-500 space-y-2 ${isSidebarCollapsed ? 'hidden' : ''}`}>
             <button
               type="button"
               onClick={() => setIsStorageCollapsed(!isStorageCollapsed)}
-              className="w-full flex items-center justify-between font-bold text-gray-600 cursor-pointer hover:text-gray-800 transition"
+              className="w-full flex items-center justify-between font-bold text-neutral-700 cursor-pointer hover:text-neutral-900 transition"
             >
               <span>Cota de Armazenamento</span>
               <ChevronRight className={`h-3 w-3 transition-transform ${isStorageCollapsed ? '' : 'rotate-180'}`} />
             </button>
             
             {!isStorageCollapsed && (
-              <div className="space-y-2 p-2.5 bg-gray-50/90 rounded-2xl border border-gray-200/80 shadow-2xs">
+              <div className="space-y-2 p-2.5 bg-neutral-100/90 rounded-2xl border border-neutral-200 shadow-2xs">
                 <div className="flex items-center justify-between text-[11px]">
-                  <span className="font-black text-gray-800">
-                    {storageInfo.usedDisplay} <span className="text-gray-400 font-normal">/ 1 GB</span>
+                  <span className="font-bold text-neutral-900">
+                    {storageInfo.usedDisplay} <span className="text-neutral-500 font-normal">/ 1 GB</span>
                   </span>
-                  <span className="text-primary-700 font-black text-[10px] bg-primary-100/80 px-2 py-0.5 rounded-md border border-primary-200">
+                  <span className="text-neutral-900 font-bold text-[10px] bg-white px-2 py-0.5 rounded-md border border-neutral-200">
                     {storageInfo.percentage.toFixed(1)}%
                   </span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden shadow-inner p-0.5">
+                <div className="w-full bg-neutral-200 rounded-full h-2 overflow-hidden p-0.5">
                   <div 
-                    className={`h-full rounded-full transition-all duration-500 ${
-                      storageInfo.percentage > 90 
-                        ? 'bg-gradient-to-r from-rose-500 to-red-600 shadow-sm shadow-rose-500/50' 
-                        : storageInfo.percentage > 70 
-                        ? 'bg-gradient-to-r from-amber-400 to-amber-600 shadow-sm shadow-amber-500/50' 
-                        : 'bg-gradient-to-r from-primary-500 to-indigo-600 shadow-sm shadow-primary-500/40'
-                    }`}
+                    className="h-full rounded-full transition-all duration-500 bg-neutral-900"
                     style={{ width: `${Math.max(storageInfo.percentage, 2)}%` }}
                   />
                 </div>
-                <div className="flex items-center justify-between text-[10px] text-gray-400 pt-0.5">
-                  <span className="font-semibold text-gray-500">Plano Corporativo</span>
-                  <span className="text-emerald-600 font-black flex items-center space-x-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block animate-pulse"></span>
+                <div className="flex items-center justify-between text-[10px] text-neutral-500 pt-0.5">
+                  <span className="font-medium text-neutral-600">Plano Corporativo</span>
+                  <span className="text-neutral-700 font-bold flex items-center space-x-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
                     <span>Espaço Seguro</span>
                   </span>
                 </div>
               </div>
             )}
 
-            {/* Botão Rápido de Mudar Senha na Barra Lateral */}
+            {/* Botão Rápido de Mudar Senha na Barra Lateral (Tesla Dark) */}
             <button
               type="button"
               onClick={handleOpenChangePassword}
-              className="w-full h-9 flex items-center justify-center space-x-2 px-3 bg-gray-900 hover:bg-black text-white rounded-xl transition cursor-pointer text-xs font-bold shadow-xs mt-2.5 active:scale-98"
+              className="w-full h-9 flex items-center justify-center space-x-2 px-3 bg-neutral-900 hover:bg-black text-white rounded-xl transition cursor-pointer text-xs font-bold shadow-xs mt-2.5 active:scale-98"
               title="Alterar senha desta conta de e-mail"
             >
-              <Key className="h-3.5 w-3.5 text-gray-300 shrink-0" />
+              <Key className="h-3.5 w-3.5 text-neutral-300 shrink-0" />
               <span>Mudar Senha</span>
             </button>
 
-            {/* Botão de Instalação na Barra Lateral */}
+            {/* Botão de Instalação na Barra Lateral (Tesla White) */}
             {!isAppInstalled && (
               <button
                 type="button"
                 onClick={handleTriggerInstall}
-                className="w-full h-9 flex items-center justify-center space-x-2 px-3 bg-gray-900 hover:bg-black text-white rounded-xl transition cursor-pointer text-xs font-bold shadow-xs mt-2 active:scale-98"
+                className="w-full h-9 flex items-center justify-center space-x-2 px-3 bg-white hover:bg-neutral-100 text-neutral-900 rounded-xl transition cursor-pointer text-xs font-bold border border-neutral-300 shadow-2xs mt-2 active:scale-98"
                 title="Instalar o Webmail no Computador ou Telemóvel"
               >
-                <Download className="h-3.5 w-3.5 text-gray-300 shrink-0" />
+                <Download className="h-3.5 w-3.5 text-neutral-700 shrink-0" />
                 <span>Instalar App</span>
               </button>
             )}
@@ -1873,17 +1868,17 @@ function WebmailContent() {
         </aside>
 
         {/* Message List Column - Mobile First */}
-        <section className={`w-full md:w-80 lg:w-96 bg-white border-r border-gray-200 flex flex-col shrink-0 ${selectedMessage ? 'hidden md:flex' : 'flex'}`}>
+        <section className={`w-full md:w-80 lg:w-96 bg-white border-r border-neutral-200 flex flex-col shrink-0 ${selectedMessage ? 'hidden md:flex' : 'flex'}`}>
           {/* Search Input & Filter Pills */}
-          <div className="p-3 border-b border-gray-100 space-y-2">
+          <div className="p-3 border-b border-neutral-100 space-y-2">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-400" />
               <input
                 type="text"
                 placeholder="Pesquisar e-mails..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-900 outline-none focus:ring-2 focus:ring-primary-500 font-medium"
+                className="w-full pl-9 pr-3 py-2 bg-neutral-100 border border-neutral-200 rounded-xl text-xs text-neutral-900 outline-none focus:bg-white focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 font-medium placeholder:text-neutral-400 transition"
               />
             </div>
 
@@ -1892,7 +1887,7 @@ function WebmailContent() {
               <button
                 type="button"
                 onClick={() => setIsFiltersCollapsed(!isFiltersCollapsed)}
-                className="flex items-center space-x-1.5 text-[11px] font-semibold text-gray-600 hover:text-gray-800 transition cursor-pointer"
+                className="flex items-center space-x-1.5 text-[11px] font-semibold text-neutral-600 hover:text-neutral-900 transition cursor-pointer"
               >
                 <Filter className="h-3.5 w-3.5" />
                 <span>Filtros</span>
@@ -1900,12 +1895,14 @@ function WebmailContent() {
               </button>
               
               {!isFiltersCollapsed && (
-                <div className="flex items-center space-x-1 text-[11px] font-semibold overflow-x-auto pb-1">
+                <div className="flex items-center space-x-1.5 text-[11px] font-semibold overflow-x-auto pb-1">
                   <button
                     type="button"
                     onClick={() => setFilterType('all')}
-                    className={`px-2.5 py-1 rounded-full whitespace-nowrap transition cursor-pointer ${
-                      filterType === 'all' ? 'bg-primary-600 text-white font-bold' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    className={`px-3 py-1 rounded-xl whitespace-nowrap transition cursor-pointer border ${
+                      filterType === 'all' 
+                        ? 'bg-neutral-900 text-white font-bold border-neutral-900 shadow-xs' 
+                        : 'bg-white text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 border-neutral-200'
                     }`}
                   >
                     Todas
@@ -1913,8 +1910,10 @@ function WebmailContent() {
                   <button
                     type="button"
                     onClick={() => setFilterType('unread')}
-                    className={`px-2.5 py-1 rounded-full whitespace-nowrap transition cursor-pointer ${
-                      filterType === 'unread' ? 'bg-primary-600 text-white font-bold' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    className={`px-3 py-1 rounded-xl whitespace-nowrap transition cursor-pointer border ${
+                      filterType === 'unread' 
+                        ? 'bg-neutral-900 text-white font-bold border-neutral-900 shadow-xs' 
+                        : 'bg-white text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 border-neutral-200'
                     }`}
                   >
                     Não lidas
@@ -1922,8 +1921,10 @@ function WebmailContent() {
                   <button
                     type="button"
                     onClick={() => setFilterType('attachments')}
-                    className={`px-2.5 py-1 rounded-full whitespace-nowrap transition cursor-pointer flex items-center space-x-1 ${
-                      filterType === 'attachments' ? 'bg-primary-600 text-white font-bold' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    className={`px-3 py-1 rounded-xl whitespace-nowrap transition cursor-pointer flex items-center space-x-1 border ${
+                      filterType === 'attachments' 
+                        ? 'bg-neutral-900 text-white font-bold border-neutral-900 shadow-xs' 
+                        : 'bg-white text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 border-neutral-200'
                     }`}
                   >
                     <Paperclip className="w-3 h-3" />
@@ -1932,8 +1933,10 @@ function WebmailContent() {
                   <button
                     type="button"
                     onClick={() => setFilterType('starred')}
-                    className={`px-2.5 py-1 rounded-full whitespace-nowrap transition cursor-pointer flex items-center space-x-1 ${
-                      filterType === 'starred' ? 'bg-amber-500 text-white font-bold' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    className={`px-3 py-1 rounded-xl whitespace-nowrap transition cursor-pointer flex items-center space-x-1 border ${
+                      filterType === 'starred' 
+                        ? 'bg-neutral-900 text-white font-bold border-neutral-900 shadow-xs' 
+                        : 'bg-white text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 border-neutral-200'
                     }`}
                   >
                     <Star className="w-3 h-3" />
@@ -1942,8 +1945,10 @@ function WebmailContent() {
                   <button
                     type="button"
                     onClick={() => setFilterType('pinned')}
-                    className={`px-2.5 py-1 rounded-full whitespace-nowrap transition cursor-pointer flex items-center space-x-1 ${
-                      filterType === 'pinned' ? 'bg-purple-600 text-white font-bold' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    className={`px-3 py-1 rounded-xl whitespace-nowrap transition cursor-pointer flex items-center space-x-1 border ${
+                      filterType === 'pinned' 
+                        ? 'bg-neutral-900 text-white font-bold border-neutral-900 shadow-xs' 
+                        : 'bg-white text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 border-neutral-200'
                     }`}
                   >
                     <Pin className="w-3 h-3" />
@@ -1952,8 +1957,10 @@ function WebmailContent() {
                   <button
                     type="button"
                     onClick={() => setFilterType('priority')}
-                    className={`px-2.5 py-1 rounded-full whitespace-nowrap transition cursor-pointer flex items-center space-x-1 ${
-                      filterType === 'priority' ? 'bg-rose-600 text-white font-bold' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    className={`px-3 py-1 rounded-xl whitespace-nowrap transition cursor-pointer flex items-center space-x-1 border ${
+                      filterType === 'priority' 
+                        ? 'bg-neutral-900 text-white font-bold border-neutral-900 shadow-xs' 
+                        : 'bg-white text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 border-neutral-200'
                     }`}
                   >
                     <Flame className="w-3 h-3" />
@@ -1965,35 +1972,35 @@ function WebmailContent() {
           </div>
 
           {/* List */}
-          <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
+          <div className="flex-1 overflow-y-auto divide-y divide-neutral-100">
             {isLoadingMessages ? (
               // Skeleton Loading
               Array.from({ length: 5 }).map((_, i) => (
                 <div key={i} className="p-4 mx-2 my-2 animate-pulse">
                   <div className="flex items-start space-x-3">
-                    <div className="w-4 h-4 bg-gray-200 rounded-full shrink-0" />
+                    <div className="w-4 h-4 bg-neutral-200 rounded-full shrink-0" />
                     <div className="flex-1 space-y-2">
                       <div className="flex items-center justify-between">
-                        <div className="h-4 bg-gray-200 rounded w-1/3" />
-                        <div className="h-3 bg-gray-200 rounded w-16" />
+                        <div className="h-4 bg-neutral-200 rounded w-1/3" />
+                        <div className="h-3 bg-neutral-200 rounded w-16" />
                       </div>
-                      <div className="h-4 bg-gray-200 rounded w-2/3" />
-                      <div className="h-3 bg-gray-200 rounded w-full" />
+                      <div className="h-4 bg-neutral-200 rounded w-2/3" />
+                      <div className="h-3 bg-neutral-200 rounded w-full" />
                     </div>
                   </div>
                 </div>
               ))
             ) : !mailboxPassword && !isAccountPending ? (
               <div className="p-4 sm:p-6 text-center flex flex-col items-center justify-center my-auto w-full max-w-sm mx-auto animate-in fade-in zoom-in-95 duration-200">
-                <div className="w-12 h-12 bg-gradient-to-br from-primary-100 to-indigo-100 text-primary-600 rounded-2xl flex items-center justify-center mx-auto shadow-inner border border-primary-200/60 mb-2">
-                  <Lock className="h-6 w-6 text-primary-600" />
+                <div className="w-12 h-12 bg-neutral-100 text-neutral-900 rounded-2xl flex items-center justify-center mx-auto shadow-2xs border border-neutral-200 mb-2">
+                  <Lock className="h-6 w-6 text-neutral-800" />
                 </div>
-                <h4 className="font-extrabold text-gray-900 text-sm sm:text-base">Caixa Bloqueada</h4>
-                <p className="text-xs text-gray-500 mt-0.5 mb-3 leading-relaxed">
-                  Insira a senha de <strong className="font-mono text-primary-700">{selectedAccountEmail}</strong> para aceder às mensagens.
+                <h4 className="font-bold text-neutral-900 text-sm sm:text-base">Caixa Bloqueada</h4>
+                <p className="text-xs text-neutral-500 mt-0.5 mb-3 leading-relaxed">
+                  Insira a senha de <strong className="font-mono text-neutral-900">{selectedAccountEmail}</strong> para aceder às mensagens.
                 </p>
 
-                <form onSubmit={handleWebmailLogin} className="w-full space-y-3 bg-white p-4 rounded-2xl border border-gray-200/90 shadow-sm text-left">
+                <form onSubmit={handleWebmailLogin} className="w-full space-y-3 bg-white p-4 rounded-2xl border border-neutral-200 shadow-2xs text-left">
                   {webmailLoginError && (
                     <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs font-semibold">
                       {webmailLoginError}
@@ -2001,7 +2008,7 @@ function WebmailContent() {
                   )}
 
                   <div>
-                    <label className="block text-[10px] font-bold text-gray-600 uppercase tracking-wider mb-1">
+                    <label className="block text-[10px] font-bold text-neutral-600 uppercase tracking-wider mb-1">
                       Conta de Email
                     </label>
                     <input
@@ -2011,13 +2018,13 @@ function WebmailContent() {
                         setWebmailLoginEmail(e.target.value);
                         setSelectedAccountEmail(e.target.value);
                       }}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent text-xs font-mono bg-gray-50 text-gray-800"
+                      className="w-full px-3 py-2 border border-neutral-200 rounded-xl focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 text-xs font-mono bg-neutral-50 text-neutral-900"
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[10px] font-bold text-gray-600 uppercase tracking-wider mb-1">
+                    <label className="block text-[10px] font-bold text-neutral-600 uppercase tracking-wider mb-1">
                       Senha do Webmail
                     </label>
                     <div className="relative">
@@ -2027,12 +2034,12 @@ function WebmailContent() {
                         onChange={(e) => setWebmailLoginPassword(e.target.value)}
                         placeholder="••••••••"
                         required
-                        className="w-full pl-3 pr-10 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent text-xs text-gray-900"
+                        className="w-full pl-3 pr-10 py-2 border border-neutral-200 rounded-xl focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 text-xs text-neutral-900"
                       />
                       <button
                         type="button"
                         onClick={() => setShowLoginPassword(!showLoginPassword)}
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 cursor-pointer"
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-neutral-400 hover:text-neutral-700 cursor-pointer"
                         title={showLoginPassword ? 'Ocultar senha' : 'Ver senha'}
                       >
                         {showLoginPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -2043,7 +2050,7 @@ function WebmailContent() {
                   <button
                     type="submit"
                     disabled={webmailLoginLoading}
-                    className="w-full py-2.5 bg-gray-900 hover:bg-black active:scale-98 disabled:bg-gray-400 text-white font-bold text-xs rounded-xl transition cursor-pointer shadow-md flex items-center justify-center space-x-2"
+                    className="w-full py-2.5 bg-neutral-900 hover:bg-black active:scale-98 disabled:bg-neutral-400 text-white font-bold text-xs rounded-xl transition cursor-pointer shadow-xs flex items-center justify-center space-x-2"
                   >
                     {webmailLoginLoading ? (
                       <>
@@ -2058,20 +2065,20 @@ function WebmailContent() {
                     )}
                   </button>
 
-                  <div className="pt-2 text-center border-t border-gray-100">
+                  <div className="pt-2 text-center border-t border-neutral-100">
                     <button
                       type="button"
                       onClick={handleOpenChangePassword}
-                      className="text-[11px] font-bold text-gray-700 hover:text-black underline cursor-pointer inline-flex items-center space-x-1"
+                      className="text-[11px] font-bold text-neutral-700 hover:text-black underline cursor-pointer inline-flex items-center space-x-1"
                     >
-                      <Key className="h-3 w-3 text-gray-500" />
+                      <Key className="h-3 w-3 text-neutral-500" />
                       <span>Esqueceu ou deseja alterar a senha? Mudar Senha</span>
                     </button>
                   </div>
                 </form>
               </div>
             ) : displayMessages.length === 0 ? (
-              <div className="p-8 text-center text-gray-400 text-xs">
+              <div className="p-8 text-center text-neutral-400 text-xs">
                 <Mail className="h-8 w-8 mx-auto mb-2 opacity-50" />
                 <p>Nenhuma mensagem nesta pasta.</p>
               </div>
@@ -2084,65 +2091,68 @@ function WebmailContent() {
                   <div
                     key={msg.id}
                     onClick={() => handleSelectMessage(msg)}
-                    className={`p-3.5 sm:p-4 cursor-pointer transition-all duration-200 flex items-start space-x-2.5 sm:space-x-3 rounded-2xl mx-2 my-1.5 ${
+                    className={`p-3.5 sm:p-4 cursor-pointer transition-all duration-150 flex items-start space-x-2.5 sm:space-x-3 rounded-2xl mx-2 my-1.5 ${
                       isSelected
-                        ? 'bg-gradient-to-r from-primary-50 to-primary-100/50 border-2 border-primary-300 shadow-md'
+                        ? 'bg-neutral-100 border-l-4 border-l-neutral-900 border-y border-r border-neutral-200 shadow-2xs'
                         : msg.pinned
-                        ? 'bg-gradient-to-r from-purple-50/70 to-indigo-50/50 border border-purple-200 shadow-2xs hover:shadow-sm'
+                        ? 'bg-neutral-50 border border-neutral-200 shadow-2xs hover:bg-neutral-100/70'
                         : msg.isRead
-                        ? 'bg-white hover:bg-gray-50 hover:shadow-2xs border border-transparent'
-                        : 'bg-gradient-to-r from-blue-50/60 to-indigo-50/40 hover:from-blue-50/80 hover:to-indigo-50/60 border border-blue-200/50 shadow-2xs'
+                        ? 'bg-white hover:bg-neutral-50/80 border border-transparent'
+                        : 'bg-white hover:bg-neutral-50 border border-neutral-200/90 shadow-2xs'
                     }`}
                   >
                     <div className="flex flex-col items-center space-y-2 shrink-0 pt-0.5">
                       <button
                         type="button"
                         onClick={(e) => handleToggleStar(msg.id, e)}
-                        className="text-gray-300 hover:text-amber-400 transition"
+                        className="text-neutral-300 hover:text-neutral-700 transition"
                         title={msg.starred ? 'Remover estrela' : 'Marcar com estrela'}
                       >
-                        <Star className={`h-4 w-4 ${msg.starred ? 'fill-amber-400 text-amber-400' : ''}`} />
+                        <Star className={`h-4 w-4 ${msg.starred ? 'fill-neutral-900 text-neutral-900' : ''}`} />
                       </button>
                       <button
                         type="button"
                         onClick={(e) => handleTogglePin(msg.id, e)}
-                        className={`transition ${msg.pinned ? 'text-purple-600 hover:text-purple-700' : 'text-gray-300 hover:text-purple-500'}`}
+                        className={`transition ${msg.pinned ? 'text-neutral-900' : 'text-neutral-300 hover:text-neutral-700'}`}
                         title={msg.pinned ? 'Desafixar mensagem do topo' : 'Fixar mensagem no topo'}
                       >
-                        <Pin className={`h-3.5 w-3.5 ${msg.pinned ? 'fill-purple-600 text-purple-600' : ''}`} />
+                        <Pin className={`h-3.5 w-3.5 ${msg.pinned ? 'fill-neutral-900 text-neutral-900' : ''}`} />
                       </button>
                     </div>
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-1">
                         <div className="flex items-center space-x-1.5 truncate">
-                          <span className={`text-xs sm:text-sm truncate ${msg.isRead ? 'text-gray-700 font-semibold' : 'text-gray-900 font-extrabold'}`}>
+                          {!msg.isRead && (
+                            <span className="w-1.5 h-1.5 rounded-full bg-neutral-900 shrink-0 inline-block" />
+                          )}
+                          <span className={`text-xs sm:text-sm truncate ${msg.isRead ? 'text-neutral-700 font-medium' : 'text-neutral-900 font-bold'}`}>
                             {msg.fromName}
                           </span>
                           {msg.pinned && (
-                            <span className="bg-purple-100 text-purple-700 text-[10px] font-black px-1.5 py-0.2 rounded-md shrink-0 border border-purple-200 flex items-center space-x-1">
+                            <span className="bg-neutral-100 text-neutral-800 text-[10px] font-bold px-1.5 py-0.2 rounded-md shrink-0 border border-neutral-200 flex items-center space-x-1">
                               <Pin className="w-2.5 h-2.5" />
                               <span>Fixado</span>
                             </span>
                           )}
                           {msg.priority === 'high' && (
-                            <span className="bg-rose-100 text-rose-700 text-[10px] font-black px-1.5 py-0.2 rounded-md shrink-0 border border-rose-200 flex items-center space-x-1">
-                              <Flame className="w-2.5 h-2.5 text-rose-600" />
+                            <span className="bg-neutral-900 text-white text-[10px] font-bold px-1.5 py-0.2 rounded-md shrink-0 flex items-center space-x-1">
+                              <Flame className="w-2.5 h-2.5" />
                               <span className="hidden sm:inline">Urgente</span>
                             </span>
                           )}
                         </div>
                         <div className="flex items-center space-x-1.5 ml-2 shrink-0">
-                          {hasAtt && <Paperclip className="h-3.5 w-3.5 text-gray-400" />}
-                          <span className="text-[10px] sm:text-[11px] text-gray-400 whitespace-nowrap font-medium">
+                          {hasAtt && <Paperclip className="h-3.5 w-3.5 text-neutral-400" />}
+                          <span className="text-[10px] sm:text-[11px] text-neutral-400 whitespace-nowrap font-medium">
                             {new Date(msg.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </div>
                       </div>
-                      <h4 className={`text-xs sm:text-sm truncate mb-0.5 ${msg.isRead ? 'text-gray-800 font-semibold' : 'text-gray-900 font-bold'}`}>
+                      <h4 className={`text-xs sm:text-sm truncate mb-0.5 ${msg.isRead ? 'text-neutral-800 font-medium' : 'text-neutral-900 font-bold'}`}>
                         {msg.subject}
                       </h4>
-                      <p className="text-[11px] sm:text-xs text-gray-500 truncate leading-relaxed">
+                      <p className="text-[11px] sm:text-xs text-neutral-500 truncate leading-relaxed">
                         {getSnippetText(msg.textPreview, msg.body)}
                       </p>
                       {imageAttachment && (
@@ -2150,7 +2160,7 @@ function WebmailContent() {
                           <img 
                             src={imageAttachment.url} 
                             alt="Preview" 
-                            className="h-7 w-7 rounded-lg object-cover border border-gray-200"
+                            className="h-7 w-7 rounded-lg object-cover border border-neutral-200"
                           />
                         </div>
                       )}
@@ -2245,34 +2255,34 @@ function WebmailContent() {
                     </button>
                     <button
                       onClick={() => handleReplyMessage()}
-                      className="p-2.5 hover:bg-primary-50 text-gray-400 hover:text-primary-600 rounded-2xl transition cursor-pointer"
+                      className="p-2.5 hover:bg-neutral-100 text-neutral-500 hover:text-neutral-900 rounded-2xl transition cursor-pointer"
                       title="Responder"
                     >
                       <Reply className="h-4 w-4" />
                     </button>
                     <button
                       onClick={() => handleReplyAllMessage()}
-                      className="p-2.5 hover:bg-primary-50 text-gray-400 hover:text-primary-600 rounded-2xl transition cursor-pointer"
+                      className="p-2.5 hover:bg-neutral-100 text-neutral-500 hover:text-neutral-900 rounded-2xl transition cursor-pointer"
                       title="Responder a Todos"
                     >
                       <Reply className="h-4 w-4" style={{ transform: 'scaleX(-1)' }} />
                     </button>
                     <button
                       onClick={() => handleForwardMessage()}
-                      className="p-2.5 hover:bg-primary-50 text-gray-400 hover:text-primary-600 rounded-2xl transition cursor-pointer"
+                      className="p-2.5 hover:bg-neutral-100 text-neutral-500 hover:text-neutral-900 rounded-2xl transition cursor-pointer"
                       title="Encaminhar"
                     >
                       <Forward className="h-4 w-4" />
                     </button>
                     <button
                       onClick={(e) => handleToggleStar(selectedMessage.id, e)}
-                      className="p-2.5 hover:bg-gray-100 rounded-2xl transition cursor-pointer"
+                      className="p-2.5 hover:bg-neutral-100 rounded-2xl transition cursor-pointer"
                     >
-                      <Star className={`h-4 w-4 ${selectedMessage.starred ? 'fill-amber-400 text-amber-400' : 'text-gray-400'}`} />
+                      <Star className={`h-4 w-4 ${selectedMessage.starred ? 'fill-neutral-900 text-neutral-900' : 'text-neutral-400'}`} />
                     </button>
                     <button
                       onClick={() => handleDeleteMessage(selectedMessage.id)}
-                      className="p-2.5 hover:bg-rose-50 text-gray-400 hover:text-rose-600 rounded-2xl transition cursor-pointer"
+                      className="p-2.5 hover:bg-neutral-100 text-neutral-400 hover:text-neutral-900 rounded-2xl transition cursor-pointer"
                       title="Excluir"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -2280,46 +2290,44 @@ function WebmailContent() {
                   </div>
                 </div>
 
-                <div className="flex flex-wrap items-center justify-between text-xs pt-2 border-t border-gray-100 gap-2">
+                <div className="flex flex-wrap items-center justify-between text-xs pt-2 border-t border-neutral-100 gap-2">
                   <div className="flex items-center space-x-2.5">
-                    <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full ${selectedMessage.avatarColor || 'bg-primary-600'} text-white flex items-center justify-center font-bold text-sm shadow-md shrink-0`}>
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-neutral-900 text-white flex items-center justify-center font-bold text-sm shadow-xs shrink-0">
                       {selectedMessage.fromName.charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <span className="font-bold text-gray-900 text-sm block">{selectedMessage.fromName}</span>
-                      <span className="text-gray-500 font-mono text-[11px] truncate max-w-[180px] sm:max-w-none block">&lt;{selectedMessage.fromEmail}&gt;</span>
+                      <span className="font-bold text-neutral-900 text-sm block">{selectedMessage.fromName}</span>
+                      <span className="text-neutral-500 font-mono text-[11px] truncate max-w-[180px] sm:max-w-none block">&lt;{selectedMessage.fromEmail}&gt;</span>
                     </div>
                   </div>
 
                   {/* Priority Selector Pill */}
                   <div className="flex items-center space-x-2">
-                    <div className="flex items-center space-x-1.5 bg-gray-100 px-2.5 py-1 rounded-xl border border-gray-200">
-                      <Flag className="w-3 h-3 text-gray-500" />
-                      <span className="text-[10px] font-bold text-gray-500">Prioridade:</span>
+                    <div className="flex items-center space-x-1.5 bg-neutral-100 px-2.5 py-1 rounded-xl border border-neutral-200">
+                      <Flag className="w-3 h-3 text-neutral-500" />
+                      <span className="text-[10px] font-bold text-neutral-500">Prioridade:</span>
                       <select
                         value={selectedMessage.priority || 'normal'}
                         onChange={(e) => handleChangePriority(selectedMessage.id, e.target.value as any)}
-                        className={`bg-transparent text-xs font-black outline-none cursor-pointer ${
-                          selectedMessage.priority === 'high' ? 'text-rose-700' : selectedMessage.priority === 'low' ? 'text-blue-700' : 'text-gray-700'
-                        }`}
+                        className="bg-transparent text-xs font-bold text-neutral-800 outline-none cursor-pointer"
                       >
                         <option value="normal">Normal</option>
                         <option value="high">Alta Prioridade</option>
                         <option value="low">Baixa Prioridade</option>
                       </select>
                     </div>
-                    <div className="text-right text-gray-400 font-medium text-[11px] sm:text-xs">
+                    <div className="text-right text-neutral-400 font-medium text-[11px] sm:text-xs">
                       {new Date(selectedMessage.date).toLocaleDateString('pt-MZ', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* AI Assistant Smart Bar */}
-              <div className="bg-gradient-to-r from-purple-900 via-indigo-900 to-primary-950 rounded-2xl p-3 sm:p-4 text-white shadow-sm space-y-3">
+              {/* AI Assistant Smart Bar (Tesla Minimalist Dark Card) */}
+              <div className="bg-neutral-900 rounded-2xl p-3.5 sm:p-4 text-white shadow-sm border border-neutral-800 space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center space-x-2 text-xs font-bold">
-                    <Sparkles className="h-4 w-4 text-purple-300 animate-pulse" />
+                    <Sparkles className="h-4 w-4 text-neutral-300" />
                     <span>IA Integrado</span>
                   </div>
 
@@ -2328,16 +2336,16 @@ function WebmailContent() {
                       type="button"
                       onClick={handleSummarizeWithAI}
                       disabled={isGeneratingSummary}
-                      className="px-2.5 py-1.5 bg-white/20 hover:bg-white/30 text-white rounded-lg text-[11px] font-bold transition flex items-center space-x-1 disabled:opacity-50"
+                      className="px-2.5 py-1.5 bg-white/10 hover:bg-white/20 border border-white/10 text-white rounded-xl text-[11px] font-bold transition flex items-center space-x-1 disabled:opacity-50"
                     >
-                      {isGeneratingSummary ? <Loader2 className="h-3 w-3 animate-spin" /> : <Lightbulb className="h-3 w-3 text-amber-300" />}
+                      {isGeneratingSummary ? <Loader2 className="h-3 w-3 animate-spin" /> : <Lightbulb className="h-3 w-3 text-neutral-300" />}
                       <span>{isGeneratingSummary ? 'Resumindo...' : 'Resumir'}</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => handleGenerateAIReply('formal')}
                       disabled={isGeneratingReply}
-                      className="px-2.5 py-1 bg-white/10 hover:bg-white/20 text-white rounded-lg text-[11px] font-semibold transition"
+                      className="px-2.5 py-1.5 bg-white/10 hover:bg-white/20 border border-white/10 text-white rounded-xl text-[11px] font-semibold transition"
                     >
                       Formal
                     </button>
@@ -2345,7 +2353,7 @@ function WebmailContent() {
                       type="button"
                       onClick={() => handleGenerateAIReply('friendly')}
                       disabled={isGeneratingReply}
-                      className="px-2.5 py-1 bg-white/10 hover:bg-white/20 text-white rounded-lg text-[11px] font-semibold transition"
+                      className="px-2.5 py-1.5 bg-white/10 hover:bg-white/20 border border-white/10 text-white rounded-xl text-[11px] font-semibold transition"
                     >
                       Amigável
                     </button>
@@ -2353,7 +2361,7 @@ function WebmailContent() {
                       type="button"
                       onClick={() => handleGenerateAIReply('quick_accept')}
                       disabled={isGeneratingReply}
-                      className="px-2.5 py-1 bg-emerald-500/30 hover:bg-emerald-500/40 text-emerald-200 rounded-lg text-[11px] font-bold transition"
+                      className="px-3 py-1.5 bg-white hover:bg-neutral-100 text-neutral-900 rounded-xl text-[11px] font-bold transition shadow-xs"
                     >
                       Confirmar
                     </button>
@@ -2362,7 +2370,7 @@ function WebmailContent() {
 
                 {/* AI Summary Box */}
                 {aiSummary && (
-                  <div className="p-3 bg-white/10 rounded-xl border border-white/15 text-xs text-purple-100 whitespace-pre-line relative">
+                  <div className="p-3 bg-white/10 rounded-xl border border-white/15 text-xs text-neutral-100 whitespace-pre-line relative">
                     <button
                       onClick={() => setAiSummary(null)}
                       className="absolute top-2 right-2 text-white/50 hover:text-white"
@@ -2375,7 +2383,7 @@ function WebmailContent() {
               </div>
 
               {/* Body card */}
-              <div className="bg-white rounded-3xl p-4 sm:p-6 shadow-sm border border-gray-200 flex-1 space-y-4">
+              <div className="bg-white rounded-3xl p-4 sm:p-6 shadow-2xs border border-neutral-200 flex-1 space-y-4">
                 {(() => {
                   let cleanBody = stripRawHeaders(selectedMessage.body);
                   if (cleanBody.includes('&lt;') && cleanBody.includes('&gt;')) {
@@ -2384,11 +2392,11 @@ function WebmailContent() {
                   const isHtml = /<[a-z][\s\S]*>/i.test(cleanBody);
                   return isHtml ? (
                     <div 
-                      className="prose prose-sm max-w-none text-gray-900 font-sans break-words overflow-x-auto leading-relaxed [&_p]:my-1.5 [&_div]:my-1 [&_*]:text-gray-900"
+                      className="prose prose-sm max-w-none text-neutral-900 font-sans break-words overflow-x-auto leading-relaxed [&_p]:my-1.5 [&_div]:my-1 [&_*]:text-neutral-900"
                       dangerouslySetInnerHTML={{ __html: cleanBody }}
                     />
                   ) : (
-                    <div className="whitespace-pre-line text-sm text-gray-900 leading-relaxed font-sans font-normal">
+                    <div className="whitespace-pre-line text-sm text-neutral-900 leading-relaxed font-sans font-normal">
                       {cleanBody}
                     </div>
                   );
@@ -2396,9 +2404,9 @@ function WebmailContent() {
 
                 {/* Exibição de Ficheiros Anexados */}
                 {selectedMessage.attachments && selectedMessage.attachments.length > 0 && (
-                  <div className="mt-6 pt-4 border-t border-gray-100 space-y-2">
-                    <span className="text-xs font-bold text-gray-700 flex items-center space-x-1.5">
-                      <Paperclip className="h-4 w-4 text-primary-600" />
+                  <div className="mt-6 pt-4 border-t border-neutral-100 space-y-2">
+                    <span className="text-xs font-bold text-neutral-800 flex items-center space-x-1.5">
+                      <Paperclip className="h-4 w-4 text-neutral-600" />
                       <span>{selectedMessage.attachments.length} Ficheiro(s) Anexado(s)</span>
                     </span>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -2407,17 +2415,17 @@ function WebmailContent() {
                           key={idx}
                           type="button"
                           onClick={() => setPreviewAttachment(att)}
-                          className="p-2.5 bg-gray-50 hover:bg-primary-50/50 rounded-xl border border-gray-200 flex items-center justify-between transition group cursor-pointer"
+                          className="p-2.5 bg-neutral-50 hover:bg-neutral-100 rounded-xl border border-neutral-200 flex items-center justify-between transition group cursor-pointer"
                         >
                           <div className="flex items-center space-x-2 truncate">
-                            <FileText className="h-4 w-4 text-primary-600 shrink-0" />
-                            <span className="text-xs font-bold text-gray-800 truncate group-hover:text-primary-700">{att.name}</span>
+                            <FileText className="h-4 w-4 text-neutral-600 shrink-0" />
+                            <span className="text-xs font-bold text-neutral-800 truncate group-hover:text-black">{att.name}</span>
                           </div>
                           <div className="flex items-center space-x-1">
                             {att.type?.startsWith('image/') && (
-                              <span className="text-[10px] text-gray-400">📷</span>
+                              <span className="text-[10px] text-neutral-400">📷</span>
                             )}
-                            <Download className="h-3.5 w-3.5 text-gray-400 group-hover:text-primary-600 shrink-0" />
+                            <Download className="h-3.5 w-3.5 text-neutral-400 group-hover:text-neutral-900 shrink-0" />
                           </div>
                         </button>
                       ))}
@@ -2427,23 +2435,23 @@ function WebmailContent() {
               </div>
 
               {/* Quick Reply Form */}
-              <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-gray-200 space-y-3">
+              <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-2xs border border-neutral-200 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-gray-700 flex items-center space-x-1.5">
-                    <Reply className="h-4 w-4 text-primary-600" />
-                    <span className="truncate">Resposta rápida para <span className="font-mono text-primary-700">{selectedMessage.fromEmail}</span></span>
+                  <span className="text-xs font-bold text-neutral-700 flex items-center space-x-1.5">
+                    <Reply className="h-4 w-4 text-neutral-600" />
+                    <span className="truncate">Resposta rápida para <span className="font-mono text-neutral-900">{selectedMessage.fromEmail}</span></span>
                   </span>
-                  <span className="text-[10px] text-gray-400 hidden sm:inline">Shift + Enter para nova linha</span>
+                  <span className="text-[10px] text-neutral-400 hidden sm:inline">Shift + Enter para nova linha</span>
                 </div>
 
-                {/* Sugestões Inteligentes de Resposta Rápida (1 Clique) */}
+                {/* Sugestões Inteligentes de Resposta Rápida (1 Clique - Tesla Style) */}
                 <div className="space-y-1.5 pt-1">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-black text-gray-700 flex items-center space-x-1.5">
-                      <Sparkles className="h-3.5 w-3.5 text-indigo-600 animate-pulse" />
+                    <span className="text-[11px] font-bold text-neutral-700 flex items-center space-x-1.5">
+                      <Sparkles className="h-3.5 w-3.5 text-neutral-600" />
                       <span>Sugestões Rápidas:</span>
                     </span>
-                    <span className="text-[10px] text-gray-400">Clique para preencher</span>
+                    <span className="text-[10px] text-neutral-400">Clique para preencher</span>
                   </div>
                   <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 scrollbar-thin">
                     {getSmartReplies(selectedMessage.subject, selectedMessage.body).map((sug, idx) => (
@@ -2451,7 +2459,7 @@ function WebmailContent() {
                         key={idx}
                         type="button"
                         onClick={() => setReplyText(sug)}
-                        className="px-3 py-1.5 bg-gradient-to-r from-indigo-50 to-primary-50 hover:from-indigo-100 hover:to-primary-100 text-indigo-800 text-[11px] font-bold rounded-xl border border-indigo-200/80 shadow-2xs whitespace-nowrap transition-all duration-150 cursor-pointer active:scale-95 flex items-center space-x-1 shrink-0"
+                        className="px-3 py-1.5 bg-neutral-100 hover:bg-neutral-200/80 text-neutral-900 text-[11px] font-semibold rounded-xl border border-neutral-200/80 shadow-2xs whitespace-nowrap transition-all duration-150 cursor-pointer active:scale-95 flex items-center space-x-1 shrink-0"
                         title="Usar esta resposta"
                       >
                         <span>💬</span>
@@ -2466,19 +2474,19 @@ function WebmailContent() {
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}
                   placeholder="Escreva a sua resposta..."
-                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-900 outline-none focus:ring-2 focus:ring-primary-500 font-sans resize-none"
+                  className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded-xl text-xs text-neutral-900 outline-none focus:bg-white focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 font-sans resize-none transition"
                 />
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   {quickReplyStatus !== 'idle' && (
-                    <span className={`text-xs font-semibold ${quickReplyStatus === 'sent' ? 'text-emerald-600' : 'text-red-500'}`}>
-                      {quickReplyStatus === 'sent' ? '✅ Enviada!' : 'Erro ao enviar.'}
+                    <span className={`text-xs font-bold ${quickReplyStatus === 'sent' ? 'text-neutral-900' : 'text-rose-600'}`}>
+                      {quickReplyStatus === 'sent' ? '✅ Enviada com sucesso!' : 'Erro ao enviar.'}
                     </span>
                   )}
                   <button
                     type="button"
                     onClick={handleSendQuickReply}
                     disabled={!replyText.trim() || quickReplySending}
-                    className="ml-auto px-5 py-2.5 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow transition cursor-pointer flex items-center space-x-1.5"
+                    className="ml-auto px-5 py-2.5 bg-neutral-900 hover:bg-black disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-xs transition cursor-pointer flex items-center space-x-1.5 active:scale-98"
                   >
                     <Send className="h-3.5 w-3.5" />
                     <span>{quickReplySending ? 'A enviar...' : 'Enviar Resposta'}</span>
@@ -2596,12 +2604,12 @@ function WebmailContent() {
         </main>
       </div>
 
-      {/* Mobile FAB: Escrever E-mail */}
+      {/* Mobile FAB: Escrever E-mail (Tesla Black) */}
       {!showCompose && (
         <button
           type="button"
           onClick={handleOpenCompose}
-          className="sm:hidden fixed bottom-6 right-6 z-40 w-14 h-14 bg-gradient-to-br from-primary-600 to-indigo-600 text-white rounded-full shadow-2xl flex items-center justify-center transition-all duration-200 active:scale-95 border-2 border-white"
+          className="sm:hidden fixed bottom-6 right-6 z-40 w-14 h-14 bg-neutral-900 hover:bg-black text-white rounded-full shadow-2xl flex items-center justify-center transition-all duration-200 active:scale-95 border-2 border-white"
           title="Escrever E-mail"
         >
           <Edit3 className="h-6 w-6" />
@@ -2614,52 +2622,52 @@ function WebmailContent() {
           className="fixed inset-0 z-50 sm:hidden"
           onClick={() => setShowMobileMenu(false)}
         >
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-xs" />
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-xs" />
           <div
             className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl p-6 shadow-2xl animate-in slide-in-from-bottom duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Handle bar */}
-            <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-5" />
-            <h3 className="text-sm font-black text-gray-900 mb-4">Ações do Webmail</h3>
+            <div className="w-12 h-1.5 bg-neutral-200 rounded-full mx-auto mb-5" />
+            <h3 className="text-sm font-bold text-neutral-900 mb-4">Ações do Webmail</h3>
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => { handleOpenCompose(); setShowMobileMenu(false); }}
-                className="flex items-center space-x-3 p-4 bg-primary-50 hover:bg-primary-100 rounded-2xl transition cursor-pointer border border-primary-200 active:scale-95"
+                className="flex items-center space-x-3 p-4 bg-neutral-900 hover:bg-black text-white rounded-2xl transition cursor-pointer active:scale-95 shadow-xs"
               >
-                <Edit3 className="h-5 w-5 text-primary-600 shrink-0" />
-                <span className="text-sm font-bold text-primary-700">Novo Email</span>
+                <Edit3 className="h-5 w-5 text-neutral-300 shrink-0" />
+                <span className="text-sm font-bold text-white">Novo Email</span>
               </button>
               <button
                 type="button"
                 onClick={() => { setShowSignatureModal(true); setShowMobileMenu(false); }}
-                className="flex items-center space-x-3 p-4 bg-purple-50 hover:bg-purple-100 rounded-2xl transition cursor-pointer border border-purple-200 active:scale-95"
+                className="flex items-center space-x-3 p-4 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 rounded-2xl transition cursor-pointer border border-neutral-200 active:scale-95"
               >
-                <FileSignature className="h-5 w-5 text-purple-600 shrink-0" />
-                <span className="text-sm font-bold text-purple-700">Assinatura</span>
+                <FileSignature className="h-5 w-5 text-neutral-600 shrink-0" />
+                <span className="text-sm font-bold text-neutral-800">Assinatura</span>
               </button>
               <button
                 type="button"
                 onClick={handleOpenChangePassword}
-                className="flex items-center space-x-3 p-4 bg-gray-900 hover:bg-black text-white rounded-2xl transition cursor-pointer active:scale-95 shadow-sm"
+                className="flex items-center space-x-3 p-4 bg-neutral-900 hover:bg-black text-white rounded-2xl transition cursor-pointer active:scale-95 shadow-xs"
               >
-                <Key className="h-5 w-5 text-gray-300 shrink-0" />
+                <Key className="h-5 w-5 text-neutral-300 shrink-0" />
                 <span className="text-sm font-bold text-white">Alterar Senha</span>
               </button>
               <button
                 type="button"
                 onClick={() => { auth.logout(); router.push('/login'); }}
-                className="flex items-center space-x-3 p-4 bg-rose-50 hover:bg-rose-100 rounded-2xl transition cursor-pointer border border-rose-200 active:scale-95"
+                className="flex items-center space-x-3 p-4 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 rounded-2xl transition cursor-pointer border border-neutral-200 active:scale-95"
               >
-                <LogOut className="h-5 w-5 text-rose-600 shrink-0" />
-                <span className="text-sm font-bold text-rose-700">Sair da App</span>
+                <LogOut className="h-5 w-5 text-neutral-600 shrink-0" />
+                <span className="text-sm font-bold text-neutral-800">Sair da App</span>
               </button>
             </div>
             <button
               type="button"
               onClick={() => setShowMobileMenu(false)}
-              className="mt-4 w-full py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm rounded-2xl transition cursor-pointer"
+              className="mt-4 w-full py-3 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-bold text-sm rounded-2xl transition cursor-pointer"
             >
               Fechar
             </button>
@@ -2694,19 +2702,19 @@ function WebmailContent() {
               </div>
             ) : (
               <>
-                <div className="flex items-center justify-between pb-3 border-b border-gray-100 mb-4">
+                <div className="flex items-center justify-between pb-3 border-b border-neutral-100 mb-4">
                   <div className="flex items-center space-x-2">
-                    <Edit3 className="h-5 w-5 text-primary-600" />
-                    <h2 className="text-lg font-extrabold text-gray-900">Novo E-mail</h2>
+                    <Edit3 className="h-5 w-5 text-neutral-900" />
+                    <h2 className="text-lg font-bold text-neutral-900">Novo E-mail</h2>
                   </div>
                   <div className="flex items-center space-x-1.5">
                     <button
                       type="button"
                       onClick={() => setShowTemplateSelector(!showTemplateSelector)}
-                      className={`flex items-center space-x-1.5 px-2.5 py-2 rounded-xl transition cursor-pointer ${
+                      className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl transition cursor-pointer border ${
                         showTemplateSelector 
-                          ? 'bg-primary-600 text-white' 
-                          : 'bg-primary-50 text-primary-600 hover:bg-primary-100'
+                          ? 'bg-neutral-900 text-white border-neutral-900' 
+                          : 'bg-neutral-100 text-neutral-800 hover:bg-neutral-200 border-neutral-200'
                       }`}
                       title="Usar Template"
                     >
@@ -2716,7 +2724,7 @@ function WebmailContent() {
                     <button
                       type="button"
                       onClick={() => setIsComposeExpanded(!isComposeExpanded)}
-                      className="hidden sm:flex p-2 hover:bg-gray-100 text-gray-600 rounded-xl transition cursor-pointer"
+                      className="hidden sm:flex p-2 hover:bg-neutral-100 text-neutral-600 rounded-xl transition cursor-pointer"
                       title={isComposeExpanded ? "Reduzir" : "Expandir"}
                     >
                       {isComposeExpanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
@@ -2724,7 +2732,7 @@ function WebmailContent() {
                     <button
                       type="button"
                       onClick={handleCloseCompose}
-                      className="p-1.5 text-gray-400 hover:text-gray-700 rounded-lg cursor-pointer"
+                      className="p-1.5 text-neutral-400 hover:text-neutral-900 rounded-lg cursor-pointer"
                     >
                       <X className="h-5 w-5" />
                     </button>
@@ -2733,11 +2741,11 @@ function WebmailContent() {
 
                 {/* Template Selector */}
                 {showTemplateSelector && (
-                  <div className="mb-4 p-4 bg-gradient-to-r from-primary-50 to-indigo-50 rounded-2xl border border-primary-200">
+                  <div className="mb-4 p-4 bg-neutral-50 rounded-2xl border border-neutral-200">
                     <div className="flex items-center justify-between mb-3">
                       <div>
-                        <h3 className="text-sm font-bold text-gray-800 flex items-center space-x-2">
-                          <Sparkles className="h-4 w-4 text-primary-600" />
+                        <h3 className="text-sm font-bold text-neutral-900 flex items-center space-x-2">
+                          <Sparkles className="h-4 w-4 text-neutral-700" />
                           <span>Templates de Email</span>
                         </h3>
                         <p className="text-[10px] text-gray-500 mt-1">Selecione um modelo para começar rapidamente</p>
@@ -3141,7 +3149,7 @@ function WebmailContent() {
                   <button
                     type="button"
                     onClick={handleCloseCompose}
-                    className="sm:flex-1 py-3 border border-gray-200 text-gray-700 font-bold text-xs rounded-2xl hover:bg-gray-50 transition cursor-pointer"
+                    className="sm:flex-1 py-3 border border-neutral-300 text-neutral-800 font-bold text-xs rounded-xl hover:bg-neutral-100 transition cursor-pointer"
                   >
                     Cancelar
                   </button>
@@ -3149,7 +3157,7 @@ function WebmailContent() {
                     type="button"
                     onClick={handleSaveDraftManually}
                     disabled={sendingMsg || uploadingAttachment}
-                    className="sm:flex-1 py-3 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-bold text-xs rounded-2xl transition cursor-pointer shadow-md flex items-center justify-center space-x-2"
+                    className="sm:flex-1 py-3 bg-neutral-100 hover:bg-neutral-200/80 text-neutral-900 border border-neutral-300 font-bold text-xs rounded-xl transition cursor-pointer shadow-2xs flex items-center justify-center space-x-2"
                   >
                     <FileText className="h-4 w-4" />
                     <span>Salvar Rascunho</span>
@@ -3157,7 +3165,7 @@ function WebmailContent() {
                   <button
                     type="submit"
                     disabled={sendingMsg || uploadingAttachment}
-                    className="sm:flex-1 py-3 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white font-bold text-xs rounded-2xl transition cursor-pointer shadow-md flex items-center justify-center space-x-2"
+                    className="sm:flex-1 py-3 bg-neutral-900 hover:bg-black disabled:opacity-50 text-white font-bold text-xs rounded-xl transition cursor-pointer shadow-xs flex items-center justify-center space-x-2"
                   >
                     <Send className="h-4 w-4" />
                     <span>{sendingMsg ? 'A Enviar...' : 'Enviar E-mail'}</span>
