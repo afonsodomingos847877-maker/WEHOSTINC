@@ -45,50 +45,84 @@ export default function SocialProofToast() {
 
     if (proofs.length === 0 || dismissed) return;
 
-    // Regra: só exibir se o utilizador já estiver há mais de 3 minutos no site
-    const THREE_MINUTES_MS = 3 * 60 * 1000; // 180.000 ms (3 minutos)
+    // Regras de Intervalo:
+    // 1. Só deve aparecer a 1ª vez após 5 minutos (300.000 ms) no site
+    // 2. Só volta a aparecer após passar mais 15 minutos (900.000 ms)
+    // 3. Permanece visível durante 6 segundos e recolhe
+    const FIVE_MINUTES_MS = 5 * 60 * 1000; // 5 minutos
+    const FIFTEEN_MINUTES_MS = 15 * 60 * 1000; // 15 minutos
+    const DISPLAY_DURATION_MS = 6000; // 6 segundos
     const SESSION_START_KEY = 'wehost_session_start_time';
-    
-    let startTime = 0;
+    const LAST_SHOWN_KEY = 'wehost_social_proof_last_shown';
+
+    const now = Date.now();
+    let startTime = now;
+    let lastShown = 0;
+
     try {
-      const stored = sessionStorage.getItem(SESSION_START_KEY);
-      if (stored) {
-        startTime = Number(stored);
+      const storedStart = sessionStorage.getItem(SESSION_START_KEY);
+      if (storedStart) {
+        const parsed = Number(storedStart);
+        if (!isNaN(parsed) && parsed > 0) startTime = parsed;
+      } else {
+        sessionStorage.setItem(SESSION_START_KEY, String(now));
       }
-      if (!startTime || isNaN(startTime)) {
-        startTime = Date.now();
-        sessionStorage.setItem(SESSION_START_KEY, String(startTime));
+
+      const storedLastShown = sessionStorage.getItem(LAST_SHOWN_KEY);
+      if (storedLastShown) {
+        const parsed = Number(storedLastShown);
+        if (!isNaN(parsed) && parsed > 0) lastShown = parsed;
       }
     } catch {
-      startTime = Date.now();
+      startTime = now;
     }
 
-    const elapsed = Date.now() - startTime;
-    // Se ainda não passaram 3 minutos, aguarda o tempo restante. Se já passaram, aguarda 6s discretos nesta navegação.
-    const initialDelay = elapsed < THREE_MINUTES_MS 
-      ? (THREE_MINUTES_MS - elapsed) 
-      : 6000;
+    let delay = 0;
+    if (lastShown > 0) {
+      // Já apareceu anteriormente: só volta a aparecer quando passarem mais 15 minutos
+      const timeSinceLastShown = now - lastShown;
+      if (timeSinceLastShown < FIFTEEN_MINUTES_MS) {
+        delay = FIFTEEN_MINUTES_MS - timeSinceLastShown;
+      } else {
+        delay = 4000; // Já passaram os 15 minutos: exibe após 4s discretos nesta página
+      }
+    } else {
+      // Primeira vez na sessão: só exibe após completar 5 minutos de navegação no site
+      const sessionElapsed = now - startTime;
+      if (sessionElapsed < FIVE_MINUTES_MS) {
+        delay = FIVE_MINUTES_MS - sessionElapsed;
+      } else {
+        delay = 4000; // Já tem mais de 5 minutos no site: exibe após 4s
+      }
+    }
 
-    let cycleInterval: NodeJS.Timeout | null = null;
-    let nextToastTimer: NodeJS.Timeout | null = null;
+    let hideTimer: NodeJS.Timeout | null = null;
+    let nextCycleTimer: NodeJS.Timeout | null = null;
 
-    const initialTimer = setTimeout(() => {
+    const triggerToast = () => {
       setVisible(true);
+      try {
+        sessionStorage.setItem(LAST_SHOWN_KEY, String(Date.now()));
+      } catch {}
 
-      // Ciclo: exibe durante 5s, recolhe durante 16s e avança para a próxima prova social
-      cycleInterval = setInterval(() => {
+      // Exibe durante 6 segundos e depois recolhe
+      hideTimer = setTimeout(() => {
         setVisible(false);
-        nextToastTimer = setTimeout(() => {
-          setCurrentIndex((prev) => (prev + 1) % proofs.length);
-          setVisible(true);
-        }, 16000);
-      }, 21000);
-    }, initialDelay);
+        setCurrentIndex((prev) => (prev + 1) % proofs.length);
+
+        // Só volta a aparecer após passarem mais 15 minutos!
+        nextCycleTimer = setTimeout(() => {
+          triggerToast();
+        }, FIFTEEN_MINUTES_MS);
+      }, DISPLAY_DURATION_MS);
+    };
+
+    const initialTimer = setTimeout(triggerToast, delay);
 
     return () => {
       clearTimeout(initialTimer);
-      if (cycleInterval) clearInterval(cycleInterval);
-      if (nextToastTimer) clearTimeout(nextToastTimer);
+      if (hideTimer) clearTimeout(hideTimer);
+      if (nextCycleTimer) clearTimeout(nextCycleTimer);
       setVisible(false);
     };
   }, [proofs, dismissed, pathname, newsletterVisible]);
@@ -143,7 +177,13 @@ export default function SocialProofToast() {
 
         {/* Botão Fechar */}
         <button
-          onClick={() => setDismissed(true)}
+          onClick={() => {
+            setVisible(false);
+            setDismissed(true);
+            try {
+              sessionStorage.setItem('wehost_social_proof_last_shown', String(Date.now()));
+            } catch {}
+          }}
           className="absolute top-1 right-1 text-slate-400 hover:text-white p-0.5 rounded transition cursor-pointer"
           title="Fechar"
         >
