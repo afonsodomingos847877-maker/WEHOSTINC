@@ -29,7 +29,7 @@ async function getAuthContext(req: Request, body?: any): Promise<{ isAuthenticat
         return { isAuthenticated: true, isAdmin: false, email };
       }
     }
-  } catch {}
+  } catch { }
 
   // 2. Token interno para chamadas server-side
   const internalSecret = process.env.NEXTAUTH_SECRET || '';
@@ -41,22 +41,22 @@ async function getAuthContext(req: Request, body?: any): Promise<{ isAuthenticat
   // 3. Header do usuário autenticado no cliente (x-user-email), query param, ou body
   const origin = req.headers.get('origin');
   const referer = req.headers.get('referer');
-  const isSameOrigin = 
-    !origin || 
-    origin.includes('wehosthere.com') || 
-    origin.includes('localhost') || 
+  const isSameOrigin =
+    !origin ||
+    origin.includes('wehosthere.com') ||
+    origin.includes('localhost') ||
     (referer && (referer.includes('wehosthere.com') || referer.includes('localhost')));
 
   let queryEmail: string | undefined;
   try {
     const parsed = new URL(req.url);
     queryEmail = parsed.searchParams.get('customerEmail')?.toLowerCase()?.trim() || parsed.searchParams.get('email')?.toLowerCase()?.trim();
-  } catch {}
+  } catch { }
 
-  const candidateEmail = 
-    req.headers.get('x-user-email')?.toLowerCase()?.trim() || 
+  const candidateEmail =
+    req.headers.get('x-user-email')?.toLowerCase()?.trim() ||
     queryEmail ||
-    body?.adminEmail?.toLowerCase()?.trim() || 
+    body?.adminEmail?.toLowerCase()?.trim() ||
     body?.createdBy?.toLowerCase()?.trim();
 
   if (isSameOrigin && candidateEmail) {
@@ -66,7 +66,7 @@ async function getAuthContext(req: Request, body?: any): Promise<{ isAuthenticat
       return { isAuthenticated: true, isAdmin, email: dbUser.email };
     }
     const manualClient: any = await ManualClientModel.findOne({ email: candidateEmail }).lean();
-    if (manualClient) {
+    if (manualClient && !Array.isArray(manualClient)) {
       return { isAuthenticated: true, isAdmin: false, email: manualClient.email };
     }
     if (candidateEmail === 'admin@wehosthere.com') {
@@ -217,7 +217,7 @@ export async function POST(req: Request) {
     // Verificar se o cliente existe (User ou ManualClient)
     const user = await UserModel.findOne({ id: customerId }).lean();
     const manualClient = await ManualClientModel.findOne({ id: customerId }).lean();
-    
+
     if (!user && !manualClient) {
       return NextResponse.json({ success: false, error: 'Cliente não encontrado' }, { status: 404 });
     }
@@ -230,7 +230,7 @@ export async function POST(req: Request) {
       const discount = Number(item.discount) || 0;
       const itemSubtotal = (quantity * unitPrice) - discount;
       subtotal += itemSubtotal;
-      
+
       return {
         service: item.service || 'Serviço',
         description: item.description || '',
@@ -354,7 +354,7 @@ export async function PUT(req: Request) {
         const discount = Number(item.discount) || 0;
         const itemSubtotal = (quantity * unitPrice) - discount;
         subtotal += itemSubtotal;
-        
+
         return {
           service: item.service || 'Serviço',
           description: item.description || '',

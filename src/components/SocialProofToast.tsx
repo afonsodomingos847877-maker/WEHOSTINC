@@ -45,23 +45,51 @@ export default function SocialProofToast() {
 
     if (proofs.length === 0 || dismissed) return;
 
-    // Exibir primeiro toast após 4s
+    // Regra: só exibir se o utilizador já estiver há mais de 3 minutos no site
+    const THREE_MINUTES_MS = 3 * 60 * 1000; // 180.000 ms (3 minutos)
+    const SESSION_START_KEY = 'wehost_session_start_time';
+    
+    let startTime = 0;
+    try {
+      const stored = sessionStorage.getItem(SESSION_START_KEY);
+      if (stored) {
+        startTime = Number(stored);
+      }
+      if (!startTime || isNaN(startTime)) {
+        startTime = Date.now();
+        sessionStorage.setItem(SESSION_START_KEY, String(startTime));
+      }
+    } catch {
+      startTime = Date.now();
+    }
+
+    const elapsed = Date.now() - startTime;
+    // Se ainda não passaram 3 minutos, aguarda o tempo restante. Se já passaram, aguarda 6s discretos nesta navegação.
+    const initialDelay = elapsed < THREE_MINUTES_MS 
+      ? (THREE_MINUTES_MS - elapsed) 
+      : 6000;
+
+    let cycleInterval: NodeJS.Timeout | null = null;
+    let nextToastTimer: NodeJS.Timeout | null = null;
+
     const initialTimer = setTimeout(() => {
       setVisible(true);
-    }, 4000);
 
-    // Ciclo discreto: exibe 4.5s, esconde por 8s, depois avança
-    const cycleInterval = setInterval(() => {
-      setVisible(false);
-      setTimeout(() => {
-        setCurrentIndex((prev) => (prev + 1) % proofs.length);
-        setVisible(true);
-      }, 8000);
-    }, 13000);
+      // Ciclo: exibe durante 5s, recolhe durante 16s e avança para a próxima prova social
+      cycleInterval = setInterval(() => {
+        setVisible(false);
+        nextToastTimer = setTimeout(() => {
+          setCurrentIndex((prev) => (prev + 1) % proofs.length);
+          setVisible(true);
+        }, 16000);
+      }, 21000);
+    }, initialDelay);
 
     return () => {
       clearTimeout(initialTimer);
-      clearInterval(cycleInterval);
+      if (cycleInterval) clearInterval(cycleInterval);
+      if (nextToastTimer) clearTimeout(nextToastTimer);
+      setVisible(false);
     };
   }, [proofs, dismissed, pathname, newsletterVisible]);
 
