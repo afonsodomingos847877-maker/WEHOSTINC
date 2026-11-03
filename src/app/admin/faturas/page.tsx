@@ -296,28 +296,37 @@ export default function FaturasPage() {
   };
 
   const handleAddItem = () => {
-    if (!newItem.service || !newItem.description || newItem.unitPrice <= 0) {
-      setToastMsg({ type: 'error', message: 'Preencha todos os campos do item' });
+    if (!newItem.service.trim()) {
+      setToastMsg({ type: 'error', message: 'Informe o nome do serviço' });
       return;
     }
 
-    const subtotal = (newItem.quantity * newItem.unitPrice) - newItem.discount;
+    if (newItem.unitPrice <= 0) {
+      setToastMsg({ type: 'error', message: 'Informe um preço unitário válido para o item' });
+      return;
+    }
+
+    const description = newItem.description.trim() || newItem.service.trim();
+    const quantity = newItem.quantity > 0 ? newItem.quantity : 1;
+    const subtotal = (quantity * newItem.unitPrice) - (newItem.discount || 0);
+
     const item: InvoiceItem = {
-      service: newItem.service,
-      description: newItem.description,
-      quantity: newItem.quantity,
+      service: newItem.service.trim(),
+      description,
+      quantity,
       unitPrice: newItem.unitPrice,
-      discount: newItem.discount,
+      discount: newItem.discount || 0,
       subtotal
     };
 
-    setFormData({
-      ...formData,
-      items: [...formData.items, item]
-    });
+    setFormData(prev => ({
+      ...prev,
+      items: [...prev.items, item]
+    }));
 
     setNewItem({ service: '', description: '', quantity: 1, unitPrice: 0, discount: 0 });
     soundEffects.playSuccessSound();
+    setToastMsg({ type: 'success', message: `Item "${item.service}" adicionado à fatura!` });
   };
 
   const handleRemoveItem = (index: number) => {
@@ -472,8 +481,32 @@ export default function FaturasPage() {
   };
 
   const handleSubmit = async () => {
-    if (!formData.customerId || formData.items.length === 0) {
-      setToastMsg({ type: 'error', message: 'Selecione um cliente e adicione pelo menos um item' });
+    // Se o usuário preencheu o formulário de item mas não clicou no botão (+), inclui automaticamente
+    let finalItems = [...formData.items];
+    if (newItem.service.trim() && newItem.unitPrice > 0) {
+      const quantity = newItem.quantity > 0 ? newItem.quantity : 1;
+      const description = newItem.description.trim() || newItem.service.trim();
+      const subtotal = (quantity * newItem.unitPrice) - (newItem.discount || 0);
+      finalItems.push({
+        service: newItem.service.trim(),
+        description,
+        quantity,
+        unitPrice: newItem.unitPrice,
+        discount: newItem.discount || 0,
+        subtotal
+      });
+      // Limpa os campos do item adicionado automaticamente
+      setNewItem({ service: '', description: '', quantity: 1, unitPrice: 0, discount: 0 });
+      setFormData(prev => ({ ...prev, items: finalItems }));
+    }
+
+    if (!formData.customerId) {
+      setToastMsg({ type: 'error', message: 'Por favor, selecione um cliente para a fatura' });
+      return;
+    }
+
+    if (finalItems.length === 0) {
+      setToastMsg({ type: 'error', message: 'Adicione pelo menos um item à fatura (preencha o serviço, valor e clique em +)' });
       return;
     }
 
@@ -486,12 +519,13 @@ export default function FaturasPage() {
     }
 
     try {
-      const { subtotal, total } = calculateTotals();
+      const subtotal = finalItems.reduce((sum, item) => sum + item.subtotal, 0);
+      const total = subtotal - formData.discount;
       const payload = {
         ...formData,
         subtotal,
         total,
-        items: formData.items
+        items: finalItems
       };
 
       let res;
@@ -1117,7 +1151,7 @@ export default function FaturasPage() {
                     </div>
                     <input
                       type="text"
-                      placeholder="Descrição"
+                      placeholder="Descrição (opcional)"
                       value={newItem.description}
                       onChange={(e) => setNewItem({ ...newItem, description: e.target.value })}
                       className="px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-emerald-500"
