@@ -116,6 +116,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: 'Pelo menos um item é obrigatório' }, { status: 400 });
     }
 
+    // Validação de consistência do período de prestação
+    if (servicePeriodStart && servicePeriodEnd) {
+      if (servicePeriodEnd < servicePeriodStart) {
+        return NextResponse.json({
+          success: false,
+          error: 'Data inconsistente: a data de fim do período de prestação não pode ser anterior à data de início.'
+        }, { status: 400 });
+      }
+    }
+
     // Verificar se o cliente existe (User ou ManualClient)
     const user = await UserModel.findOne({ id: customerId }).lean();
     const manualClient = await ManualClientModel.findOne({ id: customerId }).lean();
@@ -217,6 +227,16 @@ export async function PUT(req: Request) {
     const existingInvoice = await InvoiceModel.findOne({ id }).lean();
     if (!existingInvoice || Array.isArray(existingInvoice)) {
       return NextResponse.json({ success: false, error: 'Fatura não encontrada' }, { status: 404 });
+    }
+
+    // Validação de consistência do período de prestação
+    const finalStart = updateData.servicePeriodStart !== undefined ? updateData.servicePeriodStart : (existingInvoice as any).servicePeriodStart;
+    const finalEnd = updateData.servicePeriodEnd !== undefined ? updateData.servicePeriodEnd : (existingInvoice as any).servicePeriodEnd;
+    if (finalStart && finalEnd && finalEnd < finalStart) {
+      return NextResponse.json({
+        success: false,
+        error: 'Data inconsistente: a data de fim do período de prestação não pode ser anterior à data de início.'
+      }, { status: 400 });
     }
 
     // Se items foram atualizados, recalcular subtotal e total
