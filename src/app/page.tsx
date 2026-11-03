@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from "next/link";
 import Image from "next/image";
-import { Server, Mail, Shield, ShieldCheck, Activity, Smartphone, Zap, Globe, Users, Search, Sparkles, CheckCircle, Facebook, Phone, Linkedin, Star, ArrowRight, Play, Calendar, Eye, Instagram, ChevronLeft, ChevronRight, LayoutTemplate, Code } from "lucide-react";
+import { Server, Mail, Shield, ShieldCheck, Activity, Smartphone, Zap, Globe, Users, Search, Sparkles, CheckCircle, Facebook, Phone, Linkedin, Star, ArrowRight, Play, Calendar, Eye, Instagram, ChevronLeft, ChevronRight, LayoutTemplate, Code, GraduationCap, Award, BookOpen, CheckCircle2 } from "lucide-react";
 import { websiteTypes } from '@/lib/data';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import { useLanguage } from '@/context/LanguageContext';
@@ -133,6 +133,7 @@ export default function Home() {
   const pricingRef = useScrollAnimation<HTMLDivElement>();
   const siteCreationRef = useScrollAnimation<HTMLDivElement>();
   const systemsRentRef = useScrollAnimation<HTMLDivElement>();
+  const academyPromoRef = useScrollAnimation<HTMLDivElement>();
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
@@ -854,6 +855,125 @@ export default function Home() {
             <p className="text-[10px] sm:text-xs text-gray-500 mt-2 sm:mt-3">
               {t('systems.subtext')}
             </p>
+          </div>
+        </div>
+      </section>
+
+      {/* 🎓 Academia WeHostHere Section — Formação Prática com Certificação */}
+      <section id="academia" ref={academyPromoRef} className="anim-fade-up py-12 sm:py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-purple-50/40 via-white to-blue-50/30 overflow-hidden">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-center">
+            
+            {/* Coluna da Imagem — academiaweb.jpg com Ambient Glow */}
+            <div className="lg:col-span-7 relative order-2 lg:order-1">
+              <div className="absolute -inset-3 bg-gradient-to-tr from-primary-600/20 via-sky-500/20 to-indigo-600/20 rounded-[36px] blur-2xl opacity-75 group-hover:opacity-100 transition duration-1000 -z-10" />
+
+              <div className="relative rounded-2xl sm:rounded-3xl lg:rounded-[32px] overflow-hidden bg-white shadow-2xl shadow-blue-950/10 border border-slate-200/80 group">
+                <div className="relative w-full aspect-16/11 sm:aspect-16/10 overflow-hidden">
+                  <Image
+                    src="/academiaweb.jpg"
+                    alt="Academia WEHOSTHERE — Cursos de Tecnologia e Programação em Moçambique"
+                    fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 60vw, 720px"
+                    className="object-cover object-center group-hover:scale-103 transition-transform duration-700 ease-out"
+                    priority
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent pointer-events-none" />
+                </div>
+
+                {/* Floating Badges sobre a Imagem */}
+                <div className="absolute top-3 left-3 sm:top-4 sm:left-4">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-slate-950/70 text-white backdrop-blur-md border border-white/20 shadow-lg">
+                    <Sparkles className="w-3.5 h-3.5 text-primary-400" />
+                    <span>Cursos 100% Práticos</span>
+                  </span>
+                </div>
+
+                <div className="absolute bottom-3 left-3 right-3 sm:bottom-4 sm:left-4 sm:right-4 flex items-center justify-between text-white/95 text-xs bg-black/60 backdrop-blur-md px-3.5 py-2.5 rounded-2xl border border-white/10">
+                  <div className="flex items-center gap-2">
+                    <div className="flex text-amber-400">
+                      {[...Array(5)].map((_, i) => (
+                        <Star key={i} className="w-3.5 h-3.5 fill-current" />
+                      ))}
+                    </div>
+                    <span className="font-bold text-[11px] sm:text-xs">4.9/5 Avaliação</span>
+                  </div>
+                  <span className="text-[11px] font-semibold text-primary-300">
+                    Certificado Oficial Emitido
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Coluna de Texto & Conteúdo */}
+            <div className="lg:col-span-5 flex flex-col items-start text-left order-1 lg:order-2">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-primary-50 text-primary-700 border border-primary-200 mb-3 shadow-2xs">
+                <GraduationCap className="w-4 h-4 text-primary-600" />
+                <span>Academia WEHOSTHERE</span>
+              </span>
+
+              <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight leading-[1.15] mb-4">
+                Aprende Tecnologia na Prática com Projetos Reais
+              </h2>
+
+              <p className="text-sm sm:text-base text-slate-600 leading-relaxed mb-6 font-normal">
+                Desenvolve competências reais em Inteligência Artificial, Engenharia Cloud, Desenvolvimento Web e Automações com os especialistas que operam a infraestrutura da WEHOSTHERE em Moçambique.
+              </p>
+
+              {/* 3 Pontos Chave */}
+              <div className="space-y-3 mb-8 w-full">
+                <div className="flex items-start gap-3 p-3 rounded-2xl bg-white border border-slate-100 shadow-xs">
+                  <div className="w-8 h-8 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center shrink-0 mt-0.5">
+                    <Code className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs sm:text-sm font-bold text-slate-900">Código Real & Projetos do Início ao Fim</h3>
+                    <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5">Sem teorias cansativas. Constrói soluções funcionais prontas para o mercado.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 p-3 rounded-2xl bg-white border border-slate-100 shadow-xs">
+                  <div className="w-8 h-8 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center shrink-0 mt-0.5">
+                    <Award className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs sm:text-sm font-bold text-slate-900">Certificado Oficial Reconhecido</h3>
+                    <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5">Certificação com autenticidade verificada para enriquecer o teu currículo.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 p-3 rounded-2xl bg-white border border-slate-100 shadow-xs">
+                  <div className="w-8 h-8 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center shrink-0 mt-0.5">
+                    <Smartphone className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs sm:text-sm font-bold text-slate-900">Pagamento em 2x via M-Pesa & e-Mola</h3>
+                    <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5">Opção flexível em 2 parcelas ou à vista com aprovação automática em segundos.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Botões de Ação */}
+              <div className="flex items-center gap-3 flex-wrap">
+                <Link
+                  href="/academy"
+                  className="inline-flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 active:scale-95 text-white font-black text-xs sm:text-sm px-6 sm:px-8 py-3.5 sm:py-4 rounded-full shadow-lg shadow-primary-600/25 hover:shadow-xl transition-all duration-200 group"
+                >
+                  <span>Explorar Cursos da Academia</span>
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </Link>
+
+                <Link
+                  href="/dashboard/academy"
+                  className="inline-flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-bold text-xs sm:text-sm px-5 sm:px-6 py-3.5 sm:py-4 rounded-full transition-all duration-200"
+                >
+                  <BookOpen className="w-4 h-4 text-slate-500" />
+                  <span>Área de Aluno</span>
+                </Link>
+              </div>
+
+            </div>
+
           </div>
         </div>
       </section>
