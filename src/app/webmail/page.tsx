@@ -8,7 +8,7 @@ import {
   ArrowLeft, CheckCircle2, ShieldCheck, User, Paperclip, Reply, Forward,
   FileText, LogOut, ChevronRight, X, AlertCircle, Sparkles, Clock, Printer, Download, Loader2, Filter, Maximize2, Minimize2, Bold, Italic, Underline, Type,
   Wand2, Bot, FileSignature, Lightbulb, Check, Wifi, WifiOff, Pin, PinOff, Flag, Flame, Lock, Key, Eye, EyeOff,
-  Bell, Calendar, TrendingUp, LayoutGrid, HelpCircle
+  Bell, Calendar, TrendingUp, LayoutGrid, HelpCircle, Smartphone, Laptop, Monitor
 } from 'lucide-react';
 import { auth, User as AuthUser } from '@/lib/auth';
 import { dataManager, EmailAccount } from '@/lib/data';
@@ -587,6 +587,54 @@ function WebmailContent() {
     return () => clearInterval(interval);
   }, [router, initialEmailParam, mailboxPassword]);
 
+
+  // PWA Install Prompt State & Handlers
+  const [deferredInstallPrompt, setDeferredInstallPrompt] = useState<any>(null);
+  const [isAppInstalled, setIsAppInstalled] = useState(false);
+  const [showInstallGuideModal, setShowInstallGuideModal] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone) {
+        setIsAppInstalled(true);
+      }
+
+      const handleBeforeInstall = (e: Event) => {
+        e.preventDefault();
+        setDeferredInstallPrompt(e);
+      };
+
+      const handleInstalled = () => {
+        setIsAppInstalled(true);
+        setDeferredInstallPrompt(null);
+      };
+
+      window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+      window.addEventListener('appinstalled', handleInstalled);
+
+      return () => {
+        window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+        window.removeEventListener('appinstalled', handleInstalled);
+      };
+    }
+  }, []);
+
+  const handleTriggerInstall = async () => {
+    if (deferredInstallPrompt) {
+      deferredInstallPrompt.prompt();
+      try {
+        const choice = await deferredInstallPrompt.userChoice;
+        if (choice && choice.outcome === 'accepted') {
+          setIsAppInstalled(true);
+        }
+      } catch (err) {
+        console.error('Erro ao instalar PWA:', err);
+      }
+      setDeferredInstallPrompt(null);
+    } else {
+      setShowInstallGuideModal(true);
+    }
+  };
 
   // Helper to open login modal reliably from any button
   const openLoginModal = (targetEmail?: string) => {
@@ -1265,6 +1313,20 @@ function WebmailContent() {
             </span>
           )}
 
+          {/* Botão Rápido: Instalar Webmail App */}
+          {!isAppInstalled && (
+            <button
+              type="button"
+              onClick={handleTriggerInstall}
+              className="flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl transition cursor-pointer text-xs font-bold shadow-xs shrink-0 active:scale-95"
+              title="Instalar o Webmail no Computador ou Telemóvel como aplicativo independente"
+            >
+              <Download className="h-3.5 w-3.5 shrink-0" />
+              <span className="hidden sm:inline">Instalar App</span>
+              <span className="sm:hidden">Instalar</span>
+            </button>
+          )}
+
           {/* Botão Rápido: Mudar Senha */}
           <button
             type="button"
@@ -1737,6 +1799,19 @@ function WebmailContent() {
               <Key className="h-3.5 w-3.5 text-blue-600 shrink-0" />
               <span>Mudar Senha do E-mail</span>
             </button>
+
+            {/* Botão de Instalação na Barra Lateral */}
+            {!isAppInstalled && (
+              <button
+                type="button"
+                onClick={handleTriggerInstall}
+                className="w-full flex items-center justify-center space-x-2 px-3 py-2 bg-gradient-to-r from-emerald-50 to-teal-50 hover:from-emerald-100 hover:to-teal-100 text-emerald-800 border border-emerald-200 rounded-xl transition cursor-pointer text-xs font-bold shadow-2xs mt-2 active:scale-98"
+                title="Instalar o Webmail no seu computador ou telemóvel"
+              >
+                <Download className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                <span>Instalar Aplicativo Webmail</span>
+              </button>
+            )}
           </div>
         </aside>
 
@@ -3500,6 +3575,86 @@ function WebmailContent() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: Como Instalar o Webmail no Computador ou Telemóvel */}
+      {showInstallGuideModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-5 sm:p-6 border border-gray-100 animate-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-4 mb-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-xs">
+                  <Download className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-base sm:text-lg font-black text-gray-900">
+                    Instalar WEHOSTHERE Webmail
+                  </h3>
+                  <p className="text-xs text-gray-500">
+                    Abra o seu e-mail como um app dedicado no PC ou telemóvel
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowInstallGuideModal(false)}
+                className="p-1.5 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4 text-xs sm:text-sm text-gray-700">
+              {/* Opção 1: Computador */}
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                <div className="flex items-center space-x-2 font-bold text-slate-900">
+                  <Laptop className="h-4 w-4 text-blue-600" />
+                  <span>No Computador (Google Chrome ou Microsoft Edge):</span>
+                </div>
+                <ol className="list-decimal list-inside space-y-1 text-xs text-slate-600 pl-1">
+                  <li>Na barra de endereços (ao lado do link do site), clique no ícone de <strong>Instalar aplicativo (⊕ ou monitor)</strong>.</li>
+                  <li>Ou clique nos <strong>três pontinhos (⋮)</strong> no canto superior direito do navegador &gt; <strong>Instalar WEHOSTHERE Webmail</strong>.</li>
+                  <li>Clique em <strong>Instalar</strong>. O ícone será colocado na sua Área de Trabalho e Menu Iniciar.</li>
+                </ol>
+              </div>
+
+              {/* Opção 2: iPhone / iPad */}
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                <div className="flex items-center space-x-2 font-bold text-slate-900">
+                  <Smartphone className="h-4 w-4 text-slate-800" />
+                  <span>No iPhone ou iPad (Safari):</span>
+                </div>
+                <ol className="list-decimal list-inside space-y-1 text-xs text-slate-600 pl-1">
+                  <li>Toque no botão de <strong>Partilhar (o ícone de quadrado com seta para cima ⎋)</strong> na barra inferior.</li>
+                  <li>Role a lista para baixo e toque em <strong>&quot;Adicionar ao Ecrã Principal&quot;</strong>.</li>
+                  <li>Toque em <strong>Adicionar</strong> no canto superior direito.</li>
+                </ol>
+              </div>
+
+              {/* Opção 3: Android */}
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                <div className="flex items-center space-x-2 font-bold text-slate-900">
+                  <Smartphone className="h-4 w-4 text-emerald-600" />
+                  <span>No Android (Google Chrome / Samsung Internet):</span>
+                </div>
+                <ol className="list-decimal list-inside space-y-1 text-xs text-slate-600 pl-1">
+                  <li>Toque nos <strong>três pontinhos (⋮)</strong> no canto superior direito do navegador.</li>
+                  <li>Toque em <strong>&quot;Instalar aplicativo&quot;</strong> ou <strong>&quot;Adicionar ao ecrã inicial&quot;</strong>.</li>
+                  <li>Confirme tocando em <strong>Instalar</strong>.</li>
+                </ol>
+              </div>
+            </div>
+
+            <div className="mt-5 pt-3 border-t border-gray-100 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setShowInstallGuideModal(false)}
+                className="w-full sm:w-auto px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition shadow-xs"
+              >
+                Entendido
+              </button>
+            </div>
           </div>
         </div>
       )}

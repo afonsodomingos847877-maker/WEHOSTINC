@@ -4,6 +4,12 @@ import { SITE_URL } from '@/lib/siteConfig';
 export const metadata: Metadata = {
   title: 'Webmail Corporativo | WEHOSTHERE',
   description: 'Aceda à sua caixa de entrada de email corporativo WEHOSTHERE. Envie e receba emails profissionais com total segurança e rapidez.',
+  manifest: '/manifest-webmail.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Webmail',
+  },
   alternates: { canonical: `${SITE_URL}/webmail` },
   openGraph: {
     type: 'website',

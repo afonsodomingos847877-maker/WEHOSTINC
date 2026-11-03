@@ -1,13 +1,16 @@
 // Service Worker para WEHOSTHERE PWA
-const CACHE_NAME = 'wehosthere-v3';
+const CACHE_NAME = 'wehosthere-v4';
 const urlsToCache = [
   '/',
+  '/webmail',
   '/dashboard',
+  '/dashboard/email',
   '/dashboard/notifications',
   '/dashboard/settings',
   '/admin',
   '/admin/settings',
-  '/manifest.json'
+  '/manifest.json',
+  '/manifest-webmail.json'
 ];
 
 // Instalação do Service Worker

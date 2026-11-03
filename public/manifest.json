@@ -42,6 +42,13 @@
   "categories": ["business", "productivity", "utilities"],
   "shortcuts": [
     {
+      "name": "Webmail Corporativo",
+      "short_name": "Webmail",
+      "description": "Aceder ao Webmail",
+      "url": "/webmail",
+      "icons": [{ "src": "/mascote-transparent.png", "sizes": "192x192" }]
+    },
+    {
       "name": "Dashboard",
       "short_name": "Dashboard",
       "description": "Aceder ao painel principal",
