@@ -31,6 +31,7 @@ interface Course {
   instructorName?: string;
   instructorTitle?: string;
   instructorBio?: string;
+  instructorAvatar?: string;
   skills?: string[];
   requirements?: string[];
   targetAudience?: string[];
@@ -266,9 +267,9 @@ export default function CourseDetailsPage() {
               <div className="pt-4 border-t border-slate-800/80 flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 p-1 overflow-hidden flex items-center justify-center shrink-0 shadow-sm backdrop-blur-xs">
                   <img
-                    src="/icon-192.png"
-                    alt="WEHOSTHERE"
-                    className="w-full h-full object-contain"
+                    src={course.instructorAvatar || "/icon-192.png"}
+                    alt={course.instructorName || "WEHOSTHERE"}
+                    className="w-full h-full object-cover rounded-lg"
                   />
                 </div>
                 <div>
@@ -566,9 +567,9 @@ export default function CourseDetailsPage() {
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
                 <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white border border-gray-200 p-2 flex items-center justify-center shrink-0 shadow-sm overflow-hidden">
                   <img
-                    src="/icon-192.png"
-                    alt="WEHOSTHERE"
-                    className="w-full h-full object-contain"
+                    src={course.instructorAvatar || "/icon-192.png"}
+                    alt={course.instructorName || "Formador"}
+                    className="w-full h-full object-cover rounded-xl"
                   />
                 </div>
                 <div className="space-y-1.5">

@@ -20,6 +20,10 @@ interface Course {
   order: number;
   active: boolean;
   freeLessonsCount?: number;
+  instructorName?: string;
+  instructorTitle?: string;
+  instructorBio?: string;
+  instructorAvatar?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -101,6 +105,7 @@ export default function AdminAcademyPage() {
   const [selectedLessons, setSelectedLessons] = useState<Set<string>>(new Set());
   const [uploadingMaterial, setUploadingMaterial] = useState(false);
   const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
+  const [uploadingInstructorAvatar, setUploadingInstructorAvatar] = useState(false);
   
   // Coupon form & handlers state
   const [couponForm, setCouponForm] = useState({
@@ -154,6 +159,10 @@ export default function AdminAcademyPage() {
     order: 1,
     active: true,
     freeLessonsCount: 1,
+    instructorName: '',
+    instructorTitle: '',
+    instructorBio: '',
+    instructorAvatar: '',
     // Module fields
     courseId: '',
     objective: '',
@@ -539,6 +548,10 @@ export default function AdminAcademyPage() {
         order: courses.length + 1,
         active: true,
         freeLessonsCount: 1,
+        instructorName: '',
+        instructorTitle: '',
+        instructorBio: '',
+        instructorAvatar: '',
         courseId: '',
         objective: '',
         hasVideo: false,
@@ -568,6 +581,10 @@ export default function AdminAcademyPage() {
         order: modules.filter(m => m.courseId === parentItem.id).length + 1,
         active: true,
         freeLessonsCount: 1,
+        instructorName: '',
+        instructorTitle: '',
+        instructorBio: '',
+        instructorAvatar: '',
         courseId: parentItem.id,
         objective: '',
         hasVideo: false,
@@ -597,6 +614,10 @@ export default function AdminAcademyPage() {
         order: lessons.filter(l => l.moduleId === parentItem.id).length + 1,
         active: true,
         freeLessonsCount: 1,
+        instructorName: '',
+        instructorTitle: '',
+        instructorBio: '',
+        instructorAvatar: '',
         courseId: '',
         objective: '',
         hasVideo: false,
@@ -635,6 +656,10 @@ export default function AdminAcademyPage() {
         order: course.order,
         active: course.active,
         freeLessonsCount: course.freeLessonsCount || 1,
+        instructorName: (course as any).instructorName || '',
+        instructorTitle: (course as any).instructorTitle || '',
+        instructorBio: (course as any).instructorBio || '',
+        instructorAvatar: (course as any).instructorAvatar || '',
         courseId: '',
         objective: '',
         hasVideo: false,
@@ -665,6 +690,10 @@ export default function AdminAcademyPage() {
         order: moduleItem.order,
         active: moduleItem.active,
         freeLessonsCount: 1,
+        instructorName: '',
+        instructorTitle: '',
+        instructorBio: '',
+        instructorAvatar: '',
         courseId: moduleItem.courseId,
         objective: moduleItem.objective,
         hasVideo: moduleItem.hasVideo,
@@ -695,6 +724,10 @@ export default function AdminAcademyPage() {
         order: lesson.order,
         active: lesson.active,
         freeLessonsCount: 1,
+        instructorName: '',
+        instructorTitle: '',
+        instructorBio: '',
+        instructorAvatar: '',
         courseId: '',
         objective: '',
         hasVideo: lesson.hasVideo,
@@ -808,6 +841,43 @@ export default function AdminAcademyPage() {
       return null;
     } finally {
       setUploadingMaterial(false);
+    }
+  };
+
+  
+  const handleInstructorAvatarUpload = async (file: File) => {
+    try {
+      setUploadingInstructorAvatar(true);
+      const uploadFormData = new FormData();
+      uploadFormData.append('file', file);
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: uploadFormData
+      });
+
+      if (!response.ok) {
+        throw new Error('Falha no upload da foto do formador');
+      }
+
+      const data = await response.json();
+      if (data.success && data.url) {
+        setFormData(prev => ({ ...prev, instructorAvatar: data.url }));
+        return data.url;
+      } else {
+        throw new Error(data.error || 'Upload falhou');
+      }
+    } catch (error: any) {
+      console.error('Erro no upload da foto do formador:', error);
+      setConfirmModal({
+        show: true,
+        title: 'Erro no Upload da Foto',
+        message: 'Não foi possível carregar a imagem do formador: ' + (error.message || 'Tente novamente.'),
+        onConfirm: () => setConfirmModal({ show: false, title: '', message: '', onConfirm: () => {} })
+      });
+      return null;
+    } finally {
+      setUploadingInstructorAvatar(false);
     }
   };
 
@@ -1084,7 +1154,11 @@ export default function AdminAcademyPage() {
           currency: formData.currency,
           order: parseInt(formData.order.toString()) || 1,
           active: formData.active,
-          freeLessonsCount: parseInt(formData.freeLessonsCount.toString()) || 1
+          freeLessonsCount: parseInt(formData.freeLessonsCount.toString()) || 1,
+          instructorName: formData.instructorName || undefined,
+          instructorTitle: formData.instructorTitle || undefined,
+          instructorBio: formData.instructorBio || undefined,
+          instructorAvatar: formData.instructorAvatar || undefined
         };
 
         action = editingCourse ? 'update' : 'create';
@@ -2754,6 +2828,112 @@ export default function AdminAcademyPage() {
                     <p className="text-[11px] text-gray-500">
                       Suporta JPG, PNG, WEBP. A imagem é guardada de forma segura na nuvem (Cloudinary CDN).
                     </p>
+                  </div>
+
+                  
+                  {/* Secção do Formador / Instrutor */}
+                  <div className="pt-4 border-t border-gray-200 space-y-3.5">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-sm font-bold text-gray-900 flex items-center gap-1.5">
+                        <GraduationCap className="w-4 h-4 text-emerald-600" />
+                        <span>Dados do Formador / Instrutor</span>
+                      </label>
+                      <span className="text-[11px] text-gray-500">Exibido na página pública do curso</span>
+                    </div>
+
+                    {/* Foto do Formador */}
+                    <div className="space-y-2">
+                      <label className="block text-xs font-semibold text-gray-700">Foto do Formador (Avatar)</label>
+                      
+                      {formData.instructorAvatar && (
+                        <div className="flex items-center gap-3 p-2.5 bg-gray-50 border border-gray-200 rounded-xl">
+                          <img
+                            src={formData.instructorAvatar}
+                            alt="Foto do Formador"
+                            className="w-12 h-12 rounded-full object-cover border border-gray-300 shadow-xs"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-bold text-gray-800 truncate">Foto Carregada</p>
+                            <p className="text-[10px] text-gray-400 truncate">{formData.instructorAvatar}</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setFormData(prev => ({ ...prev, instructorAvatar: '' }))}
+                            className="px-2.5 py-1 text-xs text-red-600 hover:text-red-700 font-bold border border-red-200 rounded-lg hover:bg-red-50 transition"
+                          >
+                            Remover
+                          </button>
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <label className={`flex items-center justify-center gap-2 p-2.5 border-2 border-dashed rounded-xl cursor-pointer transition text-xs font-bold shadow-xs ${uploadingInstructorAvatar ? 'bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed' : 'border-emerald-300 hover:border-emerald-500 bg-emerald-50/60 hover:bg-emerald-50 text-emerald-700'}`}>
+                          {uploadingInstructorAvatar ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin text-emerald-600" />
+                              <span>A carregar foto...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="h-4 w-4 text-emerald-600" />
+                              <span>📷 Upload da Foto do Formador</span>
+                            </>
+                          )}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            disabled={uploadingInstructorAvatar}
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleInstructorAvatarUpload(file);
+                            }}
+                            className="hidden"
+                          />
+                        </label>
+
+                        <input
+                          type="url"
+                          value={formData.instructorAvatar}
+                          onChange={(e) => setFormData({ ...formData, instructorAvatar: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-xs"
+                          placeholder="Ou link da foto (https://...)"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-700 mb-1">Nome do Formador</label>
+                        <input
+                          type="text"
+                          value={formData.instructorName}
+                          onChange={(e) => setFormData({ ...formData, instructorName: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-xs"
+                          placeholder="Ex: Afonso Domingos, Carlos Silva..."
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-700 mb-1">Cargo / Especialidade</label>
+                        <input
+                          type="text"
+                          value={formData.instructorTitle}
+                          onChange={(e) => setFormData({ ...formData, instructorTitle: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-xs"
+                          placeholder="Ex: Especialista em Cloud, Engenheiro de Software..."
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1">Biografia / Apresentação do Formador</label>
+                      <textarea
+                        value={formData.instructorBio}
+                        onChange={(e) => setFormData({ ...formData, instructorBio: e.target.value })}
+                        rows={3}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-xs"
+                        placeholder="Breve biografia com a experiência, projetos e credenciais do formador..."
+                      />
+                    </div>
                   </div>
 
                   <div>

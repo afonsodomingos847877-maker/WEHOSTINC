@@ -29,6 +29,7 @@ interface Course {
   freeLessonsCount?: number;
   instructorName?: string;
   instructorTitle?: string;
+  instructorAvatar?: string;
   rating?: number;
   studentsCount?: number;
   active: boolean;
@@ -293,9 +294,9 @@ export default function PublicAcademyPage() {
                       <div className="mt-4 pt-3 border-t border-gray-100 flex items-center gap-2.5">
                         <div className="w-8 h-8 rounded-full bg-white border border-gray-200 p-0.5 overflow-hidden flex items-center justify-center shrink-0 shadow-xs">
                           <img
-                            src="/icon-192.png"
+                            src={course.instructorAvatar || "/icon-192.png"}
                             alt="WEHOSTHERE"
-                            className="w-full h-full object-contain rounded-full"
+                            className="w-full h-full object-cover rounded-full"
                           />
                         </div>
                         <div className="min-w-0">
