@@ -98,3 +98,4 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ success: false, error: error.message || 'Erro ao remover mensagem' }, { status: 500 });
   }
 }
+

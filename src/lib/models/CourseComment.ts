@@ -44,3 +44,4 @@ export const CourseCommentModel: Model<ICourseComment> =
   mongoose.models.CourseComment || mongoose.model<ICourseComment>('CourseComment', CourseCommentSchema);
 
 export default CourseCommentModel;
+

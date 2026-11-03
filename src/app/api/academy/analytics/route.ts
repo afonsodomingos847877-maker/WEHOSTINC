@@ -5,6 +5,7 @@ import { ModuleModel } from '@/lib/models/ModuleModel';
 import { LessonModel } from '@/lib/models/LessonModel';
 import EnrollmentModel from '@/lib/models/Enrollment';
 import { CourseProgress } from '@/lib/models/CourseProgress';
+import UserModel from '@/lib/models/User';
 
 export const dynamic = 'force-dynamic';
 
@@ -51,6 +52,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Curso não encontrado' }, { status: 404 });
     }
 
+    // Buscar fotos de perfil dos alunos na base de utilizadores
+    const studentEmails = enrollments.map((enr: any) => (enr.studentEmail || '').toLowerCase().trim()).filter(Boolean);
+    const users = await UserModel.find({ email: { $in: studentEmails } }).select('email avatar name').lean();
+
     const totalLessonsCount = lessons.filter((l: any) => 
       modules.some((m: any) => m.id === l.moduleId)
     ).length || modules.length; // Fallback se módulos forem capítulos diretos
@@ -62,6 +67,8 @@ export async function GET(request: NextRequest) {
         (enr.userId && p.userId === enr.userId) || 
         (p.userId && p.userId.toLowerCase() === studentEmail)
       );
+      const userDoc = users.find((u: any) => u.email?.toLowerCase() === studentEmail);
+      const avatar = userDoc?.avatar || (enr as any).studentAvatar || null;
 
       const completedCount = progress?.completedLessons?.length || 0;
       const progressPercent = totalLessonsCount > 0 
@@ -74,6 +81,7 @@ export async function GET(request: NextRequest) {
         name: enr.studentName || 'Aluno',
         email: studentEmail,
         phone: enr.studentPhone || '',
+        avatar: avatar,
         enrolledAt: enr.enrolledAt,
         status: enr.status,
         paymentPlan: enr.paymentPlan || 'full',
@@ -172,3 +180,4 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, error: error.message || 'Erro ao registrar métrica' }, { status: 500 });
   }
 }
+

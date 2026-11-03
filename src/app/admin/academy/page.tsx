@@ -2715,7 +2715,18 @@ export default function AdminAcademyPage() {
                                 <tr key={s.enrollmentId || s.email} className="hover:bg-gray-50/70 transition">
                                   <td className="p-3">
                                     <div className="flex items-center gap-2.5">
-                                      <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-700 font-bold flex items-center justify-center shrink-0">
+                                      {s.avatar ? (
+                                        <img 
+                                          src={s.avatar} 
+                                          alt={s.name} 
+                                          className="w-8 h-8 rounded-full object-cover border border-purple-200 shadow-xs shrink-0" 
+                                          onError={(e) => {
+                                            (e.currentTarget as HTMLElement).style.display = 'none';
+                                            (e.currentTarget.nextElementSibling as HTMLElement)?.classList.remove('hidden');
+                                          }}
+                                        />
+                                      ) : null}
+                                      <div className={`w-8 h-8 rounded-full bg-gradient-to-tr from-purple-100 to-indigo-100 text-purple-700 font-bold flex items-center justify-center shrink-0 border border-purple-200/60 ${s.avatar ? 'hidden' : ''}`}>
                                         {s.name?.charAt(0) || 'A'}
                                       </div>
                                       <div>

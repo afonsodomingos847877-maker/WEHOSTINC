@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
@@ -883,9 +883,17 @@ export default function ChapterViewPage() {
                 <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-primary-600 text-white font-bold text-xs flex items-center justify-center">
-                        {activeUser?.name?.charAt(0) || 'U'}
-                      </div>
+                      {activeUser?.avatar ? (
+                        <img 
+                          src={activeUser.avatar} 
+                          alt={activeUser.name} 
+                          className="w-8 h-8 rounded-full object-cover border border-slate-200 shrink-0" 
+                        />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-primary-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                          {activeUser?.name?.charAt(0) || 'U'}
+                        </div>
+                      )}
                       <div>
                         <p className="text-xs font-bold text-slate-900">{activeUser?.name || 'Tu'}</p>
                         <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full inline-flex items-center gap-1 ${
@@ -944,9 +952,20 @@ export default function ChapterViewPage() {
                         <div key={c.id} className="border border-slate-200 rounded-2xl p-4 sm:p-5 bg-white space-y-3">
                           <div className="flex items-start justify-between gap-3">
                             <div className="flex items-center gap-2.5">
+                              {c.userAvatar ? (
+                                <img 
+                                  src={c.userAvatar} 
+                                  alt={c.userName} 
+                                  className="w-9 h-9 rounded-full object-cover border border-slate-200 shadow-xs shrink-0" 
+                                  onError={(e) => {
+                                    (e.currentTarget as HTMLElement).style.display = 'none';
+                                    (e.currentTarget.nextElementSibling as HTMLElement)?.classList.remove('hidden');
+                                  }}
+                                />
+                              ) : null}
                               <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${
                                 isInstructor ? 'bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-md' : 'bg-slate-100 text-slate-700'
-                              }`}>
+                              } ${c.userAvatar ? 'hidden' : ''}`}>
                                 {c.userName?.charAt(0) || 'U'}
                               </div>
                               <div>
@@ -1034,11 +1053,22 @@ export default function ChapterViewPage() {
                                   }`}>
                                     <div className="flex items-start justify-between gap-2 mb-1">
                                       <div className="flex items-center gap-2 flex-wrap">
-                                        <div className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-[10px] ${
-                                          isReplyInstructor ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-700'
-                                        }`}>
-                                          {reply.userName?.charAt(0) || 'U'}
-                                        </div>
+                                        {reply.userAvatar ? (
+                                            <img 
+                                              src={reply.userAvatar} 
+                                              alt={reply.userName} 
+                                              className="w-6 h-6 rounded-full object-cover border border-slate-200 shrink-0" 
+                                              onError={(e) => {
+                                                (e.currentTarget as HTMLElement).style.display = 'none';
+                                                (e.currentTarget.nextElementSibling as HTMLElement)?.classList.remove('hidden');
+                                              }}
+                                            />
+                                          ) : null}
+                                          <div className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-[10px] shrink-0 ${
+                                            isReplyInstructor ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-700'
+                                          } ${reply.userAvatar ? 'hidden' : ''}`}>
+                                            {reply.userName?.charAt(0) || 'U'}
+                                          </div>
                                         <span className="text-xs font-bold text-slate-900">{reply.userName}</span>
                                         <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full inline-flex items-center gap-0.5 ${
                                           isReplyInstructor ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-600'
