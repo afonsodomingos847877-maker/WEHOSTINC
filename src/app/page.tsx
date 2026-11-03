@@ -864,7 +864,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-center">
             
-            {/* Coluna da Imagem — academiaweb.jpg com Ambient Glow */}
+            {/* Coluna da Imagem — Foto limpa sem sobreposições */}
             <div className="lg:col-span-7 relative order-2 lg:order-1">
               <div className="absolute -inset-3 bg-gradient-to-tr from-primary-600/20 via-sky-500/20 to-indigo-600/20 rounded-[36px] blur-2xl opacity-75 group-hover:opacity-100 transition duration-1000 -z-10" />
 
@@ -878,29 +878,6 @@ export default function Home() {
                     className="object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
                     priority
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent pointer-events-none" />
-                </div>
-
-                {/* Floating Badges sobre a Imagem */}
-                <div className="absolute top-3 left-3 sm:top-4 sm:left-4">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-slate-950/70 text-white backdrop-blur-md border border-white/20 shadow-lg">
-                    <Sparkles className="w-3.5 h-3.5 text-primary-400" />
-                    <span>Cursos 100% Práticos</span>
-                  </span>
-                </div>
-
-                <div className="absolute bottom-3 left-3 right-3 sm:bottom-4 sm:left-4 sm:right-4 flex items-center justify-between text-white/95 text-xs bg-black/60 backdrop-blur-md px-3.5 py-2.5 rounded-2xl border border-white/10">
-                  <div className="flex items-center gap-2">
-                    <div className="flex text-amber-400">
-                      {[...Array(5)].map((_, i) => (
-                        <Star key={i} className="w-3.5 h-3.5 fill-current" />
-                      ))}
-                    </div>
-                    <span className="font-bold text-[11px] sm:text-xs">4.9/5 Avaliação</span>
-                  </div>
-                  <span className="text-[11px] font-semibold text-primary-300">
-                    Certificado Oficial Emitido
-                  </span>
                 </div>
               </div>
             </div>
