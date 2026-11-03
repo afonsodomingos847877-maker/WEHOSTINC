@@ -1357,13 +1357,26 @@ export default function EmailPage() {
 
             {/* ───── CONFIGURAÇÃO IMAP/SMTP GERAL ───── */}
             <div className="bg-white border border-blue-200 rounded-3xl p-5 sm:p-6 shadow-xs">
-              <div className="flex items-center space-x-2 mb-2">
-                <ShieldCheck className="h-5 w-5 text-blue-600" />
-                <h3 className="font-bold text-gray-900 text-base">Parâmetros de Conexão (Outlook, iPhone, Android &amp; Webmail)</h3>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                <div>
+                  <div className="flex items-center space-x-2">
+                    <ShieldCheck className="h-5 w-5 text-blue-600" />
+                    <h3 className="font-bold text-gray-900 text-base">Parâmetros de Conexão (Outlook, iPhone, Android &amp; Webmail)</h3>
+                  </div>
+                  <p className="text-gray-500 text-xs sm:text-sm mt-1">
+                    Utilize estas credenciais para sincronizar as suas contas no seu computador ou telemóvel:
+                  </p>
+                </div>
+                <Link
+                  href="/ajuda/configurar-email"
+                  target="_blank"
+                  className="inline-flex items-center justify-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold shadow-xs transition shrink-0 active:scale-95"
+                >
+                  <HelpCircle className="h-4 w-4" />
+                  <span>Guia Passo a Passo (Outlook / Telemóvel)</span>
+                  <ExternalLink className="h-3.5 w-3.5 opacity-80" />
+                </Link>
               </div>
-              <p className="text-gray-500 text-xs sm:text-sm mb-4">
-                Utilize estas credenciais para sincronizar as suas contas no seu computador ou dispositivo móvel:
-              </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
                 <div className="p-3 bg-blue-50/60 rounded-xl border border-blue-100">

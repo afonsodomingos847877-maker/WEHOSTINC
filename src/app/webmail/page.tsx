@@ -8,7 +8,7 @@ import {
   ArrowLeft, CheckCircle2, ShieldCheck, User, Paperclip, Reply, Forward,
   FileText, LogOut, ChevronRight, X, AlertCircle, Sparkles, Clock, Printer, Download, Loader2, Filter, Maximize2, Minimize2, Bold, Italic, Underline, Type,
   Wand2, Bot, FileSignature, Lightbulb, Check, Wifi, WifiOff, Pin, PinOff, Flag, Flame, Lock, Key, Eye, EyeOff,
-  Bell, Calendar, TrendingUp, LayoutGrid
+  Bell, Calendar, TrendingUp, LayoutGrid, HelpCircle
 } from 'lucide-react';
 import { auth, User as AuthUser } from '@/lib/auth';
 import { dataManager, EmailAccount } from '@/lib/data';
@@ -1292,6 +1292,17 @@ function WebmailContent() {
           >
             {isRefreshingWebmail ? <Loader2 className="h-4 w-4 animate-spin text-primary-600" /> : <RefreshCw className="h-4 w-4" />}
           </button>
+
+          {/* Link Ajuda Outlook & Telemóvel */}
+          <Link
+            href="/ajuda/configurar-email"
+            target="_blank"
+            className="hidden md:flex items-center space-x-1 px-2.5 py-1.5 bg-gray-50 hover:bg-gray-100 text-gray-600 hover:text-gray-900 border border-gray-200 rounded-xl transition cursor-pointer text-xs font-medium shrink-0"
+            title="Abrir guia passo a passo para configurar no Outlook, iPhone e Android"
+          >
+            <HelpCircle className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+            <span>Guia Outlook/Celular</span>
+          </Link>
 
           {/* Mailbox Logout */}
           {mailboxPassword && (
