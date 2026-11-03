@@ -760,14 +760,14 @@ export default function EmailPage() {
               {/* Caixas de Correio */}
               <div className="bg-white p-4 rounded-2xl border border-gray-200/80 shadow-xs flex flex-col justify-between">
                 <div className="flex items-center justify-between text-gray-500 mb-2">
-                  <span className="text-xs font-bold uppercase tracking-wider">Contas Ativas</span>
+                  <span className="text-xs font-bold uppercase tracking-wider">Contas</span>
                   <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg">
                     <Mail className="h-4 w-4" />
                   </div>
                 </div>
                 <div>
                   <span className="text-xl sm:text-2xl font-black text-gray-900">{totalEmailsCount}</span>
-                  <span className="text-[11px] text-gray-500 block">caixas corporativas</span>
+                  <span className="text-[11px] text-gray-500 block">ativas</span>
                 </div>
               </div>
 
@@ -798,7 +798,7 @@ export default function EmailPage() {
                     <CheckCircle2 className="h-4 w-4" />
                     <span>Protegido</span>
                   </span>
-                  <span className="text-[11px] text-gray-500 block">SPF, DKIM, MX &amp; DMARC</span>
+                  <span className="text-[11px] text-gray-500 block">DNS Configurado</span>
                 </div>
               </div>
 
@@ -834,10 +834,10 @@ export default function EmailPage() {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
                   <div>
                     <h1 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">
-                      Email Corporativo &amp; Entregabilidade
+                      Email Corporativo
                     </h1>
                     <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
-                      Gerencie as suas caixas de correio, pseudónimos, senhas e verificação de registos DNS.
+                      Gerencie as suas contas de e-mail e configurações.
                     </p>
                   </div>
 
@@ -850,14 +850,14 @@ export default function EmailPage() {
                         title="Forçar sincronização em tempo real de caixas de correio"
                       >
                         <RefreshCw className={`h-4 w-4 ${isSyncingMigadu ? 'animate-spin text-emerald-600' : 'text-emerald-700'}`} />
-                        <span>{isSyncingMigadu ? 'A Sincronizar...' : 'Sincronizar em Tempo Real'}</span>
+                        <span>{isSyncingMigadu ? 'A Sincronizar...' : 'Sincronizar'}</span>
                       </button>
                       <button
                         onClick={() => setShowCreateModal(true)}
                         className="flex items-center justify-center space-x-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow-xs transition cursor-pointer"
                       >
                         <Plus className="h-4 w-4" />
-                        <span>Nova Conta de Email</span>
+                        <span>Nova Conta</span>
                       </button>
                     </div>
                   )}
@@ -868,7 +868,7 @@ export default function EmailPage() {
                       className="flex items-center justify-center space-x-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow-xs transition cursor-pointer shrink-0"
                     >
                       <Plus className="h-4 w-4" />
-                      <span>Novo Pseudónimo</span>
+                      <span>Novo Alias</span>
                     </button>
                   )}
 
@@ -879,7 +879,7 @@ export default function EmailPage() {
                       className="flex items-center justify-center space-x-2 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow-xs transition cursor-pointer shrink-0 disabled:opacity-50"
                     >
                       <RefreshCw className={`h-4 w-4 ${isCheckingDNS ? 'animate-spin' : ''}`} />
-                      <span>{isCheckingDNS ? 'A Verificar...' : 'Verificar DNS em Tempo Real'}</span>
+                      <span>{isCheckingDNS ? 'A Verificar...' : 'Verificar DNS'}</span>
                     </button>
                   )}
                 </div>
@@ -902,7 +902,6 @@ export default function EmailPage() {
                 ) : userDomains.length === 1 ? (
                   <div className="inline-flex items-center gap-2 bg-blue-50/80 border border-blue-200 text-blue-900 px-3 py-1.5 rounded-xl mb-4 text-xs font-medium">
                     <Globe className="h-3.5 w-3.5 text-blue-600 shrink-0" />
-                    <span className="text-blue-700">Domínio Ativo:</span>
                     <span className="font-mono font-bold text-blue-950">{userDomains[0]}</span>
                   </div>
                 ) : null}
@@ -918,7 +917,7 @@ export default function EmailPage() {
                     }`}
                   >
                     <Mail className="h-4 w-4" />
-                    <span>Caixas de Correio ({displayEmails.length})</span>
+                    <span>Contas ({displayEmails.length})</span>
                   </button>
 
                   <button
@@ -930,7 +929,7 @@ export default function EmailPage() {
                     }`}
                   >
                     <Shuffle className="h-4 w-4" />
-                    <span>Aliases &amp; Redirecionamentos ({aliases.length})</span>
+                    <span>Aliases ({aliases.length})</span>
                   </button>
 
                   <button
@@ -942,7 +941,7 @@ export default function EmailPage() {
                     }`}
                   >
                     <ShieldCheck className="h-4 w-4" />
-                    <span>Diagnóstico DNS &amp; Entregabilidade</span>
+                    <span>Diagnóstico DNS</span>
                   </button>
                 </div>
               </div>
@@ -1013,7 +1012,7 @@ export default function EmailPage() {
                                         {copiedText === email.email ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
                                       </button>
                                     </div>
-                                    <p className="text-xs text-gray-500 font-medium">Caixa Profissional • Servidor Seguro Migadu</p>
+                                    <p className="text-xs text-gray-500 font-medium">Caixa Corporativa</p>
                                   </div>
                                 </div>
 
