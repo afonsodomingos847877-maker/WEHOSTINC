@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
@@ -918,6 +918,40 @@ export default function ChapterViewPage() {
                     className="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
                   />
 
+                  {/* Modelos de Mensagens Pré-definidas Rápidas */}
+                  <div className="space-y-1.5 pt-1">
+                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                      <Sparkles className="w-3 h-3 text-primary-500" />
+                      <span>Modelos rápidos (Clica para usar ou editar):</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {(isTeacherMode ? [
+                        "👋 Olá a todos! Deixem aqui as vossas dúvidas que estou a acompanhar a turma.",
+                        "💡 Dica prática: Prestem especial atenção à lógica demonstrada nesta aula.",
+                        "🏆 Parabéns a todos que concluíram os exercícios práticos deste capítulo!",
+                        "📂 O material complementar de apoio já se encontra disponível para consulta."
+                      ] : [
+                        "💡 Tenho uma dúvida sobre a explicação deste conceito...",
+                        "🛠️ Consegui concluir os passos desta aula com sucesso! Muito bom.",
+                        "🤔 Alguém pode partilhar como resolveu o exercício prático deste capítulo?",
+                        "📁 Onde posso descarregar os modelos de código desta lição?",
+                        "🚀 Excelente aula! A aplicação prática ficou muito clara."
+                      ]).map((template, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => {
+                            setCommentText(template);
+                          }}
+                          className="text-[11px] font-medium px-2.5 py-1 rounded-lg bg-white hover:bg-primary-50 hover:text-primary-700 hover:border-primary-300 border border-slate-200 text-slate-600 transition shadow-2xs text-left cursor-pointer active:scale-95"
+                          title="Clica para preencher este texto na caixa acima"
+                        >
+                          {template}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
                   <div className="flex justify-end">
                     <button
                       onClick={() => handleSendComment()}
@@ -1023,6 +1057,25 @@ export default function ChapterViewPage() {
                                 rows={2}
                                 className="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
                               />
+                                {/* Modelos Rápidos de Resposta */}
+                                <div className="flex flex-wrap gap-1 pt-1">
+                                  {[
+                                    "Obrigado pela explicação!",
+                                    "Também tive essa mesma dúvida, ficou claro agora.",
+                                    "Excelente contribuição, ajudou bastante!",
+                                    "Consegui resolver seguindo esta mesma dica."
+                                  ].map((replyPreset, idx) => (
+                                    <button
+                                      key={idx}
+                                      type="button"
+                                      onClick={() => setReplyText(replyPreset)}
+                                      className="text-[10px] px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-600 hover:bg-primary-50 hover:text-primary-700 transition cursor-pointer"
+                                      title="Clica para preencher a resposta"
+                                    >
+                                      {replyPreset}
+                                    </button>
+                                  ))}
+                                </div>
                               <div className="flex justify-end gap-2">
                                 <button
                                   onClick={() => setReplyToId(null)}
