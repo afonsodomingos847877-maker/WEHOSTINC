@@ -47,6 +47,7 @@ interface Module {
   materialUploadType?: 'url' | 'upload';
   order: number;
   active: boolean;
+  isFree?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -67,6 +68,7 @@ interface Lesson {
   materialUploadType?: 'url' | 'upload';
   order: number;
   active: boolean;
+  isFree?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -203,7 +205,8 @@ export default function AdminAcademyPage() {
     materialUploadType: 'url' as 'url' | 'upload',
     // Lesson fields
     moduleId: '',
-    content: ''
+    content: '',
+    isFree: false
   });
 
   const fetchSalesData = useCallback(async () => {
@@ -592,7 +595,8 @@ export default function AdminAcademyPage() {
         materialType: 'pdf',
         materialUploadType: 'url',
         moduleId: '',
-        content: ''
+        content: '',
+        isFree: false
       });
     } else if (type === 'module' && parentItem) {
       setSelectedCourseForModule(parentItem as Course);
@@ -626,7 +630,8 @@ export default function AdminAcademyPage() {
         materialType: 'pdf',
         materialUploadType: 'url',
         moduleId: '',
-        content: ''
+        content: '',
+        isFree: false
       });
     } else if (type === 'lesson' && parentItem) {
       setSelectedModuleForLesson(parentItem as Module);
@@ -660,7 +665,8 @@ export default function AdminAcademyPage() {
         materialType: 'pdf',
         materialUploadType: 'url',
         moduleId: parentItem.id,
-        content: ''
+        content: '',
+        isFree: false
       });
     }
     
@@ -703,7 +709,8 @@ export default function AdminAcademyPage() {
         materialType: 'pdf',
         materialUploadType: 'url',
         moduleId: '',
-        content: ''
+        content: '',
+        isFree: false
       });
     } else if (type === 'module') {
       const moduleItem = item as Module;
@@ -738,7 +745,8 @@ export default function AdminAcademyPage() {
         materialType: moduleItem.materialType || 'pdf',
         materialUploadType: moduleItem.materialUploadType || 'url',
         moduleId: '',
-        content: ''
+        content: '',
+        isFree: Boolean(moduleItem.isFree)
       });
     } else if (type === 'lesson') {
       const lesson = item as Lesson;
@@ -773,7 +781,8 @@ export default function AdminAcademyPage() {
         materialType: lesson.materialType || 'pdf',
         materialUploadType: lesson.materialUploadType || 'url',
         moduleId: lesson.moduleId,
-        content: lesson.content
+        content: lesson.content,
+        isFree: Boolean(lesson.isFree)
       });
     }
     
@@ -1256,7 +1265,8 @@ export default function AdminAcademyPage() {
           materialTitle: formData.hasMaterial ? formData.materialTitle : undefined,
           materialType: formData.hasMaterial ? formData.materialType : undefined,
           order: parseInt(formData.order.toString()) || 1,
-          active: formData.active
+          active: formData.active,
+          isFree: Boolean(formData.isFree)
         };
 
         action = editingModule ? 'update' : 'create';
@@ -1279,7 +1289,8 @@ export default function AdminAcademyPage() {
           materialTitle: formData.hasMaterial ? formData.materialTitle : undefined,
           materialType: formData.hasMaterial ? formData.materialType : undefined,
           order: parseInt(formData.order.toString()) || 1,
-          active: formData.active
+          active: formData.active,
+          isFree: Boolean(formData.isFree)
         };
 
         action = editingLesson ? 'update' : 'create';
@@ -1920,6 +1931,11 @@ export default function AdminAcademyPage() {
                             </td>
                             <td className="px-4 py-3.5 whitespace-nowrap">
                               <div className="flex flex-wrap gap-1">
+                                {module.isFree ? (
+                                  <span className="bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-0.5 rounded-md text-xs font-bold flex items-center gap-1">
+                                    🎁 Grátis
+                                  </span>
+                                ) : null}
                                 {module.hasVideo ? (
                                   <span className="bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-md text-xs font-semibold">
                                     🎥 Vídeo
@@ -2044,6 +2060,11 @@ export default function AdminAcademyPage() {
                             </td>
                             <td className="px-4 py-3.5 whitespace-nowrap">
                               <div className="flex flex-wrap gap-1">
+                                {lesson.isFree ? (
+                                  <span className="bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-0.5 rounded-md text-xs font-bold flex items-center gap-1">
+                                    🎁 Grátis
+                                  </span>
+                                ) : null}
                                 {lesson.hasVideo ? (
                                   <span className="bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-md text-xs font-semibold">
                                     🎥 Vídeo
@@ -3678,6 +3699,30 @@ export default function AdminAcademyPage() {
                     </div>
                   )}
 
+                  {/* Toggle Aula Grátis / Degustação */}
+                  <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200">
+                    <div className="flex items-start space-x-3">
+                      <input
+                        type="checkbox"
+                        id="isFreeModule"
+                        checked={formData.isFree}
+                        onChange={(e) => setFormData({ ...formData, isFree: e.target.checked })}
+                        className="h-5 w-5 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded mt-0.5"
+                      />
+                      <div className="flex-1">
+                        <label htmlFor="isFreeModule" className="text-sm font-bold text-emerald-950 cursor-pointer flex items-center gap-2">
+                          <span>🎁 Liberar como Aula Grátis (Degustação)</span>
+                          <span className="text-[10px] font-extrabold uppercase tracking-wider bg-emerald-600 text-white px-2 py-0.5 rounded-full">
+                            Grátis
+                          </span>
+                        </label>
+                        <p className="text-xs text-emerald-700 mt-0.5 leading-relaxed">
+                          Permite que qualquer visitante ou aluno assista ao vídeo deste módulo gratuitamente na página de apresentação do curso (ao clicar na capa) e na sala de aula sem precisar comprar.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="flex items-center space-x-2">
                     <input
                       type="checkbox"
@@ -3884,7 +3929,31 @@ export default function AdminAcademyPage() {
                     </div>
                   )}
 
-                  <div className="flex items-center space-x-2">
+                                    {/* Toggle Lição Grátis / Degustação */}
+                  <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200">
+                    <div className="flex items-start space-x-3">
+                      <input
+                        type="checkbox"
+                        id="isFreeLesson"
+                        checked={formData.isFree}
+                        onChange={(e) => setFormData({ ...formData, isFree: e.target.checked })}
+                        className="h-5 w-5 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded mt-0.5"
+                      />
+                      <div className="flex-1">
+                        <label htmlFor="isFreeLesson" className="text-sm font-bold text-emerald-950 cursor-pointer flex items-center gap-2">
+                          <span>🎁 Liberar como Lição Grátis (Degustação)</span>
+                          <span className="text-[10px] font-extrabold uppercase tracking-wider bg-emerald-600 text-white px-2 py-0.5 rounded-full">
+                            Grátis
+                          </span>
+                        </label>
+                        <p className="text-xs text-emerald-700 mt-0.5 leading-relaxed">
+                          Permite que visitantes ou alunos assistam ao vídeo desta lição gratuitamente.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+<div className="flex items-center space-x-2">
                     <input
                       type="checkbox"
                       id="hasMaterial"

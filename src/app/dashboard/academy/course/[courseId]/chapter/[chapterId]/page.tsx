@@ -477,7 +477,7 @@ export default function ChapterViewPage() {
   const completedInModule = moduleLessons.filter(l => isLessonCompleted(l.id)).length;
 
   // Verifica se o módulo atual está dentro do limite de aulas grátis
-  const isCurrentModuleFree = course && currentModule && currentModule.order <= (course.freeLessonsCount || 1);
+  const isCurrentModuleFree = course && currentModule && (Boolean((currentModule as any).isFree) || currentModule.order <= (course.freeLessonsCount || 1));
   
   // Permite acesso se: curso é gratuito, usuário é pago, OU módulo está dentro do limite grátis
   const hasAccess = course?.accessType === 'free' || isPaidUser || isCurrentModuleFree;
@@ -589,7 +589,8 @@ export default function ChapterViewPage() {
                 const completedInModule = moduleLessons.filter(l => isLessonCompleted(l.id)).length;
                 const isActive = module.id === currentChapterId;
                 const isCompleted = completedInModule === moduleLessons.length && moduleLessons.length > 0;
-                const isLocked = !hasAccess && (module.order > (course?.freeLessonsCount || 1));
+                const isModuleFree = Boolean((module as any).isFree) || (module.order <= (course?.freeLessonsCount || 1));
+                const isLocked = !isPaidUser && course?.accessType !== 'free' && !isModuleFree;
 
                 return (
                   <div key={module.id} className="mb-3">
@@ -628,11 +629,15 @@ export default function ChapterViewPage() {
                             <span className={`font-bold text-xs sm:text-sm ${isActive ? 'text-primary-900' : 'text-gray-900'}`}>
                               Capítulo {index + 1}
                             </span>
-                            {isLocked && (
+                            {isLocked ? (
                               <span className="text-[10px] font-extrabold text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded">
                                 🔒 Bloqueado
                               </span>
-                            )}
+                            ) : isModuleFree && !isPaidUser ? (
+                              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded">
+                                🎁 Grátis
+                              </span>
+                            ) : null}
                           </div>
                           <div className="text-xs text-gray-500 truncate mt-0.5">{module.title}</div>
                         </div>

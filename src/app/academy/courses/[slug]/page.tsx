@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { formatVideoEmbedUrl } from '@/lib/videoEmbed';
 import Link from 'next/link';
 import { 
   BookOpen, Clock, Award, Maximize2, Camera, X, ShieldCheck, CheckCircle2, Play, Sparkles, 
   Lock, Star, Users, ArrowRight, ArrowLeft, ChevronDown, 
-  ChevronUp, Zap, HelpCircle, FileText, Video, Smartphone, Tag, Ticket
+  ChevronUp, Zap, HelpCircle, FileText, Video, Smartphone, Tag, Ticket, ExternalLink
 } from 'lucide-react';
 import AcademyNavbar from '@/components/academy/AcademyNavbar';
 import AcademyFooter from '@/components/academy/AcademyFooter';
@@ -46,6 +47,14 @@ interface Module {
   title: string;
   description: string;
   objective: string;
+  hasVideo?: boolean;
+  videoUrl?: string;
+  videoTitle?: string;
+  videoDescription?: string;
+  hasMaterial?: boolean;
+  materialUrl?: string;
+  materialTitle?: string;
+  isFree?: boolean;
   order: number;
 }
 
@@ -74,6 +83,12 @@ export default function CourseDetailsPage() {
   const [showCouponInput, setShowCouponInput] = useState(false);
   const [validatingCoupon, setValidatingCoupon] = useState(false);
   const [couponError, setCouponError] = useState('');
+  const [videoPreviewModal, setVideoPreviewModal] = useState<{
+    isOpen: boolean;
+    videoUrl: string;
+    title: string;
+    description?: string;
+  } | null>(null);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState<number>(0);
   const [activePreviewIndex, setActivePreviewIndex] = useState<number>(0);
@@ -92,6 +107,7 @@ export default function CourseDetailsPage() {
       if (!lightboxImage) return;
       if (e.key === 'Escape') {
         setLightboxImage(null);
+        setVideoPreviewModal(null);
       } else if (e.key === 'ArrowLeft' && course?.instructorGallery && course.instructorGallery.length > 1) {
         const total = course.instructorGallery.length;
         const prevIdx = (lightboxIndex - 1 + total) % total;
@@ -224,6 +240,11 @@ export default function CourseDetailsPage() {
     );
   }
 
+  // Procurar aula gratuita com vídeo: prioridade para isFree marcado, ou módulo 1, ou vídeo preview
+  const freeLessonWithVideo = modules.find(m => m.isFree && m.hasVideo && m.videoUrl)
+    || modules.find(m => m.hasVideo && m.videoUrl)
+    || (course?.videoPreviewUrl ? { title: course.title, videoUrl: course.videoPreviewUrl, description: course.shortDescription, isFree: true, id: 'preview' } : null);
+
   const currentPrice = appliedCoupon ? appliedCoupon.finalAmount : (course?.price || 199);
   const allowInstallments = (course as any)?.allowInstallments !== false && currentPrice > 0;
   const installmentPrice = Math.ceil(currentPrice / 2);
@@ -263,9 +284,30 @@ export default function CourseDetailsPage() {
                 <span className="px-3 py-1 rounded-full bg-slate-800 text-slate-300 text-xs font-semibold">
                   {course.level || 'Todos os Níveis'}
                 </span>
-                <span className="px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-300 text-xs font-semibold">
-                  1 Aula Gratuita Disponível
-                </span>
+                {freeLessonWithVideo ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (freeLessonWithVideo?.videoUrl) {
+                        setVideoPreviewModal({
+                          isOpen: true,
+                          videoUrl: freeLessonWithVideo.videoUrl,
+                          title: freeLessonWithVideo.title || course.title,
+                          description: (freeLessonWithVideo as any).videoDescription || (freeLessonWithVideo as any).description
+                        });
+                      }
+                    }}
+                    className="px-3 py-1 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 text-xs font-bold border border-emerald-500/30 flex items-center gap-1.5 transition cursor-pointer shadow-xs"
+                    title="Clique para assistir à aula gratuita agora"
+                  >
+                    <Play className="w-3 h-3 fill-current text-emerald-400" />
+                    <span>Aula Grátis Disponível • Assistir</span>
+                  </button>
+                ) : (
+                  <span className="px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-300 text-xs font-semibold">
+                    100% Prático
+                  </span>
+                )}
               </div>
 
               <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white leading-tight">
@@ -311,20 +353,38 @@ export default function CourseDetailsPage() {
 
             {/* Right Col: Sticky Purchase Card (Compacto & Cores da Marca) */}
             <div className="lg:col-span-1 bg-white text-slate-900 rounded-2xl p-4 sm:p-5 shadow-xl border border-slate-200 sticky top-20 space-y-3">
-              {/* Media Preview Box Compacto */}
-              <div className="relative h-28 sm:h-32 rounded-xl overflow-hidden bg-slate-900 group">
+              {/* Media Preview Box Compacto - Clicável para abrir o vídeo da aula grátis */}
+              <div 
+                onClick={() => {
+                  if (freeLessonWithVideo?.videoUrl) {
+                    setVideoPreviewModal({
+                      isOpen: true,
+                      videoUrl: freeLessonWithVideo.videoUrl,
+                      title: freeLessonWithVideo.title || course.title,
+                      description: (freeLessonWithVideo as any).videoDescription || (freeLessonWithVideo as any).description
+                    });
+                  }
+                }}
+                className={`relative h-32 sm:h-36 rounded-xl overflow-hidden bg-slate-950 group transition duration-300 ring-2 ring-transparent hover:ring-primary-500 shadow-lg ${freeLessonWithVideo?.videoUrl ? 'cursor-pointer' : 'cursor-default'}`}
+                title={freeLessonWithVideo?.videoUrl ? "Clique para assistir ao vídeo da aula gratuita agora!" : course.title}
+              >
                 <img
                   src={course.thumbnail || 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&auto=format&fit=crop&q=80'}
                   alt={course.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition duration-500 opacity-90"
+                  className="w-full h-full object-cover group-hover:scale-105 transition duration-500 opacity-80 group-hover:opacity-95"
                 />
-                <div className="absolute inset-0 bg-slate-950/40 flex items-center justify-center">
-                  <div className="w-9 h-9 rounded-full bg-primary-600/90 hover:bg-primary-600 text-white flex items-center justify-center shadow-md transform group-hover:scale-110 transition cursor-pointer">
-                    <Play className="w-4 h-4 fill-current ml-0.5" />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/30 to-transparent flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-full bg-primary-600 text-white flex items-center justify-center shadow-2xl transform group-hover:scale-115 transition duration-300 ring-4 ring-white/30 group-hover:bg-primary-500">
+                    <Play className="w-5 h-5 fill-current ml-0.5 text-white" />
                   </div>
                 </div>
-                <div className="absolute bottom-1.5 left-2 right-2 text-center text-[9px] text-white/90 bg-black/60 backdrop-blur-xs py-0.5 rounded-md font-medium">
-                  Aula 1 Liberada Gratuitamente
+                <div className="absolute bottom-1.5 left-2 right-2 text-center text-[10px] text-white bg-black/80 backdrop-blur-md py-1 px-2 rounded-lg font-bold flex items-center justify-center gap-1.5 border border-white/10 shadow-sm">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block" />
+                  <span className="truncate">
+                    {freeLessonWithVideo?.title 
+                      ? `Aula Grátis: ${freeLessonWithVideo.title}`
+                      : 'Aula 1 Liberada Gratuitamente'}
+                  </span>
                 </div>
               </div>
 
@@ -601,33 +661,59 @@ export default function CourseDetailsPage() {
                             {mod.description}
                           </p>
 
-                          {/* Mock lesson items */}
-                          <div className="space-y-2">
-                            <div className="p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-200/60 flex items-center justify-between">
-                              <div className="flex items-center gap-2 text-emerald-950 font-medium">
-                                <Play className="w-3.5 h-3.5 text-emerald-600 fill-current" />
-                                <span>Aula 1: Introdução Prática & Visão Geral</span>
+                          {/* Detalhes e Aulas do Módulo */}
+                          <div className="space-y-2.5">
+                            {/* Card de Vídeo/Aula deste Módulo */}
+                            {(mod.isFree || idx === 0) ? (
+                              <div className="p-3 rounded-xl bg-emerald-50/90 border border-emerald-200 flex items-center justify-between flex-wrap gap-2 shadow-xs">
+                                <div className="flex items-center gap-2.5 text-emerald-950 font-semibold text-xs sm:text-sm">
+                                  <div className="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0">
+                                    <Play className="w-3 h-3 fill-current ml-0.5" />
+                                  </div>
+                                  <span>{mod.videoTitle || mod.title}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[10px] font-extrabold text-emerald-800 bg-white px-2 py-0.5 rounded-full border border-emerald-300 shadow-xs">
+                                    🎁 Aula Grátis
+                                  </span>
+                                  {mod.hasVideo && mod.videoUrl && (
+                                    <button
+                                      type="button"
+                                      onClick={() => setVideoPreviewModal({
+                                        isOpen: true,
+                                        videoUrl: mod.videoUrl!,
+                                        title: mod.title,
+                                        description: mod.videoDescription || mod.description
+                                      })}
+                                      className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold transition flex items-center gap-1 shadow-xs cursor-pointer"
+                                    >
+                                      <Play className="w-3 h-3 fill-current" />
+                                      <span>Assistir Agora</span>
+                                    </button>
+                                  )}
+                                </div>
                               </div>
-                              <span className="text-[10px] font-bold text-emerald-700 bg-white px-2 py-0.5 rounded-full border border-emerald-200">
-                                Grátis
-                              </span>
-                            </div>
+                            ) : (
+                              <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between text-slate-600 text-xs">
+                                <div className="flex items-center gap-2.5">
+                                  <Lock className="w-4 h-4 text-slate-400 shrink-0" />
+                                  <span className="font-medium">{mod.title}</span>
+                                </div>
+                                <span className="text-[10px] text-slate-400 bg-white border border-slate-200 px-2 py-0.5 rounded-md font-medium">
+                                  Exclusivo para Alunos
+                                </span>
+                              </div>
+                            )}
 
-                            <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between text-slate-500">
-                              <div className="flex items-center gap-2">
-                                <Lock className="w-3.5 h-3.5 text-slate-400" />
-                                <span>Aula 2: Desenvolvimento do Projeto Passo a Passo</span>
+                            {mod.hasMaterial && (
+                              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between text-slate-500 text-xs">
+                                <div className="flex items-center gap-2">
+                                  <FileText className="w-3.5 h-3.5 text-primary-600" />
+                                  <span>Material de Apoio e Recursos</span>
+                                </div>
+                                <span className="text-[10px] text-slate-400">Download Incluso</span>
                               </div>
-                              <span className="text-[10px] text-slate-400">Conteúdo do Curso</span>
-                            </div>
-
-                            <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between text-slate-500">
-                              <div className="flex items-center gap-2">
-                                <FileText className="w-3.5 h-3.5 text-slate-400" />
-                                <span>Materiais de Apoio & Ficheiros de Código</span>
-                              </div>
-                              <span className="text-[10px] text-slate-400">Download</span>
-                            </div>
+                            )}
                           </div>
                         </div>
                       )}
@@ -976,6 +1062,106 @@ export default function CourseDetailsPage() {
           )}
         </div>
       )}
+
+            {/* MODAL CINEMA DE VÍDEO DA AULA GRATUITA */}
+      {videoPreviewModal?.isOpen && (() => {
+        const videoEmbed = formatVideoEmbedUrl(videoPreviewModal.videoUrl);
+        return (
+          <div 
+            className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-300"
+            onClick={() => setVideoPreviewModal(null)}
+          >
+            <div 
+              className="bg-slate-900 border border-slate-700 w-full max-w-4xl rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-200"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header do Modal */}
+              <div className="p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between gap-3 bg-slate-950/70">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-black uppercase tracking-wider flex items-center gap-1 shrink-0">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    Aula Grátis Liberada
+                  </span>
+                  <h3 className="text-sm sm:text-base font-bold text-white truncate">
+                    {videoPreviewModal.title}
+                  </h3>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  {videoEmbed.originalWatchUrl && (
+                    <a
+                      href={videoEmbed.originalWatchUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition"
+                      title="Abrir diretamente no YouTube"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span>Abrir no YouTube</span>
+                    </a>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setVideoPreviewModal(null)}
+                    className="p-1.5 sm:p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition cursor-pointer"
+                    title="Fechar Vídeo"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Player de Vídeo Seguro */}
+              <div className="relative aspect-video w-full bg-black">
+                {videoEmbed.type === 'video' ? (
+                  <video
+                    controls
+                    autoPlay
+                    className="w-full h-full"
+                    src={videoEmbed.embedUrl}
+                  />
+                ) : (
+                  <iframe
+                    key={videoEmbed.embedUrl}
+                    src={videoEmbed.embedUrl}
+                    className="w-full h-full border-0"
+                    allowFullScreen
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    title={videoPreviewModal.title}
+                  />
+                )}
+              </div>
+
+              {/* Rodapé do Modal com Informações e CTA de Matrícula */}
+              <div className="p-4 sm:p-5 bg-slate-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-slate-800">
+                <div className="space-y-0.5">
+                  <p className="text-xs text-slate-400">
+                    Estás a assistir à aula degustação de: <strong className="text-slate-200">{course.title}</strong>
+                  </p>
+                  <p className="text-[11px] text-emerald-400 font-medium">
+                    ✓ Garante acesso completo com aulas práticas, mentoria e certificado oficial WEHOSTHERE.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2.5 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setVideoPreviewModal(null);
+                      const purchaseCard = document.querySelector('.lg\\:col-span-1');
+                      if (purchaseCard) {
+                        purchaseCard.scrollIntoView({ behavior: 'smooth' });
+                      }
+                    }}
+                    className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-primary-600 to-indigo-600 hover:from-primary-500 hover:to-indigo-500 text-white font-bold text-xs sm:text-sm shadow-lg transition flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <span>Quero o Curso Completo</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       <AcademyFooter />
     </div>

@@ -154,6 +154,7 @@ export interface Module {
   materialType?: 'pdf' | 'document' | 'link';
   order: number;
   active: boolean;
+  isFree?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -173,6 +174,7 @@ export interface Lesson {
   materialType?: 'pdf' | 'document' | 'link';
   order: number;
   active: boolean;
+  isFree?: boolean;
   createdAt: string;
   updatedAt: string;
 }

@@ -15,6 +15,7 @@ export interface ILesson {
   materialType?: 'pdf' | 'document' | 'link';
   order: number;
   active: boolean;
+  isFree?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -34,6 +35,7 @@ const LessonSchema = new Schema<ILesson>({
   materialType: { type: String, enum: ['pdf', 'document', 'link'] },
   order: { type: Number, required: true },
   active: { type: Boolean, required: true, default: true },
+  isFree: { type: Boolean, default: false },
   createdAt: { type: String, required: true },
   updatedAt: { type: String, required: true }
 }, {

@@ -16,6 +16,7 @@ export interface IModule {
   materialType?: 'pdf' | 'document' | 'link';
   order: number;
   active: boolean;
+  isFree?: boolean;
   viewsCount?: number;
   createdAt: string;
   updatedAt: string;
@@ -37,6 +38,7 @@ const ModuleSchema = new Schema<IModule>({
   materialType: { type: String, enum: ['pdf', 'document', 'link'] },
   order: { type: Number, required: true },
   active: { type: Boolean, required: true, default: true },
+  isFree: { type: Boolean, default: false },
   viewsCount: { type: Number, default: 0 },
   createdAt: { type: String, required: true },
   updatedAt: { type: String, required: true }
