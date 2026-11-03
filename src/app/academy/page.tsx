@@ -521,20 +521,24 @@ export default function PublicAcademyPage() {
         </div>
       </section>
 
-      {/* BOTTOM CTA BANNER */}
-      <section className="bg-gradient-to-r from-emerald-600 to-teal-700 text-white py-12 px-4 sm:px-6 lg:px-8 text-center mt-auto">
-        <div className="max-w-3xl mx-auto space-y-4">
-          <h2 className="text-2xl sm:text-3xl font-black">Pronto para Elevar as Tuas Habilidades Digitais?</h2>
-          <p className="text-xs sm:text-sm text-emerald-100 max-w-lg mx-auto">
+      {/* BOTTOM CTA BANNER — Azul Oficial Branding WEHOSTHERE */}
+      <section className="bg-gradient-to-r from-[#0284c7] via-[#0369a1] to-[#075985] text-white py-14 px-4 sm:px-6 lg:px-8 text-center mt-auto relative overflow-hidden">
+        {/* Subtle decorative glow */}
+        <div className="absolute -top-24 -left-24 w-72 h-72 bg-white/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-24 -right-24 w-72 h-72 bg-sky-300/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="max-w-3xl mx-auto space-y-4 relative z-10">
+          <h2 className="text-2xl sm:text-3xl font-black tracking-tight">Pronto para Elevar as Tuas Habilidades Digitais?</h2>
+          <p className="text-xs sm:text-sm text-sky-100 max-w-lg mx-auto leading-relaxed">
             Junta-te a profissionais e empreendedores em Moçambique que já estão a evoluir com as nossas formações práticas.
           </p>
           <div className="pt-2">
             <a
               href="#cursos"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-white text-emerald-900 font-extrabold rounded-2xl shadow-lg hover:bg-emerald-50 transition text-sm"
+              className="inline-flex items-center gap-2 px-7 py-3.5 bg-white text-primary-900 font-extrabold rounded-2xl shadow-xl hover:bg-sky-50 hover:shadow-2xl hover:scale-[1.02] transition duration-200 text-sm"
             >
               <span>Ver Cursos Disponíveis</span>
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-4 h-4 text-primary-600" />
             </a>
           </div>
         </div>
