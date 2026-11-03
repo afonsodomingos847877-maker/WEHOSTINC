@@ -221,6 +221,12 @@ export default function ChapterViewPage() {
             setCommentText('');
           }
           setToast({ show: true, message: parentId ? 'Resposta enviada!' : 'Dúvida enviada para a turma!', type: 'success' });
+          setTimeout(() => {
+            const container = document.getElementById('classroom-chat-scroll-container');
+            if (container) {
+              container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+            }
+          }, 150);
         }
       }
     } catch (err) {
@@ -1001,9 +1007,52 @@ export default function ChapterViewPage() {
                     <p className="text-[11px] text-slate-400 mt-0.5">Sê o primeiro a colocar uma pergunta ou partilhar uma resolução!</p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {/* Agrupar por comentários raiz */}
-                    {comments.filter(c => !c.parentId).map((c) => {
+                  <div className="space-y-3">
+                    {/* Barra Superior do Chat com Controles de Scroll */}
+                    <div className="flex items-center justify-between pb-2 border-b border-slate-100 flex-wrap gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-slate-800">Mensagens da Turma</span>
+                        <span className="text-[11px] text-slate-400 font-medium">({comments.filter(c => !c.parentId).length} tópicos)</span>
+                      </div>
+                      
+                      {/* Botões Rápidos de Rolagem (Scroll) */}
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const container = document.getElementById('classroom-chat-scroll-container');
+                            if (container) container.scrollTo({ top: 0, behavior: 'smooth' });
+                          }}
+                          className="px-2.5 py-1 text-[11px] font-semibold text-slate-600 hover:text-primary-700 bg-slate-100 hover:bg-primary-50 rounded-lg transition flex items-center gap-1 cursor-pointer"
+                          title="Rolar até o topo das mensagens"
+                        >
+                          <span>↑ Início</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const container = document.getElementById('classroom-chat-scroll-container');
+                            if (container) container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+                          }}
+                          className="px-2.5 py-1 text-[11px] font-semibold text-slate-600 hover:text-primary-700 bg-slate-100 hover:bg-primary-50 rounded-lg transition flex items-center gap-1 cursor-pointer"
+                          title="Rolar até as mensagens mais recentes"
+                        >
+                          <span>↓ Recentes</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Contentor com Scroll Suave e Altura Máxima Fixada */}
+                    <div 
+                      id="classroom-chat-scroll-container" 
+                      className="max-h-[460px] sm:max-h-[520px] overflow-y-auto pr-1.5 sm:pr-2 space-y-3.5 scroll-smooth divide-y divide-transparent"
+                      style={{
+                        scrollbarWidth: 'thin',
+                        scrollbarColor: '#cbd5e1 #f8fafc'
+                      }}
+                    >
+                      {/* Agrupar por comentários raiz */}
+                      {comments.filter(c => !c.parentId).map((c) => {
                       const replies = comments.filter(r => r.parentId === c.id);
                       const isInstructor = c.userRole === 'instructor' || c.userRole === 'admin';
 
@@ -1180,6 +1229,7 @@ export default function ChapterViewPage() {
                         </div>
                       );
                     })}
+                    </div>
                   </div>
                 )}
               </div>
