@@ -68,8 +68,14 @@ export async function PUT(
     if (provider.isConfigured()) {
       try {
         updatedProvMailbox = await provider.updateMailbox(domain, localPart, body);
-      } catch (provErr) {
-        console.warn('[Migadu Mailbox PUT] Provider update warning:', provErr);
+      } catch (provErr: any) {
+        console.error('[Migadu Mailbox PUT] Provider update error:', provErr);
+        if (body.password) {
+          return NextResponse.json(
+            { error: provErr?.message || 'Falha ao atualizar a senha no servidor Migadu' },
+            { status: 500 }
+          );
+        }
       }
     }
 

@@ -477,8 +477,8 @@ function WebmailContent() {
     setPasswordError('');
     setPasswordSuccess('');
 
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      setPasswordError('Por favor, preencha todos os campos.');
+    if (!newPassword || !confirmPassword) {
+      setPasswordError('Por favor, preencha a nova senha e a confirmação.');
       return;
     }
 
@@ -492,39 +492,86 @@ function WebmailContent() {
       return;
     }
 
+    if (!selectedAccountEmail || !selectedAccountEmail.includes('@')) {
+      setPasswordError('Nenhuma caixa de e-mail selecionada.');
+      return;
+    }
+
+    setIsUpdatingPassword(true);
+
     try {
-      const currentUser = auth.getCurrentUser();
-      if (!currentUser) {
-        setPasswordError('Usuário não autenticado.');
-        return;
-      }
+      // 1. Verificar senha atual se fornecida
+      if (currentPassword) {
+        let isVerified = false;
 
-      // Verify current password
-      const loginResult = auth.login(currentUser.email, currentPassword);
-      if (!loginResult) {
-        setPasswordError('A senha atual está incorreta.');
-        return;
-      }
+        // Se coincidir com a senha ativa na sessão do Webmail
+        if (mailboxPassword && currentPassword.trim() === mailboxPassword.trim()) {
+          isVerified = true;
+        } else {
+          // Testar via IMAP
+          try {
+            const authRes = await fetch('/api/webmail/auth', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email: selectedAccountEmail, password: currentPassword })
+            });
+            if (authRes.ok) {
+              isVerified = true;
+            }
+          } catch (authErr) {
+            console.warn('[ChangePassword] Auth check warning:', authErr);
+          }
 
-      // Update portal login password
-      auth.updatePassword(currentUser.email, newPassword);
-      
-      // Sincronizar nova senha com o servidor Migadu se houver caixa de e-mail ativa
-      if (selectedAccountEmail && selectedAccountEmail.includes('@')) {
-        const [localPart, domain] = selectedAccountEmail.split('@');
-        try {
-          await fetch(`/api/email-providers/migadu/domains/${domain}/mailboxes/${localPart}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ password: newPassword })
-          });
-          setMailboxPassword(newPassword);
-        } catch (migErr) {
-          console.warn('[Webmail] Warning syncing new password with Migadu:', migErr);
+          // Fallback portal check
+          if (!isVerified) {
+            const currentUser = auth.getCurrentUser();
+            if (currentUser && auth.login(currentUser.email, currentPassword)) {
+              isVerified = true;
+            }
+          }
+        }
+
+        if (!isVerified) {
+          setPasswordError('A senha atual inserida está incorreta.');
+          setIsUpdatingPassword(false);
+          soundEffects.playErrorSound();
+          return;
         }
       }
 
-      setPasswordSuccess('Senha alterada com sucesso!');
+      // 2. Sincronizar nova senha diretamente com o servidor Migadu
+      const [localPart, domain] = selectedAccountEmail.split('@');
+      const res = await fetch(`/api/email-providers/migadu/domains/${domain}/mailboxes/${localPart}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: newPassword })
+      });
+
+      const resData = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(resData.error || resData.message || 'Falha ao atualizar senha na Migadu.');
+      }
+
+      // 3. Atualizar estado e credenciais locais do Webmail
+      setMailboxPassword(newPassword);
+      try {
+        localStorage.setItem(`webmail_auth_${selectedAccountEmail}`, newPassword);
+      } catch (e) {}
+
+      // Atualizar também na conta local do dataManager
+      const existingAcc = accounts.find(a => a.email.toLowerCase() === selectedAccountEmail.toLowerCase());
+      if (existingAcc) {
+        dataManager.updateEmail(existingAcc.id, { password: newPassword } as any);
+      }
+
+      // Se utilizador do portal for igual a este email, atualizar também
+      const currentUser = auth.getCurrentUser();
+      if (currentUser && currentUser.email.toLowerCase() === selectedAccountEmail.toLowerCase()) {
+        auth.updatePassword(currentUser.email, newPassword);
+      }
+
+      soundEffects.playSuccessSound();
+      setPasswordSuccess('Senha alterada com sucesso! Atualizada imediatamente no servidor Migadu.');
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
@@ -533,8 +580,12 @@ function WebmailContent() {
         setShowChangePasswordModal(false);
         setPasswordSuccess('');
       }, 2000);
-    } catch (err) {
-      setPasswordError('Erro ao alterar senha. Tente novamente.');
+    } catch (err: any) {
+      console.error('[Webmail Change Password] Error:', err);
+      soundEffects.playErrorSound();
+      setPasswordError(err?.message || 'Erro ao alterar a senha. Tente novamente.');
+    } finally {
+      setIsUpdatingPassword(false);
     }
   };
 
@@ -3358,14 +3409,15 @@ function WebmailContent() {
               )}
 
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1.5">Senha Atual da Caixa</label>
+                <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                  Senha Atual da Caixa {mailboxPassword ? <span className="text-gray-400 font-normal">(opcional)</span> : ''}
+                </label>
                 <input
                   type={showPasswordText ? "text" : "password"}
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-900 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
-                  placeholder="Digite sua senha atual"
-                  required
+                  placeholder={mailboxPassword ? "Sessão já autenticada (opcional)" : "Digite sua senha atual"}
                 />
               </div>
 
@@ -3438,7 +3490,7 @@ function WebmailContent() {
                 </button>
                 <button
                   type="submit"
-                  disabled={!currentPassword || !newPassword || !confirmPassword || isUpdatingPassword}
+                  disabled={!newPassword || !confirmPassword || isUpdatingPassword}
                   className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-xs sm:text-sm rounded-xl transition cursor-pointer shadow-md flex items-center justify-center space-x-2"
                 >
                   {isUpdatingPassword ? (
