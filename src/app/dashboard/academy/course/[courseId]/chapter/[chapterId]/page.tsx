@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { ArrowLeft, BookOpen, ChevronLeft, ChevronRight, CheckCircle, Menu, X, Video, FileText, Clock, Target, Award, Lock, DollarSign, CreditCard, Sparkles } from 'lucide-react';
+import { ArrowLeft, BookOpen, ChevronLeft, ChevronRight, CheckCircle, Menu, X, Video, FileText, Clock, Target, Award, Lock, DollarSign, CreditCard, Sparkles, MessageSquare, Send, Reply, Trash2, ShieldCheck, GraduationCap, CornerDownRight, ThumbsUp, User as UserIcon } from 'lucide-react';
 import { auth, User } from '@/lib/auth';
 import { dataManager, Course, Module, Lesson, CourseProgress } from '@/lib/data';
 import BrandLogo from '@/components/BrandLogo';
@@ -17,6 +17,8 @@ export default function ChapterViewPage() {
   const courseId = params.courseId as string;
   const chapterId = params.chapterId as string;
   const { data: session, status } = useSession();
+  const searchParams = useSearchParams();
+  const isTeacherParam = searchParams.get('role') === 'docente';
 
   const [course, setCourse] = useState<Course | null>(null);
   const [modules, setModules] = useState<Module[]>([]);
@@ -29,6 +31,16 @@ export default function ChapterViewPage() {
   const [showCelebration, setShowCelebration] = useState(false);
   const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'error' | 'info' | 'warning' }>({ show: false, message: '', type: 'success' });
   const [isPaidUser, setIsPaidUser] = useState(false);
+  const [activeUser, setActiveUser] = useState<User | null>(null);
+
+  // Estados da Comunidade & Chat da Sala de Aula
+  const [comments, setComments] = useState<any[]>([]);
+  const [loadingComments, setLoadingComments] = useState(false);
+  const [commentText, setCommentText] = useState('');
+  const [submittingComment, setSubmittingComment] = useState(false);
+  const [replyToId, setReplyToId] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState('');
+  const [submittingReply, setSubmittingReply] = useState(false);
 
   const currentUser = auth.getCurrentUser();
 
@@ -70,7 +82,7 @@ export default function ChapterViewPage() {
       const isAdmin = auth.isAdminUser(currentUser);
       const isProOrEnterprise = currentUser.plan === 'pro' || currentUser.plan === 'enterprise';
       
-      if (isAdmin || isProOrEnterprise) {
+      if (isAdmin || isProOrEnterprise || isTeacherParam) {
         setIsPaidUser(true);
       } else if (courseData && (courseData.accessType === 'paid' || courseData.accessType === 'preview')) {
         const hasPaid = await dataManager.hasPaidForCourse(currentUser.email, courseData.title);
@@ -94,7 +106,7 @@ export default function ChapterViewPage() {
       console.error('[ChapterView] Erro em loadCourseData:', error);
       setLoading(false);
     }
-  }, [courseId, chapterId, router]);
+  }, [courseId, chapterId, router, isTeacherParam]);
 
   useEffect(() => {
     let currentUser: User | null = null;
@@ -127,8 +139,111 @@ export default function ChapterViewPage() {
       return;
     }
 
+    setActiveUser(currentUser);
     loadCourseData(currentUser);
   }, [courseId, router, session, status, loadCourseData]);
+
+  const isTeacherMode = isTeacherParam || (activeUser ? auth.isAdminUser(activeUser) : false);
+
+  const loadComments = useCallback(async (cId: string, mId: string) => {
+    try {
+      setLoadingComments(true);
+      const res = await fetch(`/api/academy/comments?courseId=${encodeURIComponent(cId)}&moduleId=${encodeURIComponent(mId)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.comments)) {
+          setComments(data.comments);
+        }
+      }
+    } catch (err) {
+      console.warn('Erro ao carregar comentários:', err);
+    } finally {
+      setLoadingComments(false);
+    }
+  }, []);
+
+  // Sincronizar comentários e registrar analytics ao trocar de capítulo
+  useEffect(() => {
+    if (courseId && currentChapterId) {
+      loadComments(courseId, currentChapterId);
+
+      // Registrar visualização nas métricas
+      fetch('/api/academy/analytics', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'track_view',
+          courseId,
+          moduleId: currentChapterId,
+          userId: activeUser?.id,
+          userEmail: activeUser?.email,
+          userName: activeUser?.name
+        })
+      }).catch(err => console.warn('Erro ao registrar visualização:', err));
+    }
+  }, [courseId, currentChapterId, activeUser, loadComments]);
+
+  const handleSendComment = async (parentId?: string) => {
+    const textToSend = parentId ? replyText.trim() : commentText.trim();
+    if (!textToSend || !activeUser) return;
+
+    try {
+      if (parentId) setSubmittingReply(true);
+      else setSubmittingComment(true);
+
+      const userRole = isTeacherMode ? 'instructor' : 'student';
+
+      const res = await fetch('/api/academy/comments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          courseId,
+          moduleId: currentChapterId,
+          lessonId: currentLessonData?.id,
+          userId: activeUser.id || activeUser.email,
+          userName: activeUser.name || (isTeacherMode ? 'Docente / Formador' : 'Aluno'),
+          userEmail: activeUser.email,
+          userAvatar: activeUser.avatar,
+          userRole,
+          message: textToSend,
+          parentId: parentId || undefined
+        })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.comment) {
+          setComments(prev => [...prev, data.comment]);
+          if (parentId) {
+            setReplyText('');
+            setReplyToId(null);
+          } else {
+            setCommentText('');
+          }
+          setToast({ show: true, message: parentId ? 'Resposta enviada!' : 'Dúvida enviada para a turma!', type: 'success' });
+        }
+      }
+    } catch (err) {
+      setToast({ show: true, message: 'Erro ao enviar mensagem.', type: 'error' });
+    } finally {
+      if (parentId) setSubmittingReply(false);
+      else setSubmittingComment(false);
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    try {
+      const res = await fetch(`/api/academy/comments?id=${encodeURIComponent(commentId)}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        setComments(prev => prev.filter(c => c.id !== commentId && c.parentId !== commentId));
+        setToast({ show: true, message: 'Mensagem removida.', type: 'info' });
+      }
+    } catch (err) {
+      setToast({ show: true, message: 'Erro ao remover mensagem.', type: 'error' });
+    }
+  };
 
   const getCurrentChapter = () => {
     const chapterIndex = modules.findIndex(m => m.id === currentChapterId);
@@ -369,6 +484,30 @@ export default function ChapterViewPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      {/* Barra de Modo Docente / Formador */}
+      {isTeacherMode && (
+        <div className="bg-gradient-to-r from-blue-950 via-indigo-900 to-slate-900 text-white px-4 py-2.5 text-xs border-b border-indigo-700/60 shadow-inner flex items-center justify-between flex-wrap gap-2 sticky top-0 z-50">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-500/30 text-blue-200 font-bold border border-blue-400/30 text-[10px] uppercase tracking-wider">
+              <GraduationCap className="w-3.5 h-3.5 text-blue-300" />
+              <span>Modo Docente Ativo</span>
+            </span>
+            <span className="text-slate-200 hidden sm:inline">
+              Visão de Formador: Acesso ilimitado às aulas, vídeos e respostas destacadas na comunidade da turma.
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => router.push('/admin/academy')}
+              className="inline-flex items-center gap-1 px-3 py-1 bg-white/10 hover:bg-white/20 text-white font-bold rounded-lg text-xs transition cursor-pointer"
+            >
+              <ArrowLeft className="w-3 h-3" />
+              <span>Voltar ao Painel Admin</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Celebration Animation */}
       {showCelebration && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 animate-in fade-in duration-300">
@@ -721,6 +860,222 @@ export default function ChapterViewPage() {
                 <p className="text-gray-600">Este capítulo ainda não tem aulas disponíveis. Por favor, volte mais tarde ou entre em contato com o suporte.</p>
               </div>
             )}
+
+            {/* 💬 CHAT & COMUNIDADE DA TURMA (Alunos + Docente) */}
+            <div className="mt-8 bg-white rounded-3xl border border-gray-200 shadow-xl overflow-hidden animate-in fade-in duration-300">
+              <div className="p-5 sm:p-6 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex items-center justify-between flex-wrap gap-3">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <MessageSquare className="w-5 h-5 text-primary-400" />
+                    <h3 className="text-base sm:text-lg font-bold">Comunidade & Dúvidas da Aula</h3>
+                  </div>
+                  <p className="text-xs text-slate-300">
+                    Tira dúvidas diretamente com o formador e debate os exercícios com outros alunos da turma.
+                  </p>
+                </div>
+                <span className="px-3 py-1 rounded-full bg-white/10 text-white text-xs font-bold border border-white/20">
+                  {comments.length} {comments.length === 1 ? 'mensagem' : 'mensagens'}
+                </span>
+              </div>
+
+              <div className="p-5 sm:p-7 space-y-6">
+                {/* Caixa de Entrada de Nova Mensagem */}
+                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-primary-600 text-white font-bold text-xs flex items-center justify-center">
+                        {activeUser?.name?.charAt(0) || 'U'}
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-slate-900">{activeUser?.name || 'Tu'}</p>
+                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full inline-flex items-center gap-1 ${
+                          isTeacherMode ? 'bg-blue-100 text-blue-800 border border-blue-200' : 'bg-slate-200 text-slate-700'
+                        }`}>
+                          {isTeacherMode ? '👨‍🏫 Docente / Formador' : '🎓 Aluno'}
+                        </span>
+                      </div>
+                    </div>
+                    {isTeacherMode && (
+                      <span className="text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
+                        Resposta Oficial Destacada
+                      </span>
+                    )}
+                  </div>
+
+                  <textarea
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                    placeholder={isTeacherMode ? "Escreve uma orientação para a turma ou responde a uma dúvida..." : "Escreve a tua dúvida sobre este capítulo ou lição..."}
+                    rows={3}
+                    className="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+                  />
+
+                  <div className="flex justify-end">
+                    <button
+                      onClick={() => handleSendComment()}
+                      disabled={submittingComment || !commentText.trim()}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary-600 hover:bg-primary-700 active:scale-95 text-white text-xs font-bold rounded-xl shadow-md transition disabled:opacity-50 cursor-pointer"
+                    >
+                      <Send className="w-3.5 h-3.5" />
+                      <span>{submittingComment ? 'A enviar...' : 'Publicar na Turma'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Lista de Mensagens */}
+                {loadingComments ? (
+                  <div className="text-center py-8 text-xs text-slate-400">
+                    A carregar dúvidas e mensagens da turma...
+                  </div>
+                ) : comments.length === 0 ? (
+                  <div className="text-center py-10 border border-dashed border-slate-200 rounded-2xl p-6">
+                    <MessageSquare className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                    <p className="text-xs font-semibold text-slate-700">Ainda não há dúvidas publicadas neste capítulo.</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">Sê o primeiro a colocar uma pergunta ou partilhar uma resolução!</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {/* Agrupar por comentários raiz */}
+                    {comments.filter(c => !c.parentId).map((c) => {
+                      const replies = comments.filter(r => r.parentId === c.id);
+                      const isInstructor = c.userRole === 'instructor' || c.userRole === 'admin';
+
+                      return (
+                        <div key={c.id} className="border border-slate-200 rounded-2xl p-4 sm:p-5 bg-white space-y-3">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex items-center gap-2.5">
+                              <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${
+                                isInstructor ? 'bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-md' : 'bg-slate-100 text-slate-700'
+                              }`}>
+                                {c.userName?.charAt(0) || 'U'}
+                              </div>
+                              <div>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="text-xs font-bold text-slate-900">{c.userName}</span>
+                                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1 ${
+                                    isInstructor 
+                                      ? 'bg-blue-600 text-white shadow-xs' 
+                                      : 'bg-slate-100 text-slate-600'
+                                  }`}>
+                                    {isInstructor ? '👨‍🏫 Docente / Formador' : '🎓 Aluno'}
+                                  </span>
+                                </div>
+                                <span className="text-[10px] text-slate-400">
+                                  {c.createdAt ? new Date(c.createdAt).toLocaleDateString('pt-MZ', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}
+                                </span>
+                              </div>
+                            </div>
+
+                            {isTeacherMode && (
+                              <button
+                                onClick={() => handleDeleteComment(c.id)}
+                                className="text-slate-300 hover:text-rose-500 p-1 rounded transition cursor-pointer"
+                                title="Eliminar mensagem (Modo Docente)"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+
+                          <p className="text-xs sm:text-sm text-slate-700 whitespace-pre-wrap leading-relaxed pl-11">
+                            {c.message}
+                          </p>
+
+                          <div className="pl-11 flex items-center gap-3 pt-1">
+                            <button
+                              onClick={() => {
+                                setReplyToId(replyToId === c.id ? null : c.id);
+                                setReplyText('');
+                              }}
+                              className="inline-flex items-center gap-1 text-xs font-bold text-primary-600 hover:text-primary-700 cursor-pointer"
+                            >
+                              <Reply className="w-3.5 h-3.5" />
+                              <span>{replyToId === c.id ? 'Cancelar' : 'Responder'}</span>
+                            </button>
+                          </div>
+
+                          {/* Campo de Resposta Aberto */}
+                          {replyToId === c.id && (
+                            <div className="ml-11 mt-2 bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2 animate-in fade-in duration-150">
+                              <textarea
+                                value={replyText}
+                                onChange={(e) => setReplyText(e.target.value)}
+                                placeholder={`Responder a ${c.userName}...`}
+                                rows={2}
+                                className="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+                              />
+                              <div className="flex justify-end gap-2">
+                                <button
+                                  onClick={() => setReplyToId(null)}
+                                  className="px-3 py-1 text-xs text-slate-500 hover:text-slate-700 cursor-pointer"
+                                >
+                                  Cancelar
+                                </button>
+                                <button
+                                  onClick={() => handleSendComment(c.id)}
+                                  disabled={submittingReply || !replyText.trim()}
+                                  className="inline-flex items-center gap-1 px-3 py-1 bg-primary-600 hover:bg-primary-700 text-white text-xs font-bold rounded-lg transition disabled:opacity-50 cursor-pointer"
+                                >
+                                  <Send className="w-3 h-3" />
+                                  <span>{submittingReply ? '...' : 'Responder'}</span>
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Respostas Aninhadas */}
+                          {replies.length > 0 && (
+                            <div className="ml-8 sm:ml-11 space-y-2.5 pt-2 border-l-2 border-slate-100 pl-3">
+                              {replies.map((reply) => {
+                                const isReplyInstructor = reply.userRole === 'instructor' || reply.userRole === 'admin';
+                                return (
+                                  <div key={reply.id} className={`p-3 rounded-xl border ${
+                                    isReplyInstructor ? 'bg-blue-50/60 border-blue-200/80' : 'bg-slate-50/80 border-slate-200/80'
+                                  }`}>
+                                    <div className="flex items-start justify-between gap-2 mb-1">
+                                      <div className="flex items-center gap-2 flex-wrap">
+                                        <div className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-[10px] ${
+                                          isReplyInstructor ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-700'
+                                        }`}>
+                                          {reply.userName?.charAt(0) || 'U'}
+                                        </div>
+                                        <span className="text-xs font-bold text-slate-900">{reply.userName}</span>
+                                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full inline-flex items-center gap-0.5 ${
+                                          isReplyInstructor ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-600'
+                                        }`}>
+                                          {isReplyInstructor ? '👨‍🏫 Docente' : '🎓 Aluno'}
+                                        </span>
+                                        <span className="text-[10px] text-slate-400">
+                                          {reply.createdAt ? new Date(reply.createdAt).toLocaleDateString('pt-MZ', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}
+                                        </span>
+                                      </div>
+
+                                      {isTeacherMode && (
+                                        <button
+                                          onClick={() => handleDeleteComment(reply.id)}
+                                          className="text-slate-300 hover:text-rose-500 p-0.5 transition cursor-pointer"
+                                          title="Eliminar resposta"
+                                        >
+                                          <Trash2 className="w-3 h-3" />
+                                        </button>
+                                      )}
+                                    </div>
+                                    <p className="text-xs text-slate-700 whitespace-pre-wrap pl-8">
+                                      {reply.message}
+                                    </p>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>

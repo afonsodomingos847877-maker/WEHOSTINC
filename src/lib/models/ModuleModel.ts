@@ -16,6 +16,7 @@ export interface IModule {
   materialType?: 'pdf' | 'document' | 'link';
   order: number;
   active: boolean;
+  viewsCount?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -36,10 +37,12 @@ const ModuleSchema = new Schema<IModule>({
   materialType: { type: String, enum: ['pdf', 'document', 'link'] },
   order: { type: Number, required: true },
   active: { type: Boolean, required: true, default: true },
+  viewsCount: { type: Number, default: 0 },
   createdAt: { type: String, required: true },
   updatedAt: { type: String, required: true }
 }, {
-  timestamps: true
+  timestamps: true,
+  strict: false
 });
 
 // Índice composto para courseId + order

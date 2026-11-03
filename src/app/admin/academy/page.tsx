@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Toast from '@/components/Toast';
 import { formatVideoEmbedUrl } from '@/lib/videoEmbed';
-import { Plus, Edit, Users, Trash2, Eye, BookOpen, DollarSign, Clock, ArrowLeft, Home, GraduationCap, Loader2, CheckCircle, XCircle, Save, X, CheckSquare, Upload, AlertTriangle, MessageCircle, Send, Check, RefreshCw, Mail, ExternalLink, Filter, Smartphone, Zap, ImageIcon, FileText, Paperclip } from 'lucide-react';
+import { Plus, Edit, Users, Trash2, Eye, BookOpen, DollarSign, Clock, ArrowLeft, Home, GraduationCap, Loader2, CheckCircle, XCircle, Save, X, CheckSquare, Upload, AlertTriangle, MessageCircle, Send, Check, RefreshCw, Mail, ExternalLink, Filter, Smartphone, Zap, ImageIcon, FileText, Paperclip, BarChart3 } from 'lucide-react';
 
 interface Course {
   id: string;
@@ -20,6 +20,7 @@ interface Course {
   order: number;
   active: boolean;
   freeLessonsCount?: number;
+  viewsCount?: number;
   instructorName?: string;
   instructorTitle?: string;
   instructorBio?: string;
@@ -94,7 +95,29 @@ export default function AdminAcademyPage() {
     show: false, courseId: '', courseTitle: '', price: 199, originalPrice: 500, accessType: 'paid', allowInstallments: true
   });
   const [filter, setFilter] = useState<'all' | 'active' | 'inactive'>('all');
-  const [activeTab, setActiveTab] = useState<'courses' | 'modules' | 'lessons' | 'enrollments' | 'coupons'>('courses');
+  const [activeTab, setActiveTab] = useState<'courses' | 'modules' | 'lessons' | 'enrollments' | 'coupons' | 'metrics'>('courses');
+  const [selectedAnalyticsCourse, setSelectedAnalyticsCourse] = useState<Course | null>(null);
+  const [analyticsData, setAnalyticsData] = useState<any>(null);
+  const [loadingAnalytics, setLoadingAnalytics] = useState(false);
+  const [studentSearchTerm, setStudentSearchTerm] = useState('');
+  const [studentFilter, setStudentFilter] = useState<'all' | 'completed' | 'in_progress' | 'installment_1' | 'installment_2'>('all');
+
+  const fetchCourseAnalytics = async (courseId: string) => {
+    try {
+      setLoadingAnalytics(true);
+      const res = await fetch(`/api/academy/analytics?courseId=${encodeURIComponent(courseId)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setAnalyticsData(data);
+        }
+      }
+    } catch (err) {
+      console.warn('Erro ao carregar métricas:', err);
+    } finally {
+      setLoadingAnalytics(false);
+    }
+  };
   const [enrollments, setEnrollments] = useState<any[]>([]);
   const [coupons, setCoupons] = useState<any[]>([]);
   const [showCouponModal, setShowCouponModal] = useState(false);
@@ -1516,6 +1539,26 @@ export default function AdminAcademyPage() {
                 <span className="bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full text-xs font-semibold">{coupons.length}</span>
               </div>
             </button>
+            <button
+              onClick={() => {
+                setActiveTab('metrics');
+                const target = selectedAnalyticsCourse || courses[0];
+                if (target) {
+                  setSelectedAnalyticsCourse(target);
+                  fetchCourseAnalytics(target.id);
+                }
+              }}
+              className={`px-6 py-4 font-bold text-xs sm:text-sm transition whitespace-nowrap ${
+                activeTab === 'metrics'
+                  ? 'text-purple-600 border-b-2 border-purple-600 bg-purple-50/50'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+              }`}
+            >
+              <div className="flex items-center justify-center space-x-2">
+                <BarChart3 className="h-4 w-4 text-purple-600" />
+                <span>Métricas & Visitas</span>
+              </div>
+            </button>
           </div>
         </div>
 
@@ -1735,7 +1778,28 @@ export default function AdminAcademyPage() {
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-600">{course.order}</td>
                           <td className="px-4 py-3 text-right">
-                            <div className="flex items-center justify-end space-x-1">
+                            <div className="flex items-center justify-end space-x-1.5">
+                              <Link
+                                href={`/dashboard/academy/course/${course.id}?role=docente`}
+                                target="_blank"
+                                className="p-1.5 text-blue-600 hover:bg-blue-50 bg-blue-50/50 border border-blue-200/60 rounded-lg transition inline-flex items-center gap-1 text-xs font-bold"
+                                title="Ver Apresentação como Docente (Entrar na Sala de Aula com Acesso Total)"
+                              >
+                                <GraduationCap className="h-3.5 w-3.5 text-blue-600" />
+                                <span className="hidden xl:inline text-[11px]">Ver como Docente</span>
+                              </Link>
+                              <button
+                                onClick={() => {
+                                  setSelectedAnalyticsCourse(course);
+                                  fetchCourseAnalytics(course.id);
+                                  setActiveTab('metrics');
+                                }}
+                                className="p-1.5 text-purple-600 hover:bg-purple-50 bg-purple-50/50 border border-purple-200/60 rounded-lg transition inline-flex items-center gap-1 text-xs font-bold"
+                                title="Ver Métricas de Visitas, Módulos e Alunos deste Curso"
+                              >
+                                <BarChart3 className="h-3.5 w-3.5 text-purple-600" />
+                                <span className="hidden xl:inline text-[11px]">Métricas</span>
+                              </button>
                               <button
                                 onClick={() => {
                                   setPriceModal({
@@ -2415,6 +2479,311 @@ export default function AdminAcademyPage() {
                     );
                   })}
                 </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'metrics' && (
+            <div className="p-6 space-y-8 animate-in fade-in duration-200">
+              {/* Header com Seletor de Curso e Botão de Docente */}
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-gray-200">
+                <div>
+                  <h3 className="text-xl font-black text-gray-900 tracking-tight flex items-center gap-2">
+                    <BarChart3 className="h-6 w-6 text-purple-600" />
+                    <span>Métricas de Visitas, Módulos & Alunos</span>
+                  </h3>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Acompanha o engajamento real, visualizações por módulo e o progresso individual de cada aluno matriculado.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3 flex-wrap">
+                  {/* Seletor de Curso */}
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs font-bold text-gray-600 uppercase tracking-wider">Curso:</label>
+                    <select
+                      value={selectedAnalyticsCourse?.id || ''}
+                      onChange={(e) => {
+                        const c = courses.find(item => item.id === e.target.value);
+                        if (c) {
+                          setSelectedAnalyticsCourse(c);
+                          fetchCourseAnalytics(c.id);
+                        }
+                      }}
+                      className="px-3.5 py-2 bg-white border border-gray-300 rounded-xl text-xs sm:text-sm font-bold text-slate-800 shadow-2xs focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                    >
+                      {courses.map(c => (
+                        <option key={c.id} value={c.id}>{c.title}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {selectedAnalyticsCourse && (
+                    <Link
+                      href={`/dashboard/academy/course/${selectedAnalyticsCourse.id}?role=docente`}
+                      target="_blank"
+                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md transition active:scale-95 cursor-pointer"
+                    >
+                      <GraduationCap className="w-4 h-4" />
+                      <span>Ver Apresentação como Docente</span>
+                    </Link>
+                  )}
+
+                  <button
+                    onClick={() => {
+                      if (selectedAnalyticsCourse) fetchCourseAnalytics(selectedAnalyticsCourse.id);
+                    }}
+                    className="p-2 border border-gray-200 rounded-xl hover:bg-gray-50 text-gray-600 transition cursor-pointer"
+                    title="Atualizar Métricas"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${loadingAnalytics ? 'animate-spin text-purple-600' : ''}`} />
+                  </button>
+                </div>
+              </div>
+
+              {loadingAnalytics && !analyticsData ? (
+                <div className="p-16 text-center text-gray-400 space-y-2">
+                  <Loader2 className="w-8 h-8 animate-spin mx-auto text-purple-600" />
+                  <p className="text-xs">A carregar métricas detalhadas do curso...</p>
+                </div>
+              ) : (
+                <>
+                  {/* 3 Cartões de Métricas Principais */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                    <div className="p-5 rounded-2xl bg-gradient-to-br from-purple-50 to-white border border-purple-100 shadow-xs">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-bold text-purple-900 uppercase tracking-wider">Visitas ao Curso</span>
+                        <div className="p-2 bg-purple-100 text-purple-700 rounded-xl">
+                          <Eye className="w-4 h-4" />
+                        </div>
+                      </div>
+                      <div className="text-3xl font-black text-purple-950">
+                        {analyticsData?.course?.viewsCount ?? selectedAnalyticsCourse?.viewsCount ?? 0}
+                      </div>
+                      <p className="text-[11px] text-purple-600 mt-1">Acessos à página de apresentação e sala de aula</p>
+                    </div>
+
+                    <div className="p-5 rounded-2xl bg-gradient-to-br from-blue-50 to-white border border-blue-100 shadow-xs">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-bold text-blue-900 uppercase tracking-wider">Visualizações nos Módulos</span>
+                        <div className="p-2 bg-blue-100 text-blue-700 rounded-xl">
+                          <BookOpen className="w-4 h-4" />
+                        </div>
+                      </div>
+                      <div className="text-3xl font-black text-blue-950">
+                        {analyticsData?.course?.totalModuleViews ?? 0}
+                      </div>
+                      <p className="text-[11px] text-blue-600 mt-1">Aulas e capítulos assistidos pelos formandos</p>
+                    </div>
+
+                    <div className="p-5 rounded-2xl bg-gradient-to-br from-emerald-50 to-white border border-emerald-100 shadow-xs">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-bold text-emerald-900 uppercase tracking-wider">Alunos Matriculados</span>
+                        <div className="p-2 bg-emerald-100 text-emerald-700 rounded-xl">
+                          <Users className="w-4 h-4" />
+                        </div>
+                      </div>
+                      <div className="text-3xl font-black text-emerald-950">
+                        {analyticsData?.students?.length ?? 0}
+                      </div>
+                      <p className="text-[11px] text-emerald-600 mt-1">Total de estudantes ativos na turma</p>
+                    </div>
+                  </div>
+
+                  {/* Visualizações por Módulo / Capítulo */}
+                  <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-xs space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-black text-gray-900 text-base flex items-center gap-2">
+                        <BookOpen className="w-4 h-4 text-purple-600" />
+                        <span>Visualizações por Módulo / Capítulo</span>
+                      </h4>
+                      <span className="text-xs text-gray-400">
+                        {analyticsData?.modules?.length || 0} capítulos cadastrados
+                      </span>
+                    </div>
+
+                    {(!analyticsData?.modules || analyticsData.modules.length === 0) ? (
+                      <p className="text-xs text-gray-400 py-4 text-center">Nenhum módulo registado para este curso.</p>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {analyticsData.modules.map((m: any) => (
+                          <div key={m.id} className="p-3.5 rounded-xl border border-gray-100 bg-gray-50/60 flex items-center justify-between hover:bg-gray-50 transition">
+                            <div className="min-w-0 pr-2">
+                              <span className="text-[10px] font-bold text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded uppercase">
+                                Cap. {m.order}
+                              </span>
+                              <h5 className="font-bold text-xs text-gray-900 truncate mt-1">{m.title}</h5>
+                              <div className="flex items-center gap-2 text-[10px] text-gray-400 mt-0.5">
+                                {m.hasVideo && <span>📹 Inclui vídeo</span>}
+                                {m.hasMaterial && <span>📄 Material PDF</span>}
+                              </div>
+                            </div>
+                            <div className="text-right shrink-0">
+                              <div className="text-lg font-black text-purple-950">{m.viewsCount || 0}</div>
+                              <span className="text-[9px] text-gray-400 uppercase font-semibold">visualizações</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Filtro e Tabela de Acompanhamento por Aluno */}
+                  <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-xs space-y-5">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <h4 className="font-black text-gray-900 text-base flex items-center gap-2">
+                          <Users className="w-4 h-4 text-purple-600" />
+                          <span>Acompanhamento Individual por Aluno</span>
+                        </h4>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          Consulta o progresso, última data de acesso e status de quitação de cada formando.
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {/* Campo de Busca de Aluno */}
+                        <div className="relative">
+                          <input
+                            type="text"
+                            placeholder="Buscar por nome ou e-mail..."
+                            value={studentSearchTerm}
+                            onChange={(e) => setStudentSearchTerm(e.target.value)}
+                            className="pl-8 pr-3 py-1.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 w-52 sm:w-64"
+                          />
+                          <Eye className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-2.5" />
+                        </div>
+
+                        {/* Filtro de Conclusão / Pagamento */}
+                        <select
+                          value={studentFilter}
+                          onChange={(e) => setStudentFilter(e.target.value as any)}
+                          className="px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        >
+                          <option value="all">Todos os Estados</option>
+                          <option value="completed">Concluído (100%)</option>
+                          <option value="in_progress">Em Andamento</option>
+                          <option value="installment_1">1ª Parcela Paga</option>
+                          <option value="installment_2">2x Quitado</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Tabela de Alunos */}
+                    {(() => {
+                      const allStudents = analyticsData?.students || [];
+                      const filteredStudents = allStudents.filter((s: any) => {
+                        const matchesSearch = !studentSearchTerm || 
+                          s.name?.toLowerCase().includes(studentSearchTerm.toLowerCase()) ||
+                          s.email?.toLowerCase().includes(studentSearchTerm.toLowerCase()) ||
+                          s.phone?.includes(studentSearchTerm);
+
+                        if (!matchesSearch) return false;
+
+                        if (studentFilter === 'completed') return s.progressPercent === 100;
+                        if (studentFilter === 'in_progress') return s.progressPercent < 100;
+                        if (studentFilter === 'installment_1') return s.paymentPlan === 'installments_2x' && s.installmentsPaid === 1;
+                        if (studentFilter === 'installment_2') return s.paymentPlan === 'installments_2x' && s.installmentsPaid >= 2;
+
+                        return true;
+                      });
+
+                      if (filteredStudents.length === 0) {
+                        return (
+                          <div className="py-10 text-center border border-dashed border-gray-200 rounded-xl p-6">
+                            <Users className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                            <p className="text-xs font-semibold text-gray-600">Nenhum aluno encontrado com este filtro.</p>
+                            <p className="text-[11px] text-gray-400 mt-0.5">Tente uma busca diferente ou limpe os filtros.</p>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div className="overflow-x-auto">
+                          <table className="w-full min-w-[750px] text-left text-xs">
+                            <thead className="bg-gray-50 text-gray-500 uppercase text-[10px] font-bold tracking-wider border-b border-gray-200">
+                              <tr>
+                                <th className="p-3">Aluno</th>
+                                <th className="p-3">Plano de Pagamento</th>
+                                <th className="p-3">Progresso no Curso</th>
+                                <th className="p-3">Último Acesso</th>
+                                <th className="p-3">Status</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                              {filteredStudents.map((s: any) => (
+                                <tr key={s.enrollmentId || s.email} className="hover:bg-gray-50/70 transition">
+                                  <td className="p-3">
+                                    <div className="flex items-center gap-2.5">
+                                      <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-700 font-bold flex items-center justify-center shrink-0">
+                                        {s.name?.charAt(0) || 'A'}
+                                      </div>
+                                      <div>
+                                        <div className="font-bold text-gray-900">{s.name}</div>
+                                        <div className="text-[11px] text-gray-400">{s.email}</div>
+                                        {s.phone && <div className="text-[10px] text-gray-400">{s.phone}</div>}
+                                      </div>
+                                    </div>
+                                  </td>
+                                  <td className="p-3">
+                                    {s.paymentPlan === 'installments_2x' ? (
+                                      <div className="space-y-0.5">
+                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                          s.installmentsPaid >= 2 
+                                            ? 'bg-emerald-100 text-emerald-800' 
+                                            : 'bg-amber-100 text-amber-800'
+                                        }`}>
+                                          2x Parcelas ({s.installmentsPaid}/2 pagas)
+                                        </span>
+                                        <div className="text-[10px] text-gray-400">Total pago: {s.amountPaid} MT</div>
+                                      </div>
+                                    ) : (
+                                      <div className="space-y-0.5">
+                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800">
+                                          À Vista (1x)
+                                        </span>
+                                        <div className="text-[10px] text-gray-400">Total pago: {s.amountPaid} MT</div>
+                                      </div>
+                                    )}
+                                  </td>
+                                  <td className="p-3">
+                                    <div className="w-36 space-y-1">
+                                      <div className="flex justify-between text-[10px] font-bold">
+                                        <span className="text-gray-700">{s.progressPercent}%</span>
+                                        <span className="text-gray-400">{s.completedLessonsCount}/{s.totalLessonsCount} lições</span>
+                                      </div>
+                                      <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                                        <div 
+                                          className={`h-full rounded-full ${s.progressPercent === 100 ? 'bg-emerald-500' : 'bg-purple-600'}`}
+                                          style={{ width: `${s.progressPercent}%` }}
+                                        />
+                                      </div>
+                                    </div>
+                                  </td>
+                                  <td className="p-3 text-gray-600">
+                                    <div className="font-semibold text-[11px] text-gray-800">
+                                      {s.lastAccessedAt ? new Date(s.lastAccessedAt).toLocaleDateString('pt-MZ', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                                    </div>
+                                    <div className="text-[10px] text-gray-400">
+                                      {s.lastAccessedAt ? new Date(s.lastAccessedAt).toLocaleTimeString('pt-MZ', { hour: '2-digit', minute: '2-digit' }) : ''}
+                                    </div>
+                                  </td>
+                                  <td className="p-3">
+                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                      s.status === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'
+                                    }`}>
+                                      {s.status === 'active' ? 'Ativo' : 'Suspenso'}
+                                    </span>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </>
               )}
             </div>
           )}

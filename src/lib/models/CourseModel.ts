@@ -21,6 +21,7 @@ export interface ICourse {
   order: number;
   active: boolean;
   freeLessonsCount?: number;
+  viewsCount?: number;
   instructorName?: string;
   instructorTitle?: string;
   instructorBio?: string;
@@ -57,6 +58,7 @@ const CourseSchema = new Schema<ICourse>({
   order: { type: Number, required: true },
   active: { type: Boolean, required: true, default: true },
   freeLessonsCount: { type: Number, default: 1 },
+  viewsCount: { type: Number, default: 0 },
   instructorName: { type: String, default: 'Equipa WEHOSTHERE' },
   instructorTitle: { type: String, default: 'Especialista em Engenharia & Cloud' },
   instructorBio: { type: String, default: 'Profissional com vasta experiência em infraestrutura, desenvolvimento web e sistemas de alta performance.' },
