@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { ArrowLeft, BookOpen, ChevronLeft, ChevronRight, CheckCircle, Menu, X, Video, FileText, Clock, Target, Award, Lock, DollarSign, CreditCard, Sparkles, MessageSquare, Send, Reply, Trash2, ShieldCheck, GraduationCap, CornerDownRight, ThumbsUp, User as UserIcon } from 'lucide-react';
+import { ArrowLeft, ExternalLink, BookOpen, ChevronLeft, ChevronRight, CheckCircle, Menu, X, Video, FileText, Clock, Target, Award, Lock, DollarSign, CreditCard, Sparkles, MessageSquare, Send, Reply, Trash2, ShieldCheck, GraduationCap, CornerDownRight, ThumbsUp, User as UserIcon } from 'lucide-react';
 import { auth, User } from '@/lib/auth';
 import { dataManager, Course, Module, Lesson, CourseProgress } from '@/lib/data';
 import BrandLogo from '@/components/BrandLogo';
@@ -751,7 +751,7 @@ export default function ChapterViewPage() {
                     const videoEmbed = formatVideoEmbedUrl(currentLessonData.videoUrl);
                     return (
                       <div className="mb-8">
-                        <div className="aspect-video bg-gray-950 rounded-2xl overflow-hidden shadow-xl border border-gray-800">
+                        <div className="aspect-video bg-gray-950 rounded-2xl overflow-hidden shadow-xl border border-gray-800 relative group">
                           {videoEmbed.type === 'video' ? (
                             <video
                               controls
@@ -760,21 +760,41 @@ export default function ChapterViewPage() {
                             />
                           ) : (
                             <iframe
+                              key={`${currentLessonData.id}_${videoEmbed.embedUrl}`}
                               src={videoEmbed.embedUrl}
                               className="w-full h-full border-0"
                               allowFullScreen
-                              referrerPolicy="strict-origin-when-cross-origin"
                               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                               title={currentLessonData.videoTitle || 'Vídeo da aula'}
                             />
                           )}
                         </div>
-                        {currentLessonData.videoTitle && (
-                          <h4 className="font-semibold text-gray-900 mt-3">{currentLessonData.videoTitle}</h4>
-                        )}
-                        {currentLessonData.videoDescription && (
-                          <p className="text-sm text-gray-600 mt-1">{currentLessonData.videoDescription}</p>
-                        )}
+
+                        {/* Ações e Informações do Vídeo */}
+                        <div className="flex items-start justify-between mt-3 flex-wrap gap-3">
+                          <div className="flex-1 min-w-[240px]">
+                            {currentLessonData.videoTitle && (
+                              <h4 className="font-semibold text-gray-900">{currentLessonData.videoTitle}</h4>
+                            )}
+                            {currentLessonData.videoDescription && (
+                              <p className="text-sm text-gray-600 mt-0.5">{currentLessonData.videoDescription}</p>
+                            )}
+                          </div>
+
+                          {/* Fallback direto caso o navegador ou adblocker bloqueie embeds */}
+                          {videoEmbed.originalWatchUrl && (
+                            <a
+                              href={videoEmbed.originalWatchUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold transition"
+                              title="Abrir vídeo diretamente numa nova aba"
+                            >
+                              <ExternalLink className="w-3.5 h-3.5" />
+                              <span>{videoEmbed.isYouTube ? 'Abrir no YouTube' : 'Abrir Vídeo'}</span>
+                            </a>
+                          )}
+                        </div>
                       </div>
                     );
                   })()}

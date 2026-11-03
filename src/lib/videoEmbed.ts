@@ -1,11 +1,12 @@
 /**
  * Utilitário para converter URLs de vídeo comuns (YouTube, Vimeo, Google Drive, MP4)
- * em URLs seguras de incorporação (embed) para iframes e players HTML5.
+ * em URLs seguras e compatíveis de incorporação (embed) para iframes e players HTML5.
  */
 export function formatVideoEmbedUrl(rawUrl?: string): {
   type: 'iframe' | 'video' | 'empty';
   embedUrl: string;
   isYouTube: boolean;
+  originalWatchUrl?: string;
 } {
   if (!rawUrl || typeof rawUrl !== 'string' || !rawUrl.trim()) {
     return { type: 'empty', embedUrl: '', isYouTube: false };
@@ -15,7 +16,7 @@ export function formatVideoEmbedUrl(rawUrl?: string): {
 
   // 1. Arquivos diretos de vídeo (MP4, WebM, OGG, MOV)
   if (/\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(trimmed)) {
-    return { type: 'video', embedUrl: trimmed, isYouTube: false };
+    return { type: 'video', embedUrl: trimmed, isYouTube: false, originalWatchUrl: trimmed };
   }
 
   // 2. YouTube (watch?v=, youtu.be/, shorts/, embed/)
@@ -29,10 +30,13 @@ export function formatVideoEmbedUrl(rawUrl?: string): {
   );
   if (ytMatch && ytMatch[1]) {
     const videoId = ytMatch[1];
+    // Usar youtube-nocookie.com para contornar bloqueios de cookies de terceiros no Chrome e Safari
+    // playsinline=1 garante reprodução nativa sem forçar fullscreen em mobile
     return {
       type: 'iframe',
-      embedUrl: `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&enablejsapi=1`,
-      isYouTube: true
+      embedUrl: `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1&playsinline=1`,
+      isYouTube: true,
+      originalWatchUrl: `https://www.youtube.com/watch?v=${videoId}`
     };
   }
 
@@ -43,7 +47,8 @@ export function formatVideoEmbedUrl(rawUrl?: string): {
     return {
       type: 'iframe',
       embedUrl: `https://player.vimeo.com/video/${vimeoMatch[3]}?title=0&byline=0&portrait=0`,
-      isYouTube: false
+      isYouTube: false,
+      originalWatchUrl: `https://vimeo.com/${vimeoMatch[3]}`
     };
   }
 
@@ -54,15 +59,17 @@ export function formatVideoEmbedUrl(rawUrl?: string): {
     return {
       type: 'iframe',
       embedUrl: `https://drive.google.com/file/d/${driveMatch[1]}/preview`,
-      isYouTube: false
+      isYouTube: false,
+      originalWatchUrl: `https://drive.google.com/file/d/${driveMatch[1]}/view`
     };
   }
 
   // Fallback: Se já for um iframe embed ou outra URL válida
+  const isYt = trimmed.includes('youtube.com') || trimmed.includes('youtu.be');
   return {
     type: 'iframe',
     embedUrl: trimmed,
-    isYouTube: trimmed.includes('youtube.com') || trimmed.includes('youtu.be')
+    isYouTube: isYt,
+    originalWatchUrl: trimmed
   };
 }
-
