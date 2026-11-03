@@ -1369,12 +1369,11 @@ function WebmailContent() {
             <button
               type="button"
               onClick={handleTriggerInstall}
-              className="flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl transition cursor-pointer text-xs font-bold shadow-xs shrink-0 active:scale-95"
-              title="Instalar o Webmail no Computador ou Telemóvel como aplicativo independente"
+              className="flex items-center space-x-1.5 px-3 py-1.5 bg-gray-900 hover:bg-black text-white rounded-xl transition cursor-pointer text-xs font-bold shadow-xs shrink-0 active:scale-95"
+              title="Instalar o Webmail no Computador ou Telemóvel"
             >
-              <Download className="h-3.5 w-3.5 shrink-0" />
-              <span className="hidden sm:inline">Instalar App</span>
-              <span className="sm:hidden">Instalar</span>
+              <Download className="h-3.5 w-3.5 text-gray-300 shrink-0" />
+              <span>Instalar App</span>
             </button>
           )}
 
@@ -1386,11 +1385,11 @@ function WebmailContent() {
               setPasswordSuccess('');
               setShowChangePasswordModal(true);
             }}
-            className="flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 text-blue-700 border border-blue-200 rounded-xl transition cursor-pointer text-xs font-bold shadow-2xs shrink-0 active:scale-95"
-            title="Alterar senha desta conta de e-mail (reflete imediatamente na Migadu)"
+            className="flex items-center space-x-1.5 px-3 py-1.5 bg-gray-900 hover:bg-black text-white rounded-xl transition cursor-pointer text-xs font-bold shadow-xs shrink-0 active:scale-95"
+            title="Alterar senha desta conta de e-mail"
           >
-            <Key className="h-3.5 w-3.5 text-blue-600 shrink-0" />
-            <span className="hidden sm:inline">Mudar Senha</span>
+            <Key className="h-3.5 w-3.5 text-gray-300 shrink-0" />
+            <span>Mudar Senha</span>
           </button>
 
           {/* Refresh */}
@@ -1410,10 +1409,10 @@ function WebmailContent() {
           <Link
             href="/ajuda/configurar-email"
             target="_blank"
-            className="hidden md:flex items-center space-x-1 px-2.5 py-1.5 bg-gray-50 hover:bg-gray-100 text-gray-600 hover:text-gray-900 border border-gray-200 rounded-xl transition cursor-pointer text-xs font-medium shrink-0"
-            title="Abrir guia passo a passo para configurar no Outlook, iPhone e Android"
+            className="hidden md:flex items-center space-x-1.5 px-3 py-1.5 bg-gray-900 hover:bg-black text-white rounded-xl transition cursor-pointer text-xs font-bold shadow-xs shrink-0 active:scale-95"
+            title="Abrir guia de configuração para Outlook e Celular"
           >
-            <HelpCircle className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+            <HelpCircle className="h-3.5 w-3.5 text-gray-300 shrink-0" />
             <span>Guia Outlook/Celular</span>
           </Link>
 
@@ -1688,7 +1687,7 @@ function WebmailContent() {
           <button
             type="button"
             onClick={handleOpenCompose}
-            className={`w-full py-3 bg-gradient-to-r from-primary-600 to-indigo-600 hover:from-primary-500 hover:to-indigo-500 text-white font-black text-xs sm:text-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center space-x-2 cursor-pointer border border-primary-700/30 ${isSidebarCollapsed ? 'px-2' : ''}`}
+            className={`w-full py-2.5 bg-gray-900 hover:bg-black text-white font-bold text-xs sm:text-sm rounded-xl shadow-md transition-all duration-200 flex items-center justify-center space-x-2 cursor-pointer border border-gray-800 ${isSidebarCollapsed ? 'px-2' : ''}`}
           >
             <Edit3 className="h-4 w-4 shrink-0" />
             {!isSidebarCollapsed && <span>Escrever E-mail</span>}
@@ -1844,11 +1843,11 @@ function WebmailContent() {
                 setPasswordSuccess('');
                 setShowChangePasswordModal(true);
               }}
-              className="w-full flex items-center justify-center space-x-2 px-3 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 text-blue-700 border border-blue-200 rounded-xl transition cursor-pointer text-xs font-bold shadow-2xs mt-2.5 active:scale-98"
+              className="w-full h-9 flex items-center justify-center space-x-2 px-3 bg-gray-900 hover:bg-black text-white rounded-xl transition cursor-pointer text-xs font-bold shadow-xs mt-2.5 active:scale-98"
               title="Alterar senha desta conta de e-mail"
             >
-              <Key className="h-3.5 w-3.5 text-blue-600 shrink-0" />
-              <span>Mudar Senha do E-mail</span>
+              <Key className="h-3.5 w-3.5 text-gray-300 shrink-0" />
+              <span>Mudar Senha</span>
             </button>
 
             {/* Botão de Instalação na Barra Lateral */}
@@ -1856,11 +1855,11 @@ function WebmailContent() {
               <button
                 type="button"
                 onClick={handleTriggerInstall}
-                className="w-full flex items-center justify-center space-x-2 px-3 py-2 bg-gradient-to-r from-emerald-50 to-teal-50 hover:from-emerald-100 hover:to-teal-100 text-emerald-800 border border-emerald-200 rounded-xl transition cursor-pointer text-xs font-bold shadow-2xs mt-2 active:scale-98"
-                title="Instalar o Webmail no seu computador ou telemóvel"
+                className="w-full h-9 flex items-center justify-center space-x-2 px-3 bg-gray-900 hover:bg-black text-white rounded-xl transition cursor-pointer text-xs font-bold shadow-xs mt-2 active:scale-98"
+                title="Instalar o Webmail no Computador ou Telemóvel"
               >
-                <Download className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                <span>Instalar Aplicativo Webmail</span>
+                <Download className="h-3.5 w-3.5 text-gray-300 shrink-0" />
+                <span>Instalar App</span>
               </button>
             )}
           </div>
@@ -2037,7 +2036,7 @@ function WebmailContent() {
                   <button
                     type="submit"
                     disabled={webmailLoginLoading}
-                    className="w-full py-2.5 bg-primary-600 hover:bg-primary-700 active:scale-98 disabled:bg-gray-300 text-white font-bold text-xs rounded-xl transition cursor-pointer shadow-md flex items-center justify-center space-x-2"
+                    className="w-full py-2.5 bg-gray-900 hover:bg-black active:scale-98 disabled:bg-gray-400 text-white font-bold text-xs rounded-xl transition cursor-pointer shadow-md flex items-center justify-center space-x-2"
                   >
                     {webmailLoginLoading ? (
                       <>
@@ -2537,7 +2536,7 @@ function WebmailContent() {
                   <button
                     type="submit"
                     disabled={webmailLoginLoading}
-                    className="w-full py-3.5 bg-gradient-to-r from-primary-600 to-indigo-600 hover:from-primary-700 hover:to-indigo-700 disabled:opacity-50 text-white font-black text-xs sm:text-sm rounded-xl transition-all duration-200 cursor-pointer shadow-lg shadow-primary-500/20 flex items-center justify-center space-x-2 active:scale-98"
+                    className="w-full py-3 bg-gray-900 hover:bg-black disabled:opacity-50 text-white font-bold text-xs sm:text-sm rounded-xl transition-all duration-200 cursor-pointer shadow-md flex items-center justify-center space-x-2 active:scale-98"
                   >
                     {webmailLoginLoading ? (
                       <>
@@ -3491,7 +3490,7 @@ function WebmailContent() {
                 <button
                   type="submit"
                   disabled={!newPassword || !confirmPassword || isUpdatingPassword}
-                  className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-xs sm:text-sm rounded-xl transition cursor-pointer shadow-md flex items-center justify-center space-x-2"
+                  className="flex-1 py-2.5 bg-gray-900 hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-xs sm:text-sm rounded-xl transition cursor-pointer shadow-md flex items-center justify-center space-x-2"
                 >
                   {isUpdatingPassword ? (
                     <>
