@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import { 
   Database, CheckCircle, LayoutDashboard, Globe, Mail, Settings as SettingsIcon, LogOut, Server,
-  CreditCard, TrendingUp, Calendar, Zap, Shield, Download, Printer
+  CreditCard, TrendingUp, Calendar, Zap, Shield, Download, Printer, Filter
 } from 'lucide-react';
 import { auth, User } from '@/lib/auth';
 import { hostingPlans, dataManager, ServiceOrder } from '@/lib/data';
@@ -25,7 +25,9 @@ interface Invoice {
   invoiceNumber: string;
   customerName: string;
   customerEmail: string;
+  customerPhone?: string;
   issuedAt: string;
+  dueDate?: string;
   servicePeriodStart?: string;
   servicePeriodEnd?: string;
   status: 'draft' | 'pending' | 'paid' | 'overdue' | 'cancelled';
@@ -33,6 +35,7 @@ interface Invoice {
   items: InvoiceItem[];
   total: number;
   currency: string;
+  notes?: string;
 }
 
 export default function BillingPage() {
@@ -44,6 +47,7 @@ export default function BillingPage() {
   const [selectedReceipt, setSelectedReceipt] = useState<ReceiptData | null>(null);
   const [userOrders, setUserOrders] = useState<ServiceOrder[]>(() => getCached<ServiceOrder[]>('billing:orders') || []);
   const [invoices, setInvoices] = useState<Invoice[]>(() => getCached<Invoice[]>('billing:invoices') || []);
+  const [invoiceStatusFilter, setInvoiceStatusFilter] = useState<'all' | 'paid' | 'pending' | 'overdue'>('all');
   const [siteCount, setSiteCount] = useState(0);
   const [emailCount, setEmailCount] = useState(0);
   const [toastMsg, setToastMsg] = useState<{ type: 'success' | 'error' | 'info'; title?: string; message: string } | null>(null);
@@ -116,10 +120,18 @@ export default function BillingPage() {
 
     dataManager.fetchOrdersAsync().then((fetched) => refreshOrders(fetched));
 
-    // Carregar faturas manuais
+    // Carregar faturas manuais emitidas para este cliente
     const loadInvoices = async () => {
       try {
-        const res = await fetch('/api/invoices');
+        const email = currentUser?.email || auth.getCurrentUser()?.email;
+        if (!email) return;
+
+        const res = await fetch(`/api/invoices?customerEmail=${encodeURIComponent(email)}`, {
+          headers: {
+            'x-user-email': email
+          }
+        });
+
         if (res.ok) {
           const data = await res.json();
           setInvoices(data.invoices || []);
@@ -178,6 +190,17 @@ export default function BillingPage() {
     }, 400);
   };
 
+  const filteredInvoices = invoices.filter(inv => {
+    if (invoiceStatusFilter === 'all') return true;
+    if (invoiceStatusFilter === 'paid') return inv.status === 'paid';
+    if (invoiceStatusFilter === 'pending') return inv.status === 'pending' || inv.status === 'draft';
+    if (invoiceStatusFilter === 'overdue') return inv.status === 'overdue';
+    return true;
+  });
+
+  const totalPaidCount = userOrders.filter(o => o.status === 'completed').length + invoices.filter(i => i.status === 'paid').length;
+  const totalAmountContracted = userOrders.filter(o => o.status === 'completed' || o.status === 'in_progress').reduce((acc, o) => acc + (o.amount || 0), 0) + invoices.filter(i => i.status === 'paid').reduce((acc, i) => acc + (i.total || 0), 0);
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header Responsivo */}
@@ -209,7 +232,7 @@ export default function BillingPage() {
                 </div>
                 <div className="sm:text-right">
                   <p className="text-3xl sm:text-4xl font-bold">
-                    {userOrders.filter(o => o.status === 'completed' || o.status === 'in_progress').reduce((acc, o) => acc + (o.amount || 0), 0).toLocaleString('pt-MZ')} MT
+                    {totalAmountContracted.toLocaleString('pt-MZ')} MT
                   </p>
                   <p className="text-blue-100 text-sm">Total Contratado</p>
                 </div>
@@ -227,7 +250,7 @@ export default function BillingPage() {
                 </div>
                 <div className="bg-white/10 rounded-lg p-4">
                   <CreditCard className="h-6 w-6 mb-2 text-purple-300" />
-                  <p className="font-semibold text-lg">{userOrders.filter(o => o.status === 'completed').length} Pago(s)</p>
+                  <p className="font-semibold text-lg">{totalPaidCount} Pago(s)</p>
                   <p className="text-sm text-blue-100">Faturas Liquidadas</p>
                 </div>
               </div>
@@ -262,11 +285,191 @@ export default function BillingPage() {
               </div>
             </div>
 
-            {/* Billing History */}
+            {/* Faturas Emitidas pela Administração (Invoices Manuais) */}
+            {invoices.length > 0 && (
+              <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900 flex items-center space-x-2">
+                      <FileText className="h-5 w-5 text-emerald-600" />
+                      <span>Faturas Oficiais WEHOSTHERE</span>
+                    </h3>
+                    <p className="text-xs text-gray-500 mt-0.5">Faturas comerciais emitidas para a sua organização</p>
+                  </div>
+                  <div className="flex items-center space-x-1.5 bg-gray-100 p-1 rounded-xl text-xs font-semibold">
+                    <button
+                      type="button"
+                      onClick={() => setInvoiceStatusFilter('all')}
+                      className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${invoiceStatusFilter === 'all' ? 'bg-white text-gray-900 shadow-xs font-bold' : 'text-gray-600 hover:text-gray-900'}`}
+                    >
+                      Todas ({invoices.length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setInvoiceStatusFilter('pending')}
+                      className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${invoiceStatusFilter === 'pending' ? 'bg-amber-500 text-white shadow-xs font-bold' : 'text-gray-600 hover:text-gray-900'}`}
+                    >
+                      Pendentes ({invoices.filter(i => i.status === 'pending' || i.status === 'draft').length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setInvoiceStatusFilter('paid')}
+                      className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${invoiceStatusFilter === 'paid' ? 'bg-emerald-600 text-white shadow-xs font-bold' : 'text-gray-600 hover:text-gray-900'}`}
+                    >
+                      Pagas ({invoices.filter(i => i.status === 'paid').length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setInvoiceStatusFilter('overdue')}
+                      className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${invoiceStatusFilter === 'overdue' ? 'bg-red-600 text-white shadow-xs font-bold' : 'text-gray-600 hover:text-gray-900'}`}
+                    >
+                      Vencidas ({invoices.filter(i => i.status === 'overdue').length})
+                    </button>
+                  </div>
+                </div>
+
+                {filteredInvoices.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500 text-sm">
+                    Nenhuma fatura encontrada para este filtro.
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {filteredInvoices.map((invoice) => {
+                      const statusConfig = {
+                        draft: { label: 'Rascunho', bg: 'bg-gray-100 text-gray-800 border-gray-200', icon: FileText, iconColor: 'text-gray-600', iconBg: 'bg-gray-200' },
+                        pending: { label: 'Pagamento Pendente', bg: 'bg-amber-50 text-amber-800 border-amber-200', icon: Clock, iconColor: 'text-amber-600', iconBg: 'bg-amber-100' },
+                        paid: { label: 'Documento Liquidado (Pago)', bg: 'bg-emerald-50 text-emerald-800 border-emerald-200', icon: CheckCircle, iconColor: 'text-emerald-600', iconBg: 'bg-emerald-100' },
+                        overdue: { label: 'Vencido', bg: 'bg-red-50 text-red-800 border-red-200', icon: XCircle, iconColor: 'text-red-600', iconBg: 'bg-red-100' },
+                        cancelled: { label: 'Cancelado', bg: 'bg-gray-100 text-gray-700 border-gray-200', icon: XCircle, iconColor: 'text-gray-500', iconBg: 'bg-gray-200' },
+                      }[invoice.status] || { label: invoice.status, bg: 'bg-gray-50 text-gray-800 border-gray-200', icon: Clock, iconColor: 'text-gray-600', iconBg: 'bg-gray-100' };
+
+                      const StatusIcon = statusConfig.icon;
+
+                      const handleDownloadInvoicePdf = async () => {
+                        try {
+                          const res = await fetch(`/api/invoices/${invoice.id}/pdf`);
+                          if (res.ok) {
+                            const blob = await res.blob();
+                            const url = window.URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `Fatura-${invoice.invoiceNumber}.pdf`;
+                            document.body.appendChild(a);
+                            a.click();
+                            window.URL.revokeObjectURL(url);
+                            document.body.removeChild(a);
+                            soundEffects.playSuccessSound();
+                          } else {
+                            setToastMsg({ type: 'error', message: 'Erro ao baixar PDF' });
+                          }
+                        } catch (e) {
+                          console.error('Erro ao baixar PDF:', e);
+                          setToastMsg({ type: 'error', message: 'Erro ao baixar PDF' });
+                        }
+                      };
+
+                      return (
+                        <div key={invoice.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-gray-200 rounded-xl hover:border-emerald-300 transition gap-4 bg-white shadow-2xs">
+                          <div className="flex items-center space-x-3.5">
+                            <div className={`${statusConfig.iconBg} p-2.5 rounded-xl shrink-0`}>
+                              <StatusIcon className={`h-5 w-5 ${statusConfig.iconColor}`} />
+                            </div>
+                            <div>
+                              <div className="flex items-center space-x-2 flex-wrap gap-1">
+                                <span className="font-bold text-gray-900 text-sm sm:text-base font-mono">{invoice.invoiceNumber}</span>
+                                <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border ${statusConfig.bg}`}>
+                                  {statusConfig.label}
+                                </span>
+                              </div>
+                              <p className="text-xs text-gray-500 mt-0.5 flex items-center space-x-2 flex-wrap">
+                                <span>Emissão: <strong>{new Date(invoice.issuedAt).toLocaleDateString('pt-MZ')}</strong></span>
+                                {invoice.dueDate && (
+                                  <>
+                                    <span>•</span>
+                                    <span>Vencimento: <strong className={invoice.status === 'overdue' ? 'text-red-600' : 'text-gray-700'}>{new Date(invoice.dueDate).toLocaleDateString('pt-MZ')}</strong></span>
+                                  </>
+                                )}
+                                {invoice.servicePeriodStart && invoice.servicePeriodEnd && (
+                                  <>
+                                    <span>•</span>
+                                    <span>Período: {new Date(invoice.servicePeriodStart).toLocaleDateString('pt-MZ')} - {new Date(invoice.servicePeriodEnd).toLocaleDateString('pt-MZ')}</span>
+                                  </>
+                                )}
+                              </p>
+                              {invoice.items && invoice.items.length > 0 && (
+                                <p className="text-[11px] text-gray-400 mt-0.5">
+                                  {invoice.items.map(it => it.service).join(', ')}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between sm:justify-end space-x-3 border-t sm:border-t-0 pt-3 sm:pt-0 border-gray-100">
+                            <div className="text-left sm:text-right mr-1">
+                              <p className="font-black text-gray-900 text-base">{invoice.total.toLocaleString('pt-MZ')} {invoice.currency}</p>
+                              <p className="text-[11px] text-gray-400">
+                                {invoice.items.length} {invoice.items.length === 1 ? 'item' : 'itens'}
+                              </p>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                soundEffects.playInvoiceDownloadSound();
+                                setSelectedReceipt({
+                                  id: invoice.invoiceNumber || invoice.id,
+                                  clientName: invoice.customerName,
+                                  clientEmail: invoice.customerEmail,
+                                  clientPhone: invoice.customerPhone || '',
+                                  amount: invoice.total,
+                                  paymentMethod: invoice.paymentMethod || 'mpesa',
+                                  status: invoice.status === 'paid' ? 'completed' : invoice.status === 'pending' ? 'pending' : invoice.status,
+                                  createdAt: invoice.issuedAt || new Date().toISOString(),
+                                  dueDate: invoice.dueDate,
+                                  servicePeriodStart: invoice.servicePeriodStart,
+                                  servicePeriodEnd: invoice.servicePeriodEnd,
+                                  serviceName: invoice.items?.[0]?.service || 'Serviços de Hospedagem & Cloud',
+                                  items: invoice.items && invoice.items.length > 0 ? invoice.items.map(it => ({
+                                    service: it.service,
+                                    description: it.description,
+                                    quantity: it.quantity,
+                                    unitPrice: it.unitPrice,
+                                    discount: it.discount,
+                                    subtotal: it.subtotal
+                                  })) : undefined,
+                                  notes: invoice.notes
+                                });
+                              }}
+                              className="px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-xs rounded-xl transition flex items-center space-x-1.5 cursor-pointer border border-emerald-200 shrink-0 shadow-2xs"
+                              title="Ver e Imprimir Recibo Oficial (PDF)"
+                            >
+                              <FileText className="h-4 w-4 text-emerald-600" />
+                              <span>Recibo (PDF)</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={handleDownloadInvoicePdf}
+                              className="px-3 py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 font-bold text-xs rounded-xl transition flex items-center space-x-1 cursor-pointer border border-gray-200 shrink-0 shadow-2xs"
+                              title="Baixar Fatura (PDF)"
+                            >
+                              <Download className="h-4 w-4 text-gray-600" />
+                              <span>PDF</span>
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Billing History (Pedidos Online / Checkout) */}
             <div className="bg-white rounded-xl shadow-sm p-6">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900">Histórico de Pagamentos & Faturas</h3>
+                  <h3 className="text-xl font-bold text-gray-900">Histórico de Pedidos & Checkout</h3>
                   <p className="text-xs text-gray-400">
                     <a href="mailto:info@wehosthere.com" className="hover:underline">info@wehosthere.com</a>
                     {' • '}
@@ -279,13 +482,13 @@ export default function BillingPage() {
                   </p>
                 </div>
                 <span className="bg-primary-50 text-primary-700 text-xs font-bold px-3 py-1 rounded-full border border-primary-200">
-                  {userOrders.length} {userOrders.length === 1 ? 'Fatura' : 'Faturas'}
+                  {userOrders.length} {userOrders.length === 1 ? 'Pedido' : 'Pedidos'}
                 </span>
               </div>
 
               {userOrders.length === 0 ? (
                 <div className="text-center py-8 text-gray-500 text-sm">
-                  Nenhum histórico de fatura registado ainda.
+                  Nenhum pedido de checkout online registado ainda.
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -347,103 +550,6 @@ export default function BillingPage() {
                 </div>
               )}
             </div>
-
-            {/* Manual Invoices */}
-            {invoices.length > 0 && (
-              <div className="bg-white rounded-xl shadow-sm p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-900">Faturas Manuais</h3>
-                    <p className="text-xs text-gray-400">Faturas emitidas manualmente pela administração</p>
-                  </div>
-                  <span className="bg-amber-50 text-amber-700 text-xs font-bold px-3 py-1 rounded-full border border-amber-200">
-                    {invoices.length} {invoices.length === 1 ? 'Fatura' : 'Faturas'}
-                  </span>
-                </div>
-
-                <div className="space-y-3">
-                  {invoices.map((invoice) => {
-                    const statusConfig = {
-                      draft: { label: 'Rascunho', bg: 'bg-gray-100 text-gray-800 border-gray-200', icon: FileText, iconColor: 'text-gray-600', iconBg: 'bg-gray-200' },
-                      pending: { label: 'Pendente', bg: 'bg-amber-50 text-amber-800 border-amber-200', icon: Clock, iconColor: 'text-amber-600', iconBg: 'bg-amber-100' },
-                      paid: { label: 'Pago', bg: 'bg-emerald-50 text-emerald-800 border-emerald-200', icon: CheckCircle, iconColor: 'text-emerald-600', iconBg: 'bg-emerald-100' },
-                      overdue: { label: 'Vencido', bg: 'bg-red-50 text-red-800 border-red-200', icon: XCircle, iconColor: 'text-red-600', iconBg: 'bg-red-100' },
-                      cancelled: { label: 'Cancelado', bg: 'bg-gray-100 text-gray-700 border-gray-200', icon: XCircle, iconColor: 'text-gray-500', iconBg: 'bg-gray-200' },
-                    }[invoice.status] || { label: invoice.status, bg: 'bg-gray-50 text-gray-800 border-gray-200', icon: Clock, iconColor: 'text-gray-600', iconBg: 'bg-gray-100' };
-
-                    const StatusIcon = statusConfig.icon;
-
-                    const handleDownloadInvoicePdf = async () => {
-                      try {
-                        const res = await fetch(`/api/invoices/${invoice.id}/pdf`);
-                        if (res.ok) {
-                          const blob = await res.blob();
-                          const url = window.URL.createObjectURL(blob);
-                          const a = document.createElement('a');
-                          a.href = url;
-                          a.download = `Fatura-${invoice.invoiceNumber}.pdf`;
-                          document.body.appendChild(a);
-                          a.click();
-                          window.URL.revokeObjectURL(url);
-                          document.body.removeChild(a);
-                          soundEffects.playSuccessSound();
-                        } else {
-                          setToastMsg({ type: 'error', message: 'Erro ao baixar PDF' });
-                        }
-                      } catch (e) {
-                        console.error('Erro ao baixar PDF:', e);
-                        setToastMsg({ type: 'error', message: 'Erro ao baixar PDF' });
-                      }
-                    };
-
-                    return (
-                      <div key={invoice.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-gray-200 rounded-xl hover:border-amber-200 transition gap-4">
-                        <div className="flex items-center space-x-3.5">
-                          <div className={`${statusConfig.iconBg} p-2.5 rounded-xl shrink-0`}>
-                            <StatusIcon className={`h-5 w-5 ${statusConfig.iconColor}`} />
-                          </div>
-                          <div>
-                            <div className="flex items-center space-x-2 flex-wrap gap-1">
-                              <span className="font-bold text-gray-900 text-sm sm:text-base">{invoice.invoiceNumber}</span>
-                              <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border ${statusConfig.bg}`}>
-                                {statusConfig.label}
-                              </span>
-                            </div>
-                            <p className="text-xs text-gray-500 mt-0.5 flex items-center space-x-2 flex-wrap">
-                              <span>Emissão: <strong>{new Date(invoice.issuedAt).toLocaleDateString('pt-MZ')}</strong></span>
-                              {invoice.servicePeriodStart && invoice.servicePeriodEnd && (
-                                <>
-                                  <span>•</span>
-                                  <span>Período: {new Date(invoice.servicePeriodStart).toLocaleDateString('pt-MZ')} - {new Date(invoice.servicePeriodEnd).toLocaleDateString('pt-MZ')}</span>
-                                </>
-                              )}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center justify-between sm:justify-end space-x-4 border-t sm:border-t-0 pt-3 sm:pt-0 border-gray-100">
-                          <div className="text-left sm:text-right">
-                            <p className="font-black text-gray-900 text-base">{invoice.total.toLocaleString('pt-MZ')} {invoice.currency}</p>
-                            <p className="text-[11px] text-gray-400">
-                              {invoice.items.length} {invoice.items.length === 1 ? 'item' : 'itens'}
-                            </p>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={handleDownloadInvoicePdf}
-                            className="px-3.5 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold text-xs rounded-xl transition flex items-center space-x-1.5 cursor-pointer border border-amber-200 shrink-0 shadow-2xs"
-                            title="Baixar Fatura (PDF)"
-                          >
-                            <Download className="h-4 w-4 text-amber-600" />
-                            <span>PDF</span>
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
 
             {/* Upgrade Plans */}
             <div className="bg-white rounded-xl shadow-sm p-6">

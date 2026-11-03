@@ -4,6 +4,7 @@ import { connectDB } from '@/lib/mongodb';
 import InvoiceModel, { IInvoice, InvoiceItem } from '@/lib/models/Invoice';
 import UserModel from '@/lib/models/User';
 import ManualClientModel from '@/lib/models/ManualClient';
+import { sendInvoiceIssuedEmail } from '@/lib/sendgrid';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,7 +38,7 @@ async function getAuthContext(req: Request, body?: any): Promise<{ isAuthenticat
     return { isAuthenticated: true, isAdmin: true, email: 'system@wehosthere.com' };
   }
 
-  // 3. Header do usuário autenticado no cliente (x-user-email) ou body (adminEmail / createdBy)
+  // 3. Header do usuário autenticado no cliente (x-user-email), query param, ou body
   const origin = req.headers.get('origin');
   const referer = req.headers.get('referer');
   const isSameOrigin = 
@@ -46,8 +47,15 @@ async function getAuthContext(req: Request, body?: any): Promise<{ isAuthenticat
     origin.includes('localhost') || 
     (referer && (referer.includes('wehosthere.com') || referer.includes('localhost')));
 
+  let queryEmail: string | undefined;
+  try {
+    const parsed = new URL(req.url);
+    queryEmail = parsed.searchParams.get('customerEmail')?.toLowerCase()?.trim() || parsed.searchParams.get('email')?.toLowerCase()?.trim();
+  } catch {}
+
   const candidateEmail = 
     req.headers.get('x-user-email')?.toLowerCase()?.trim() || 
+    queryEmail ||
     body?.adminEmail?.toLowerCase()?.trim() || 
     body?.createdBy?.toLowerCase()?.trim();
 
@@ -57,8 +65,15 @@ async function getAuthContext(req: Request, body?: any): Promise<{ isAuthenticat
       const isAdmin = dbUser.role === 'admin' || dbUser.role === 'super_admin' || dbUser.email === 'admin@wehosthere.com';
       return { isAuthenticated: true, isAdmin, email: dbUser.email };
     }
+    const manualClient: any = await ManualClientModel.findOne({ email: candidateEmail }).lean();
+    if (manualClient) {
+      return { isAuthenticated: true, isAdmin: false, email: manualClient.email };
+    }
     if (candidateEmail === 'admin@wehosthere.com') {
       return { isAuthenticated: true, isAdmin: true, email: candidateEmail };
+    }
+    if (candidateEmail.includes('@')) {
+      return { isAuthenticated: true, isAdmin: false, email: candidateEmail };
     }
   }
 
@@ -78,7 +93,7 @@ function generateInvoiceNumber(): string {
   return `INV-${year}-${timestamp}-${random}`;
 }
 
-// GET - Listar faturas (admin: todas, cliente: apenas as suas)
+// GET - Listar faturas (admin: todas ou filtradas, cliente: apenas as suas)
 export async function GET(req: Request) {
   try {
     const authCtx = await getAuthContext(req);
@@ -88,6 +103,7 @@ export async function GET(req: Request) {
 
     const { searchParams } = new URL(req.url);
     const customerId = searchParams.get('customerId');
+    const customerEmailParam = searchParams.get('customerEmail') || searchParams.get('email');
     const invoiceId = searchParams.get('id');
 
     // Se pedindo uma fatura específica
@@ -98,7 +114,7 @@ export async function GET(req: Request) {
       }
 
       // Verificar permissão: admin ou cliente dono da fatura
-      if (!authCtx.isAdmin && invoice.customerEmail?.toLowerCase() !== authCtx.email) {
+      if (!authCtx.isAdmin && invoice.customerEmail?.toLowerCase() !== authCtx.email?.toLowerCase()) {
         return NextResponse.json({ success: false, error: 'Não autorizado' }, { status: 403 });
       }
 
@@ -107,15 +123,34 @@ export async function GET(req: Request) {
 
     // Se cliente normal, filtrar pelas suas faturas
     if (!authCtx.isAdmin) {
-      const invoices = await InvoiceModel.find({ customerEmail: authCtx.email })
+      const targetEmail = (customerEmailParam || authCtx.email || '').toLowerCase().trim();
+      if (!targetEmail) {
+        return NextResponse.json({ success: true, invoices: [] });
+      }
+
+      const escapedEmail = targetEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const invoices = await InvoiceModel.find({
+        customerEmail: { $regex: new RegExp(`^${escapedEmail}$`, 'i') }
+      })
+        .sort({ issuedAt: -1 })
+        .lean();
+
+      return NextResponse.json({ success: true, invoices: invoices || [] });
+    }
+
+    // Admin: pode filtrar por customerId ou customerEmail
+    if (customerId) {
+      const invoices = await InvoiceModel.find({ customerId })
         .sort({ issuedAt: -1 })
         .lean();
       return NextResponse.json({ success: true, invoices: invoices || [] });
     }
 
-    // Admin: pode filtrar por cliente ou ver todas
-    if (customerId) {
-      const invoices = await InvoiceModel.find({ customerId })
+    if (customerEmailParam) {
+      const escapedEmail = customerEmailParam.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const invoices = await InvoiceModel.find({
+        customerEmail: { $regex: new RegExp(`^${escapedEmail}$`, 'i') }
+      })
         .sort({ issuedAt: -1 })
         .lean();
       return NextResponse.json({ success: true, invoices: invoices || [] });
@@ -216,7 +251,6 @@ export async function POST(req: Request) {
     // Verificar se o número de fatura já existe
     const existingInvoice = await InvoiceModel.findOne({ invoiceNumber }).lean();
     if (existingInvoice) {
-      // Gerar novo número
       invoiceNumber = generateInvoiceNumber();
     }
 
@@ -227,7 +261,7 @@ export async function POST(req: Request) {
       invoiceNumber,
       customerId,
       customerName,
-      customerEmail: customerEmail.toLowerCase(),
+      customerEmail: customerEmail.toLowerCase().trim(),
       customerPhone,
       issuedAt,
       servicePeriodStart,
@@ -249,6 +283,30 @@ export async function POST(req: Request) {
     };
 
     await InvoiceModel.create(newInvoice);
+
+    // Disparar envio de e-mail ao cliente de forma não-bloqueante
+    try {
+      sendInvoiceIssuedEmail({
+        toEmail: newInvoice.customerEmail,
+        customerName: newInvoice.customerName,
+        invoiceNumber: newInvoice.invoiceNumber,
+        issuedAt: newInvoice.issuedAt,
+        dueDate: newInvoice.dueDate,
+        servicePeriodStart: newInvoice.servicePeriodStart,
+        servicePeriodEnd: newInvoice.servicePeriodEnd,
+        status: newInvoice.status,
+        paymentMethod: newInvoice.paymentMethod,
+        items: newInvoice.items,
+        subtotal: newInvoice.subtotal,
+        discount: newInvoice.discount,
+        total: newInvoice.total,
+        notes: newInvoice.notes
+      }).catch(err => {
+        console.error('[API/invoices] Erro assíncrono ao enviar e-mail de fatura:', err);
+      });
+    } catch (err) {
+      console.error('[API/invoices] Falha ao disparar e-mail de fatura:', err);
+    }
 
     return NextResponse.json({ success: true, invoice: newInvoice });
   } catch (e) {
@@ -314,7 +372,8 @@ export async function PUT(req: Request) {
     }
 
     // Se status mudou para paid, definir paidAt
-    if (updateData.status === 'paid' && (existingInvoice as any).status !== 'paid') {
+    const statusChangedToPaid = updateData.status === 'paid' && (existingInvoice as any).status !== 'paid';
+    if (statusChangedToPaid) {
       updateData.paidAt = new Date().toISOString();
     }
 
@@ -325,6 +384,29 @@ export async function PUT(req: Request) {
       { $set: updateData },
       { new: true }
     ).lean();
+
+    if (updatedInvoice && !Array.isArray(updatedInvoice) && statusChangedToPaid) {
+      try {
+        sendInvoiceIssuedEmail({
+          toEmail: updatedInvoice.customerEmail,
+          customerName: updatedInvoice.customerName,
+          invoiceNumber: updatedInvoice.invoiceNumber,
+          issuedAt: updatedInvoice.issuedAt,
+          dueDate: updatedInvoice.dueDate,
+          servicePeriodStart: updatedInvoice.servicePeriodStart,
+          servicePeriodEnd: updatedInvoice.servicePeriodEnd,
+          status: 'paid',
+          paymentMethod: updatedInvoice.paymentMethod,
+          items: updatedInvoice.items,
+          subtotal: updatedInvoice.subtotal,
+          discount: updatedInvoice.discount,
+          total: updatedInvoice.total,
+          notes: updatedInvoice.notes
+        }).catch(err => console.error('[API/invoices] Erro assíncrono ao enviar recibo pago:', err));
+      } catch (err) {
+        console.error('[API/invoices] Falha ao disparar recibo de pagamento:', err);
+      }
+    }
 
     return NextResponse.json({ success: true, invoice: updatedInvoice });
   } catch (e) {

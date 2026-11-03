@@ -1,20 +1,34 @@
 'use client';
 
-import { X, Printer, Download, CheckCircle2, ShieldCheck, FileText, Server } from 'lucide-react';
+import { X, Printer, Download, CheckCircle2, Clock, ShieldCheck, FileText, Server } from 'lucide-react';
 import BrandLogo from './BrandLogo';
+
+export interface ReceiptItem {
+  service: string;
+  description?: string;
+  quantity: number;
+  unitPrice: number;
+  discount?: number;
+  subtotal: number;
+}
 
 export interface ReceiptData {
   id: string;
   clientName: string;
   clientEmail: string;
   clientPhone?: string;
-  serviceName: string;
+  serviceName?: string;
+  items?: ReceiptItem[];
   amount: number;
   valorFaturado?: number;
   valorPorFaturar?: number;
   paymentMethod: string;
   status: string;
   createdAt: string;
+  servicePeriodStart?: string;
+  servicePeriodEnd?: string;
+  dueDate?: string;
+  notes?: string;
 }
 
 interface ReceiptModalProps {
@@ -33,7 +47,13 @@ export default function ReceiptModal({ receipt, onClose }: ReceiptModalProps) {
     minute: '2-digit'
   });
 
-  const receiptNumber = receipt.id.startsWith('REC-') ? receipt.id : `REC-${receipt.id}`;
+  const receiptNumber = receipt.id.startsWith('REC-') || receipt.id.startsWith('INV-') 
+    ? receipt.id 
+    : `REC-${receipt.id}`;
+
+  const documentTypeLabel = receipt.id.startsWith('INV-') 
+    ? 'FATURA OFICIAL' 
+    : 'FATURA-RECIBO OFICIAL';
 
   const handlePrint = () => {
     window.print();
@@ -43,10 +63,15 @@ export default function ReceiptModal({ receipt, onClose }: ReceiptModalProps) {
     mpesa: 'M-Pesa Moçambique',
     emola: 'eMola Moçambique',
     card: 'Cartão de Crédito / Débito',
-    bank_transfer: 'Transferência Bancária / Depósito'
-  }[receipt.paymentMethod] || receipt.paymentMethod;
+    bank_transfer: 'Transferência Bancária / Depósito',
+    cash: 'Numerário / Caixa'
+  }[(receipt.paymentMethod || '').toLowerCase()] || receipt.paymentMethod || 'M-Pesa / eMola / BIM';
 
-  const isPaid = receipt.status === 'completed' || receipt.status === 'active';
+  const isPaid = receipt.status === 'completed' || receipt.status === 'active' || receipt.status === 'paid';
+  const isInProgress = receipt.status === 'in_progress';
+  const isPending = receipt.status === 'pending' || receipt.status === 'draft';
+  const isOverdue = receipt.status === 'overdue';
+  const isCancelled = receipt.status === 'cancelled';
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
@@ -101,20 +126,38 @@ export default function ReceiptModal({ receipt, onClose }: ReceiptModalProps) {
 
             <div className="text-left sm:text-right">
               <span className="inline-block bg-primary-50 text-primary-700 font-extrabold text-xs px-3 py-1 rounded-full border border-primary-200 uppercase tracking-wider mb-2">
-                FATURA-RECIBO OFICIAL
+                {documentTypeLabel}
               </span>
               <h2 className="text-lg font-black text-gray-900 font-mono">{receiptNumber}</h2>
               <p className="text-xs text-gray-500 font-medium mt-0.5">Emissão: {formattedDate}</p>
               
               <div className="mt-3">
-                {isPaid ? (
+                {isPaid && (
                   <span className="inline-flex items-center space-x-1.5 bg-emerald-100 text-emerald-800 font-extrabold text-xs px-3 py-1 rounded-full border border-emerald-300">
                     <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                     <span>DOCUMENTO LIQUIDADO (PAGO)</span>
                   </span>
-                ) : (
+                )}
+                {isInProgress && (
                   <span className="inline-flex items-center space-x-1.5 bg-amber-100 text-amber-800 font-extrabold text-xs px-3 py-1 rounded-full border border-amber-300">
+                    <Clock className="h-4 w-4 text-amber-600" />
                     <span>EM PROCESSAMENTO</span>
+                  </span>
+                )}
+                {isPending && (
+                  <span className="inline-flex items-center space-x-1.5 bg-amber-100 text-amber-800 font-extrabold text-xs px-3 py-1 rounded-full border border-amber-300">
+                    <Clock className="h-4 w-4 text-amber-600" />
+                    <span>PAGAMENTO PENDENTE</span>
+                  </span>
+                )}
+                {isOverdue && (
+                  <span className="inline-flex items-center space-x-1.5 bg-red-100 text-red-800 font-extrabold text-xs px-3 py-1 rounded-full border border-red-300">
+                    <span>DOCUMENTO VENCIDO</span>
+                  </span>
+                )}
+                {isCancelled && (
+                  <span className="inline-flex items-center space-x-1.5 bg-gray-100 text-gray-700 font-extrabold text-xs px-3 py-1 rounded-full border border-gray-300">
+                    <span>FATURA CANCELADA</span>
                   </span>
                 )}
               </div>
@@ -132,8 +175,18 @@ export default function ReceiptModal({ receipt, onClose }: ReceiptModalProps) {
             <div>
               <span className="text-gray-400 font-bold uppercase tracking-wider block text-[10px] mb-1">Detalhes do Pagamento</span>
               <p className="font-semibold text-gray-800">Método: <strong className="text-gray-900">{paymentMethodLabel}</strong></p>
-              <p className="text-gray-600">Estado: <strong className={isPaid ? 'text-emerald-600 font-bold' : 'text-amber-600 font-bold'}>{isPaid ? 'Confirmado / Ativo' : 'Pendente de Verificação'}</strong></p>
+              <p className="text-gray-600">Estado: <strong className={isPaid ? 'text-emerald-600 font-bold' : isInProgress ? 'text-blue-600 font-bold' : 'text-amber-600 font-bold'}>{isPaid ? 'Confirmado / Ativo' : isInProgress ? 'Em Processamento' : 'Pendente de Verificação'}</strong></p>
               <p className="text-gray-500">Moeda: Meticais Moçambicanos (MT)</p>
+              {receipt.servicePeriodStart && receipt.servicePeriodEnd && (
+                <p className="text-gray-500 mt-1">
+                  Período: <strong className="text-gray-800">{new Date(receipt.servicePeriodStart).toLocaleDateString('pt-MZ')} a {new Date(receipt.servicePeriodEnd).toLocaleDateString('pt-MZ')}</strong>
+                </p>
+              )}
+              {receipt.dueDate && (
+                <p className="text-gray-500">
+                  Vencimento: <strong className="text-gray-800">{new Date(receipt.dueDate).toLocaleDateString('pt-MZ')}</strong>
+                </p>
+              )}
             </div>
           </div>
 
@@ -148,16 +201,31 @@ export default function ReceiptModal({ receipt, onClose }: ReceiptModalProps) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 text-gray-800">
-                <tr>
-                  <td className="py-3.5 px-4">
-                    <p className="font-bold text-gray-900 text-sm">{receipt.serviceName}</p>
-                    <p className="text-[11px] text-gray-500 mt-0.5">Infraestrutura em Datacenter • WEHOSTHERE Moçambique</p>
-                  </td>
-                  <td className="py-3.5 px-4 text-center font-bold">1</td>
-                  <td className="py-3.5 px-4 text-right font-black text-sm text-gray-900">
-                    {receipt.amount.toLocaleString('pt-MZ')} MT
-                  </td>
-                </tr>
+                {receipt.items && receipt.items.length > 0 ? (
+                  receipt.items.map((item, idx) => (
+                    <tr key={idx}>
+                      <td className="py-3.5 px-4">
+                        <p className="font-bold text-gray-900 text-sm">{item.service}</p>
+                        <p className="text-[11px] text-gray-500 mt-0.5">{item.description || 'Infraestrutura em Datacenter • WEHOSTHERE Moçambique'}</p>
+                      </td>
+                      <td className="py-3.5 px-4 text-center font-bold">{item.quantity}</td>
+                      <td className="py-3.5 px-4 text-right font-black text-sm text-gray-900">
+                        {item.subtotal.toLocaleString('pt-MZ')} MT
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td className="py-3.5 px-4">
+                      <p className="font-bold text-gray-900 text-sm">{receipt.serviceName || 'Serviços de Hospedagem & Cloud'}</p>
+                      <p className="text-[11px] text-gray-500 mt-0.5">Infraestrutura em Datacenter • WEHOSTHERE Moçambique</p>
+                    </td>
+                    <td className="py-3.5 px-4 text-center font-bold">1</td>
+                    <td className="py-3.5 px-4 text-right font-black text-sm text-gray-900">
+                      {receipt.amount.toLocaleString('pt-MZ')} MT
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -170,6 +238,11 @@ export default function ReceiptModal({ receipt, onClose }: ReceiptModalProps) {
                 <span>Garantia de Uptime de 99.9% e Suporte 24/7 Ativo.</span>
               </p>
               <p>Valores incluem IVA à taxa legal em vigor (16%). Documento emitido ao abrigo do artigo 23º do Código do IVA.</p>
+              {receipt.notes && (
+                <p className="text-gray-600 bg-gray-50 p-2 rounded-lg border border-gray-200 mt-2">
+                  <strong>Obs:</strong> {receipt.notes}
+                </p>
+              )}
             </div>
 
             <div className="w-full sm:w-64 bg-gray-50 rounded-2xl p-4 border border-gray-200 space-y-2">
@@ -182,8 +255,8 @@ export default function ReceiptModal({ receipt, onClose }: ReceiptModalProps) {
                 <span className="font-semibold">{(receipt.amount * 0.16).toLocaleString('pt-MZ', { maximumFractionDigits: 2 })} MT</span>
               </div>
               <div className="flex justify-between border-t border-gray-200 pt-2 font-black text-base text-gray-900">
-                <span>TOTAL PAGO:</span>
-                <span className="text-emerald-600">{receipt.amount.toLocaleString('pt-MZ')} MT</span>
+                <span>{isPaid ? 'TOTAL PAGO:' : 'TOTAL A PAGAR:'}</span>
+                <span className={isPaid ? 'text-emerald-600' : 'text-amber-600'}>{receipt.amount.toLocaleString('pt-MZ')} MT</span>
               </div>
             </div>
           </div>

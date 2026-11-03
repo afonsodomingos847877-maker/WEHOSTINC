@@ -141,6 +141,256 @@ export async function sendInvoiceEmail(toEmail: string, userName: string, invoic
 }
 
 /** E-mail enviado do Webmail corporativo */
+export interface InvoiceEmailItem {
+  service: string;
+  description?: string;
+  quantity: number;
+  unitPrice: number;
+  discount?: number;
+  subtotal: number;
+}
+
+export interface SendInvoiceIssuedEmailOptions {
+  toEmail: string;
+  customerName: string;
+  invoiceNumber: string;
+  issuedAt: string;
+  dueDate?: string;
+  servicePeriodStart?: string;
+  servicePeriodEnd?: string;
+  status: string;
+  paymentMethod?: string;
+  items: InvoiceEmailItem[];
+  subtotal: number;
+  discount?: number;
+  total: number;
+  notes?: string;
+}
+
+/** E-mail oficial disparado quando uma fatura é emitida ou atualizada pela administração */
+export async function sendInvoiceIssuedEmail(opts: SendInvoiceIssuedEmailOptions) {
+  const isPaid = opts.status === 'paid' || opts.status === 'completed';
+  const isPending = opts.status === 'pending' || opts.status === 'draft';
+  const isOverdue = opts.status === 'overdue';
+
+  const statusLabel = isPaid ? 'PAGO / LIQUIDADO' : isOverdue ? 'VENCIDO' : 'PAGAMENTO PENDENTE';
+  const statusBg = isPaid ? '#ecfdf5' : isOverdue ? '#fef2f2' : '#fffbeb';
+  const statusColor = isPaid ? '#047857' : isOverdue ? '#b91c1c' : '#b45309';
+  const statusBorder = isPaid ? '#a7f3d0' : isOverdue ? '#fecaca' : '#fde68a';
+
+  const methodLabel = {
+    mpesa: 'M-Pesa Moçambique',
+    emola: 'eMola Moçambique',
+    card: 'Cartão de Crédito / Débito',
+    bank_transfer: 'Transferência Bancária / Depósito',
+    cash: 'Numerário / Caixa'
+  }[opts.paymentMethod?.toLowerCase() || ''] || opts.paymentMethod || 'M-Pesa / eMola / Transferência';
+
+  const formatDate = (val?: string) => {
+    if (!val) return '—';
+    try {
+      return new Date(val).toLocaleDateString('pt-MZ', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    } catch {
+      return val;
+    }
+  };
+
+  const formattedIssued = formatDate(opts.issuedAt);
+  const formattedDue = opts.dueDate ? formatDate(opts.dueDate) : 'A pronto pagamento';
+  const hasPeriod = opts.servicePeriodStart && opts.servicePeriodEnd;
+  const formattedPeriod = hasPeriod
+    ? `${formatDate(opts.servicePeriodStart)} a ${formatDate(opts.servicePeriodEnd)}`
+    : null;
+
+  const subject = isPaid
+    ? `✅ Fatura Liquidada: ${opts.invoiceNumber} (${opts.total.toLocaleString('pt-MZ')} MT) — WEHOSTHERE`
+    : `📄 Nova Fatura Emitida: ${opts.invoiceNumber} (${opts.total.toLocaleString('pt-MZ')} MT) — WEHOSTHERE`;
+
+  const itemsHtml = opts.items && opts.items.length > 0
+    ? opts.items.map((it, idx) => `
+      <tr style="border-bottom:1px solid #e2e8f0;background:${idx % 2 === 0 ? '#ffffff' : '#f8fafc'};">
+        <td style="padding:12px 14px;color:#0f172a;font-size:13px;line-height:1.4;">
+          <div style="font-weight:700;">${it.service}</div>
+          ${it.description ? `<div style="font-size:11px;color:#64748b;margin-top:2px;">${it.description}</div>` : ''}
+        </td>
+        <td align="center" style="padding:12px 14px;color:#334155;font-size:13px;font-weight:600;">
+          ${it.quantity}
+        </td>
+        <td align="right" style="padding:12px 14px;color:#0f172a;font-size:13px;font-weight:700;">
+          ${it.subtotal.toLocaleString('pt-MZ')} MT
+        </td>
+      </tr>
+    `).join('')
+    : `
+      <tr style="border-bottom:1px solid #e2e8f0;background:#ffffff;">
+        <td style="padding:12px 14px;color:#0f172a;font-size:13px;line-height:1.4;">
+          <div style="font-weight:700;">Serviços de Hospedagem & Cloud</div>
+        </td>
+        <td align="center" style="padding:12px 14px;color:#334155;font-size:13px;font-weight:600;">1</td>
+        <td align="right" style="padding:12px 14px;color:#0f172a;font-size:13px;font-weight:700;">
+          ${opts.total.toLocaleString('pt-MZ')} MT
+        </td>
+      </tr>
+    `;
+
+  const billingDashboardUrl = `${SITE_URL}/dashboard/billing`;
+
+  const html = `
+    <div style="font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif;max-width:620px;margin:0 auto;color:#0f172a;background:#ffffff;">
+      <!-- Cabeçalho com Branding WEHOSTHERE -->
+      <div style="background:linear-gradient(135deg,#0052cc 0%,#0065ff 50%,#003884 100%);padding:36px 32px 30px;border-radius:18px 18px 0 0;text-align:center;">
+        <img src="${SITE_URL}/logo.png" alt="WEHOSTHERE Logo" style="width:190px;height:auto;margin:0 auto 14px;display:block;" />
+        <span style="display:inline-block;background:rgba(255,255,255,0.18);color:#ffffff;font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:5px 14px;border-radius:20px;border:1px solid rgba(255,255,255,0.25);">
+          Fatura Comercial Oficial
+        </span>
+        <h1 style="color:#ffffff;font-size:22px;font-weight:800;margin:12px 0 4px;letter-spacing:-0.5px;">
+          ${opts.invoiceNumber}
+        </h1>
+        <p style="color:#dbeafe;margin:0;font-size:13px;">
+          WEHOSTHERE Infraestruturas & Cloud Moçambique
+        </p>
+      </div>
+
+      <!-- Corpo da Fatura -->
+      <div style="background:#f8fafc;padding:32px 28px;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 18px 18px;">
+        <!-- Saudação -->
+        <p style="color:#334155;font-size:15px;line-height:1.6;margin:0 0 16px;">
+          Prezado(a) <strong>${opts.customerName}</strong>,
+        </p>
+        <p style="color:#475569;font-size:14px;line-height:1.6;margin:0 0 24px;">
+          ${isPaid 
+            ? 'Confirmamos a receção e quitação da sua fatura. Abaixo encontra os dados oficiais do documento emitido:' 
+            : 'Informamos que foi gerada uma nova fatura referente aos seus serviços contratados. Seguem os detalhes para conferência e liquidação:'}
+        </p>
+
+        <!-- Metadados do Documento -->
+        <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:14px;padding:18px;margin-bottom:24px;">
+          <table style="width:100%;border-collapse:collapse;font-size:13px;">
+            <tr>
+              <td style="padding:6px 0;color:#64748b;font-weight:600;width:40%;">Data de Emissão:</td>
+              <td style="padding:6px 0;color:#0f172a;font-weight:700;">${formattedIssued}</td>
+            </tr>
+            <tr>
+              <td style="padding:6px 0;color:#64748b;font-weight:600;">Data de Vencimento:</td>
+              <td style="padding:6px 0;color:#0f172a;font-weight:700;">${formattedDue}</td>
+            </tr>
+            ${formattedPeriod ? `
+            <tr>
+              <td style="padding:6px 0;color:#64748b;font-weight:600;">Período do Serviço:</td>
+              <td style="padding:6px 0;color:#0f172a;font-weight:700;">${formattedPeriod}</td>
+            </tr>
+            ` : ''}
+            <tr>
+              <td style="padding:6px 0;color:#64748b;font-weight:600;">Método Indicado:</td>
+              <td style="padding:6px 0;color:#0f172a;font-weight:700;">${methodLabel}</td>
+            </tr>
+            <tr>
+              <td style="padding:8px 0 2px;color:#64748b;font-weight:600;">Estado do Pagamento:</td>
+              <td style="padding:8px 0 2px;">
+                <span style="display:inline-block;background:${statusBg};color:${statusColor};border:1px solid ${statusBorder};font-size:11px;font-weight:800;padding:3px 10px;border-radius:12px;text-transform:uppercase;letter-spacing:0.5px;">
+                  ${statusLabel}
+                </span>
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- Tabela de Itens -->
+        <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:14px;overflow:hidden;margin-bottom:24px;">
+          <table style="width:100%;border-collapse:collapse;text-align:left;">
+            <thead>
+              <tr style="background:#f1f5f9;border-bottom:1px solid #e2e8f0;">
+                <th style="padding:10px 14px;font-size:11px;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:0.5px;">Descrição</th>
+                <th style="padding:10px 14px;font-size:11px;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:0.5px;text-align:center;">Qtd</th>
+                <th style="padding:10px 14px;font-size:11px;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:0.5px;text-align:right;">Subtotal</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsHtml}
+            </tbody>
+          </table>
+
+          <!-- Totais -->
+          <div style="background:#f8fafc;padding:16px;border-top:1px solid #e2e8f0;">
+            <table style="width:100%;font-size:13px;border-collapse:collapse;">
+              <tr>
+                <td style="color:#64748b;padding:4px 0;">Subtotal (sem IVA):</td>
+                <td align="right" style="color:#334155;font-weight:600;">${(opts.total * 0.84).toLocaleString('pt-MZ', { maximumFractionDigits: 2 })} MT</td>
+              </tr>
+              <tr>
+                <td style="color:#64748b;padding:4px 0;">IVA (16% legal):</td>
+                <td align="right" style="color:#334155;font-weight:600;">${(opts.total * 0.16).toLocaleString('pt-MZ', { maximumFractionDigits: 2 })} MT</td>
+              </tr>
+              <tr style="border-top:1px solid #cbd5e1;">
+                <td style="padding:10px 0 2px;font-weight:800;font-size:15px;color:#0f172a;">
+                  ${isPaid ? 'TOTAL PAGO:' : 'TOTAL A PAGAR:'}
+                </td>
+                <td align="right" style="padding:10px 0 2px;font-weight:900;font-size:18px;color:${isPaid ? '#047857' : '#0052cc'};">
+                  ${opts.total.toLocaleString('pt-MZ')} MT
+                </td>
+              </tr>
+            </table>
+          </div>
+        </div>
+
+        <!-- Instruções de Pagamento (Se não estiver pago) -->
+        ${!isPaid ? `
+        <div style="background:#ffffff;border:1px solid #cbd5e1;border-left:4px solid #0052cc;border-radius:12px;padding:18px;margin-bottom:24px;">
+          <h3 style="margin:0 0 10px;font-size:14px;font-weight:800;color:#0f172a;">
+            💳 Coordenadas de Pagamento Rápidas:
+          </h3>
+          <ul style="margin:0;padding-left:18px;color:#334155;font-size:13px;line-height:1.8;">
+            <li><strong>M-Pesa:</strong> +258 84 833 5618 (Titular: WEHOSTHERE / Afonso Domingos)</li>
+            <li><strong>e-Mola:</strong> +258 86 833 5618 / +258 84 833 5618</li>
+            <li><strong>Millennium BIM:</strong> NIB: <code>433372004293948</code></li>
+          </ul>
+          <p style="margin:10px 0 0;font-size:12px;color:#64748b;">
+            Após efetuar o pagamento, o comprovativo pode ser enviado para <a href="mailto:info@wehosthere.com" style="color:#0052cc;">info@wehosthere.com</a> ou via WhatsApp para <strong>+258 84 833 5618</strong>.
+          </p>
+        </div>
+        ` : ''}
+
+        ${opts.notes ? `
+        <div style="background:#f1f5f9;border-radius:10px;padding:12px 16px;margin-bottom:24px;font-size:12px;color:#475569;">
+          <strong>Observações:</strong> ${opts.notes}
+        </div>
+        ` : ''}
+
+        <!-- Botão de Ação -->
+        <div style="text-align:center;margin:30px 0 16px;">
+          <a href="${billingDashboardUrl}" style="background:linear-gradient(135deg,#0052cc,#0065ff);color:#ffffff;font-weight:800;padding:15px 36px;border-radius:12px;text-decoration:none;font-size:14px;display:inline-block;box-shadow:0 4px 14px rgba(0,82,204,0.35);letter-spacing:0.2px;">
+            Aceder ao Painel & Ver Fatura / Recibo →
+          </a>
+        </div>
+
+        <p style="text-align:center;color:#94a3b8;font-size:12px;margin:20px 0 0;">
+          A fatura e recibo em formato PDF estão disponíveis a qualquer momento no seu painel em <strong>${billingDashboardUrl}</strong>.
+        </p>
+      </div>
+
+      <!-- Rodapé Oficial -->
+      <div style="padding:24px 20px;text-align:center;color:#94a3b8;font-size:11px;line-height:1.6;">
+        <p style="margin:0 0 4px;font-weight:600;color:#64748b;">
+          WEHOSTHERE Infraestruturas & Cloud Moçambique
+        </p>
+        <p style="margin:0 0 6px;">
+          Maputo, Moçambique • <a href="mailto:info@wehosthere.com" style="color:#64748b;text-decoration:none;">info@wehosthere.com</a> • +258 84 833 5618
+        </p>
+        <p style="margin:0;font-size:10px;color:#cbd5e1;">
+          Processado por computador ao abrigo do Código do IVA. Documento válido como comprovativo após boa cobrança.
+        </p>
+      </div>
+    </div>
+  `;
+
+  return sendEmail({
+    to: opts.toEmail,
+    subject,
+    html
+  });
+}
+
+/** E-mail enviado do Webmail corporativo */
 export async function sendWebmailMessage(fromEmail: string, toEmail: string, subject: string, body: string) {
   return sendEmail({
     to: toEmail,

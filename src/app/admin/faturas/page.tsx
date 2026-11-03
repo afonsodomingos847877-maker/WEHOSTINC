@@ -14,6 +14,7 @@ import InvoiceModel, { InvoiceItem } from '@/lib/models/Invoice';
 import { soundEffects } from '@/lib/soundEffects';
 import Toast from '@/components/Toast';
 import { auth } from '@/lib/auth';
+import ReceiptModal, { ReceiptData } from '@/components/ReceiptModal';
 
 // Helpers para manipulação e validação de datas sem problemas de fuso horário
 function parseDateParts(dateStr: string): { year: number; month: number; day: number } | null {
@@ -208,6 +209,7 @@ export default function FaturasPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showModal, setShowModal] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
+  const [selectedReceipt, setSelectedReceipt] = useState<ReceiptData | null>(null);
   const [toastMsg, setToastMsg] = useState<{ type: 'success' | 'error' | 'info'; title?: string; message: string } | null>(null);
 
   // Ciclo e cálculo automático de período
@@ -798,6 +800,38 @@ export default function FaturasPage() {
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end space-x-2">
                             <button
+                              onClick={() => {
+                                soundEffects.playInvoiceDownloadSound();
+                                setSelectedReceipt({
+                                  id: invoice.invoiceNumber || invoice.id,
+                                  clientName: invoice.customerName,
+                                  clientEmail: invoice.customerEmail,
+                                  clientPhone: invoice.customerPhone,
+                                  amount: invoice.total,
+                                  paymentMethod: invoice.paymentMethod || 'mpesa',
+                                  status: invoice.status === 'paid' ? 'completed' : invoice.status === 'pending' ? 'pending' : invoice.status,
+                                  createdAt: invoice.issuedAt || invoice.createdAt || new Date().toISOString(),
+                                  dueDate: invoice.dueDate,
+                                  servicePeriodStart: invoice.servicePeriodStart,
+                                  servicePeriodEnd: invoice.servicePeriodEnd,
+                                  serviceName: invoice.items?.[0]?.service || 'Serviços de Hospedagem & Cloud',
+                                  items: invoice.items?.map(it => ({
+                                    service: it.service,
+                                    description: it.description,
+                                    quantity: it.quantity,
+                                    unitPrice: it.unitPrice,
+                                    discount: it.discount,
+                                    subtotal: it.subtotal
+                                  })),
+                                  notes: invoice.notes
+                                });
+                              }}
+                              className="p-2 text-gray-600 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition"
+                              title="Visualizar e Imprimir Recibo Oficial (PDF)"
+                            >
+                              <FileText className="h-4 w-4 text-emerald-600" />
+                            </button>
+                            <button
                               onClick={() => handleDownloadPdf(invoice.id)}
                               className="p-2 text-gray-600 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition"
                               title="Baixar PDF"
@@ -1276,6 +1310,9 @@ export default function FaturasPage() {
           </div>
         </div>
       )}
+
+      {/* Modal de Recibo Oficial */}
+      <ReceiptModal receipt={selectedReceipt} onClose={() => setSelectedReceipt(null)} />
 
       {/* Toast */}
       {toastMsg && (
