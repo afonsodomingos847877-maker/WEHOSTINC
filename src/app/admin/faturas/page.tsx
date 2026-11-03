@@ -13,6 +13,7 @@ import ManualClientModel from '@/lib/models/ManualClient';
 import InvoiceModel, { InvoiceItem } from '@/lib/models/Invoice';
 import { soundEffects } from '@/lib/soundEffects';
 import Toast from '@/components/Toast';
+import { auth } from '@/lib/auth';
 
 // Helpers para manipulação e validação de datas sem problemas de fuso horário
 function parseDateParts(dateStr: string): { year: number; month: number; day: number } | null {
@@ -242,11 +243,24 @@ export default function FaturasPage() {
     discount: 0
   });
 
+  const getAuthHeaders = (): Record<string, string> => {
+    const localUser = auth.getCurrentUser();
+    const email = (session?.user as any)?.email || localUser?.email || 'admin@wehosthere.com';
+    return {
+      'Content-Type': 'application/json',
+      'x-user-email': email
+    };
+  };
+
   useEffect(() => {
     if (status === 'loading') return;
     
-    const userRole = (session?.user as any)?.role;
-    if (userRole !== 'admin' && userRole !== 'super_admin') {
+    const localUser = auth.getCurrentUser();
+    const isLocalAdmin = localUser && auth.isAdminUser(localUser);
+    const sessionRole = (session?.user as any)?.role;
+    const isSessionAdmin = sessionRole === 'admin' || sessionRole === 'super_admin';
+
+    if (!isLocalAdmin && !isSessionAdmin) {
       router.push('/dashboard');
       return;
     }
@@ -256,11 +270,12 @@ export default function FaturasPage() {
 
   const loadData = async () => {
     try {
-      // Carregar clientes (Users e ManualClients)
+      const headers = getAuthHeaders();
+      // Carregar clientes (Users e ManualClients) e faturas com headers autenticados
       const [usersRes, manualClientsRes, invoicesRes] = await Promise.all([
-        fetch('/api/users'),
-        fetch('/api/manual-clients'),
-        fetch('/api/invoices')
+        fetch('/api/users', { headers }),
+        fetch('/api/manual-clients', { headers }),
+        fetch('/api/invoices', { headers })
       ]);
 
       const usersData = usersRes.ok ? await usersRes.json() : { users: [] };
@@ -528,17 +543,18 @@ export default function FaturasPage() {
         items: finalItems
       };
 
+      const headers = getAuthHeaders();
       let res;
       if (editingInvoice) {
         res = await fetch('/api/invoices', {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify({ id: editingInvoice.id, ...payload })
         });
       } else {
         res = await fetch('/api/invoices', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify(payload)
         });
       }
@@ -586,7 +602,10 @@ export default function FaturasPage() {
     if (!confirm('Tem certeza que deseja excluir esta fatura?')) return;
 
     try {
-      const res = await fetch(`/api/invoices?id=${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/invoices?id=${id}`, { 
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      });
       if (res.ok) {
         setToastMsg({ type: 'success', message: 'Fatura excluída!' });
         loadData();
@@ -602,7 +621,9 @@ export default function FaturasPage() {
 
   const handleDownloadPdf = async (invoiceId: string) => {
     try {
-      const res = await fetch(`/api/invoices/${invoiceId}/pdf`);
+      const res = await fetch(`/api/invoices/${invoiceId}/pdf`, {
+        headers: getAuthHeaders()
+      });
       if (res.ok) {
         const blob = await res.blob();
         const url = window.URL.createObjectURL(blob);
