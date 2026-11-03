@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Toast from '@/components/Toast';
 import { formatVideoEmbedUrl } from '@/lib/videoEmbed';
-import { Plus, Edit, Trash2, Eye, BookOpen, DollarSign, Clock, ArrowLeft, Home, GraduationCap, Loader2, CheckCircle, XCircle, Save, X, CheckSquare, Upload, AlertTriangle, MessageCircle, Send, Check, RefreshCw, Mail, ExternalLink, Filter, Smartphone, Zap, ImageIcon, FileText, Paperclip } from 'lucide-react';
+import { Plus, Edit, Users, Trash2, Eye, BookOpen, DollarSign, Clock, ArrowLeft, Home, GraduationCap, Loader2, CheckCircle, XCircle, Save, X, CheckSquare, Upload, AlertTriangle, MessageCircle, Send, Check, RefreshCw, Mail, ExternalLink, Filter, Smartphone, Zap, ImageIcon, FileText, Paperclip } from 'lucide-react';
 
 interface Course {
   id: string;
@@ -1272,6 +1272,24 @@ export default function AdminAcademyPage() {
                          (filter === 'inactive' && !course.active);
     return matchesSearch && matchesFilter;
   }).sort((a, b) => a.order - b.order);
+
+  
+  // Lista única de formadores já registados em outros cursos para reutilização rápida
+  const existingInstructors: { name: string; title: string; bio: string; avatar: string }[] = Array.from(
+    new Map(
+      courses
+        .filter(c => c.instructorName && c.instructorName.trim() !== '')
+        .map(c => [
+          c.instructorName!.trim().toLowerCase(),
+          {
+            name: c.instructorName!.trim(),
+            title: c.instructorTitle || '',
+            bio: c.instructorBio || '',
+            avatar: c.instructorAvatar || ''
+          }
+        ])
+    ).values()
+  );
 
   if (loading) {
     return (
@@ -2840,6 +2858,45 @@ export default function AdminAcademyPage() {
                       </label>
                       <span className="text-[11px] text-gray-500">Exibido na página pública do curso</span>
                     </div>
+
+                    {/* Seletor Rápido para Reutilizar Formador Existente */}
+                    {existingInstructors.length > 0 && (
+                      <div className="p-3 bg-emerald-50/70 border border-emerald-200 rounded-xl space-y-1.5">
+                        <div className="flex items-center gap-1.5">
+                          <Users className="w-3.5 h-3.5 text-emerald-700" />
+                          <span className="text-xs font-bold text-emerald-950">
+                            Reutilizar Formador Cadastrado:
+                          </span>
+                        </div>
+                        <select
+                          onChange={(e) => {
+                            const selected = existingInstructors.find(inst => inst.name === e.target.value);
+                            if (selected) {
+                              setFormData(prev => ({
+                                ...prev,
+                                instructorName: selected.name,
+                                instructorTitle: selected.title,
+                                instructorBio: selected.bio,
+                                instructorAvatar: selected.avatar
+                              }));
+                            }
+                          }}
+                          defaultValue=""
+                          className="w-full px-3 py-2 bg-white border border-emerald-300 rounded-lg text-xs font-medium text-gray-800 focus:ring-2 focus:ring-emerald-500 cursor-pointer shadow-xs"
+                        >
+                          <option value="" disabled>-- Selecionar um formador existente para preencher automaticamente --</option>
+                          {existingInstructors.map((inst, i) => (
+                            <option key={i} value={inst.name}>
+                              {inst.name} {inst.title ? `(${inst.title})` : ''}
+                            </option>
+                          ))}
+                        </select>
+                        <p className="text-[10px] text-emerald-800">
+                          Ao selecionar, a foto, nome, cargo e bio são preenchidos automaticamente. Pode editá-los livremente se quiser.
+                        </p>
+                      </div>
+                    )}
+
 
                     {/* Foto do Formador */}
                     <div className="space-y-2">
