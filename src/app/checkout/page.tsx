@@ -47,6 +47,13 @@ function CheckoutContent() {
   const courseNameParam = searchParams.get('name');
   const [courseClaimToken, setCourseClaimToken] = useState<string>('');
   const courseAmountParam = Number(searchParams.get('amount')) || 500;
+  const installmentsParam = searchParams.get('installments');
+  const installmentNumberParam = Number(searchParams.get('installmentNumber')) || 1;
+  const totalPriceParam = Number(searchParams.get('totalPrice')) || (installmentsParam === '2' ? courseAmountParam * 2 : courseAmountParam);
+
+  const [courseInstallmentOption, setCourseInstallmentOption] = useState<'1' | '2'>(
+    installmentsParam === '2' ? '2' : '1'
+  );
 
   // Parâmetro para continuar pagamento de encomenda existente
   const continuePaymentParam = searchParams.get('continuePayment');
@@ -195,7 +202,10 @@ function CheckoutContent() {
 
   const calculatePlanCost = () => {
     if (isCoursePayment) {
-      return courseAmountParam;
+      if (installmentNumberParam === 2) {
+        return courseAmountParam;
+      }
+      return courseInstallmentOption === '2' ? Math.ceil(totalPriceParam / 2) : totalPriceParam;
     }
     if (isAffiliateVerification) {
       return verificationAmount;
@@ -216,7 +226,9 @@ function CheckoutContent() {
 
   const basePrice = calculatePlanCost();
   const rawTotal = isCoursePayment 
-    ? courseAmountParam 
+    ? (installmentNumberParam === 2 
+        ? courseAmountParam 
+        : (courseInstallmentOption === '2' ? Math.ceil(totalPriceParam / 2) : totalPriceParam))
     : (isAffiliateVerification ? verificationAmount : (basePrice + domainCost));
 
   // Coupon state
@@ -726,8 +738,11 @@ function CheckoutContent() {
       const isWebsite = selectedPlan?.id === 'website_creation';
       const siteLabel = isWebsite && siteTypeName ? ` — ${siteTypeName}` : '';
       const cycleLabel = isWebsite ? '' : ` (${durationMonths} ${durationMonths === 1 ? 'Mês' : 'Meses'})`;
+      const courseInstallmentSuffix = installmentNumberParam === 2
+        ? ' (2ª Parcela Final)'
+        : (courseInstallmentOption === '2' ? ' (1ª Parcela de 2)' : '');
       const serviceName = isCoursePayment
-        ? `Curso: ${courseNameParam || 'Curso WEHOSTHERE'}`
+        ? `Curso: ${courseNameParam || 'Curso WEHOSTHERE'}${courseInstallmentSuffix}`
         : isAffiliateVerification 
         ? 'Verificação de Afiliado'
         : (selectedPlan
@@ -859,7 +874,14 @@ function CheckoutContent() {
               orderId: orderId,
               paymentReference: paymentReference,
               amountPaid: grandTotal,
-              paymentMethod: paymentMethod
+              paymentMethod: paymentMethod,
+              paymentPlan: (courseInstallmentOption === '2' || installmentsParam === '2') ? 'installments_2x' : 'full',
+              installments: (courseInstallmentOption === '2' || installmentsParam === '2') ? 2 : 1,
+              installmentNumber: installmentNumberParam,
+              isSecondInstallment: installmentNumberParam === 2,
+              totalPrice: totalPriceParam,
+              totalCourseAmount: totalPriceParam,
+              remainingAmount: (courseInstallmentOption === '2' || installmentsParam === '2') && installmentNumberParam !== 2 ? grandTotal : 0
             })
           });
           const enrData = await enrRes.json();
@@ -2397,6 +2419,96 @@ function CheckoutContent() {
               )
             )}
 
+            {/* Opção de Parcelamento para Cursos */}
+            {isCoursePayment && (
+              <div className="pt-2">
+                {installmentNumberParam === 2 ? (
+                  <div className="p-4 bg-emerald-50 border border-emerald-300 rounded-2xl space-y-1">
+                    <div className="flex items-center gap-2 text-emerald-900 font-black text-sm">
+                      <Sparkles className="w-4 h-4 text-emerald-600" />
+                      <span>Pagamento da 2ª Parcela Final</span>
+                    </div>
+                    <p className="text-xs text-emerald-800">
+                      Estás a pagar a 2ª parcela de <strong>{courseAmountParam.toLocaleString('pt-MZ')} MT</strong> para quitar integralmente o curso <strong>{courseNameParam || 'Curso WEHOSTHERE'}</strong> e desbloquear o certificado oficial de conclusão.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-sm font-bold text-gray-800">
+                        Opção de Pagamento do Curso
+                      </label>
+                      <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+                        {courseInstallmentOption === '2' ? '2x Parcelas' : '1x Integral'}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {/* 1x Integral */}
+                      <button
+                        type="button"
+                        onClick={() => setCourseInstallmentOption('1')}
+                        className={`p-3.5 border-2 rounded-2xl text-left transition cursor-pointer relative ${
+                          courseInstallmentOption === '1'
+                            ? 'border-emerald-600 bg-emerald-50/50 ring-2 ring-emerald-500/20'
+                            : 'border-gray-200 bg-white hover:border-gray-300'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-black uppercase text-gray-800 tracking-wider">À Vista (1x)</span>
+                          <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${courseInstallmentOption === '1' ? 'border-emerald-600 bg-emerald-600' : 'border-gray-300'}`}>
+                            {courseInstallmentOption === '1' && <span className="w-1.5 h-1.5 bg-white rounded-full"></span>}
+                          </div>
+                        </div>
+                        <span className="text-base font-black text-gray-900 block mt-1">
+                          {totalPriceParam.toLocaleString('pt-MZ')} MT
+                        </span>
+                        <span className="text-xs text-emerald-700 block font-semibold mt-0.5">
+                          ✓ Pagamento único integral com acesso vitalício
+                        </span>
+                      </button>
+
+                      {/* 2x Parcelas */}
+                      <button
+                        type="button"
+                        onClick={() => setCourseInstallmentOption('2')}
+                        className={`p-3.5 border-2 rounded-2xl text-left transition cursor-pointer relative ${
+                          courseInstallmentOption === '2'
+                            ? 'border-emerald-600 bg-emerald-50/50 ring-2 ring-emerald-500/20'
+                            : 'border-gray-200 bg-white hover:border-gray-300'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-black uppercase text-emerald-800 tracking-wider">2 Parcelas (2x)</span>
+                          <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${courseInstallmentOption === '2' ? 'border-emerald-600 bg-emerald-600' : 'border-gray-300'}`}>
+                            {courseInstallmentOption === '2' && <span className="w-1.5 h-1.5 bg-white rounded-full"></span>}
+                          </div>
+                        </div>
+                        <span className="text-base font-black text-emerald-700 block mt-1">
+                          {Math.ceil(totalPriceParam / 2).toLocaleString('pt-MZ')} MT <span className="text-xs font-normal text-gray-500">hoje</span>
+                        </span>
+                        <span className="text-xs text-primary-700 block font-semibold mt-0.5">
+                          ✓ 1ª parcela hoje: acesso imediato ao curso
+                        </span>
+                      </button>
+                    </div>
+
+                    {courseInstallmentOption === '2' && (
+                      <div className="p-3 bg-emerald-50/80 border border-emerald-200 rounded-xl text-xs text-emerald-950 flex items-start gap-2">
+                        <Sparkles className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="font-bold">Como funciona o pagamento em 2 vezes?</p>
+                          <p className="text-emerald-800 mt-0.5 leading-relaxed">
+                            Pagas a <strong>1ª parcela de {Math.ceil(totalPriceParam / 2).toLocaleString('pt-MZ')} MT hoje</strong> e começas logo a assistir a todas as aulas práticas. A <strong>2ª parcela de {Math.ceil(totalPriceParam / 2).toLocaleString('pt-MZ')} MT</strong> poderá ser paga posteriormente na tua área de aluno quando quiseres concluir e emitir o certificado.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* 3. Resumo da Compra (Collapsible Order Summary) */}
             <div className="pt-2 sm:pt-3 border-t border-gray-200">
               {/* Toggle header */}
@@ -2435,12 +2547,24 @@ function CheckoutContent() {
                     <>
                       <div className="flex justify-between items-center">
                         <span className="font-semibold text-gray-900">
-                          Curso: {courseNameParam || 'Curso WEHOSTHERE'}
+                          {installmentNumberParam === 2
+                            ? `Curso: ${courseNameParam || 'Curso WEHOSTHERE'} (2ª Parcela Final)`
+                            : (courseInstallmentOption === '2'
+                                ? `Curso: ${courseNameParam || 'Curso WEHOSTHERE'} (1ª Parcela de 2)`
+                                : `Curso: ${courseNameParam || 'Curso WEHOSTHERE'}`)}
                         </span>
-                        <span className="font-bold text-gray-900">{courseAmountParam.toLocaleString('pt-MZ')} MT</span>
+                        <span className="font-bold text-gray-900">
+                          {(installmentNumberParam === 2
+                            ? courseAmountParam
+                            : (courseInstallmentOption === '2' ? Math.ceil(totalPriceParam / 2) : totalPriceParam)).toLocaleString('pt-MZ')} MT
+                        </span>
                       </div>
                       <div className="text-xs text-gray-500">
-                        Acesso vitalício ao curso completo • Certificado de conclusão
+                        {installmentNumberParam === 2
+                          ? 'Pagamento da 2ª parcela final • Quitação do curso e emissão de certificado'
+                          : (courseInstallmentOption === '2'
+                              ? `1ª Parcela de 2 • Acesso total imediato • 2ª Parcela restante: ${Math.ceil(totalPriceParam / 2).toLocaleString('pt-MZ')} MT`
+                              : 'Acesso vitalício ao curso completo • Certificado de conclusão')}
                       </div>
                     </>
                   ) : isAffiliateVerification ? (

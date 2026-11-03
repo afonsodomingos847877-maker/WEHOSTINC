@@ -270,26 +270,45 @@ export async function POST(req: Request) {
                 const sName = (orderDoc.serviceName || '');
                 if (sName.toLowerCase().includes('curso')) {
                   const targetEmail = (orderDoc.clientEmail || '').toLowerCase().trim();
-                  const cleanTitle = sName.replace(/^curso:\s*/i, '').trim();
+                  const cleanTitle = sName.replace(/^curso:\s*/i, '').replace(/\(.*\)/, '').trim();
                   const existingEnr = await EnrollmentModel.findOne({
                     studentEmail: targetEmail,
                     courseTitle: { $regex: cleanTitle, $options: 'i' },
                     status: 'active'
                   });
 
-                  if (!existingEnr) {
+                  const isSecondInstallment = (orderDoc as any).installmentNumber === 2 || sName.toLowerCase().includes('2ª parcela');
+                  const isInstallments = (orderDoc as any).installments === 2 || sName.toLowerCase().includes('parcela');
+
+                  if (existingEnr) {
+                    if (isSecondInstallment) {
+                      existingEnr.installmentsPaid = 2;
+                      existingEnr.remainingAmount = 0;
+                      existingEnr.amountPaid = (existingEnr.amountPaid || 0) + (orderDoc.amount || 0);
+                      await existingEnr.save();
+                    }
+                  } else {
                     const claimToken = 'CLM_' + crypto.randomBytes(16).toString('hex');
+                    const paid = orderDoc.amount || 0;
+                    const totalAmt = (orderDoc as any).totalCoursePrice || (isInstallments ? paid * 2 : paid);
+                    const remaining = isInstallments ? Math.max(0, totalAmt - paid) : 0;
+
                     await EnrollmentModel.create({
                       id: 'ENR_' + Date.now().toString().slice(-6) + '_' + Math.floor(100 + Math.random() * 900),
-                      courseId: 'COURSE_AUTO',
+                      courseId: (orderDoc as any).courseId || 'COURSE_AUTO',
                       courseTitle: cleanTitle || sName,
                       studentEmail: targetEmail,
                       studentName: orderDoc.clientName || 'Aluno',
                       studentPhone: orderDoc.clientPhone || '',
                       orderId: orderDoc.id,
                       paymentReference: orderDoc.reference || orderDoc.kivoraPaymentId,
-                      amountPaid: orderDoc.amount || 0,
+                      amountPaid: paid,
                       paymentMethod: orderDoc.paymentMethod || 'mpesa',
+                      paymentPlan: isInstallments ? 'installments_2x' : 'full',
+                      installmentsTotal: isInstallments ? 2 : 1,
+                      installmentsPaid: isSecondInstallment ? 2 : 1,
+                      totalCourseAmount: totalAmt,
+                      remainingAmount: remaining,
                       claimToken,
                       claimed: false,
                       status: 'active',

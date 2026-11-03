@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import { 
   BookOpen, Play, Lock, CheckCircle, Clock, DollarSign, Eye, Unlock, 
-  ChevronRight, ArrowRight, ArrowLeft, Award, Download, ShieldCheck, Sparkles, ExternalLink
+  ChevronRight, ArrowRight, ArrowLeft, Award, Download, ShieldCheck, Sparkles, ExternalLink, CreditCard
 } from 'lucide-react';
 import { auth, User } from '@/lib/auth';
 import { dataManager, Course, Module, Lesson, CourseProgress, CourseEnrollment, Certificate } from '@/lib/data';
@@ -335,6 +335,30 @@ export default function DashboardAcademyPage() {
                                   />
                                 </div>
                               </div>
+
+                              {/* Status de Parcelamento */}
+                              {((enrollment as any).paymentPlan === 'installments_2x' && (enrollment as any).installmentsPaid === 1) && (
+                                <div 
+                                  className="mb-3 p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-[11px] text-amber-950 flex flex-col gap-1.5"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <div className="flex items-center justify-between font-bold">
+                                    <span className="flex items-center gap-1 text-amber-800">
+                                      <CreditCard className="w-3.5 h-3.5 text-amber-600" />
+                                      <span>1ª Parcela Paga</span>
+                                    </span>
+                                    <span className="text-amber-700 font-black">
+                                      2ª: {(((enrollment as any).remainingAmount) || Math.ceil((course.price || 0) / 2)).toLocaleString('pt-MZ')} MT
+                                    </span>
+                                  </div>
+                                  <Link
+                                    href={`/checkout?service=course&courseId=${course.id}&name=${encodeURIComponent(course.title)}&amount=${((enrollment as any).remainingAmount) || Math.ceil((course.price || 0) / 2)}&installments=2&installmentNumber=2`}
+                                    className="w-full py-1.5 px-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-center font-bold text-[10px] transition cursor-pointer"
+                                  >
+                                    Pagar 2ª Parcela Final
+                                  </Link>
+                                </div>
+                              )}
 
                               <button 
                                 onClick={(e) => {

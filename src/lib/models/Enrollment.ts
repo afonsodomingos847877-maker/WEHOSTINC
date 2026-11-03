@@ -16,6 +16,11 @@ export interface IEnrollment extends Document {
   claimed: boolean;
   claimedAt?: string;
   status: 'active' | 'suspended' | 'cancelled';
+  paymentPlan?: 'full' | 'installments_2x';
+  installmentsTotal?: number;
+  installmentsPaid?: number;
+  totalCourseAmount?: number;
+  remainingAmount?: number;
   enrolledAt: string;
   accessExpiresAt?: string;
 }
@@ -36,6 +41,11 @@ const EnrollmentSchema = new Schema<IEnrollment>({
   claimed: { type: Boolean, default: false },
   claimedAt: { type: String },
   status: { type: String, enum: ['active', 'suspended', 'cancelled'], default: 'active' },
+  paymentPlan: { type: String, enum: ['full', 'installments_2x'], default: 'full' },
+  installmentsTotal: { type: Number, default: 1 },
+  installmentsPaid: { type: Number, default: 1 },
+  totalCourseAmount: { type: Number },
+  remainingAmount: { type: Number, default: 0 },
   enrolledAt: { type: String, default: () => new Date().toISOString() },
   accessExpiresAt: { type: String }
 }, {

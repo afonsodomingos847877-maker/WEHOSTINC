@@ -77,6 +77,7 @@ export default function CourseDetailsPage() {
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState<number>(0);
   const [activePreviewIndex, setActivePreviewIndex] = useState<number>(0);
+  const [paymentPlan, setPaymentPlan] = useState<'full' | 'installments_2x'>('full');
   const [appliedCoupon, setAppliedCoupon] = useState<{
     code: string;
     discountType: 'percentage' | 'fixed';
@@ -224,8 +225,11 @@ export default function CourseDetailsPage() {
   }
 
   const currentPrice = appliedCoupon ? appliedCoupon.finalAmount : (course?.price || 199);
+  const allowInstallments = (course as any)?.allowInstallments !== false && currentPrice > 0;
+  const installmentPrice = Math.ceil(currentPrice / 2);
+  const selectedAmount = paymentPlan === 'installments_2x' ? installmentPrice : currentPrice;
   const checkoutUrl = course 
-    ? `/checkout?service=course&courseId=${course.id}&name=${encodeURIComponent(course.title)}&amount=${currentPrice}${appliedCoupon ? `&coupon=${appliedCoupon.code}` : ''}`
+    ? `/checkout?service=course&courseId=${course.id}&name=${encodeURIComponent(course.title)}&amount=${selectedAmount}&totalPrice=${currentPrice}&installments=${paymentPlan === 'installments_2x' ? '2' : '1'}&installmentNumber=1${appliedCoupon ? `&coupon=${appliedCoupon.code}` : ''}`
     : '#';
 
   return (
@@ -429,6 +433,74 @@ export default function CourseDetailsPage() {
                 )}
               </div>
 
+              {/* Opções de Pagamento: Integral ou em 2 Parcelas */}
+              {allowInstallments && (
+                <div className="space-y-2 pt-1 pb-1">
+                  <div className="flex items-center justify-between text-[11px] font-bold text-slate-700 px-0.5">
+                    <span>Opção de Pagamento:</span>
+                    <span className="text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full font-bold text-[10px]">
+                      {paymentPlan === 'installments_2x' ? '2x Parcelas' : '1x Integral'}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setPaymentPlan('full')}
+                      className={`p-2.5 rounded-2xl border text-left transition cursor-pointer flex flex-col justify-between ${
+                        paymentPlan === 'full'
+                          ? 'border-emerald-500 bg-emerald-50/60 ring-2 ring-emerald-500/20 text-slate-900 shadow-2xs'
+                          : 'border-slate-200 bg-slate-50 hover:bg-slate-100/70 text-slate-600'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-black uppercase tracking-wider text-slate-800">À Vista (1x)</span>
+                        <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${paymentPlan === 'full' ? 'border-emerald-600 bg-emerald-600' : 'border-slate-300'}`}>
+                          {paymentPlan === 'full' && <span className="w-1.5 h-1.5 bg-white rounded-full"></span>}
+                        </div>
+                      </div>
+                      <div className="mt-1">
+                        <span className="text-sm font-black text-slate-900">{currentPrice.toLocaleString('pt-MZ')} MT</span>
+                        <span className="block text-[9px] text-emerald-700 font-semibold">Acesso vitalício</span>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setPaymentPlan('installments_2x')}
+                      className={`p-2.5 rounded-2xl border text-left transition cursor-pointer flex flex-col justify-between ${
+                        paymentPlan === 'installments_2x'
+                          ? 'border-emerald-500 bg-emerald-50/60 ring-2 ring-emerald-500/20 text-slate-900 shadow-2xs'
+                          : 'border-slate-200 bg-slate-50 hover:bg-slate-100/70 text-slate-600'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-black uppercase tracking-wider text-emerald-800">2x Parcelas</span>
+                        <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${paymentPlan === 'installments_2x' ? 'border-emerald-600 bg-emerald-600' : 'border-slate-300'}`}>
+                          {paymentPlan === 'installments_2x' && <span className="w-1.5 h-1.5 bg-white rounded-full"></span>}
+                        </div>
+                      </div>
+                      <div className="mt-1">
+                        <span className="text-sm font-black text-emerald-700">{installmentPrice.toLocaleString('pt-MZ')} MT</span>
+                        <span className="block text-[9px] text-emerald-600 font-semibold">1ª parcela hoje</span>
+                      </div>
+                    </button>
+                  </div>
+
+                  {paymentPlan === 'installments_2x' && (
+                    <div className="p-2.5 rounded-xl bg-emerald-50/80 border border-emerald-200/80 text-[11px] text-emerald-950 space-y-1 animate-in fade-in duration-200">
+                      <div className="flex items-center justify-between font-bold">
+                        <span>1ª Parcela a pagar hoje:</span>
+                        <span className="text-emerald-700 font-black">{installmentPrice.toLocaleString('pt-MZ')} MT</span>
+                      </div>
+                      <p className="text-[10px] text-emerald-800 leading-tight">
+                        ⚡ Dá acesso imediato ao curso e às aulas práticas. A 2ª parcela ({installmentPrice.toLocaleString('pt-MZ')} MT) só é necessária para emissão do certificado e conclusão.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Primary CTA: Buy Now with dynamic discounted price */}
               <div className="space-y-3">
                 <Link
@@ -436,7 +508,11 @@ export default function CourseDetailsPage() {
                   className="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-2xl shadow-lg transition flex items-center justify-center gap-2 text-sm cursor-pointer"
                 >
                   <Zap className="w-4 h-4 fill-current" />
-                  <span>Comprar Curso por {currentPrice.toLocaleString('pt-MZ')} MT</span>
+                  <span>
+                    {paymentPlan === 'installments_2x' 
+                      ? `Pagar 1ª Parcela de ${installmentPrice.toLocaleString('pt-MZ')} MT`
+                      : `Comprar Curso por ${currentPrice.toLocaleString('pt-MZ')} MT`}
+                  </span>
                 </Link>
 
                 <p className="text-[11px] text-center text-slate-500">

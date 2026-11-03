@@ -75,6 +75,17 @@ export async function POST(request: NextRequest) {
       });
 
       if (existing) {
+        // Se estiver a pagar a 2ª Parcela do curso
+        if (data.installmentNumber === 2 || data.isSecondInstallment) {
+          existing.amountPaid = (existing.amountPaid || 0) + (data.amountPaid || data.amount || 0);
+          existing.installmentsPaid = 2;
+          existing.remainingAmount = 0;
+          if (data.orderId) existing.orderId = data.orderId;
+          if (data.paymentReference) existing.paymentReference = data.paymentReference;
+          await existing.save();
+          return NextResponse.json({ success: true, enrollment: existing, updatedInstallment: true });
+        }
+
         // If it was claimed or has new userId, update it
         if (data.userId && !existing.userId) {
           existing.userId = data.userId;
@@ -89,6 +100,13 @@ export async function POST(request: NextRequest) {
       const claimToken = `CLM_${crypto.randomBytes(16).toString('hex')}`;
       const enrollmentId = `ENR_${Date.now().toString().slice(-6)}_${Math.floor(100 + Math.random() * 900)}`;
 
+      const is2x = data.paymentPlan === 'installments_2x' || data.installments === 2 || data.installmentsTotal === 2;
+      const amountPaid = data.amountPaid || data.amount || 0;
+      const totalAmount = data.totalCourseAmount || data.totalPrice || (is2x ? (amountPaid * 2) : amountPaid);
+      const remaining = data.remainingAmount !== undefined 
+        ? Number(data.remainingAmount) 
+        : (is2x ? Math.max(0, totalAmount - amountPaid) : 0);
+
       const newEnrollment = new EnrollmentModel({
         id: enrollmentId,
         courseId: targetCourseId,
@@ -99,8 +117,13 @@ export async function POST(request: NextRequest) {
         userId: data.userId || undefined,
         orderId: data.orderId || undefined,
         paymentReference: data.paymentReference || data.reference || undefined,
-        amountPaid: data.amountPaid || data.amount || 0,
+        amountPaid: amountPaid,
         paymentMethod: data.paymentMethod || 'mpesa',
+        paymentPlan: is2x ? 'installments_2x' : 'full',
+        installmentsTotal: is2x ? 2 : 1,
+        installmentsPaid: data.installmentNumber || 1,
+        totalCourseAmount: totalAmount,
+        remainingAmount: remaining,
         claimToken,
         claimed: !!data.userId,
         claimedAt: data.userId ? new Date().toISOString() : undefined,

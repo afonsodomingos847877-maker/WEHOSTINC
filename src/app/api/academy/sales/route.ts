@@ -74,6 +74,7 @@ export async function POST(request: NextRequest) {
       if (price !== undefined) updateData.price = Number(price);
       if (originalPrice !== undefined) updateData.originalPrice = Number(originalPrice);
       if (accessType) updateData.accessType = accessType;
+      if (body.allowInstallments !== undefined) updateData.allowInstallments = !!body.allowInstallments;
 
       const updated = await CourseModel.findOneAndUpdate(
         { id: courseId },
@@ -96,8 +97,10 @@ export async function POST(request: NextRequest) {
       order.valorPorFaturar = 0;
       await order.save();
 
-      // Create enrollment
-      const cleanTitle = (order.serviceName || '').replace(/^curso:\s*/i, '').trim();
+      // Create or update enrollment
+      const isSecondInstallment = (order as any).installmentNumber === 2 || (order.serviceName || '').toLowerCase().includes('2ª parcela');
+      const isInstallments = (order as any).installments === 2 || (order.serviceName || '').toLowerCase().includes('parcela');
+      const cleanTitle = (order.serviceName || '').replace(/^curso:\s*/i, '').replace(/\(.*\)/, '').trim();
       let enrollment = await EnrollmentModel.findOne({
         studentEmail: order.clientEmail.toLowerCase().trim(),
         courseTitle: { $regex: cleanTitle, $options: 'i' },
@@ -105,8 +108,17 @@ export async function POST(request: NextRequest) {
       });
 
       let claimToken = enrollment?.claimToken;
-      if (!enrollment) {
+      if (enrollment && isSecondInstallment) {
+        enrollment.installmentsPaid = 2;
+        enrollment.remainingAmount = 0;
+        enrollment.amountPaid = (enrollment.amountPaid || 0) + (order.amount || 0);
+        await enrollment.save();
+      } else if (!enrollment) {
         claimToken = 'CLM_' + crypto.randomBytes(16).toString('hex');
+        const paid = order.amount || 0;
+        const totalAmt = (order as any).totalCoursePrice || (isInstallments ? paid * 2 : paid);
+        const remaining = isInstallments ? Math.max(0, totalAmt - paid) : 0;
+
         enrollment = await EnrollmentModel.create({
           id: 'ENR_' + Date.now().toString().slice(-6) + '_' + Math.floor(100 + Math.random() * 900),
           courseId: 'COURSE_MANUAL',
@@ -116,8 +128,13 @@ export async function POST(request: NextRequest) {
           studentPhone: order.clientPhone || '',
           orderId: order.id,
           paymentReference: order.reference || order.id,
-          amountPaid: order.amount || 0,
+          amountPaid: paid,
           paymentMethod: order.paymentMethod || 'mpesa',
+          paymentPlan: isInstallments ? 'installments_2x' : 'full',
+          installmentsTotal: isInstallments ? 2 : 1,
+          installmentsPaid: isSecondInstallment ? 2 : 1,
+          totalCourseAmount: totalAmt,
+          remainingAmount: remaining,
           claimToken,
           claimed: false,
           status: 'active',

@@ -90,8 +90,8 @@ export default function AdminAcademyPage() {
   const [salesLoading, setSalesLoading] = useState(false);
   const [recoverySending, setRecoverySending] = useState<string | null>(null);
   const [ussdSending, setUssdSending] = useState<string | null>(null);
-  const [priceModal, setPriceModal] = useState<{ show: boolean; courseId: string; courseTitle: string; price: number; originalPrice: number; accessType: 'paid' | 'free' }>({
-    show: false, courseId: '', courseTitle: '', price: 199, originalPrice: 500, accessType: 'paid'
+  const [priceModal, setPriceModal] = useState<{ show: boolean; courseId: string; courseTitle: string; price: number; originalPrice: number; accessType: 'paid' | 'free'; allowInstallments?: boolean }>({
+    show: false, courseId: '', courseTitle: '', price: 199, originalPrice: 500, accessType: 'paid', allowInstallments: true
   });
   const [filter, setFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [activeTab, setActiveTab] = useState<'courses' | 'modules' | 'lessons' | 'enrollments' | 'coupons'>('courses');
@@ -212,12 +212,13 @@ export default function AdminAcademyPage() {
           courseId: priceModal.courseId,
           price: priceModal.price,
           originalPrice: priceModal.originalPrice,
-          accessType: priceModal.accessType
+          accessType: priceModal.accessType,
+          allowInstallments: priceModal.allowInstallments !== false
         })
       });
       const data = await res.json();
       if (data.success) {
-        setCourses(prev => prev.map(c => c.id === priceModal.courseId ? { ...c, price: priceModal.price, accessType: priceModal.accessType, originalPrice: priceModal.originalPrice } as any : c));
+        setCourses(prev => prev.map(c => c.id === priceModal.courseId ? { ...c, price: priceModal.price, accessType: priceModal.accessType, originalPrice: priceModal.originalPrice, allowInstallments: priceModal.allowInstallments !== false } as any : c));
         setPriceModal(prev => ({ ...prev, show: false }));
         showToast('Preço do curso atualizado com sucesso!', 'success', 'Preço Salvo');
       } else {
@@ -1743,7 +1744,8 @@ export default function AdminAcademyPage() {
                                     courseTitle: course.title,
                                     price: course.price || 199,
                                     originalPrice: (course as any).originalPrice || 500,
-                                    accessType: course.accessType === 'free' ? 'free' : 'paid'
+                                    accessType: course.accessType === 'free' ? 'free' : 'paid',
+                                    allowInstallments: (course as any).allowInstallments !== false
                                   });
                                 }}
                                 className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition"
@@ -2666,6 +2668,23 @@ export default function AdminAcademyPage() {
                       <span className="absolute right-3 top-3 text-xs font-bold text-gray-400">MZN / MT</span>
                     </div>
                     <p className="text-[11px] text-gray-400 mt-1">Aparece riscado na página do curso para dar sensação de desconto aos alunos.</p>
+                  </div>
+
+                  <div className="pt-2 border-t border-gray-100">
+                    <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={priceModal.allowInstallments !== false}
+                        onChange={(e) => setPriceModal(prev => ({ ...prev, allowInstallments: e.target.checked }))}
+                        className="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500 cursor-pointer"
+                      />
+                      <span className="text-xs font-bold text-gray-800">
+                        Permitir pagamento em 2 parcelas (2x de {Math.ceil(priceModal.price / 2)} MT)
+                      </span>
+                    </label>
+                    <p className="text-[11px] text-gray-500 ml-6.5 mt-0.5 leading-tight">
+                      Permite que o aluno pague metade no ato da inscrição e a outra metade posteriormente.
+                    </p>
                   </div>
                 </>
               )}

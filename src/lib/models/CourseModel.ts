@@ -15,6 +15,8 @@ export interface ICourse {
   accessType: 'free' | 'paid' | 'preview';
   price?: number;
   originalPrice?: number;
+  allowInstallments?: boolean;
+  installmentPrice?: number;
   currency?: string;
   order: number;
   active: boolean;
@@ -49,6 +51,8 @@ const CourseSchema = new Schema<ICourse>({
   accessType: { type: String, required: true, enum: ['free', 'paid', 'preview'] },
   price: { type: Number },
   originalPrice: { type: Number },
+  allowInstallments: { type: Boolean, default: true },
+  installmentPrice: { type: Number },
   currency: { type: String, default: 'MZN' },
   order: { type: Number, required: true },
   active: { type: Boolean, required: true, default: true },
