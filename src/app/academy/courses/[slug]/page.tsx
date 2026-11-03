@@ -667,8 +667,8 @@ export default function CourseDetailsPage() {
                   <span>Sobre o Formador</span>
                 </h2>
                 {course.instructorGallery && course.instructorGallery.length > 0 && (
-                  <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full flex items-center gap-1.5 shadow-2xs">
-                    <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                  <span className="text-xs font-bold text-primary-700 bg-primary-50 border border-primary-200 px-3 py-1 rounded-full flex items-center gap-1.5 shadow-2xs">
+                    <Sparkles className="w-3.5 h-3.5 text-primary-600" />
                     <span>Prova Social & Atuação em Campo</span>
                   </span>
                 )}
@@ -699,7 +699,7 @@ export default function CourseDetailsPage() {
                     </div>
                     <div>
                       <h3 className="text-lg sm:text-xl font-black text-slate-900">{course.instructorName || 'Equipa WEHOSTHERE'}</h3>
-                      <p className="text-xs font-bold text-emerald-600">{course.instructorTitle || 'Especialistas em Engenharia & Cloud'}</p>
+                      <p className="text-xs font-bold text-primary-600">{course.instructorTitle || 'Especialistas em Engenharia & Cloud'}</p>
                     </div>
                   </div>
 
@@ -713,7 +713,7 @@ export default function CourseDetailsPage() {
                   <div className="lg:col-span-5 bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
                     <div className="flex items-center justify-between">
                       <p className="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                        <Camera className="w-4 h-4 text-emerald-600" />
+                        <Camera className="w-4 h-4 text-primary-600" />
                         <span>Galeria & Atuação</span>
                       </p>
                       <span className="text-[10px] text-slate-500 font-medium">
@@ -754,7 +754,7 @@ export default function CourseDetailsPage() {
                             }}
                             className={`relative aspect-4/3 rounded-xl overflow-hidden border cursor-pointer transition duration-200 ${
                               isSelected 
-                                ? 'ring-3 ring-emerald-500 border-emerald-500 scale-[1.03] shadow-md z-10' 
+                                ? 'ring-3 ring-primary-500 border-primary-500 scale-[1.03] shadow-md z-10' 
                                 : 'border-slate-200 bg-slate-900/10 hover:border-slate-400 opacity-75 hover:opacity-100 hover:scale-[1.02]'
                             }`}
                             title="Clique para pré-visualizar ao lado"
@@ -767,7 +767,7 @@ export default function CourseDetailsPage() {
                             
                             {/* Distintivo de Selecionada */}
                             {isSelected && (
-                              <div className="absolute top-1.5 left-1.5 bg-emerald-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded-md shadow flex items-center gap-1">
+                              <div className="absolute top-1.5 left-1.5 bg-primary-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded-md shadow flex items-center gap-1">
                                 <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
                                 <span>A ver</span>
                               </div>
@@ -818,15 +818,15 @@ export default function CourseDetailsPage() {
           <div className="lg:col-span-1 space-y-6">
             {/* PRÉ-VISUALIZAÇÃO DA GALERIA DO FORMADOR (Preenche o espaço lateral vazio) */}
             {course.instructorGallery && course.instructorGallery.length > 0 && (
-              <div className="sticky top-24 bg-white rounded-3xl p-5 border border-emerald-200/90 shadow-lg space-y-3.5 animate-in fade-in duration-300">
+              <div className="sticky top-24 bg-white rounded-3xl p-5 border border-primary-200/90 shadow-lg space-y-3.5 animate-in fade-in duration-300">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
-                    <Camera className="w-4 h-4 text-emerald-600" />
+                    <Camera className="w-4 h-4 text-primary-600" />
                     <span className="text-xs font-black uppercase tracking-wider text-slate-800">
                       Pré-visualização
                     </span>
                   </div>
-                  <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+                  <span className="text-[11px] font-bold text-primary-700 bg-primary-50 border border-primary-200 px-2.5 py-0.5 rounded-full">
                     Foto {activePreviewIndex + 1} de {course.instructorGallery.length}
                   </span>
                 </div>
@@ -897,7 +897,7 @@ export default function CourseDetailsPage() {
                     setLightboxImage(activeImg);
                     setLightboxIndex(activePreviewIndex);
                   }}
-                  className="w-full py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black transition flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
+                  className="w-full py-2.5 px-3 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-xs font-black transition flex items-center justify-center gap-1.5 cursor-pointer shadow-sm hover:shadow-md"
                 >
                   <Maximize2 className="w-4 h-4" />
                   <span>Ver Foto em Tela Cheia</span>
@@ -911,13 +911,13 @@ export default function CourseDetailsPage() {
 
             <div className="bg-slate-900 text-white rounded-3xl p-6 border border-slate-800 shadow-xl">
               <h3 className="text-base font-bold mb-3 flex items-center gap-2">
-                <ShieldCheck className="w-5 h-5 text-emerald-400" />
+                <ShieldCheck className="w-5 h-5 text-primary-400" />
                 <span>Garantia de Satisfação</span>
               </h3>
               <p className="text-xs text-slate-300 leading-relaxed mb-4">
                 Se após assistir às aulas sentires que o curso não entregou o valor prometido, o nosso suporte está disponível para te ajudar e garantir a tua total satisfação.
               </p>
-              <div className="text-xs text-emerald-400 font-bold">
+              <div className="text-xs text-primary-400 font-bold">
                 ✓ Suporte dedicado em Moçambique
               </div>
             </div>
