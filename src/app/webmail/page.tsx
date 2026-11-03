@@ -160,6 +160,8 @@ function WebmailContent() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState('');
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+  const [showPasswordText, setShowPasswordText] = useState(false);
 
   // Attachment error state
   const [attachmentError, setAttachmentError] = useState('');
@@ -1263,6 +1265,21 @@ function WebmailContent() {
             </span>
           )}
 
+          {/* Botão Rápido: Mudar Senha */}
+          <button
+            type="button"
+            onClick={() => {
+              setPasswordError('');
+              setPasswordSuccess('');
+              setShowChangePasswordModal(true);
+            }}
+            className="flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 text-blue-700 border border-blue-200 rounded-xl transition cursor-pointer text-xs font-bold shadow-2xs shrink-0 active:scale-95"
+            title="Alterar senha desta conta de e-mail (reflete imediatamente na Migadu)"
+          >
+            <Key className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+            <span className="hidden sm:inline">Mudar Senha</span>
+          </button>
+
           {/* Refresh */}
           <button
             onClick={() => {
@@ -1694,6 +1711,21 @@ function WebmailContent() {
                 </div>
               </div>
             )}
+
+            {/* Botão Rápido de Mudar Senha na Barra Lateral */}
+            <button
+              type="button"
+              onClick={() => {
+                setPasswordError('');
+                setPasswordSuccess('');
+                setShowChangePasswordModal(true);
+              }}
+              className="w-full flex items-center justify-center space-x-2 px-3 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 text-blue-700 border border-blue-200 rounded-xl transition cursor-pointer text-xs font-bold shadow-2xs mt-2.5 active:scale-98"
+              title="Alterar senha desta conta de e-mail"
+            >
+              <Key className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+              <span>Mudar Senha do E-mail</span>
+            </button>
           </div>
         </aside>
 
@@ -3188,18 +3220,18 @@ function WebmailContent() {
         </div>
       )}
 
-      {/* MODAL: Change Password */}
+      {/* MODAL: Alterar Senha de E-mail (Sincronizado com Migadu) */}
       {showChangePasswordModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50">
-          <div className="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl max-w-md w-full p-5 sm:p-6 animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto sm:mx-4">
-            <div className="flex items-center justify-between mb-4">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-2 sm:p-4">
+          <div className="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl max-w-md w-full p-5 sm:p-6 animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 max-h-[92vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary-100 rounded-full flex items-center justify-center shrink-0">
-                  <ShieldCheck className="h-5 w-5 sm:h-6 sm:w-6 text-primary-600" />
+                <div className="w-10 h-10 sm:w-11 sm:h-11 bg-blue-100 text-blue-700 rounded-2xl flex items-center justify-center font-bold shrink-0">
+                  <Key className="h-5 w-5 text-blue-600" />
                 </div>
                 <div>
-                  <h3 className="text-base sm:text-lg font-black text-gray-900">Alterar Senha</h3>
-                  <p className="text-xs sm:text-sm text-gray-600">Atualize a sua senha de acesso</p>
+                  <h3 className="text-base sm:text-lg font-black text-gray-900">Alterar Senha do E-mail</h3>
+                  <p className="text-xs font-mono font-semibold text-blue-600 truncate max-w-[220px] sm:max-w-none">{selectedAccountEmail}</p>
                 </div>
               </div>
               <button
@@ -3218,6 +3250,14 @@ function WebmailContent() {
               </button>
             </div>
 
+            {/* Aviso de Sincronização Migadu */}
+            <div className="p-3 bg-blue-50/80 border border-blue-200/80 rounded-xl text-xs text-blue-900 flex items-start space-x-2 mb-4">
+              <Sparkles className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
+              <p className="leading-relaxed text-[11px]">
+                A nova senha será <strong>atualizada instantaneamente na Migadu</strong> e passará a valer para este Webmail, telemóvel e Outlook.
+              </p>
+            </div>
+
             <form onSubmit={handleChangePassword} className="space-y-4">
               {passwordError && (
                 <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl">
@@ -3232,39 +3272,70 @@ function WebmailContent() {
               )}
 
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1.5">Senha Atual</label>
+                <label className="block text-xs font-bold text-gray-700 mb-1.5">Senha Atual da Caixa</label>
                 <input
-                  type="password"
+                  type={showPasswordText ? "text" : "password"}
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-900 outline-none focus:ring-2 focus:ring-primary-500 font-medium"
+                  className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-900 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
                   placeholder="Digite sua senha atual"
+                  required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1.5">Nova Senha</label>
-                <input
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-900 outline-none focus:ring-2 focus:ring-primary-500 font-medium"
-                  placeholder="Mínimo 6 caracteres"
-                />
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-bold text-gray-700">Nova Senha</label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%&*';
+                      let generated = '';
+                      for (let i = 0; i < 12; i++) {
+                        generated += chars.charAt(Math.floor(Math.random() * chars.length));
+                      }
+                      setNewPassword(generated);
+                      setConfirmPassword(generated);
+                      setShowPasswordText(true);
+                    }}
+                    className="text-[11px] font-bold text-blue-600 hover:text-blue-800 cursor-pointer flex items-center gap-1"
+                  >
+                    <span>Gerar Senha Forte</span>
+                  </button>
+                </div>
+                <div className="relative">
+                  <input
+                    type={showPasswordText ? "text" : "password"}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-900 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium pr-10"
+                    placeholder="Mínimo 6 caracteres"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPasswordText(!showPasswordText)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer p-1"
+                    title={showPasswordText ? "Ocultar senha" : "Ver senha"}
+                  >
+                    {showPasswordText ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-1.5">Confirmar Nova Senha</label>
                 <input
-                  type="password"
+                  type={showPasswordText ? "text" : "password"}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-900 outline-none focus:ring-2 focus:ring-primary-500 font-medium"
+                  className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-900 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
                   placeholder="Digite novamente a nova senha"
+                  required
                 />
               </div>
 
-              <div className="flex items-center space-x-3 pt-2">
+              <div className="flex items-center space-x-3 pt-3">
                 <button
                   type="button"
                   onClick={() => {
@@ -3275,16 +3346,23 @@ function WebmailContent() {
                     setPasswordError('');
                     setPasswordSuccess('');
                   }}
-                  className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-black text-xs sm:text-sm rounded-xl transition cursor-pointer"
+                  className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs sm:text-sm rounded-xl transition cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  disabled={!currentPassword || !newPassword || !confirmPassword}
-                  className="flex-1 py-3 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-black text-xs sm:text-sm rounded-xl transition cursor-pointer shadow-md"
+                  disabled={!currentPassword || !newPassword || !confirmPassword || isUpdatingPassword}
+                  className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-xs sm:text-sm rounded-xl transition cursor-pointer shadow-md flex items-center justify-center space-x-2"
                 >
-                  Alterar Senha
+                  {isUpdatingPassword ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin text-white" />
+                      <span>A sincronizar...</span>
+                    </>
+                  ) : (
+                    <span>Salvar Nova Senha</span>
+                  )}
                 </button>
               </div>
             </form>
