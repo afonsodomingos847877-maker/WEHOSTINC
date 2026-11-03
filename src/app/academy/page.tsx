@@ -104,7 +104,7 @@ export default function PublicAcademyPage() {
           </h1>
 
           <p className="mt-4 text-sm sm:text-base text-slate-300 max-w-xl mx-auto leading-relaxed">
-            Cursos diretos ao ponto com especialistas. Compra sem login prévio e ativação imediata via M-Pesa e e-Mola.
+            Cursos diretos ao ponto com especialistas.
           </p>
 
           {/* Quick Trust Highlights */}
