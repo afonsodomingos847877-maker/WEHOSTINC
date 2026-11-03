@@ -869,13 +869,13 @@ export default function Home() {
               <div className="absolute -inset-3 bg-gradient-to-tr from-primary-600/20 via-sky-500/20 to-indigo-600/20 rounded-[36px] blur-2xl opacity-75 group-hover:opacity-100 transition duration-1000 -z-10" />
 
               <div className="relative rounded-2xl sm:rounded-3xl lg:rounded-[32px] overflow-hidden bg-white shadow-2xl shadow-blue-950/10 border border-slate-200/80 group">
-                <div className="relative w-full aspect-16/11 sm:aspect-16/10 overflow-hidden">
+                <div className="relative w-full h-[320px] sm:h-[420px] lg:h-[480px] overflow-hidden">
                   <Image
-                    src="/academiaweb.jpg"
+                    src="/academiaweb.jpeg"
                     alt="Academia WEHOSTHERE — Cursos de Tecnologia e Programação em Moçambique"
                     fill
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 60vw, 720px"
-                    className="object-cover object-center group-hover:scale-103 transition-transform duration-700 ease-out"
+                    className="object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
                     priority
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent pointer-events-none" />
@@ -907,7 +907,7 @@ export default function Home() {
 
             {/* Coluna de Texto & Conteúdo */}
             <div className="lg:col-span-5 flex flex-col items-start text-left order-1 lg:order-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-primary-50 text-primary-700 border border-primary-200 mb-3 shadow-2xs">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-primary-50 text-primary-700 border border-primary-200 mb-3 shadow-xs">
                 <GraduationCap className="w-4 h-4 text-primary-600" />
                 <span>Academia WEHOSTHERE</span>
               </span>
@@ -922,7 +922,7 @@ export default function Home() {
 
               {/* 3 Pontos Chave */}
               <div className="space-y-3 mb-8 w-full">
-                <div className="flex items-start gap-3 p-3 rounded-2xl bg-white border border-slate-100 shadow-xs">
+                <div className="flex items-start gap-3 p-3 rounded-2xl bg-white border border-slate-100 shadow-sm">
                   <div className="w-8 h-8 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center shrink-0 mt-0.5">
                     <Code className="w-4 h-4" />
                   </div>
@@ -932,7 +932,7 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 p-3 rounded-2xl bg-white border border-slate-100 shadow-xs">
+                <div className="flex items-start gap-3 p-3 rounded-2xl bg-white border border-slate-100 shadow-sm">
                   <div className="w-8 h-8 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center shrink-0 mt-0.5">
                     <Award className="w-4 h-4" />
                   </div>
@@ -942,7 +942,7 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 p-3 rounded-2xl bg-white border border-slate-100 shadow-xs">
+                <div className="flex items-start gap-3 p-3 rounded-2xl bg-white border border-slate-100 shadow-sm">
                   <div className="w-8 h-8 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center shrink-0 mt-0.5">
                     <Smartphone className="w-4 h-4" />
                   </div>
