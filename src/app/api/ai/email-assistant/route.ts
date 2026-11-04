@@ -131,7 +131,150 @@ async function translateTextNeural(text: string, targetLang: 'pt' | 'en'): Promi
   return cleanInput;
 }
 
-// POST - Webmail AI Assistant (Summarize, Translate, Smart Reply, Improve Writing)
+// Helper: Transformar fala/voz natural num e-mail corporativo estruturado + assunto inteligente
+function transformVoiceTranscriptToCorporateEmail(
+  rawTranscript: string,
+  recipientEmailOrName: string = '',
+  senderName: string = '',
+  tone: string = 'professional',
+  lang: 'pt' | 'en' = 'pt'
+): { body: string; generatedSubject: string } {
+  let text = decodeHtmlEntitiesServer(rawTranscript || '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (!text) {
+    return {
+      body: '',
+      generatedSubject: '',
+    };
+  }
+
+  // Extrair possível nome do destinatário falado no comando (ex: "Diz ao João que...", "Envia um email para a Maria a dizer que...")
+  let spokenRecipient = '';
+  const commandMatch = text.match(
+    /^(?:olá\s+|bom dia\s+|boa tarde\s+|boa noite\s+)?(?:por favor\s+)?(?:escreve|escreva|envia|envie|manda|mande|diz|diga|fala|avisa|avise|informa|informe)\s+(?:um\s+e-?mail\s+|uma\s+mensagem\s+)?(?:para\s+o\s+|para\s+a\s+|para\s+|ao\s+|à\s+)?([A-ZÀ-Úa-zà-ú]+(?:\s+[A-ZÀ-Úa-zà-ú]+)?)\s+(?:a\s+dizer\s+que|dizendo\s+que|sobre|para\s+informar\s+que|que)\s+([\s\S]+)$/i
+  );
+
+  if (commandMatch) {
+    const candidateName = commandMatch[1].trim();
+    const stopWords = ['cliente', 'equipa', 'equipe', 'diretor', 'empresa', 'ele', 'ela', 'eles'];
+    if (!stopWords.includes(candidateName.toLowerCase())) {
+      spokenRecipient = candidateName.charAt(0).toUpperCase() + candidateName.slice(1);
+    }
+    text = commandMatch[2].trim();
+  } else {
+    // Remover prefixos simples de comando de voz ("escreve um email a dizer que...", "informa que...", "diz que...")
+    text = text.replace(
+      /^(?:por favor\s+)?(?:escreve|escreva|envia|envie|manda|mande|diz|diga|informa|informe)\s+(?:um\s+e-?mail\s+|uma\s+mensagem\s+)?(?:a\s+dizer\s+que\s+|dizendo\s+que\s+|para\s+informar\s+que\s+|que\s+)/i,
+      ''
+    ).trim();
+  }
+
+  // Limpar vícios de linguagem oral no início
+  text = text.replace(/^(?:então|hum|ahn|olha|bem|pronto|basicamente)[,\s]+/i, '').trim();
+
+  // Converter 3ª pessoa indireta ("o serviço dele já está ativo") para tratamento direto cordial ("o seu serviço já se encontra ativo")
+  text = text
+    .replace(/\bdele\b/gi, 'seu')
+    .replace(/\bdela\b/gi, 'sua')
+    .replace(/\bque ele\b/gi, 'que V. Exa.')
+    .replace(/\bque ela\b/gi, 'que V. Exa.')
+    .replace(/\bpara ele\b/gi, 'para si')
+    .replace(/\bpara ela\b/gi, 'para si');
+
+  // Garantir pontuação e letras maiúsculas em cada frase
+  const rawSentences = text
+    .split(/(?<=[.!?])\s+|\s+(?:e\s+também|além\s+disso|outro\s+ponto\s+é\s+que)\s+/i)
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  const polishedSentences = rawSentences.map((s) => {
+    const capitalized = s.charAt(0).toUpperCase() + s.slice(1);
+    return /[.!?]$/.test(capitalized) ? capitalized : `${capitalized}.`;
+  });
+
+  // Determinar nome do destinatário
+  let recipientDisplay = spokenRecipient;
+  if (!recipientDisplay && recipientEmailOrName) {
+    const cleanRec = recipientEmailOrName.split('@')[0].replace(/[._\-0-9]+/g, ' ').trim();
+    if (cleanRec) {
+      recipientDisplay = cleanRec
+        .split(/\s+/)
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+        .join(' ');
+    }
+  }
+
+  // Gerar assunto profissional automático baseado no conteúdo falado
+  const lower = text.toLowerCase();
+  let generatedSubject = lang === 'en' ? 'Professional Update & Information' : 'Informação e Atualização Corporativa';
+
+  if (lower.includes('fatura') || lower.includes('pagamento') || lower.includes('comprovativo') || lower.includes('recibo')) {
+    generatedSubject = 'Confirmação de Pagamento e Faturação';
+  } else if (lower.includes('reunião') || lower.includes('encontro') || lower.includes('agenda') || lower.includes('call')) {
+    generatedSubject = 'Agendamento e Alinhamento de Reunião';
+  } else if (lower.includes('orçamento') || lower.includes('proposta') || lower.includes('cotação') || lower.includes('preço')) {
+    generatedSubject = 'Proposta Comercial e Condições';
+  } else if (lower.includes('ativo') || lower.includes('ativação') || lower.includes('conta') || lower.includes('serviço') || lower.includes('domínio')) {
+    generatedSubject = 'Atualização sobre Ativação de Serviço';
+  } else if (lower.includes('relatório') || lower.includes('documento') || lower.includes('anexo') || lower.includes('ficheiro')) {
+    generatedSubject = 'Envio de Documentação e Informações';
+  } else if (lower.includes('prazo') || lower.includes('entrega') || lower.includes('projeto')) {
+    generatedSubject = 'Ponto de Situação do Projeto';
+  } else {
+    const words = polishedSentences[0]
+      .replace(/[.!?]+$/, '')
+      .split(/\s+/)
+      .slice(0, 7)
+      .join(' ');
+    if (words.length > 5) {
+      generatedSubject = words.charAt(0).toUpperCase() + words.slice(1);
+    }
+  }
+
+  const greeting =
+    lang === 'en'
+      ? `Dear ${recipientDisplay || 'Sir/Madam'},`
+      : tone === 'friendly'
+      ? `Olá${recipientDisplay ? ` ${recipientDisplay}` : ''},`
+      : `Prezado(a)${recipientDisplay ? ` ${recipientDisplay}` : ''},`;
+
+  const introLine =
+    lang === 'en'
+      ? 'I hope this email finds you well.'
+      : tone === 'friendly'
+      ? 'Espero que esteja tudo ótimo consigo.'
+      : 'Espero que este e-mail o(a) encontre bem.';
+
+  const mainParagraph =
+    polishedSentences.length > 1
+      ? polishedSentences.join('\n\n')
+      : `Venho por este meio informar que ${polishedSentences[0].charAt(0).toLowerCase() + polishedSentences[0].slice(1)}`;
+
+  const closingLine =
+    lang === 'en'
+      ? 'Please let me know if you need any further information.\n\nBest regards,'
+      : tone === 'friendly'
+      ? 'Qualquer dúvida, estou inteiramente à disposição.\n\nMelhores cumprimentos,'
+      : 'Permanecemos à inteira disposição para quaisquer esclarecimentos adicionais.\n\nCom os melhores cumprimentos,';
+
+  const cleanSender = senderName
+    ? senderName.split('@')[0].replace(/[._\-]+/g, ' ').trim()
+    : '';
+
+  const signatureBlock = cleanSender
+    ? `${closingLine}\n${cleanSender.charAt(0).toUpperCase() + cleanSender.slice(1)}`
+    : closingLine;
+
+  return {
+    body: `${greeting}\n\n${introLine}\n\n${mainParagraph}\n\n${signatureBlock}`,
+    generatedSubject,
+  };
+}
+
+// POST - Webmail AI Assistant (Summarize, Translate, Smart Reply, Improve Writing, Voice to Email)
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -140,6 +283,8 @@ export async function POST(request: NextRequest) {
       content = '', 
       subject = '', 
       from = '', 
+      recipient = '',
+      senderName = '',
       tone = 'professional',
       targetLang = 'pt',
       prompt = ''
@@ -147,6 +292,102 @@ export async function POST(request: NextRequest) {
 
     if (!content && !prompt && !subject) {
       return NextResponse.json({ error: 'Conteúdo é obrigatório' }, { status: 400 });
+    }
+
+    // Ação 23: Voice to Email (Transforma a voz do utilizador num e-mail profissional + assunto sugerido)
+    if (action === 'voice_to_email') {
+      const lang: 'pt' | 'en' = targetLang === 'en' ? 'en' : 'pt';
+      const fallbackVoice = transformVoiceTranscriptToCorporateEmail(
+        content,
+        recipient,
+        senderName,
+        tone,
+        lang
+      );
+
+      const geminiKey = process.env.GEMINI_API_KEY;
+      const openaiKey = process.env.OPENAI_API_KEY;
+
+      if (geminiKey) {
+        try {
+          const voicePrompt = `O utilizador ditou por voz o seguinte comando ou mensagem: "${content}".
+Transforme esta fala num e-mail corporativo altamente profissional, claro, educado e pronto para enviar em ${lang === 'en' ? 'inglês' : 'português'} (tom: ${tone}).
+Destinatário: ${recipient || 'Cliente/Parceiro'}.
+Remetente: ${senderName || 'Equipa'}.
+NÃO utilize asteriscos (**).
+Responda no formato exato:
+ASSUNTO: [Assunto profissional sugerido]
+CORPO:
+[Corpo completo do e-mail com saudação, desenvolvimento e despedida]`;
+
+          const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: voicePrompt }] }],
+            }),
+          });
+          const data = await res.json();
+          const generated = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (generated) {
+            const subjMatch = generated.match(/ASSUNTO:\s*(.+)/i);
+            const bodyMatch = generated.match(/CORPO:\s*([\s\S]+)/i);
+            return NextResponse.json({
+              success: true,
+              result: stripMarkdownAsterisks(bodyMatch ? bodyMatch[1].trim() : generated),
+              generatedSubject: stripMarkdownAsterisks(subjMatch ? subjMatch[1].trim() : fallbackVoice.generatedSubject),
+            });
+          }
+        } catch (err) {
+          console.warn('[AI Voice-to-Email] Gemini fallback:', err);
+        }
+      }
+
+      if (openaiKey) {
+        try {
+          const res = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${openaiKey}`,
+            },
+            body: JSON.stringify({
+              model: 'gpt-4o-mini',
+              messages: [
+                {
+                  role: 'system',
+                  content:
+                    'Você transforma transcrições de voz do utilizador em e-mails corporativos impecáveis, sem asteriscos (**). Responda sempre com ASSUNTO: ... na primeira linha e CORPO: nas linhas seguintes.',
+                },
+                {
+                  role: 'user',
+                  content: `Fala transcrita: "${content}"\nDestinatário: ${recipient}\nTom: ${tone}`,
+                },
+              ],
+              temperature: 0.6,
+            }),
+          });
+          const data = await res.json();
+          const generated = data?.choices?.[0]?.message?.content;
+          if (generated) {
+            const subjMatch = generated.match(/ASSUNTO:\s*(.+)/i);
+            const bodyMatch = generated.match(/CORPO:\s*([\s\S]+)/i);
+            return NextResponse.json({
+              success: true,
+              result: stripMarkdownAsterisks(bodyMatch ? bodyMatch[1].trim() : generated),
+              generatedSubject: stripMarkdownAsterisks(subjMatch ? subjMatch[1].trim() : fallbackVoice.generatedSubject),
+            });
+          }
+        } catch (err) {
+          console.warn('[AI Voice-to-Email] OpenAI fallback:', err);
+        }
+      }
+
+      return NextResponse.json({
+        success: true,
+        result: stripMarkdownAsterisks(fallbackVoice.body),
+        generatedSubject: stripMarkdownAsterisks(fallbackVoice.generatedSubject),
+      });
     }
 
     // Ação de Tradução Instantânea (Português <-> Inglês)

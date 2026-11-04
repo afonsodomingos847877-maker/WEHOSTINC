@@ -9,7 +9,8 @@ import {
   FileText, LogOut, ChevronRight, X, AlertCircle, Sparkles, Clock, Printer, Download, Loader2, Filter, Maximize2, Minimize2, Bold, Italic, Underline, Type,
   Wand2, Bot, FileSignature, Lightbulb, Check, Wifi, WifiOff, Pin, PinOff, Flag, Flame, Lock, Key, Eye, EyeOff,
   Bell, Calendar, TrendingUp, LayoutGrid, HelpCircle, Smartphone, Laptop, Monitor,
-  Globe, Languages, Sun, Sunset, Moon, MessageSquare, Image as ImageIcon, ExternalLink, BarChart3
+  Globe, Languages, Sun, Sunset, Moon, MessageSquare, Image as ImageIcon, ExternalLink, BarChart3,
+  Mic, MicOff, Volume2
 } from 'lucide-react';
 import { auth, User as AuthUser } from '@/lib/auth';
 import { dataManager, EmailAccount } from '@/lib/data';
@@ -443,6 +444,18 @@ function WebmailContent() {
   const [isTranslatingEmail, setIsTranslatingEmail] = useState<'pt' | 'en' | null>(null);
   const [isTranslatingDraft, setIsTranslatingDraft] = useState<'pt' | 'en' | null>(null);
   const [trustedSenders, setTrustedSenders] = useState<Set<string>>(new Set());
+
+  // 23. Voice to Email States (Fala -> E-mail Profissional com IA)
+  const [showVoiceToEmailPanel, setShowVoiceToEmailPanel] = useState(false);
+  const [isRecordingVoice, setIsRecordingVoice] = useState(false);
+  const [voiceTargetMode, setVoiceTargetMode] = useState<'compose' | 'quick_reply'>('compose');
+  const [voiceTranscript, setVoiceTranscript] = useState('');
+  const [voiceInterimTranscript, setVoiceInterimTranscript] = useState('');
+  const [voiceTone, setVoiceTone] = useState<'professional' | 'friendly' | 'formal'>('professional');
+  const [voiceLang, setVoiceLang] = useState<'pt-PT' | 'en-US'>('pt-PT');
+  const [isConvertingVoiceToEmail, setIsConvertingVoiceToEmail] = useState(false);
+  const [voiceError, setVoiceError] = useState('');
+  const speechRecognitionRef = useRef<any>(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -2101,6 +2114,166 @@ function WebmailContent() {
       console.error('Error improving draft:', err);
     } finally {
       setIsImprovingDraft(false);
+    }
+  };
+
+  // 23. Voice to Email — Captura de Voz em Tempo Real + Transformação em E-mail Corporativo Profissional
+  const stopVoiceRecording = () => {
+    if (speechRecognitionRef.current) {
+      try {
+        speechRecognitionRef.current.stop();
+      } catch {}
+      speechRecognitionRef.current = null;
+    }
+    setIsRecordingVoice(false);
+    setVoiceInterimTranscript('');
+  };
+
+  const startVoiceRecording = (mode: 'compose' | 'quick_reply' = 'compose') => {
+    if (typeof window === 'undefined') return;
+    setVoiceError('');
+    setVoiceTargetMode(mode);
+    if (mode === 'compose') {
+      setShowVoiceToEmailPanel(true);
+    }
+
+    const SpeechRecognitionAPI =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognitionAPI) {
+      setVoiceError(
+        'O seu navegador não suporta reconhecimento de voz direto. Pode digitar ou colar o comando abaixo para a IA transformar num e-mail profissional.'
+      );
+      return;
+    }
+
+    try {
+      if (speechRecognitionRef.current) {
+        try {
+          speechRecognitionRef.current.stop();
+        } catch {}
+      }
+
+      const recognition = new SpeechRecognitionAPI();
+      recognition.lang = voiceLang;
+      recognition.continuous = true;
+      recognition.interimResults = true;
+
+      recognition.onstart = () => {
+        setIsRecordingVoice(true);
+        setVoiceError('');
+      };
+
+      recognition.onresult = (event: any) => {
+        let finalChunk = '';
+        let interimChunk = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcriptPiece = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalChunk += transcriptPiece + ' ';
+          } else {
+            interimChunk += transcriptPiece;
+          }
+        }
+        if (finalChunk) {
+          setVoiceTranscript((prev) => `${prev ? prev.trim() + ' ' : ''}${finalChunk.trim()}`);
+        }
+        setVoiceInterimTranscript(interimChunk);
+      };
+
+      recognition.onerror = (event: any) => {
+        if (event?.error === 'not-allowed') {
+          setVoiceError('Permissão de microfone negada. Autorize o microfone no navegador para ditar por voz.');
+        } else if (event?.error !== 'no-speech' && event?.error !== 'aborted') {
+          setVoiceError('Não foi possível captar o áudio. Verifique o microfone ou escreva o resumo abaixo.');
+        }
+        setIsRecordingVoice(false);
+      };
+
+      recognition.onend = () => {
+        setIsRecordingVoice(false);
+        setVoiceInterimTranscript('');
+      };
+
+      speechRecognitionRef.current = recognition;
+      recognition.start();
+    } catch (err) {
+      console.error('[Voice to Email] Erro ao iniciar microfone:', err);
+      setVoiceError('Não foi possível iniciar a gravação de voz.');
+      setIsRecordingVoice(false);
+    }
+  };
+
+  const handleConvertVoiceToProfessionalEmail = async (overrideTarget?: 'compose' | 'quick_reply') => {
+    const target = overrideTarget || voiceTargetMode;
+    const combinedSpoken = `${voiceTranscript} ${voiceInterimTranscript}`.trim();
+    if (!combinedSpoken) {
+      setVoiceError('Fale ao microfone ou escreva uma ideia rápida antes de transformar em e-mail profissional.');
+      return;
+    }
+
+    if (isRecordingVoice) {
+      stopVoiceRecording();
+    }
+
+    setIsConvertingVoiceToEmail(true);
+    setVoiceError('');
+
+    try {
+      const recipientRef =
+        target === 'quick_reply'
+          ? selectedMessage?.fromName || selectedMessage?.fromEmail || ''
+          : composeTo;
+
+      const senderRef =
+        userSignature?.fullName ||
+        user?.name ||
+        selectedAccountEmail.split('@')[0] ||
+        '';
+
+      const res = await fetch('/api/ai/email-assistant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'voice_to_email',
+          content: combinedSpoken,
+          recipient: recipientRef,
+          senderName: senderRef,
+          tone: voiceTone,
+          targetLang: voiceLang.startsWith('en') ? 'en' : 'pt',
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success && data.result) {
+        const cleanedBody = cleanAiText(data.result);
+
+        if (target === 'quick_reply') {
+          setReplyText(cleanedBody);
+        } else {
+          const htmlParagraphs = cleanedBody
+            .split(/\n\n+/)
+            .map((p: string) => `<p>${p.trim().replace(/\n/g, '<br/>')}</p>`)
+            .join('');
+          setComposeBody(htmlParagraphs);
+
+          if (!composeSubject.trim() && data.generatedSubject) {
+            setComposeSubject(cleanAiText(data.generatedSubject));
+          }
+          setShowVoiceToEmailPanel(false);
+        }
+
+        setVoiceTranscript('');
+        setVoiceInterimTranscript('');
+        soundEffects.playAICompleteSound();
+      } else {
+        setVoiceError(data.error || 'Não foi possível transformar a fala em e-mail.');
+      }
+    } catch (err) {
+      console.error('[Voice to Email] Erro ao converter fala:', err);
+      setVoiceError('Erro ao comunicar com o assistente de IA.');
+    } finally {
+      setIsConvertingVoiceToEmail(false);
     }
   };
 
@@ -4195,13 +4368,88 @@ function WebmailContent() {
 
               {/* Quick Reply Form */}
               <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-2xs border border-neutral-200 space-y-3">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="text-xs font-bold text-neutral-700 flex items-center space-x-1.5">
                     <Reply className="h-4 w-4 text-neutral-600" />
                     <span className="truncate">Resposta rápida para <span className="font-mono text-neutral-900">{selectedMessage.fromEmail}</span></span>
                   </span>
-                  <span className="text-[10px] text-neutral-400 hidden sm:inline">Shift + Enter para nova linha</span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (isRecordingVoice && voiceTargetMode === 'quick_reply') {
+                          stopVoiceRecording();
+                        } else {
+                          setVoiceTranscript('');
+                          setVoiceInterimTranscript('');
+                          startVoiceRecording('quick_reply');
+                        }
+                      }}
+                      className={`px-2.5 py-1 rounded-xl text-[11px] font-bold transition cursor-pointer flex items-center gap-1.5 border ${
+                        isRecordingVoice && voiceTargetMode === 'quick_reply'
+                          ? 'bg-rose-600 text-white border-rose-600 animate-pulse shadow-sm'
+                          : 'bg-neutral-900 hover:bg-black text-white border-neutral-900'
+                      }`}
+                      title="Fale e a IA transforma a sua voz num e-mail profissional"
+                    >
+                      {isRecordingVoice && voiceTargetMode === 'quick_reply' ? (
+                        <>
+                          <MicOff className="h-3.5 w-3.5 text-white" />
+                          <span>Parar Voz</span>
+                        </>
+                      ) : (
+                        <>
+                          <Mic className="h-3.5 w-3.5 text-emerald-400" />
+                          <span>Voice to Email</span>
+                        </>
+                      )}
+                    </button>
+                    <span className="text-[10px] text-neutral-400 hidden sm:inline">Shift + Enter para nova linha</span>
+                  </div>
                 </div>
+
+                {/* Painel Voice-to-Email na Resposta Rápida */}
+                {(voiceTargetMode === 'quick_reply' && (isRecordingVoice || voiceTranscript || voiceInterimTranscript)) && (
+                  <div className="p-3 bg-neutral-950 text-white rounded-2xl border border-neutral-800 space-y-2.5 animate-in fade-in duration-200">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className={`w-2.5 h-2.5 rounded-full ${isRecordingVoice ? 'bg-rose-500 animate-ping' : 'bg-emerald-400'}`} />
+                        <span className="text-[11px] font-extrabold uppercase tracking-wider text-emerald-400">
+                          {isRecordingVoice ? 'A ouvir a sua voz em tempo real...' : 'Voz captada — Pronta para transformar'}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          stopVoiceRecording();
+                          setVoiceTranscript('');
+                          setVoiceInterimTranscript('');
+                        }}
+                        className="text-neutral-400 hover:text-white p-1 rounded-lg cursor-pointer"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                    <p className="text-xs text-neutral-200 italic bg-white/5 p-2.5 rounded-xl border border-white/10 min-h-[38px]">
+                      "{`${voiceTranscript} ${voiceInterimTranscript}`.trim() || 'Fale naturalmente, ex: "Diz que já recebemos o documento e vamos aprovar hoje à tarde"...'}"
+                    </p>
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleConvertVoiceToProfessionalEmail('quick_reply')}
+                        disabled={isConvertingVoiceToEmail || !`${voiceTranscript} ${voiceInterimTranscript}`.trim()}
+                        className="px-3.5 py-1.5 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-neutral-950 font-extrabold text-[11px] rounded-xl transition cursor-pointer flex items-center gap-1.5 shadow-sm"
+                      >
+                        {isConvertingVoiceToEmail ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Wand2 className="h-3.5 w-3.5" />
+                        )}
+                        <span>{isConvertingVoiceToEmail ? 'A transformar em E-mail Profissional...' : 'Transformar em Resposta Profissional'}</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {/* Sugestões Inteligentes de Resposta Rápida (1 Clique - Tesla Style) */}
                 <div className="space-y-1.5 pt-1">
@@ -4616,6 +4864,28 @@ function WebmailContent() {
                     <div className="flex flex-wrap items-center gap-1.5">
                       <button
                         type="button"
+                        onClick={() => {
+                          setVoiceTargetMode('compose');
+                          if (!showVoiceToEmailPanel) {
+                            setShowVoiceToEmailPanel(true);
+                            startVoiceRecording('compose');
+                          } else {
+                            if (isRecordingVoice) stopVoiceRecording();
+                            setShowVoiceToEmailPanel(false);
+                          }
+                        }}
+                        className={`text-[11px] font-extrabold px-2.5 py-1 rounded-lg border transition cursor-pointer flex items-center space-x-1.5 shadow-2xs ${
+                          showVoiceToEmailPanel || (isRecordingVoice && voiceTargetMode === 'compose')
+                            ? 'bg-neutral-900 text-white border-neutral-900'
+                            : 'bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200'
+                        }`}
+                        title="Voice to Email: Fale e o sistema transforma a sua voz num e-mail profissional"
+                      >
+                        <Mic className={`w-3.5 h-3.5 ${isRecordingVoice && voiceTargetMode === 'compose' ? 'text-rose-400 animate-pulse' : 'text-rose-600'}`} />
+                        <span>Voice to Email</span>
+                      </button>
+                      <button
+                        type="button"
                         onClick={handleImproveWithAI}
                         disabled={isImprovingDraft || !composeBody}
                         className="text-[11px] font-bold text-purple-700 hover:text-purple-900 bg-purple-50 hover:bg-purple-100 px-2.5 py-1 rounded-lg border border-purple-200 transition cursor-pointer flex items-center space-x-1 disabled:opacity-50"
@@ -4675,6 +4945,158 @@ function WebmailContent() {
                       </button>
                     </div>
                   </div>
+
+                  {/* 23. Painel Voice to Email (Falar -> Transformar em E-mail Corporativo Profissional) */}
+                  {showVoiceToEmailPanel && (
+                    <div className="mb-2.5 p-3.5 bg-neutral-950 text-white rounded-2xl border border-neutral-800 shadow-lg space-y-2.5 animate-in fade-in slide-in-from-top-1 duration-200">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex items-center space-x-2">
+                          <div className={`w-7 h-7 rounded-xl flex items-center justify-center ${
+                            isRecordingVoice && voiceTargetMode === 'compose'
+                              ? 'bg-rose-500/20 border border-rose-500/40 text-rose-400 animate-pulse'
+                              : 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-400'
+                          }`}>
+                            <Volume2 className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-extrabold tracking-tight text-white">
+                                Voice to Email IA
+                              </span>
+                              <span className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider ${
+                                isRecordingVoice && voiceTargetMode === 'compose'
+                                  ? 'bg-rose-500 text-white animate-pulse'
+                                  : 'bg-white/10 text-emerald-300'
+                              }`}>
+                                {isRecordingVoice && voiceTargetMode === 'compose' ? 'A Ouvir Microfone...' : 'Pronto'}
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-neutral-400">
+                              Fale naturalmente (ex: "Diz ao João que já recebemos o pagamento e o serviço está ativo")
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1.5">
+                          <select
+                            value={voiceTone}
+                            onChange={(e) => setVoiceTone(e.target.value as any)}
+                            className="px-2 py-1 bg-white/10 border border-white/15 rounded-lg text-[10px] font-bold text-white outline-none cursor-pointer"
+                            title="Tom do E-mail"
+                          >
+                            <option value="professional" className="text-neutral-900">Tom: Corporativo</option>
+                            <option value="formal" className="text-neutral-900">Tom: Executivo Formal</option>
+                            <option value="friendly" className="text-neutral-900">Tom: Cordial / Próximo</option>
+                          </select>
+                          <select
+                            value={voiceLang}
+                            onChange={(e) => setVoiceLang(e.target.value as 'pt-PT' | 'en-US')}
+                            className="px-2 py-1 bg-white/10 border border-white/15 rounded-lg text-[10px] font-bold text-white outline-none cursor-pointer"
+                            title="Idioma da Voz"
+                          >
+                            <option value="pt-PT" className="text-neutral-900">Voz: PT</option>
+                            <option value="en-US" className="text-neutral-900">Voice: EN</option>
+                          </select>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              stopVoiceRecording();
+                              setShowVoiceToEmailPanel(false);
+                            }}
+                            className="p-1 text-neutral-400 hover:text-white rounded-lg cursor-pointer"
+                            title="Fechar painel de voz"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {voiceError && (
+                        <div className="px-2.5 py-1.5 bg-amber-500/15 border border-amber-500/30 rounded-xl text-[11px] text-amber-200 flex items-center gap-1.5">
+                          <AlertCircle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                          <span>{voiceError}</span>
+                        </div>
+                      )}
+
+                      <textarea
+                        rows={2}
+                        value={
+                          voiceInterimTranscript
+                            ? `${voiceTranscript}${voiceTranscript ? ' ' : ''}${voiceInterimTranscript}`
+                            : voiceTranscript
+                        }
+                        onChange={(e) => {
+                          setVoiceTranscript(e.target.value);
+                          setVoiceInterimTranscript('');
+                        }}
+                        placeholder="A sua fala aparece aqui em tempo real (ou escreva um comando rápido como: 'Informa o cliente que a fatura foi emitida')..."
+                        className="w-full px-3 py-2 bg-white/[0.07] border border-white/15 rounded-xl text-xs text-white placeholder-neutral-400 outline-none focus:border-emerald-400 resize-none font-sans"
+                      />
+
+                      <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (isRecordingVoice && voiceTargetMode === 'compose') {
+                                stopVoiceRecording();
+                              } else {
+                                startVoiceRecording('compose');
+                              }
+                            }}
+                            className={`px-3 py-1.5 rounded-xl text-[11px] font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                              isRecordingVoice && voiceTargetMode === 'compose'
+                                ? 'bg-rose-600 hover:bg-rose-700 text-white'
+                                : 'bg-white/10 hover:bg-white/20 text-white border border-white/15'
+                            }`}
+                          >
+                            {isRecordingVoice && voiceTargetMode === 'compose' ? (
+                              <>
+                                <MicOff className="w-3.5 h-3.5" />
+                                <span>Parar Microfone</span>
+                              </>
+                            ) : (
+                              <>
+                                <Mic className="w-3.5 h-3.5 text-rose-400" />
+                                <span>{voiceTranscript ? 'Continuar a Falar' : 'Iniciar Microfone'}</span>
+                              </>
+                            )}
+                          </button>
+                          {voiceTranscript && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setVoiceTranscript('');
+                                setVoiceInterimTranscript('');
+                              }}
+                              className="px-2.5 py-1.5 text-[11px] font-semibold text-neutral-400 hover:text-white transition cursor-pointer"
+                            >
+                              Limpar
+                            </button>
+                          )}
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleConvertVoiceToProfessionalEmail('compose')}
+                          disabled={isConvertingVoiceToEmail || !`${voiceTranscript} ${voiceInterimTranscript}`.trim()}
+                          className="px-4 py-1.5 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 text-neutral-950 font-extrabold text-[11px] rounded-xl transition cursor-pointer flex items-center gap-1.5 shadow-md"
+                        >
+                          {isConvertingVoiceToEmail ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Wand2 className="w-3.5 h-3.5" />
+                          )}
+                          <span>
+                            {isConvertingVoiceToEmail
+                              ? 'A estruturar E-mail Profissional...'
+                              : 'Transformar em E-mail Profissional'}
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   <div className={`bg-white border border-gray-200 rounded-2xl overflow-hidden transition-all duration-300 text-gray-900 ${isMessageEditorExpanded ? 'fixed inset-4 z-50 rounded-3xl shadow-2xl' : ''}`}>
                     <style>{`
                       .webmail-quill-editor .ql-toolbar.ql-snow {
