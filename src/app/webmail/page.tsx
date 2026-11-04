@@ -67,6 +67,182 @@ function stripRawHeaders(raw: string): string {
   return str;
 }
 
+interface EmailSecurityAnalysis {
+  level: 'safe' | 'medium' | 'high';
+  title: string;
+  reasons: string[];
+  tips: string[];
+}
+
+function analyzeEmailSecurity(
+  msg: WebmailMessage | null,
+  currentAccountEmail: string,
+  trustedSenders: Set<string>
+): EmailSecurityAnalysis {
+  if (!msg || msg.folder === 'sent' || msg.folder === 'drafts') {
+    return { level: 'safe', title: '', reasons: [], tips: [] };
+  }
+
+  const fromEmail = (msg.fromEmail || '').trim().toLowerCase();
+  const fromName = (msg.fromName || '').trim();
+  const fromDomain = fromEmail.split('@')[1] || '';
+  const userDomain = (currentAccountEmail || '').split('@')[1]?.toLowerCase() || '';
+
+  // Remetentes confiáveis pelo utilizador ou notificações internas oficiais WEHOSTHERE
+  if (
+    trustedSenders.has(fromEmail) ||
+    fromEmail === 'noreply@wehosthere.com' ||
+    fromEmail === 'info@wehosthere.com' ||
+    fromEmail === 'suporte@wehosthere.com' ||
+    fromEmail === 'admin@wehosthere.com'
+  ) {
+    return { level: 'safe', title: '', reasons: [], tips: [] };
+  }
+
+  const rawBody = stripRawHeaders(msg.body || '');
+  const plainBody = rawBody.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  const combinedLower = `${msg.subject || ''} ${plainBody}`.toLowerCase();
+  const nameLower = fromName.toLowerCase();
+
+  const freeEmailDomains = new Set([
+    'gmail.com',
+    'googlemail.com',
+    'yahoo.com',
+    'yahoo.com.br',
+    'hotmail.com',
+    'outlook.com',
+    'live.com',
+    'msn.com',
+    'icloud.com',
+    'aol.com',
+    'mail.ru',
+    'yandex.com',
+    'protonmail.com',
+    'proton.me',
+  ]);
+  const isFreeDomain = freeEmailDomains.has(fromDomain);
+
+  const reasons: string[] = [];
+  let isHighRisk = false;
+
+  // 1. Deteção de Falsificação de Identidade (Spoofing de Marca / Banco / Suporte)
+  const protectedBrands = [
+    { keyword: 'wehosthere', officialDomain: 'wehosthere.com', label: 'WEHOSTHERE' },
+    { keyword: 'millennium', officialDomain: 'millenniumbim.co.mz', label: 'Millennium BIM' },
+    { keyword: 'standard bank', officialDomain: 'standardbank.co.mz', label: 'Standard Bank' },
+    { keyword: 'bci', officialDomain: 'bci.co.mz', label: 'Banco BCI' },
+    { keyword: 'm-pesa', officialDomain: 'vm.co.mz', label: 'Vodacom M-Pesa' },
+    { keyword: 'mpesa', officialDomain: 'vm.co.mz', label: 'Vodacom M-Pesa' },
+    { keyword: 'emola', officialDomain: 'movitel.co.mz', label: 'Movitel e-Mola' },
+    { keyword: 'paypal', officialDomain: 'paypal.com', label: 'PayPal' },
+    { keyword: 'microsoft', officialDomain: 'microsoft.com', label: 'Microsoft' },
+  ];
+
+  for (const brand of protectedBrands) {
+    if (nameLower.includes(brand.keyword) && !fromDomain.endsWith(brand.officialDomain)) {
+      isHighRisk = true;
+      reasons.push(
+        `O nome de exibição menciona "${brand.label}", mas o e-mail real provém de um domínio externo não oficial (<${fromEmail}>).`
+      );
+    }
+  }
+
+  // 2. Deteção de Phishing / Roubo de Credenciais / Fraude Financeira
+  const phishingPatterns = [
+    /confirm(e|ar)?\s+(a\s+)?sua\s+senha/i,
+    /atualiz(e|ar)\s+(os\s+)?seus\s+dados\s+banc[aá]rios/i,
+    /sua\s+conta\s+foi\s+suspensa/i,
+    /sua\s+conta\s+ser[aá]\s+(bloqueada|desativada|suspensa)/i,
+    /verify\s+your\s+(account|password|identity)/i,
+    /your\s+account\s+has\s+been\s+(suspended|locked|compromised)/i,
+    /urgent\s+action\s+required/i,
+    /digite\s+o\s+seu\s+pin/i,
+    /seed\s+phrase|private\s+key/i,
+    /ganhou\s+um\s+pr[eé]mio|won\s+the\s+lottery/i,
+  ];
+
+  if (phishingPatterns.some((rx) => rx.test(combinedLower))) {
+    isHighRisk = true;
+    reasons.push(
+      'A mensagem contém linguagem típica de phishing (pedido urgente de validação de conta, senha, PIN ou ameaça de bloqueio).'
+    );
+  }
+
+  // 3. Anexos potencialmente executáveis ou perigosos
+  if (msg.attachments && msg.attachments.length > 0) {
+    const dangerousExts = ['.exe', '.scr', '.bat', '.cmd', '.vbs', '.js', '.msi', '.ps1', '.hta', '.apk'];
+    const riskyAtt = msg.attachments.find((att) =>
+      dangerousExts.some((ext) => (att.name || '').toLowerCase().endsWith(ext))
+    );
+    if (riskyAtt) {
+      isHighRisk = true;
+      reasons.push(
+        `Contém um anexo executável potencialmente perigoso ("${riskyAtt.name}"). Nunca execute ficheiros desconhecidos.`
+      );
+    }
+  }
+
+  // 4. Redirecionamento para Telegram / Contacto Externo Anónimo ou Spam Comercial (ex: Trustpilot / Reviews / Crypto)
+  if (/telegram\s*:\s*@|t\.me\/|whatsapp\s*:\s*\+/i.test(combinedLower) && isFreeDomain) {
+    reasons.push(
+      `O remetente utiliza uma conta de e-mail gratuita (${fromDomain}) e tenta desviar a conversa para canais externos (${
+        /telegram/i.test(combinedLower) ? 'Telegram' : 'WhatsApp'
+      }).`
+    );
+  }
+
+  if (
+    isFreeDomain &&
+    /trustpilot|negative\s+reviews|genuine\s+feedback|seo\s+services|buy\s+reviews|backlinks|crypto\s+investment|forex/i.test(
+      combinedLower
+    )
+  ) {
+    reasons.push(
+      'Solicitação comercial não verificada (venda de avaliações/Trustpilot, SEO ou serviços externos de origem desconhecida).'
+    );
+  }
+
+  // 5. Conta gratuita com números aleatórios no utilizador + abordagem genérica em inglês/português
+  if (
+    isFreeDomain &&
+    /\d{2,}@/.test(fromEmail) &&
+    /business\s+discussion|partnership\s+proposal|urgent\s+business|investment\s+opportunity/i.test(combinedLower)
+  ) {
+    reasons.push(
+      `Endereço de remetente genérico (${fromEmail}) com assunto de abordagem em massa ("${msg.subject}").`
+    );
+  }
+
+  // 6. Links encurtados ou endereços IP diretos no corpo do e-mail
+  if (/https?:\/\/(bit\.ly|tinyurl\.com|is\.gd|rb\.gy|cutt\.ly|t\.co)\//i.test(rawBody) || /https?:\/\/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/i.test(rawBody)) {
+    reasons.push(
+      'O e-mail contém links encurtados ou ocultos que podem mascarar o verdadeiro site de destino.'
+    );
+  }
+
+  if (reasons.length === 0) {
+    return { level: 'safe', title: '', reasons: [], tips: [] };
+  }
+
+  const level: 'medium' | 'high' = isHighRisk ? 'high' : 'medium';
+  const title = isHighRisk
+    ? 'Alerta Crítico de Segurança: Possível Tentativa de Phishing ou Fraude'
+    : 'Aviso Inteligente de Segurança: E-mail ou Remetente Suspeito';
+
+  const tips = isHighRisk
+    ? [
+        'Nunca forneça a sua palavra-passe do Webmail, códigos M-Pesa/eMola ou dados bancários.',
+        'Não clique em links nem descarregue anexos deste remetente.',
+        'Recomendamos eliminar esta mensagem imediatamente.',
+      ]
+    : [
+        'Confirme se conhece realmente o remetente antes de responder ou clicar em links.',
+        'Evite continuar negociações empresariais através de contas anónimas de Telegram enviadas por desconhecidos.',
+      ];
+
+  return { level, title, reasons, tips };
+}
+
 function getSnippetText(text?: string, body?: string): string {
   const source = text || body || '';
   if (!source) return '';
@@ -231,6 +407,31 @@ function WebmailContent() {
   } | null>(null);
   const [isTranslatingEmail, setIsTranslatingEmail] = useState<'pt' | 'en' | null>(null);
   const [isTranslatingDraft, setIsTranslatingDraft] = useState<'pt' | 'en' | null>(null);
+  const [trustedSenders, setTrustedSenders] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('wehosthere_webmail_trusted_senders');
+        if (stored) {
+          setTrustedSenders(new Set(JSON.parse(stored)));
+        }
+      } catch {}
+    }
+  }, []);
+
+  const handleTrustSender = (senderEmail: string) => {
+    const clean = (senderEmail || '').trim().toLowerCase();
+    if (!clean) return;
+    setTrustedSenders((prev) => {
+      const next = new Set(prev);
+      next.add(clean);
+      try {
+        localStorage.setItem('wehosthere_webmail_trusted_senders', JSON.stringify(Array.from(next)));
+      } catch {}
+      return next;
+    });
+  };
 
   // Debug webmail login modal
   useEffect(() => {
@@ -2394,6 +2595,7 @@ function WebmailContent() {
                 const isSelected = selectedMessage?.id === msg.id;
                 const hasAtt = msg.attachments && msg.attachments.length > 0;
                 const imageAttachment = msg.attachments?.find(att => att.type?.startsWith('image/'));
+                const securityCheck = analyzeEmailSecurity(msg, selectedAccountEmail, trustedSenders);
                 return (
                   <div
                     key={msg.id}
@@ -2446,6 +2648,18 @@ function WebmailContent() {
                             <span className="bg-neutral-900 text-white text-[10px] font-bold px-1.5 py-0.2 rounded-md shrink-0 flex items-center space-x-1">
                               <Flame className="w-2.5 h-2.5" />
                               <span className="hidden sm:inline">Urgente</span>
+                            </span>
+                          )}
+                          {securityCheck.level === 'high' && (
+                            <span className="bg-rose-100 text-rose-800 border border-rose-300 text-[10px] font-extrabold px-1.5 py-0.2 rounded-md shrink-0 flex items-center space-x-1" title="E-mail altamente suspeito / possível phishing">
+                              <AlertCircle className="w-2.5 h-2.5 text-rose-600" />
+                              <span>Perigo</span>
+                            </span>
+                          )}
+                          {securityCheck.level === 'medium' && (
+                            <span className="bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-bold px-1.5 py-0.2 rounded-md shrink-0 flex items-center space-x-1" title="Remetente ou conteúdo suspeito">
+                              <AlertCircle className="w-2.5 h-2.5 text-amber-600" />
+                              <span>Suspeito</span>
                             </span>
                           )}
                         </div>
@@ -2636,6 +2850,99 @@ function WebmailContent() {
                   </div>
                 </div>
               </div>
+
+              {/* Escudo Inteligente Anti-Phishing & Segurança WEHOSTHERE */}
+              {(() => {
+                const sec = analyzeEmailSecurity(selectedMessage, selectedAccountEmail, trustedSenders);
+                if (sec.level === 'safe') return null;
+                const isHigh = sec.level === 'high';
+                return (
+                  <div
+                    className={`rounded-2xl p-4 sm:p-5 border shadow-xs space-y-3 transition-all ${
+                      isHigh
+                        ? 'bg-rose-50/95 border-rose-300 text-rose-950'
+                        : 'bg-amber-50/95 border-amber-300 text-amber-950'
+                    }`}
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div className="flex items-center space-x-2.5">
+                        <div
+                          className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                            isHigh ? 'bg-rose-600 text-white' : 'bg-amber-500 text-white'
+                          }`}
+                        >
+                          <AlertCircle className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                                isHigh
+                                  ? 'bg-rose-200/80 text-rose-900'
+                                  : 'bg-amber-200/80 text-amber-900'
+                              }`}
+                            >
+                              {isHigh ? '🛡️ Risco Elevado Detetado' : '⚠️ Alerta de Segurança IA'}
+                            </span>
+                          </div>
+                          <h3 className="text-xs sm:text-sm font-extrabold mt-0.5">{sec.title}</h3>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteMessage(selectedMessage.id)}
+                          className={`px-3 py-1.5 rounded-xl text-[11px] font-bold transition flex items-center space-x-1.5 cursor-pointer shadow-2xs ${
+                            isHigh
+                              ? 'bg-rose-600 hover:bg-rose-700 text-white'
+                              : 'bg-amber-600 hover:bg-amber-700 text-white'
+                          }`}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Eliminar E-mail</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleTrustSender(selectedMessage.fromEmail)}
+                          className="px-2.5 py-1.5 bg-white hover:bg-neutral-100 text-neutral-700 border border-neutral-300 rounded-xl text-[11px] font-semibold transition cursor-pointer"
+                          title="Confiar neste remetente e ocultar alertas futuros"
+                        >
+                          Confiar no Remetente
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="pl-1 space-y-1.5 text-xs">
+                      <p className="font-bold text-[11px] uppercase tracking-wider opacity-80">
+                        Motivos identificados pela verificação inteligente:
+                      </p>
+                      <ul className="space-y-1">
+                        {sec.reasons.map((reason, idx) => (
+                          <li key={idx} className="flex items-start space-x-2 leading-relaxed">
+                            <span className={`font-bold mt-0.5 ${isHigh ? 'text-rose-600' : 'text-amber-600'}`}>•</span>
+                            <span>{reason}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div
+                      className={`p-2.5 rounded-xl border text-[11px] flex items-start space-x-2 ${
+                        isHigh
+                          ? 'bg-rose-100/70 border-rose-200 text-rose-900'
+                          : 'bg-amber-100/70 border-amber-200 text-amber-900'
+                      }`}
+                    >
+                      <ShieldCheck className="w-4 h-4 shrink-0 mt-0.5" />
+                      <div className="space-y-0.5">
+                        <span className="font-bold block">Recomendações de Proteção WEHOSTHERE:</span>
+                        <span>{sec.tips.join(' ')}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* AI Assistant Smart Bar (Tesla Minimalist Dark Card) */}
               <div className="bg-neutral-900 rounded-2xl p-3.5 sm:p-4 text-white shadow-sm border border-neutral-800 space-y-3">
