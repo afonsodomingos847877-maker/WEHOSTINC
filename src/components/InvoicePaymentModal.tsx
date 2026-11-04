@@ -46,20 +46,27 @@ export default function InvoicePaymentModal({
   const [uploadingProof, setUploadingProof] = useState(false);
   const [proofUploaded, setProofUploaded] = useState(false);
 
+  useEffect(() => {
+    if (!invoice) return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [invoice]);
+
+  useEffect(() => {
+    if (invoice?.customerPhone) {
+      setPhone(invoice.customerPhone.replace(/\D/g, ''));
+    }
+  }, [invoice]);
+
   if (!invoice) return null;
 
   const invoiceRef = invoice.invoiceNumber || invoice.id;
   const formattedAmount = (invoice.total || 0).toLocaleString('pt-MZ');
   const currency = invoice.currency || 'MT';
   const bimNib = '433372004293948';
-
-  useEffect(() => {
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = originalOverflow;
-    };
-  }, []);
 
   const handleCopy = (text: string, fieldName: string) => {
     navigator.clipboard.writeText(text);

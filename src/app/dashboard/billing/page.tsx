@@ -748,36 +748,40 @@ export default function BillingPage() {
       </div>
 
       {/* Modal de Recibo Oficial PDF */}
-      <ReceiptModal
-        receipt={selectedReceipt}
-        onClose={() => setSelectedReceipt(null)}
-        onPay={(r) => {
-          setSelectedReceipt(null);
-          setSelectedInvoiceForPayment({
-            id: r.id,
-            invoiceNumber: r.id,
-            customerName: r.clientName,
-            customerEmail: r.clientEmail,
-            customerPhone: r.clientPhone,
-            total: r.amount,
-            serviceName: r.serviceName,
-            dueDate: r.dueDate
-          });
-        }}
-      />
+      {selectedReceipt && (
+        <ReceiptModal
+          receipt={selectedReceipt}
+          onClose={() => setSelectedReceipt(null)}
+          onPay={(r) => {
+            setSelectedReceipt(null);
+            setSelectedInvoiceForPayment({
+              id: r.id,
+              invoiceNumber: r.id,
+              customerName: r.clientName,
+              customerEmail: r.clientEmail,
+              customerPhone: r.clientPhone,
+              total: r.amount,
+              serviceName: r.serviceName,
+              dueDate: r.dueDate
+            });
+          }}
+        />
+      )}
 
       {/* Modal de Pagamento de Fatura (M-Pesa, eMola, BIM) */}
-      <InvoicePaymentModal
-        invoice={selectedInvoiceForPayment}
-        onClose={() => setSelectedInvoiceForPayment(null)}
-        onPaymentSuccess={() => {
-          setToastMsg({
-            type: 'success',
-            title: 'Pagamento Solicitado',
-            message: 'O pedido foi enviado com sucesso! Assim que confirmares o PIN, a fatura será atualizada.'
-          });
-        }}
-      />
+      {selectedInvoiceForPayment && (
+        <InvoicePaymentModal
+          invoice={selectedInvoiceForPayment}
+          onClose={() => setSelectedInvoiceForPayment(null)}
+          onPaymentSuccess={() => {
+            setToastMsg({
+              type: 'success',
+              title: 'Pagamento Solicitado',
+              message: 'O pedido foi enviado com sucesso! Assim que confirmares o PIN, a fatura será atualizada.'
+            });
+          }}
+        />
+      )}
 
       {/* Toast Notification */}
       {toastMsg && (
