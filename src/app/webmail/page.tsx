@@ -18,6 +18,7 @@ import { emailTemplates, templateCategories, templateCategoriesEN, EmailTemplate
 import { soundEffects } from '@/lib/soundEffects';
 import BrandLogo from '@/components/BrandLogo';
 import PageLoader from '@/components/PageLoader';
+import InternalDomainChat from '@/components/webmail/InternalDomainChat';
 import { apiEndpoint } from '@/lib/siteConfig';
 import dynamic from 'next/dynamic';
 
@@ -394,6 +395,9 @@ function WebmailContent() {
   const [isStorageCollapsed, setIsStorageCollapsed] = useState(false);
   const [isFiltersCollapsed, setIsFiltersCollapsed] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [showInternalChat, setShowInternalChat] = useState(false);
+  const [internalChatUnread, setInternalChatUnread] = useState(0);
+  const [internalChatOnline, setInternalChatOnline] = useState(0);
 
   // Attachment preview state
   const [previewAttachment, setPreviewAttachment] = useState<WebmailAttachment | null>(null);
@@ -3015,6 +3019,19 @@ function WebmailContent() {
             </span>
           )}
         </button>
+
+        <button
+          onClick={() => { soundEffects.playFolderSwitchSound(); setShowInternalChat(true); }}
+          className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl whitespace-nowrap font-bold transition-all duration-200 shrink-0 border bg-emerald-50 text-emerald-900 border-emerald-300 hover:bg-emerald-100"
+        >
+          <MessageSquare className="h-3.5 w-3.5 text-emerald-600" />
+          <span>Chat Equipa</span>
+          {internalChatUnread > 0 && (
+            <span className="text-[10px] px-1.5 py-0.2 rounded-full font-black ml-1 bg-emerald-500 text-neutral-950">
+              {internalChatUnread}
+            </span>
+          )}
+        </button>
       </div>
 
       {/* Main Layout Grid */}
@@ -3155,6 +3172,35 @@ function WebmailContent() {
                 }`}>
                   {draftsCount}
                 </span>
+              )}
+            </button>
+
+            {/* Botão de Chat Interno Corporativo (@dominio) */}
+            <button
+              type="button"
+              onClick={() => { soundEffects.playFolderSwitchSound(); setShowInternalChat(!showInternalChat); }}
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 cursor-pointer border mt-2 ${
+                showInternalChat
+                  ? 'bg-emerald-600 text-white border-emerald-600 font-bold shadow-xs'
+                  : 'bg-emerald-50/80 hover:bg-emerald-100 text-emerald-950 border-emerald-200 font-bold'
+              }`}
+              title="Abrir Chat Interno da Equipa (mesmo domínio)"
+            >
+              <div className="flex items-center space-x-2.5 truncate">
+                <MessageSquare className={`h-4 w-4 shrink-0 ${showInternalChat ? 'text-white' : 'text-emerald-600'}`} />
+                <div className="text-left truncate">
+                  <span className="block truncate">Chat da Equipa</span>
+                  <span className={`text-[10px] font-normal block truncate ${showInternalChat ? 'text-emerald-100' : 'text-emerald-700'}`}>
+                    {internalChatOnline > 0 ? `${internalChatOnline} online agora` : `@${selectedAccountEmail.split('@')[1] || 'dominio'}`}
+                  </span>
+                </div>
+              </div>
+              {internalChatUnread > 0 ? (
+                <span className="text-[10px] px-2 py-0.5 rounded-full font-black bg-emerald-400 text-neutral-950 shadow-2xs">
+                  {internalChatUnread}
+                </span>
+              ) : (
+                <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
               )}
             </button>
           </nav>
@@ -5517,6 +5563,20 @@ function WebmailContent() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Chat Interno Corporativo por Domínio (Sem Enviar E-mail) */}
+      {mailboxPassword && selectedAccountEmail && (
+        <InternalDomainChat
+          currentEmail={selectedAccountEmail}
+          currentUserName={getDynamicUserGreeting().userName}
+          isOpen={showInternalChat}
+          onToggleOpen={setShowInternalChat}
+          onUnreadChange={(unread, online) => {
+            setInternalChatUnread(unread);
+            setInternalChatOnline(online);
+          }}
+        />
       )}
     </div>
   )}
