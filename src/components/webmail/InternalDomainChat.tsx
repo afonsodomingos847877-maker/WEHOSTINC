@@ -21,6 +21,10 @@ import {
   Image as ImageIcon,
   Globe,
   ExternalLink,
+  Camera,
+  User,
+  Trash2,
+  Check,
 } from 'lucide-react';
 import { soundEffects } from '@/lib/soundEffects';
 import { apiEndpoint } from '@/lib/siteConfig';
@@ -28,6 +32,7 @@ import { apiEndpoint } from '@/lib/siteConfig';
 export interface ColleagueInfo {
   email: string;
   name: string;
+  avatarUrl?: string;
   status: 'online' | 'busy' | 'away' | 'offline';
   isOnline: boolean;
   lastSeenAt?: string;
@@ -40,6 +45,7 @@ export interface InternalChatMessage {
   channel: string;
   fromEmail: string;
   fromName: string;
+  fromAvatarUrl?: string;
   toEmail: string;
   text: string;
   attachmentUrl?: string;
@@ -55,6 +61,7 @@ interface InternalDomainChatProps {
   isOpen: boolean;
   onToggleOpen: (open: boolean) => void;
   onUnreadChange?: (count: number, onlineColleagues: number) => void;
+  onProfileChange?: (avatarUrl: string, displayName: string) => void;
 }
 
 export default function InternalDomainChat({
@@ -63,6 +70,7 @@ export default function InternalDomainChat({
   isOpen,
   onToggleOpen,
   onUnreadChange,
+  onProfileChange,
 }: InternalDomainChatProps) {
   const safeEmail =
     currentEmail && currentEmail.includes('@')
@@ -88,9 +96,28 @@ export default function InternalDomainChat({
   const [showAddColleague, setShowAddColleague] = useState<boolean>(false);
   const [customColleagueLocal, setCustomColleagueLocal] = useState<string>('');
 
+  // Estados de Foto de Perfil e Nome Personalizado do Utilizador
+  const [selfAvatarUrl, setSelfAvatarUrl] = useState<string>('');
+  const [selfDisplayName, setSelfDisplayName] = useState<string>(currentUserName || '');
+  const [showProfileEditor, setShowProfileEditor] = useState<boolean>(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState<boolean>(false);
+  const [profileSavedToast, setProfileSavedToast] = useState<boolean>(false);
+
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const prevTotalUnreadRef = useRef<number>(0);
   const prevLastMsgIdRef = useRef<string | null>(null);
+
+  // Carregar foto de perfil e nome salvos localmente ao iniciar
+  useEffect(() => {
+    if (typeof window === 'undefined' || !safeEmail) return;
+    try {
+      const localAv = localStorage.getItem(`wehosthere_avatar_${safeEmail}`) || '';
+      const localNm = localStorage.getItem(`wehosthere_displayname_${safeEmail}`) || '';
+      if (localAv) setSelfAvatarUrl(localAv);
+      if (localNm) setSelfDisplayName(localNm);
+      else if (currentUserName) setSelfDisplayName(currentUserName);
+    } catch {}
+  }, [safeEmail, currentUserName]);
 
   const getLocalCacheKey = (peer: string) =>
     `wehosthere_internal_chat_${domain}_${peer === 'general' ? 'general' : peer.toLowerCase()}`;
@@ -148,6 +175,18 @@ export default function InternalDomainChat({
       setGeneralUnread(data.generalUnreadCount || 0);
       setTotalUnread(nextTotalUnread);
       if (data.selfStatus) setSelfStatus(data.selfStatus);
+      if (data.selfAvatarUrl) {
+        setSelfAvatarUrl(data.selfAvatarUrl);
+        try {
+          localStorage.setItem(`wehosthere_avatar_${safeEmail}`, data.selfAvatarUrl);
+        } catch {}
+      }
+      if (data.selfName) {
+        setSelfDisplayName((prev) => prev || data.selfName);
+      }
+      if (onProfileChange && (data.selfAvatarUrl || selfAvatarUrl)) {
+        onProfileChange(data.selfAvatarUrl || selfAvatarUrl, data.selfName || selfDisplayName || currentUserName);
+      }
 
       if (onUnreadChange) {
         onUnreadChange(nextTotalUnread, onlineCount);
@@ -182,12 +221,129 @@ export default function InternalDomainChat({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'status',
-          fromEmail: currentEmail,
-          fromName: currentUserName,
+          fromEmail: safeEmail,
+          fromName: selfDisplayName || currentUserName,
+          avatarUrl: selfAvatarUrl || undefined,
           status: newStatus,
         }),
       });
     } catch {}
+  };
+
+  // Comprimir imagem de perfil para um quadrado nítido 180x180 (compatível com Cloudinary e armazenamento direto)
+  const resizeImageToSquareAvatar = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const objUrl = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(objUrl);
+        try {
+          const size = 180;
+          const canvas = document.createElement('canvas');
+          canvas.width = size;
+          canvas.height = size;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('Canvas context indisponível'));
+            return;
+          }
+          const minSide = Math.min(img.width, img.height);
+          const sx = (img.width - minSide) / 2;
+          const sy = (img.height - minSide) / 2;
+          ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, size, size);
+          resolve(canvas.toDataURL('image/jpeg', 0.84));
+        } catch (e) {
+          reject(e);
+        }
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(objUrl);
+        reject(new Error('Falha ao carregar imagem'));
+      };
+      img.src = objUrl;
+    });
+  };
+
+  const handleSaveProfileUpdate = async (newAvatarUrl: string, newName: string) => {
+    const cleanName = (newName || selfDisplayName || currentUserName || safeEmail.split('@')[0]).trim();
+    setSelfAvatarUrl(newAvatarUrl);
+    setSelfDisplayName(cleanName);
+    try {
+      localStorage.setItem(`wehosthere_avatar_${safeEmail}`, newAvatarUrl);
+      localStorage.setItem(`wehosthere_displayname_${safeEmail}`, cleanName);
+    } catch {}
+
+    if (onProfileChange) {
+      onProfileChange(newAvatarUrl, cleanName);
+    }
+
+    // Atualizar também as mensagens já visíveis do próprio utilizador
+    setMessages((prev) =>
+      prev.map((m) =>
+        m.fromEmail.toLowerCase() === safeEmail.toLowerCase()
+          ? { ...m, fromAvatarUrl: newAvatarUrl, fromName: cleanName }
+          : m
+      )
+    );
+
+    try {
+      await fetch(apiEndpoint('/api/webmail/chat'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'profile',
+          fromEmail: safeEmail,
+          fromName: cleanName,
+          avatarUrl: newAvatarUrl,
+        }),
+      });
+      setProfileSavedToast(true);
+      setTimeout(() => setProfileSavedToast(false), 2500);
+    } catch {}
+  };
+
+  const handleAvatarFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingAvatar(true);
+    try {
+      const squareDataUrl = await resizeImageToSquareAvatar(file);
+      let finalAvatarUrl = squareDataUrl;
+
+      // Tentar enviar para Cloudinary se disponível; caso contrário usa o dataURL compacto 180x180
+      try {
+        const sigRes = await fetch(apiEndpoint('/api/upload'), { method: 'GET' });
+        if (sigRes.ok) {
+          const sigData = await sigRes.json();
+          if (sigData.success && sigData.cloudName && sigData.signature) {
+            const formData = new FormData();
+            formData.append('file', squareDataUrl);
+            formData.append('api_key', sigData.apiKey);
+            formData.append('timestamp', sigData.timestamp);
+            formData.append('signature', sigData.signature);
+
+            const uploadRes = await fetch(
+              `https://api.cloudinary.com/v1_1/${sigData.cloudName}/image/upload`,
+              { method: 'POST', body: formData }
+            );
+            if (uploadRes.ok) {
+              const upData = await uploadRes.json();
+              if (upData.secure_url || upData.url) {
+                finalAvatarUrl = upData.secure_url || upData.url;
+              }
+            }
+          }
+        }
+      } catch {}
+
+      await handleSaveProfileUpdate(finalAvatarUrl, selfDisplayName || currentUserName);
+      soundEffects.playAttachSound();
+    } catch (err) {
+      console.error('[InternalChat] Erro ao atualizar foto de perfil:', err);
+    } finally {
+      setIsUploadingAvatar(false);
+      e.target.value = '';
+    }
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -249,7 +405,8 @@ export default function InternalDomainChat({
       domain,
       channel: selectedPeer === 'general' ? 'general' : `dm:${safeEmail}:${selectedPeer}`,
       fromEmail: safeEmail,
-      fromName: currentUserName || safeEmail.split('@')[0],
+      fromName: selfDisplayName || currentUserName || safeEmail.split('@')[0],
+      fromAvatarUrl: selfAvatarUrl || undefined,
       toEmail: selectedPeer === 'general' ? 'all' : selectedPeer,
       text: textToSend,
       attachmentUrl: attToSend?.url,
@@ -266,7 +423,8 @@ export default function InternalDomainChat({
         body: JSON.stringify({
           action: 'send',
           fromEmail: safeEmail,
-          fromName: currentUserName,
+          fromName: selfDisplayName || currentUserName,
+          avatarUrl: selfAvatarUrl || undefined,
           toEmail: selectedPeer === 'general' ? 'all' : selectedPeer,
           text: textToSend,
           attachmentUrl: attToSend?.url,
@@ -391,9 +549,29 @@ export default function InternalDomainChat({
           {/* Cabeçalho Escuro Corporativo */}
           <div className="bg-neutral-950 text-white px-4 py-3 border-b border-neutral-800 flex items-center justify-between gap-2 shrink-0">
             <div className="flex items-center space-x-3 min-w-0">
-              <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-400 shrink-0">
-                <Users className="w-4 h-4" />
-              </div>
+              {/* Avatar do Utilizador Atual (Clicável para alterar Foto de Perfil) */}
+              <button
+                type="button"
+                onClick={() => setShowProfileEditor(!showProfileEditor)}
+                className="relative w-9 h-9 rounded-full bg-emerald-500/20 border-2 border-emerald-400/60 flex items-center justify-center text-emerald-300 shrink-0 overflow-hidden group cursor-pointer"
+                title="Clique para colocar ou alterar a sua Foto de Perfil"
+              >
+                {selfAvatarUrl ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={selfAvatarUrl}
+                    alt={selfDisplayName || safeEmail}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-xs font-extrabold text-emerald-300">
+                    {(selfDisplayName || safeEmail).charAt(0).toUpperCase()}
+                  </span>
+                )}
+                <span className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <Camera className="w-3.5 h-3.5 text-white" />
+                </span>
+              </button>
               <div className="min-w-0">
                 <div className="flex items-center space-x-2">
                   <h3 className="text-xs sm:text-sm font-extrabold tracking-tight truncate">
@@ -417,7 +595,22 @@ export default function InternalDomainChat({
               </div>
             </div>
 
-            <div className="flex items-center space-x-2 shrink-0">
+            <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
+              {/* Botão Rápido: Foto de Perfil */}
+              <button
+                type="button"
+                onClick={() => setShowProfileEditor(!showProfileEditor)}
+                className={`px-2.5 py-1 rounded-xl text-[11px] font-bold transition cursor-pointer flex items-center space-x-1.5 border ${
+                  showProfileEditor
+                    ? 'bg-emerald-500 text-neutral-950 border-emerald-400'
+                    : 'bg-white/10 hover:bg-white/15 text-white border-white/15'
+                }`}
+                title="Colocar ou alterar foto de perfil e nome"
+              >
+                <Camera className="w-3.5 h-3.5" />
+                <span className="hidden md:inline">Foto de Perfil</span>
+              </button>
+
               {/* Seletor de Estado Pessoal */}
               <div className="hidden sm:flex items-center space-x-1.5 bg-white/10 border border-white/15 px-2.5 py-1 rounded-xl">
                 <span
@@ -463,6 +656,77 @@ export default function InternalDomainChat({
               </button>
             </div>
           </div>
+
+          {/* Painel Rápido de Foto de Perfil & Nome de Exibição */}
+          {showProfileEditor && (
+            <div className="bg-neutral-900 text-white px-4 py-3 border-b border-neutral-800 flex flex-wrap items-center justify-between gap-3 animate-in slide-in-from-top-1 duration-150 shrink-0">
+              <div className="flex items-center space-x-3">
+                <div className="relative w-12 h-12 rounded-full bg-neutral-800 border-2 border-emerald-400 flex items-center justify-center overflow-hidden shrink-0">
+                  {selfAvatarUrl ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={selfAvatarUrl}
+                      alt="Foto de perfil"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <User className="w-6 h-6 text-neutral-400" />
+                  )}
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center space-x-2">
+                    <label className="px-3 py-1 bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-extrabold text-[11px] rounded-xl transition cursor-pointer inline-flex items-center space-x-1.5 shadow-xs">
+                      {isUploadingAvatar ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Camera className="w-3.5 h-3.5" />
+                      )}
+                      <span>{isUploadingAvatar ? 'A carregar...' : 'Escolher Foto'}</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleAvatarFileSelect}
+                        disabled={isUploadingAvatar}
+                      />
+                    </label>
+                    {selfAvatarUrl && (
+                      <button
+                        type="button"
+                        onClick={() => handleSaveProfileUpdate('', selfDisplayName)}
+                        className="px-2.5 py-1 bg-white/10 hover:bg-rose-500/20 text-rose-300 border border-white/10 rounded-xl text-[11px] font-bold transition cursor-pointer inline-flex items-center space-x-1"
+                        title="Remover foto atual"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        <span>Remover</span>
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-neutral-400">
+                    A sua foto aparece para todos os colegas de <span className="font-mono text-emerald-300">@{domain}</span>
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-2 flex-1 sm:max-w-xs">
+                <input
+                  type="text"
+                  value={selfDisplayName}
+                  onChange={(e) => setSelfDisplayName(e.target.value)}
+                  placeholder="Seu nome na equipa..."
+                  className="flex-1 px-3 py-1.5 bg-white/10 border border-white/15 rounded-xl text-xs text-white font-bold placeholder:text-neutral-400 outline-none focus:border-emerald-400"
+                />
+                <button
+                  type="button"
+                  onClick={() => handleSaveProfileUpdate(selfAvatarUrl, selfDisplayName)}
+                  className="px-3 py-1.5 bg-white hover:bg-neutral-100 text-neutral-950 font-extrabold text-[11px] rounded-xl transition cursor-pointer inline-flex items-center space-x-1 shrink-0"
+                >
+                  <Check className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>{profileSavedToast ? 'Salvo!' : 'Guardar'}</span>
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Corpo Principal: Lista de Canais/Colegas + Conversa */}
           <div className="flex-1 min-h-0 flex flex-col sm:flex-row overflow-hidden">
@@ -570,15 +834,24 @@ export default function InternalDomainChat({
                       >
                         <div className="flex items-center space-x-2 truncate">
                           <div className="relative shrink-0">
-                            <div
-                              className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-[11px] ${
-                                isSelected
-                                  ? 'bg-white text-neutral-900'
-                                  : 'bg-neutral-200 text-neutral-800'
-                              }`}
-                            >
-                              {col.name.charAt(0).toUpperCase()}
-                            </div>
+                            {col.avatarUrl ? (
+                              /* eslint-disable-next-line @next/next/no-img-element */
+                              <img
+                                src={col.avatarUrl}
+                                alt={col.name}
+                                className="w-7 h-7 rounded-full object-cover border border-neutral-300"
+                              />
+                            ) : (
+                              <div
+                                className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-[11px] ${
+                                  isSelected
+                                    ? 'bg-white text-neutral-900'
+                                    : 'bg-neutral-200 text-neutral-800'
+                                }`}
+                              >
+                                {col.name.charAt(0).toUpperCase()}
+                              </div>
+                            )}
                             <span
                               className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white ${getStatusDotColor(
                                 col.status,
@@ -629,9 +902,18 @@ export default function InternalDomainChat({
                 ) : (
                   <div className="flex items-center space-x-2.5">
                     <div className="relative">
-                      <div className="w-8 h-8 rounded-full bg-neutral-900 text-white flex items-center justify-center font-bold text-xs">
-                        {(activeColleagueObj?.name || selectedPeer).charAt(0).toUpperCase()}
-                      </div>
+                      {activeColleagueObj?.avatarUrl ? (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img
+                          src={activeColleagueObj.avatarUrl}
+                          alt={activeColleagueObj.name}
+                          className="w-8 h-8 rounded-full object-cover border border-neutral-300"
+                        />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-neutral-900 text-white flex items-center justify-center font-bold text-xs">
+                          {(activeColleagueObj?.name || selectedPeer).charAt(0).toUpperCase()}
+                        </div>
+                      )}
                       <span
                         className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white ${getStatusDotColor(
                           activeColleagueObj?.status || 'offline',
@@ -677,36 +959,75 @@ export default function InternalDomainChat({
                 ) : (
                   messages.map((msg) => {
                     const isMe =
-                      msg.fromEmail.toLowerCase() === currentEmail.toLowerCase();
+                      msg.fromEmail.toLowerCase() === safeEmail.toLowerCase();
                     const isReadByOthers = (msg.readBy || []).some(
-                      (r) => r.toLowerCase() !== currentEmail.toLowerCase()
+                      (r) => r.toLowerCase() !== safeEmail.toLowerCase()
                     );
+                    const senderColleague = colleagues.find(
+                      (c) => c.email.toLowerCase() === msg.fromEmail.toLowerCase()
+                    );
+                    const bubbleAvatarUrl = isMe
+                      ? selfAvatarUrl || msg.fromAvatarUrl
+                      : msg.fromAvatarUrl || senderColleague?.avatarUrl || '';
+                    const bubbleDisplayName = isMe
+                      ? 'Você'
+                      : senderColleague?.name || msg.fromName;
+
                     return (
                       <div
                         key={msg.id}
-                        className={`flex flex-col ${
-                          isMe ? 'items-end' : 'items-start'
+                        className={`flex items-end gap-2 ${
+                          isMe ? 'flex-row-reverse' : 'flex-row'
                         }`}
                       >
-                        <div className="flex items-center space-x-1.5 mb-1 px-1">
-                          <span className="text-[10px] font-bold text-neutral-600">
-                            {isMe ? 'Você' : msg.fromName}
-                          </span>
-                          <span className="text-[9px] text-neutral-400 font-mono">
-                            {new Date(msg.createdAt).toLocaleTimeString([], {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </span>
+                        {/* Avatar circular ao lado da mensagem */}
+                        <div className="shrink-0 mb-0.5">
+                          {bubbleAvatarUrl ? (
+                            /* eslint-disable-next-line @next/next/no-img-element */
+                            <img
+                              src={bubbleAvatarUrl}
+                              alt={bubbleDisplayName}
+                              className="w-7 h-7 rounded-full object-cover border border-neutral-300 shadow-2xs"
+                            />
+                          ) : (
+                            <div
+                              className={`w-7 h-7 rounded-full flex items-center justify-center font-extrabold text-[11px] shadow-2xs ${
+                                isMe
+                                  ? 'bg-neutral-900 text-emerald-400 border border-neutral-700'
+                                  : 'bg-neutral-200 text-neutral-800 border border-neutral-300'
+                              }`}
+                            >
+                              {(isMe ? selfDisplayName || safeEmail : bubbleDisplayName)
+                                .charAt(0)
+                                .toUpperCase()}
+                            </div>
+                          )}
                         </div>
 
                         <div
-                          className={`max-w-[82%] sm:max-w-[75%] rounded-2xl px-3.5 py-2.5 text-xs shadow-2xs space-y-2 ${
-                            isMe
-                              ? 'bg-neutral-900 text-white rounded-br-xs'
-                              : 'bg-white text-neutral-900 border border-neutral-200 rounded-bl-xs'
+                          className={`flex flex-col max-w-[78%] sm:max-w-[72%] ${
+                            isMe ? 'items-end' : 'items-start'
                           }`}
                         >
+                          <div className="flex items-center space-x-1.5 mb-1 px-1">
+                            <span className="text-[10px] font-bold text-neutral-600">
+                              {bubbleDisplayName}
+                            </span>
+                            <span className="text-[9px] text-neutral-400 font-mono">
+                              {new Date(msg.createdAt).toLocaleTimeString([], {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </span>
+                          </div>
+
+                          <div
+                            className={`w-full rounded-2xl px-3.5 py-2.5 text-xs shadow-2xs space-y-2 ${
+                              isMe
+                                ? 'bg-neutral-900 text-white rounded-br-xs'
+                                : 'bg-white text-neutral-900 border border-neutral-200 rounded-bl-xs'
+                            }`}
+                          >
                           {msg.text && (
                             <p className="whitespace-pre-wrap break-words leading-relaxed">
                               {msg.text}
@@ -756,6 +1077,7 @@ export default function InternalDomainChat({
                               <span>{isReadByOthers ? 'Visto' : 'Enviado'}</span>
                             </div>
                           )}
+                          </div>
                         </div>
                       </div>
                     );

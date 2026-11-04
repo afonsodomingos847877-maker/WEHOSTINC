@@ -67,6 +67,7 @@ export async function GET(request: NextRequest) {
       {
         email: string;
         name: string;
+        avatarUrl?: string;
         status: 'online' | 'busy' | 'away' | 'offline';
         isOnline: boolean;
         lastSeenAt?: string;
@@ -126,15 +127,20 @@ export async function GET(request: NextRequest) {
     }
 
     const nowMs = Date.now();
+    const avatarByEmail = new Map<string, string>();
     for (const p of presences as any[]) {
       const addr = (p.email || '').trim().toLowerCase();
       if (!addr || !addr.endsWith(`@${domain}`)) continue;
+      if (p.avatarUrl) {
+        avatarByEmail.set(addr, String(p.avatarUrl));
+      }
       const seenMs = p.lastSeenAt ? new Date(p.lastSeenAt).getTime() : 0;
       const isOnline = nowMs - seenMs < 2 * 60 * 1000; // Online nos últimos 2 minutos
       const existing = colleaguesMap.get(addr);
       colleaguesMap.set(addr, {
         email: addr,
         name: formatDisplayName(addr, p.name || existing?.name),
+        avatarUrl: p.avatarUrl || existing?.avatarUrl || '',
         status: isOnline ? p.status || 'online' : 'offline',
         isOnline,
         lastSeenAt: p.lastSeenAt ? new Date(p.lastSeenAt).toISOString() : undefined,
@@ -201,22 +207,28 @@ export async function GET(request: NextRequest) {
       .limit(80)
       .lean();
 
-    const messages = rawMessages.reverse().map((m: any) => ({
-      id: m._id.toString(),
-      domain: m.domain,
-      channel: m.channel,
-      fromEmail: m.fromEmail,
-      fromName: m.fromName,
-      toEmail: m.toEmail,
-      text: m.text,
-      attachmentUrl: m.attachmentUrl,
-      attachmentName: m.attachmentName,
-      attachmentType: m.attachmentType,
-      readBy: m.readBy || [],
-      createdAt: m.createdAt ? new Date(m.createdAt).toISOString() : new Date().toISOString(),
-    }));
+    const messages = rawMessages.reverse().map((m: any) => {
+      const senderLower = String(m.fromEmail || '').toLowerCase();
+      return {
+        id: m._id.toString(),
+        domain: m.domain,
+        channel: m.channel,
+        fromEmail: m.fromEmail,
+        fromName: m.fromName,
+        fromAvatarUrl: avatarByEmail.get(senderLower) || m.fromAvatarUrl || '',
+        toEmail: m.toEmail,
+        text: m.text,
+        attachmentUrl: m.attachmentUrl,
+        attachmentName: m.attachmentName,
+        attachmentType: m.attachmentType,
+        readBy: m.readBy || [],
+        createdAt: m.createdAt ? new Date(m.createdAt).toISOString() : new Date().toISOString(),
+      };
+    });
 
     const selfPresence = colleaguesMap.get(email);
+    const selfAvatarUrl = avatarByEmail.get(email) || selfPresence?.avatarUrl || '';
+    const selfName = selfPresence?.name || callerName;
     colleaguesMap.delete(email); // Remover o próprio utilizador da lista de colegas
 
     const colleagues = Array.from(colleaguesMap.values()).sort((a, b) => {
@@ -232,6 +244,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       domain,
+      selfName,
+      selfAvatarUrl,
       selfStatus: selfPresence?.status === 'offline' ? 'online' : selfPresence?.status || 'online',
       activeChannel,
       generalUnreadCount,
@@ -256,6 +270,7 @@ export async function POST(request: NextRequest) {
       action = 'send',
       fromEmail: rawFrom,
       fromName: rawFromName,
+      avatarUrl: rawAvatarUrl,
       toEmail: rawTo,
       text = '',
       attachmentUrl,
@@ -272,17 +287,57 @@ export async function POST(request: NextRequest) {
     const domain = fromEmail.split('@')[1].toLowerCase();
     const fromName = formatDisplayName(fromEmail, rawFromName);
 
+    // Atualização de foto de perfil e nome de exibição
+    if (action === 'profile') {
+      const updateFields: Record<string, any> = {
+        email: fromEmail,
+        domain,
+        lastSeenAt: new Date(),
+      };
+      if (typeof rawFromName === 'string' && rawFromName.trim()) {
+        updateFields.name = rawFromName.trim();
+      }
+      if (typeof rawAvatarUrl === 'string') {
+        updateFields.avatarUrl = rawAvatarUrl;
+      }
+
+      const updated = await WebmailPresence.findOneAndUpdate(
+        { email: fromEmail },
+        {
+          $set: updateFields,
+          $setOnInsert: { status: 'online' },
+        },
+        { upsert: true, new: true }
+      );
+
+      if (typeof rawAvatarUrl === 'string') {
+        await WebmailChatMessage.updateMany(
+          { domain, fromEmail },
+          { $set: { fromAvatarUrl: rawAvatarUrl, ...(updateFields.name ? { fromName: updateFields.name } : {}) } }
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+        avatarUrl: updated?.avatarUrl || '',
+        name: updated?.name || fromName,
+      });
+    }
+
     // Atualização rápida de estado (online / busy / away)
     if (action === 'status') {
       const validStatus = ['online', 'busy', 'away'].includes(status) ? status : 'online';
       await WebmailPresence.findOneAndUpdate(
         { email: fromEmail },
         {
-          email: fromEmail,
-          domain,
-          name: fromName,
-          status: validStatus,
-          lastSeenAt: new Date(),
+          $set: {
+            email: fromEmail,
+            domain,
+            name: fromName,
+            status: validStatus,
+            lastSeenAt: new Date(),
+            ...(rawAvatarUrl ? { avatarUrl: rawAvatarUrl } : {}),
+          },
         },
         { upsert: true, new: true }
       );
@@ -307,11 +362,29 @@ export async function POST(request: NextRequest) {
       channel = buildDmChannel(fromEmail, toEmail);
     }
 
+    const senderPresence = await WebmailPresence.findOneAndUpdate(
+      { email: fromEmail },
+      {
+        $set: {
+          email: fromEmail,
+          domain,
+          name: fromName,
+          lastSeenAt: new Date(),
+          ...(rawAvatarUrl ? { avatarUrl: rawAvatarUrl } : {}),
+        },
+        $setOnInsert: { status: 'online' },
+      },
+      { upsert: true, new: true }
+    );
+
+    const effectiveAvatarUrl = rawAvatarUrl || senderPresence?.avatarUrl || '';
+
     const newMsg = await WebmailChatMessage.create({
       domain,
       channel,
       fromEmail,
-      fromName,
+      fromName: senderPresence?.name || fromName,
+      fromAvatarUrl: effectiveAvatarUrl,
       toEmail: channel === 'general' ? 'all' : toEmail,
       text: cleanText,
       attachmentUrl,
@@ -321,17 +394,6 @@ export async function POST(request: NextRequest) {
       createdAt: new Date(),
     });
 
-    await WebmailPresence.findOneAndUpdate(
-      { email: fromEmail },
-      {
-        email: fromEmail,
-        domain,
-        name: fromName,
-        lastSeenAt: new Date(),
-      },
-      { upsert: true }
-    );
-
     return NextResponse.json({
       success: true,
       message: {
@@ -340,6 +402,7 @@ export async function POST(request: NextRequest) {
         channel: newMsg.channel,
         fromEmail: newMsg.fromEmail,
         fromName: newMsg.fromName,
+        fromAvatarUrl: newMsg.fromAvatarUrl || effectiveAvatarUrl,
         toEmail: newMsg.toEmail,
         text: newMsg.text,
         attachmentUrl: newMsg.attachmentUrl,
@@ -357,3 +420,4 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+

@@ -5,6 +5,7 @@ export interface IWebmailChatMessage extends Document {
   channel: string; // 'general' ou 'dm:email1:email2'
   fromEmail: string;
   fromName: string;
+  fromAvatarUrl?: string;
   toEmail: string; // 'all' ou email do colega
   text: string;
   attachmentUrl?: string;
@@ -19,6 +20,7 @@ const WebmailChatMessageSchema = new Schema<IWebmailChatMessage>({
   channel: { type: String, required: true, index: true },
   fromEmail: { type: String, required: true, lowercase: true, trim: true },
   fromName: { type: String, required: true, trim: true },
+  fromAvatarUrl: { type: String, default: '' },
   toEmail: { type: String, required: true, lowercase: true, trim: true },
   text: { type: String, default: '' },
   attachmentUrl: { type: String },
@@ -34,6 +36,7 @@ export interface IWebmailPresence extends Document {
   email: string;
   domain: string;
   name: string;
+  avatarUrl?: string;
   status: 'online' | 'busy' | 'away';
   lastSeenAt: Date;
 }
@@ -42,6 +45,7 @@ const WebmailPresenceSchema = new Schema<IWebmailPresence>({
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
   domain: { type: String, required: true, lowercase: true, trim: true, index: true },
   name: { type: String, required: true, trim: true },
+  avatarUrl: { type: String, default: '' },
   status: { type: String, enum: ['online', 'busy', 'away'], default: 'online' },
   lastSeenAt: { type: Date, default: Date.now },
 });
@@ -53,3 +57,4 @@ export const WebmailChatMessage =
 export const WebmailPresence =
   mongoose.models.WebmailPresence ||
   mongoose.model<IWebmailPresence>('WebmailPresence', WebmailPresenceSchema);
+

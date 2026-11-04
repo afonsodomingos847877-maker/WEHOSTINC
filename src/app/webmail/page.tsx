@@ -463,6 +463,16 @@ function WebmailContent() {
   const [speakingSource, setSpeakingSource] = useState<'email' | 'compose' | 'quick_reply' | null>(null);
   const [speechSpeed, setSpeechSpeed] = useState<1 | 1.25 | 1.5>(1);
   const speechUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const [userAvatarUrl, setUserAvatarUrl] = useState<string>('');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && selectedAccountEmail) {
+      try {
+        const savedAv = localStorage.getItem(`wehosthere_avatar_${selectedAccountEmail.trim().toLowerCase()}`) || '';
+        setUserAvatarUrl(savedAv);
+      } catch {}
+    }
+  }, [selectedAccountEmail]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -2689,8 +2699,19 @@ function WebmailContent() {
         <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
           {/* Account Switcher */}
           {accounts.length > 0 ? (
-            <div className="flex items-center space-x-1.5 bg-neutral-100 hover:bg-neutral-200/60 px-2.5 sm:px-3 py-1.5 rounded-xl border border-neutral-200 max-w-[130px] sm:max-w-xs transition">
-              <User className="h-3.5 w-3.5 text-neutral-600 shrink-0" />
+            <div className="flex items-center space-x-1.5 bg-neutral-100 hover:bg-neutral-200/60 px-2.5 sm:px-3 py-1.5 rounded-xl border border-neutral-200 max-w-[140px] sm:max-w-xs transition">
+              {userAvatarUrl ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={userAvatarUrl}
+                  alt={selectedAccountEmail}
+                  onClick={() => setShowInternalChat(true)}
+                  className="h-5 w-5 rounded-full object-cover border border-emerald-400 shrink-0 cursor-pointer"
+                  title="Foto de perfil (clique para editar no Chat da Equipa)"
+                />
+              ) : (
+                <User className="h-3.5 w-3.5 text-neutral-600 shrink-0" />
+              )}
               <select
                 value={selectedAccountEmail}
                 onChange={(e) => {
@@ -2717,9 +2738,26 @@ function WebmailContent() {
               </select>
             </div>
           ) : (mailboxPassword && selectedAccountEmail) ? (
-            <span className="text-xs text-neutral-700 font-mono font-bold bg-neutral-100 px-2.5 py-1.5 rounded-xl border border-neutral-200 truncate max-w-[110px] sm:max-w-[180px]">
-              {selectedAccountEmail}
-            </span>
+            <button
+              type="button"
+              onClick={() => setShowInternalChat(true)}
+              className="flex items-center space-x-2 text-xs text-neutral-700 font-mono font-bold bg-neutral-100 hover:bg-neutral-200/70 px-2.5 py-1.5 rounded-xl border border-neutral-200 truncate max-w-[130px] sm:max-w-[210px] cursor-pointer transition"
+              title="Clique para abrir o Chat da Equipa ou alterar a sua Foto de Perfil"
+            >
+              {userAvatarUrl ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={userAvatarUrl}
+                  alt={selectedAccountEmail}
+                  className="h-5 w-5 rounded-full object-cover border border-emerald-500 shrink-0"
+                />
+              ) : (
+                <span className="h-5 w-5 rounded-full bg-neutral-900 text-emerald-400 font-sans font-extrabold text-[10px] flex items-center justify-center shrink-0">
+                  {selectedAccountEmail.charAt(0).toUpperCase()}
+                </span>
+              )}
+              <span className="truncate">{selectedAccountEmail}</span>
+            </button>
           ) : null}
 
           {/* Link Direto para o Site do Domínio da Empresa */}
@@ -6365,6 +6403,9 @@ function WebmailContent() {
         onUnreadChange={(unread, online) => {
           setInternalChatUnread(unread);
           setInternalChatOnline(online);
+        }}
+        onProfileChange={(avUrl) => {
+          setUserAvatarUrl(avUrl);
         }}
       />
     </div>
