@@ -1225,6 +1225,14 @@ function WebmailContent() {
   }, [selectedAccountEmail]);
 
   // AI Assistant Handlers
+  const cleanAiText = (raw: string) =>
+    decodeHtmlEntities(raw)
+      .replace(/&mdash;/gi, '—')
+      .replace(/&ndash;/gi, '–')
+      .replace(/\*\*([^*]+)\*\*/g, '$1')
+      .replace(/\*\*+/g, '')
+      .trim();
+
   const handleSummarizeWithAI = async () => {
     if (!selectedMessage) return;
     setIsGeneratingSummary(true);
@@ -1241,7 +1249,7 @@ function WebmailContent() {
       });
       const data = await res.json();
       if (data.success && data.result) {
-        setAiSummary(data.result);
+        setAiSummary(cleanAiText(data.result));
       }
     } catch (err) {
       console.error('Error generating summary:', err);
@@ -1267,7 +1275,7 @@ function WebmailContent() {
       });
       const data = await res.json();
       if (data.success && data.result) {
-        setReplyText(data.result);
+        setReplyText(cleanAiText(data.result));
       }
     } catch (err) {
       console.error('Error generating AI reply:', err);
@@ -1291,7 +1299,7 @@ function WebmailContent() {
       });
       const data = await res.json();
       if (data.success && data.result) {
-        setComposeBody(data.result);
+        setComposeBody(cleanAiText(data.result));
         soundEffects.playAICompleteSound();
       }
     } catch (err) {
@@ -2450,17 +2458,68 @@ function WebmailContent() {
                 </div>
 
                 {/* AI Summary Box */}
-                {aiSummary && (
-                  <div className="p-3 bg-white/10 rounded-xl border border-white/15 text-xs text-neutral-100 whitespace-pre-line relative">
-                    <button
-                      onClick={() => setAiSummary(null)}
-                      className="absolute top-2 right-2 text-white/50 hover:text-white"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                    {aiSummary}
-                  </div>
-                )}
+                {aiSummary && (() => {
+                  const cleaned = cleanAiText(aiSummary);
+                  const rawLines = cleaned
+                    .split(/\n+/)
+                    .map(l => l.trim())
+                    .filter(Boolean);
+
+                  const bulletLines: string[] = [];
+                  let actionLine = '';
+
+                  for (const line of rawLines) {
+                    const lower = line.toLowerCase();
+                    if (lower.includes('resumo inteligente da mensagem')) {
+                      continue;
+                    }
+                    if (lower.startsWith('💡') || lower.includes('ação recomendada:')) {
+                      actionLine = line.replace(/^💡\s*/i, '').replace(/^ação recomendada:\s*/i, '').trim();
+                    } else {
+                      bulletLines.push(line.replace(/^[•\-\*]\s*/, '').trim());
+                    }
+                  }
+
+                  return (
+                    <div className="p-3.5 sm:p-4 bg-white/[0.07] rounded-xl border border-white/15 text-xs text-neutral-100 relative space-y-2.5">
+                      <div className="flex items-center justify-between pr-6">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm">📌</span>
+                          <span className="font-bold text-white tracking-wide text-xs sm:text-[13px]">
+                            Resumo Inteligente da Mensagem
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setAiSummary(null)}
+                          className="absolute top-3 right-3 text-white/50 hover:text-white transition p-1 rounded-lg hover:bg-white/10"
+                          title="Fechar resumo"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+
+                      <ul className="space-y-1.5 pl-1">
+                        {bulletLines.map((item, idx) => (
+                          <li key={idx} className="flex items-start space-x-2 text-neutral-200 leading-relaxed">
+                            <span className="text-emerald-400 font-bold mt-0.5 shrink-0">•</span>
+                            <span className="flex-1">{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+
+                      {actionLine && (
+                        <div className="pt-2 mt-2 border-t border-white/10 flex items-start space-x-2 text-[11px] sm:text-xs text-amber-200/95">
+                          <span className="shrink-0">💡</span>
+                          <div>
+                            <span className="font-bold text-white">Ação recomendada: </span>
+                            <span>{actionLine}</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Body card */}
