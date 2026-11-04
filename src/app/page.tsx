@@ -15,6 +15,7 @@ import InteractiveSteps from '@/components/InteractiveSteps';
 import PartnersSection from '@/components/PartnersSection';
 import NewsletterForm from '@/components/NewsletterForm';
 import NewsletterPopup from '@/components/NewsletterPopup';
+import ScrollRevealHeading from '@/components/ScrollRevealHeading';
 import { soundEffects } from '@/lib/soundEffects';
 
 export default function Home() {
@@ -257,9 +258,13 @@ export default function Home() {
       {/* Features - Mobile First */}
       <section id="recursos" ref={featuresRef} className="anim-fade-up py-6 sm:py-14 px-3 sm:px-6 bg-white">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-lg sm:text-2xl lg:text-3xl font-extrabold text-center text-gray-900 mb-4 sm:mb-10">
-            {t('features.title')}
-          </h2>
+          <div className="mb-6 sm:mb-10">
+            <ScrollRevealHeading
+              text={t('features.title')}
+              badge="Diferenciais Exclusivos"
+              subtitle="Infraestrutura ultrarrápida, segurança reforçada e atendimento moçambicano dedicado 24/7."
+            />
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6">
             <div className="text-center p-4 sm:p-5 bg-gray-50/80 rounded-2xl border border-gray-100 hover:shadow-lg hover:scale-105 hover:bg-gradient-to-br hover:from-primary-50 hover:to-blue-50 transition-all duration-300 cursor-pointer group">
               <div className="flex justify-center mb-2">
