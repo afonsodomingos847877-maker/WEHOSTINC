@@ -238,6 +238,17 @@ function WebmailContent() {
 
   // Auto-save draft
   useEffect(() => {
+    const prevBodyOverflow = document.body.style.overflow;
+    const prevHtmlOverflow = document.documentElement.style.overflow;
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prevBodyOverflow;
+      document.documentElement.style.overflow = prevHtmlOverflow;
+    };
+  }, [showCompose]);
+
+  useEffect(() => {
     if (!showCompose) return;
     
     const autoSaveInterval = setInterval(() => {
@@ -1329,7 +1340,7 @@ function WebmailContent() {
 
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
+    <div className="h-screen overflow-hidden bg-gray-50 flex flex-col font-sans">
       {/* Webmail Header Bar - Mobile First */}
       <header className="bg-white text-gray-800 px-3 sm:px-4 py-2.5 sm:py-3 border-b border-gray-200 flex flex-wrap items-center justify-between gap-2 shadow-xs">
         <div className="flex items-center space-x-2.5 min-w-0">
@@ -2517,8 +2528,8 @@ function WebmailContent() {
 
       {/* MODAL: Escrever E-mail (Compose) */}
       {showCompose && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center z-50">
-          <div className={`bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl p-4 sm:p-6 ${isComposeExpanded ? 'sm:max-w-4xl' : 'sm:max-w-xl'} w-full border border-gray-100 animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 h-[92vh] sm:h-auto sm:max-h-[90vh] overflow-y-auto`}>
+        <div className="fixed inset-0 z-[9999] bg-black/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-hidden">
+          <div className={`bg-white rounded-3xl shadow-2xl p-4 sm:p-5 ${isComposeExpanded ? 'sm:max-w-4xl' : 'sm:max-w-2xl'} w-full border border-gray-100 animate-in zoom-in-95 duration-200 ${showTemplateSelector ? 'max-h-[90vh] overflow-y-auto' : 'overflow-hidden'}`}>
             {isAccountPending ? (
               <div className="text-center py-6 space-y-4">
                 <div className="w-14 h-14 bg-amber-100 rounded-full flex items-center justify-center mx-auto text-amber-600 border border-amber-200 shadow-2xs">
@@ -2542,7 +2553,7 @@ function WebmailContent() {
               </div>
             ) : (
               <>
-                <div className="flex items-center justify-between pb-3 border-b border-neutral-100 mb-4">
+                <div className="flex items-center justify-between pb-2.5 border-b border-neutral-100 mb-3">
                   <div className="flex items-center space-x-2">
                     <Edit3 className="h-5 w-5 text-neutral-900" />
                     <h2 className="text-lg font-bold text-neutral-900">Novo E-mail</h2>
@@ -2680,37 +2691,48 @@ function WebmailContent() {
                 <p className="font-bold text-gray-900">{sentSuccessMsg}</p>
               </div>
             ) : (
-              <form onSubmit={handleSendEmail} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1">
-                    De (Remetente)
-                  </label>
-                  <input
-                    type="text"
-                    value={selectedAccountEmail}
-                    disabled
-                    className="w-full px-4 py-2.5 bg-gray-100 border border-gray-200 rounded-xl text-xs font-mono font-bold text-gray-600 cursor-not-allowed"
-                  />
-                </div>
+              <form onSubmit={handleSendEmail} className="space-y-2.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-600 mb-0.5">
+                      De (Remetente)
+                    </label>
+                    <input
+                      type="text"
+                      value={selectedAccountEmail}
+                      disabled
+                      className="w-full px-3 py-2 bg-gray-100 border border-gray-200 rounded-xl text-xs font-mono font-bold text-gray-600 cursor-not-allowed"
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1">
-                    Para (Destinatário)
-                  </label>
-                  <input
-                    type="email"
-                    value={composeTo}
-                    onChange={(e) => setComposeTo(e.target.value)}
-                    placeholder="email@exemplo.com"
-                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-900 outline-none focus:ring-2 focus:ring-primary-500 font-sans"
-                    required
-                  />
+                  <div>
+                    <div className="flex items-center justify-between mb-0.5">
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-700">
+                        Para (Destinatário)
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setShowCcBcc(!showCcBcc)}
+                        className="text-[10px] font-bold text-primary-600 hover:text-primary-800 cursor-pointer"
+                      >
+                        {showCcBcc ? 'Ocultar CC/BCC' : '+ CC/BCC'}
+                      </button>
+                    </div>
+                    <input
+                      type="email"
+                      value={composeTo}
+                      onChange={(e) => setComposeTo(e.target.value)}
+                      placeholder="email@exemplo.com"
+                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-900 outline-none focus:ring-2 focus:ring-primary-500 font-sans"
+                      required
+                    />
+                  </div>
                 </div>
 
                 {showCcBcc && (
-                  <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1">
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-700 mb-0.5">
                         CC (Cópia)
                       </label>
                       <input
@@ -2718,12 +2740,12 @@ function WebmailContent() {
                         value={composeCc}
                         onChange={(e) => setComposeCc(e.target.value)}
                         placeholder="email@exemplo.com"
-                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-900 outline-none focus:ring-2 focus:ring-primary-500 font-sans"
+                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-900 outline-none focus:ring-2 focus:ring-primary-500 font-sans"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1">
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-700 mb-0.5">
                         BCC (Cópia Oculta)
                       </label>
                       <input
@@ -2731,22 +2753,14 @@ function WebmailContent() {
                         value={composeBcc}
                         onChange={(e) => setComposeBcc(e.target.value)}
                         placeholder="email@exemplo.com"
-                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-900 outline-none focus:ring-2 focus:ring-primary-500 font-sans"
+                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-900 outline-none focus:ring-2 focus:ring-primary-500 font-sans"
                       />
                     </div>
-                  </>
+                  </div>
                 )}
 
-                <button
-                  type="button"
-                  onClick={() => setShowCcBcc(!showCcBcc)}
-                  className="text-[11px] font-bold text-primary-600 hover:text-primary-800 bg-primary-50 hover:bg-primary-100 px-3 py-1.5 rounded-lg border border-primary-200 transition cursor-pointer"
-                >
-                  {showCcBcc ? 'Ocultar CC/BCC' : 'Mostrar CC/BCC'}
-                </button>
-
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1">
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-700 mb-0.5">
                     Assunto
                   </label>
                   <input
@@ -2754,7 +2768,7 @@ function WebmailContent() {
                     value={composeSubject}
                     onChange={(e) => setComposeSubject(e.target.value)}
                     placeholder="Assunto da mensagem"
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl text-xs font-bold text-gray-900 outline-none focus:ring-2 focus:ring-primary-500 font-sans"
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-900 outline-none focus:ring-2 focus:ring-primary-500 font-sans"
                   />
                 </div>
 
@@ -2809,14 +2823,15 @@ function WebmailContent() {
                     <style>{`
                       .webmail-quill-editor .ql-toolbar.ql-snow {
                         background-color: #ffffff !important;
-                        border-top-left-radius: 1rem !important;
-                        border-top-right-radius: 1rem !important;
+                        border-top-left-radius: 0.75rem !important;
+                        border-top-right-radius: 0.75rem !important;
                         border-color: #e5e7eb !important;
+                        padding: 4px 8px !important;
                       }
                       .webmail-quill-editor .ql-container.ql-snow {
                         background-color: #ffffff !important;
-                        border-bottom-left-radius: 1rem !important;
-                        border-bottom-right-radius: 1rem !important;
+                        border-bottom-left-radius: 0.75rem !important;
+                        border-bottom-right-radius: 0.75rem !important;
                         border-color: #e5e7eb !important;
                       }
                       .webmail-quill-editor .ql-editor {
@@ -2824,9 +2839,12 @@ function WebmailContent() {
                         -webkit-text-fill-color: #000000 !important;
                         caret-color: #000000 !important;
                         background-color: #ffffff !important;
-                        font-size: 13.5px !important;
+                        font-size: 13px !important;
                         font-family: inherit !important;
-                        line-height: 1.6 !important;
+                        line-height: 1.5 !important;
+                        min-height: ${isMessageEditorExpanded ? 'calc(100vh - 220px)' : '95px'} !important;
+                        max-height: ${isMessageEditorExpanded ? 'calc(100vh - 220px)' : '115px'} !important;
+                        padding: 8px 12px !important;
                       }
                       .webmail-quill-editor .ql-editor * {
                         color: #000000 !important;
@@ -2853,7 +2871,6 @@ function WebmailContent() {
                           ]
                         }}
                         className="text-xs text-gray-900 bg-white webmail-quill-editor"
-                        style={{ minHeight: isMessageEditorExpanded ? 'calc(100vh - 200px)' : '150px' }}
                       />
                     )}
                     {isMessageEditorExpanded && (
@@ -2869,127 +2886,105 @@ function WebmailContent() {
                   </div>
                 </div>
 
-                {/* Upload de Anexos no Compose */}
-                <div className="space-y-2 pt-1 border-t border-gray-100">
-                  <div className="flex items-center justify-between">
-                    <label className="cursor-pointer inline-flex items-center space-x-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold rounded-xl transition border border-emerald-200">
-                      {uploadingAttachment ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-600" />
-                      ) : (
-                        <Paperclip className="w-3.5 h-3.5 text-emerald-600" />
+                {/* Barra Compacta: Anexos + Prioridade da Mensagem */}
+                <div className="space-y-1.5 pt-1">
+                  <div className="flex flex-wrap items-center justify-between gap-2 p-2 bg-gray-50 border border-gray-200 rounded-xl">
+                    <div className="flex items-center gap-2">
+                      <label className="cursor-pointer inline-flex items-center space-x-1.5 px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[11px] font-bold rounded-lg transition border border-emerald-200">
+                        {uploadingAttachment ? (
+                          <Loader2 className="w-3 h-3 animate-spin text-emerald-600" />
+                        ) : (
+                          <Paperclip className="w-3 h-3 text-emerald-600" />
+                        )}
+                        <span>{uploadingAttachment ? 'A carregar...' : '📎 Anexar Ficheiro'}</span>
+                        <input
+                          type="file"
+                          className="hidden"
+                          onChange={handleComposeFileUpload}
+                          disabled={uploadingAttachment}
+                        />
+                      </label>
+                      {composeAttachments.length > 0 && (
+                        <span className="text-[10px] font-bold text-gray-500">
+                          {composeAttachments.length}/{ATTACHMENT_MAX_COUNT} ({(composeAttachments.reduce((sum, att) => sum + (att.size || 0), 0) / (1024 * 1024)).toFixed(1)}MB)
+                        </span>
                       )}
-                      <span>{uploadingAttachment ? 'A carregar anexo...' : '📎 Anexar Ficheiro'}</span>
-                      <input
-                        type="file"
-                        className="hidden"
-                        onChange={handleComposeFileUpload}
-                        disabled={uploadingAttachment}
-                      />
-                    </label>
-                    <span className="text-[10px] text-gray-400">PDF, Imagens, Documentos</span>
+                    </div>
+
+                    <div className="flex items-center space-x-1">
+                      <span className="text-[10px] font-bold text-gray-500 mr-1 hidden sm:inline">Prioridade:</span>
+                      <button
+                        type="button"
+                        onClick={() => setComposePriority('normal')}
+                        className={`px-2 py-1 text-[11px] font-bold rounded-lg transition cursor-pointer border flex items-center space-x-1 ${
+                          composePriority === 'normal'
+                            ? 'bg-white text-gray-900 border-gray-300 shadow-2xs'
+                            : 'text-gray-500 hover:bg-gray-100 border-transparent'
+                        }`}
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
+                        <span>Normal</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setComposePriority('high')}
+                        className={`px-2 py-1 text-[11px] font-bold rounded-lg transition cursor-pointer border flex items-center space-x-1 ${
+                          composePriority === 'high'
+                            ? 'bg-rose-100 text-rose-800 border-rose-300 shadow-2xs font-extrabold'
+                            : 'text-gray-500 hover:bg-rose-50 hover:text-rose-700 border-transparent'
+                        }`}
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-rose-600 animate-pulse"></span>
+                        <span>Alta</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setComposePriority('low')}
+                        className={`px-2 py-1 text-[11px] font-bold rounded-lg transition cursor-pointer border flex items-center space-x-1 ${
+                          composePriority === 'low'
+                            ? 'bg-blue-100 text-blue-800 border-blue-300 shadow-2xs'
+                            : 'text-gray-500 hover:bg-blue-50 hover:text-blue-700 border-transparent'
+                        }`}
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                        <span>Baixa</span>
+                      </button>
+                    </div>
                   </div>
 
                   {attachmentError && (
-                    <div className="p-2 bg-rose-50 border border-rose-200 rounded-xl">
-                      <p className="text-xs font-bold text-rose-700 flex items-center space-x-1.5">
-                        <AlertCircle className="w-3.5 h-3.5" />
+                    <div className="px-2.5 py-1.5 bg-rose-50 border border-rose-200 rounded-lg">
+                      <p className="text-[11px] font-bold text-rose-700 flex items-center space-x-1.5">
+                        <AlertCircle className="w-3 h-3" />
                         <span>{attachmentError}</span>
                       </p>
                     </div>
                   )}
 
                   {composeAttachments.length > 0 && (
-                    <>
-                      <div className="flex items-center justify-between text-[10px] text-gray-500 pt-1">
-                        <span className="font-semibold">
-                          {composeAttachments.length}/{ATTACHMENT_MAX_COUNT} anexos
-                        </span>
-                        <span className="font-semibold">
-                          {(composeAttachments.reduce((sum, att) => sum + (att.size || 0), 0) / (1024 * 1024)).toFixed(2)} / {ATTACHMENT_TOTAL_MAX_SIZE / (1024 * 1024)}MB
-                        </span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
-                        <div 
-                          className={`h-full transition-all ${
-                            (composeAttachments.reduce((sum, att) => sum + (att.size || 0), 0) / ATTACHMENT_TOTAL_MAX_SIZE) > 0.9 
-                              ? 'bg-red-500' 
-                              : (composeAttachments.reduce((sum, att) => sum + (att.size || 0), 0) / ATTACHMENT_TOTAL_MAX_SIZE) > 0.7 
-                                ? 'bg-amber-500' 
-                                : 'bg-primary-500'
-                          }`}
-                          style={{ width: `${Math.min((composeAttachments.reduce((sum, att) => sum + (att.size || 0), 0) / ATTACHMENT_TOTAL_MAX_SIZE) * 100, 100)}%` }}
-                        />
-                      </div>
-                      <div className="flex flex-wrap gap-2 pt-1">
-                        {composeAttachments.map((att, idx) => (
-                          <div key={idx} className="flex items-center space-x-1.5 px-2.5 py-1 bg-gray-100 border border-gray-200 rounded-lg text-xs">
-                            <FileText className="w-3.5 h-3.5 text-primary-600 shrink-0" />
-                            <span className="font-bold text-gray-800 truncate max-w-[150px]">{att.name}</span>
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveComposeAttachment(idx)}
-                              className="text-gray-400 hover:text-red-600 transition p-0.5"
-                            >
-                              <X className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </>
+                    <div className="flex flex-wrap gap-1.5">
+                      {composeAttachments.map((att, idx) => (
+                        <div key={idx} className="flex items-center space-x-1 px-2 py-0.5 bg-gray-100 border border-gray-200 rounded-md text-[11px]">
+                          <FileText className="w-3 h-3 text-primary-600 shrink-0" />
+                          <span className="font-bold text-gray-800 truncate max-w-[140px]">{att.name}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveComposeAttachment(idx)}
+                            className="text-gray-400 hover:text-red-600 transition p-0.5"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
 
-                {/* Seletor de Prioridade da Mensagem */}
-                <div className="flex flex-wrap items-center justify-between gap-2 p-3 bg-gray-50 border border-gray-200 rounded-2xl">
-                  <div className="flex items-center space-x-2">
-                    <Flag className="w-4 h-4 text-gray-500" />
-                    <span className="text-xs font-bold text-gray-700">Prioridade da Mensagem:</span>
-                  </div>
-                  <div className="flex items-center space-x-1.5">
-                    <button
-                      type="button"
-                      onClick={() => setComposePriority('normal')}
-                      className={`px-3 py-1.5 text-xs font-bold rounded-xl transition cursor-pointer border flex items-center space-x-1.5 ${
-                        composePriority === 'normal'
-                          ? 'bg-white text-gray-900 border-gray-300 shadow-xs'
-                          : 'text-gray-500 hover:bg-gray-100 border-transparent'
-                      }`}
-                    >
-                      <span className="w-2 h-2 rounded-full bg-gray-400"></span>
-                      <span>Normal</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setComposePriority('high')}
-                      className={`px-3 py-1.5 text-xs font-bold rounded-xl transition cursor-pointer border flex items-center space-x-1.5 ${
-                        composePriority === 'high'
-                          ? 'bg-rose-100 text-rose-800 border-rose-300 shadow-xs font-extrabold'
-                          : 'text-gray-500 hover:bg-rose-50 hover:text-rose-700 border-transparent'
-                      }`}
-                    >
-                      <span className="w-2 h-2 rounded-full bg-rose-600 animate-pulse"></span>
-                      <span>Alta Prioridade</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setComposePriority('low')}
-                      className={`px-3 py-1.5 text-xs font-bold rounded-xl transition cursor-pointer border flex items-center space-x-1.5 ${
-                        composePriority === 'low'
-                          ? 'bg-blue-100 text-blue-800 border-blue-300 shadow-xs'
-                          : 'text-gray-500 hover:bg-blue-50 hover:text-blue-700 border-transparent'
-                      }`}
-                    >
-                      <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                      <span>Baixa</span>
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-2 pt-2">
+                <div className="flex flex-col sm:flex-row gap-2 pt-1">
                   <button
                     type="button"
                     onClick={handleCloseCompose}
-                    className="sm:flex-1 py-3 border border-neutral-300 text-neutral-800 font-bold text-xs rounded-xl hover:bg-neutral-100 transition cursor-pointer"
+                    className="sm:flex-1 py-2.5 border border-neutral-300 text-neutral-800 font-bold text-xs rounded-xl hover:bg-neutral-100 transition cursor-pointer"
                   >
                     Cancelar
                   </button>
@@ -2997,17 +2992,17 @@ function WebmailContent() {
                     type="button"
                     onClick={handleSaveDraftManually}
                     disabled={sendingMsg || uploadingAttachment}
-                    className="sm:flex-1 py-3 bg-neutral-100 hover:bg-neutral-200/80 text-neutral-900 border border-neutral-300 font-bold text-xs rounded-xl transition cursor-pointer shadow-2xs flex items-center justify-center space-x-2"
+                    className="sm:flex-1 py-2.5 bg-neutral-100 hover:bg-neutral-200/80 text-neutral-900 border border-neutral-300 font-bold text-xs rounded-xl transition cursor-pointer shadow-2xs flex items-center justify-center space-x-2"
                   >
-                    <FileText className="h-4 w-4" />
+                    <FileText className="h-3.5 w-3.5" />
                     <span>Salvar Rascunho</span>
                   </button>
                   <button
                     type="submit"
                     disabled={sendingMsg || uploadingAttachment}
-                    className="sm:flex-1 py-3 bg-neutral-900 hover:bg-black disabled:opacity-50 text-white font-bold text-xs rounded-xl transition cursor-pointer shadow-xs flex items-center justify-center space-x-2"
+                    className="sm:flex-1 py-2.5 bg-neutral-900 hover:bg-black disabled:opacity-50 text-white font-bold text-xs rounded-xl transition cursor-pointer shadow-xs flex items-center justify-center space-x-2"
                   >
-                    <Send className="h-4 w-4" />
+                    <Send className="h-3.5 w-3.5" />
                     <span>{sendingMsg ? 'A Enviar...' : 'Enviar E-mail'}</span>
                   </button>
                 </div>
