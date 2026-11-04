@@ -12,7 +12,7 @@ export interface ReauthenticationModalProps {
   title?: string;
   actionDescription?: string;
   initialStep?: 'request_code' | 'enter_code';
-  // Permite customizar se a API interna deve ser chamada automaticamente
+  lang?: 'pt' | 'en';
   autoDispatchApi?: boolean;
 }
 
@@ -21,9 +21,10 @@ export default function ReauthenticationModal({
   onClose,
   userEmail,
   onSuccess,
-  title = 'Reauthenticate',
+  title,
   actionDescription,
   initialStep = 'request_code',
+  lang = 'pt',
   autoDispatchApi = true
 }: ReauthenticationModalProps) {
   const [step, setStep] = useState<'request_code' | 'enter_code'>(initialStep);
@@ -36,7 +37,28 @@ export default function ReauthenticationModal({
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  // Resetar estados ao abrir/fechar
+  // Dicionário de textos em Português e Inglês
+  const isPt = lang === 'pt';
+  const modalTitle = title || (isPt ? 'Reautenticação' : 'Reauthenticate');
+  const defaultDescStep1 = isPt
+    ? `Para continuar, desbloqueie esta ação com um código enviado para `
+    : `To continue, unlock this action with a code sent to `;
+  const defaultDescStep2 = isPt
+    ? `Insira o código que enviámos para `
+    : `Enter the code we sent to `;
+
+  const btnSendCode = isPt ? 'Enviar Código para o E-mail' : 'Send Code to Email';
+  const btnVerify = isPt ? 'Verificar' : 'Verify';
+  const btnCancel = isPt ? 'Cancelar' : 'Cancel';
+  const btnSending = isPt ? 'A enviar código...' : 'Sending code...';
+  const btnVerifying = isPt ? 'A verificar...' : 'Verifying...';
+  const btnVerified = isPt ? 'Verificado' : 'Verified';
+  const notReceivedText = isPt ? 'Não recebeu o código?' : 'Did not receive the code?';
+  const resendText = isPt ? 'Reenviar código' : 'Resend code';
+  const resendWaitText = isPt ? 'Reenviar em' : 'Resend in';
+  const backText = isPt ? 'Voltar' : 'Back';
+
+  // Resetar estados ao abrir
   useEffect(() => {
     if (isOpen) {
       setStep(initialStep);
@@ -85,7 +107,7 @@ export default function ReauthenticationModal({
         });
         const data = await res.json();
         if (!res.ok || !data.success) {
-          throw new Error(data.error || 'Falha ao enviar código para o e-mail.');
+          throw new Error(data.error || (isPt ? 'Falha ao enviar código para o e-mail.' : 'Failed to send code to email.'));
         }
       }
 
@@ -95,13 +117,13 @@ export default function ReauthenticationModal({
       setTimeout(() => inputRefs.current[0]?.focus(), 150);
     } catch (err: any) {
       soundEffects.playErrorSound();
-      setError(err.message || 'Erro ao comunicar com o servidor.');
+      setError(err.message || (isPt ? 'Erro ao comunicar com o servidor.' : 'Server communication error.'));
     } finally {
       setLoading(false);
     }
   };
 
-  // Trigger de animação de erro (shake)
+  // Efeito de vibração (shake) ao errar
   const triggerErrorShake = (message: string) => {
     soundEffects.playErrorSound();
     setError(message);
@@ -113,7 +135,7 @@ export default function ReauthenticationModal({
   const handleVerify = useCallback(async (codeToVerify?: string) => {
     const code = codeToVerify || digits.join('');
     if (code.length !== 6) {
-      triggerErrorShake('Por favor, insira o código completo de 6 dígitos.');
+      triggerErrorShake(isPt ? 'Por favor, insira o código completo de 6 dígitos.' : 'Please enter the complete 6-digit code.');
       return;
     }
 
@@ -134,14 +156,13 @@ export default function ReauthenticationModal({
         });
         const data = await res.json();
         if (!res.ok || !data.success) {
-          throw new Error(data.error || 'Código incorreto ou expirado.');
+          throw new Error(data.error || (isPt ? 'Código incorreto ou expirado.' : 'Incorrect or expired code.'));
         }
       }
 
       soundEffects.playLoginSuccessSound();
       setSuccess(true);
 
-      // Executa o callback de sucesso passado pelo pai
       setTimeout(async () => {
         try {
           await onSuccess();
@@ -150,17 +171,16 @@ export default function ReauthenticationModal({
         }
       }, 700);
     } catch (err: any) {
-      triggerErrorShake(err.message || 'Erro ao validar o código.');
+      triggerErrorShake(err.message || (isPt ? 'Erro ao validar o código.' : 'Error validating code.'));
     } finally {
       setLoading(false);
     }
-  }, [digits, autoDispatchApi, userEmail, onSuccess, onClose]);
+  }, [digits, autoDispatchApi, userEmail, isPt, onSuccess, onClose]);
 
-  // Manipulação de cada dígito individual
+  // Manipulação de Dígitos Individuais
   const handleDigitChange = (index: number, value: string) => {
     if (loading || success) return;
 
-    // Apenas números
     const cleanVal = value.replace(/\D/g, '');
     const newDigits = [...digits];
 
@@ -170,7 +190,6 @@ export default function ReauthenticationModal({
       return;
     }
 
-    // Se o usuário digitou ou inseriu 1 dígito
     newDigits[index] = cleanVal[cleanVal.length - 1];
     setDigits(newDigits);
     setError('');
@@ -187,7 +206,7 @@ export default function ReauthenticationModal({
     }
   };
 
-  // Manipulação de Backspace e Teclas de Navegação
+  // Backspace e Teclas de Navegação
   const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Backspace') {
       if (!digits[index] && index > 0) {
@@ -223,13 +242,11 @@ export default function ReauthenticationModal({
     setDigits(newDigits);
     setError('');
 
-    // Foca o último campo preenchido ou o próximo vazio
     const nextEmptyIndex = newDigits.findIndex((d) => !d);
     if (nextEmptyIndex !== -1 && nextEmptyIndex < 6) {
       inputRefs.current[nextEmptyIndex]?.focus();
     } else {
       inputRefs.current[5]?.focus();
-      // Se colou 6 dígitos completos, valida automaticamente
       if (newDigits.every((d) => d.length === 1)) {
         handleVerify(newDigits.join(''));
       }
@@ -259,7 +276,7 @@ export default function ReauthenticationModal({
               id="reauth-modal-title"
               className="text-xl font-bold tracking-tight text-white flex items-center space-x-2"
             >
-              <span>{title}</span>
+              <span>{modalTitle}</span>
             </h2>
             {step === 'enter_code' && (
               <button
@@ -269,10 +286,10 @@ export default function ReauthenticationModal({
                   setError('');
                 }}
                 className="text-neutral-400 hover:text-white text-xs flex items-center space-x-1 cursor-pointer transition"
-                title="Voltar ao início"
+                title={backText}
               >
                 <ArrowLeft className="h-3.5 w-3.5" />
-                <span>Voltar</span>
+                <span>{backText}</span>
               </button>
             )}
           </div>
@@ -281,13 +298,13 @@ export default function ReauthenticationModal({
             {step === 'request_code' ? (
               actionDescription || (
                 <>
-                  To continue, unlock this action with a code sent to{' '}
+                  {defaultDescStep1}
                   <strong className="text-white font-mono">{userEmail}</strong>.
                 </>
               )
             ) : (
               <>
-                Enter the code we sent to{' '}
+                {defaultDescStep2}
                 <strong className="text-white font-mono">{userEmail}</strong>.
               </>
             )}
@@ -306,7 +323,7 @@ export default function ReauthenticationModal({
         {success && (
           <div className="mb-5 p-3.5 rounded-xl bg-emerald-950/70 border border-emerald-800/80 text-emerald-300 text-xs font-semibold flex items-center space-x-2.5 animate-in fade-in duration-200">
             <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-            <span>Código validado com sucesso! A desbloquear...</span>
+            <span>{isPt ? 'Código validado com sucesso! A desbloquear...' : 'Code verified successfully! Unlocking...'}</span>
           </div>
         )}
 
@@ -324,12 +341,12 @@ export default function ReauthenticationModal({
               {loading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin text-black" />
-                  <span>A enviar código...</span>
+                  <span>{btnSending}</span>
                 </>
               ) : (
                 <>
                   <Mail className="h-4 w-4 text-black" />
-                  <span>Send Code to Email</span>
+                  <span>{btnSendCode}</span>
                 </>
               )}
             </button>
@@ -341,7 +358,7 @@ export default function ReauthenticationModal({
                 disabled={loading}
                 className="px-4 py-2 bg-[#121212] hover:bg-[#1c1c1c] text-neutral-300 hover:text-white border border-[#2a2a2a] rounded-xl text-xs font-semibold transition cursor-pointer active:scale-95"
               >
-                Cancel
+                {btnCancel}
               </button>
             </div>
           </div>
@@ -385,10 +402,10 @@ export default function ReauthenticationModal({
 
             {/* Reenvio de Código com Timer */}
             <div className="flex items-center justify-between text-[11px] text-neutral-400 pt-1">
-              <span>Não recebeu o código?</span>
+              <span>{notReceivedText}</span>
               {resendCooldown > 0 ? (
                 <span className="text-neutral-500 font-mono">
-                  Reenviar em {resendCooldown}s
+                  {resendWaitText} {resendCooldown}s
                 </span>
               ) : (
                 <button
@@ -398,7 +415,7 @@ export default function ReauthenticationModal({
                   className="text-neutral-300 hover:text-white underline cursor-pointer inline-flex items-center space-x-1 font-medium transition"
                 >
                   <RefreshCw className="h-3 w-3" />
-                  <span>Reenviar código</span>
+                  <span>{resendText}</span>
                 </button>
               )}
             </div>
@@ -413,15 +430,15 @@ export default function ReauthenticationModal({
               {loading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin text-black" />
-                  <span>A verificar...</span>
+                  <span>{btnVerifying}</span>
                 </>
               ) : success ? (
                 <>
                   <CheckCircle2 className="h-4 w-4 text-emerald-700" />
-                  <span>Verificado</span>
+                  <span>{btnVerified}</span>
                 </>
               ) : (
-                <span>Verify</span>
+                <span>{btnVerify}</span>
               )}
             </button>
 
@@ -433,7 +450,7 @@ export default function ReauthenticationModal({
                 disabled={loading}
                 className="px-4 py-2 bg-[#121212] hover:bg-[#1c1c1c] text-neutral-300 hover:text-white border border-[#2a2a2a] rounded-xl text-xs font-semibold transition cursor-pointer active:scale-95"
               >
-                Cancel
+                {btnCancel}
               </button>
             </div>
           </div>

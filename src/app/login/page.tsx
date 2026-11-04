@@ -10,6 +10,7 @@ import BrandLogo from '@/components/BrandLogo';
 import PageLoader from '@/components/PageLoader';
 import FacebookPixel from '@/lib/facebookPixel';
 import { soundEffects } from '@/lib/soundEffects';
+import ReauthenticationModal from '@/components/ReauthenticationModal';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -20,6 +21,8 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [googleConfigured, setGoogleConfigured] = useState(true);
+  const [showReauthModal, setShowReauthModal] = useState(false);
+  const [pendingUser, setPendingUser] = useState<any>(null);
 
   useEffect(() => {
     try {
@@ -83,6 +86,14 @@ export default function LoginPage() {
     }
   }, [router]);
 
+  const handleReauthSuccess = () => {
+    if (pendingUser && auth.isAdminUser(pendingUser)) {
+      window.location.href = '/admin';
+    } else {
+      window.location.href = '/dashboard';
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     soundEffects.playClickSound();
@@ -102,12 +113,13 @@ export default function LoginPage() {
       });
       
       if (auth.isAdminUser(user)) {
-        console.log('[Login Normal] Redirecionando para admin');
-        window.location.href = '/admin';
-      } else {
-        console.log('[Login Normal] Redirecionando para dashboard');
-        window.location.href = '/dashboard';
+        console.log('[Login Normal] Administrador requer Reautenticação');
+        setPendingUser(user);
+        setShowReauthModal(true);
+        return;
       }
+      console.log('[Login Normal] Redirecionando para dashboard');
+      window.location.href = '/dashboard';
     } catch (err) {
       soundEffects.playErrorSound();
       console.error('[Login Normal] Erro de login:', err);
@@ -299,6 +311,23 @@ export default function LoginPage() {
                 </>
               )}
             </button>
+
+            {/* Opção Rápida de Reautenticação por Código */}
+            <button
+              type="button"
+              onClick={() => {
+                if (!email) {
+                  setError('Por favor, insira o seu e-mail no campo acima para receber o código.');
+                  return;
+                }
+                setPendingUser({ email });
+                setShowReauthModal(true);
+              }}
+              className="w-full py-2.5 px-3 bg-slate-900/90 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/80 rounded-lg sm:rounded-xl text-xs font-semibold transition cursor-pointer flex items-center justify-center space-x-1.5 shadow-sm active:scale-98"
+            >
+              <ShieldCheck className="h-4 w-4 text-primary-400" />
+              <span>Entrar com Código Seguro (Reautenticação)</span>
+            </button>
           </form>
 
           <div className="mt-4 sm:mt-5 pt-3 sm:pt-4 border-t border-white/10 text-center">
@@ -316,6 +345,15 @@ export default function LoginPage() {
             ← Voltar para a página inicial
           </Link>
         </div>
+        {/* Modal de Reautenticação Estilo Vercel */}
+        <ReauthenticationModal
+          isOpen={showReauthModal}
+          onClose={() => setShowReauthModal(false)}
+          userEmail={email || pendingUser?.email || ''}
+          onSuccess={handleReauthSuccess}
+          title="Reauthenticate"
+          lang="pt"
+        />
       </div>
     </div>
   );
