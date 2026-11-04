@@ -129,6 +129,7 @@ function WebmailContent() {
   const [uploadingAttachment, setUploadingAttachment] = useState(false);
   const [sendingMsg, setSendingMsg] = useState(false);
   const [sentSuccessMsg, setSentSuccessMsg] = useState('');
+  const [composeError, setComposeError] = useState('');
   const [editingDraftId, setEditingDraftId] = useState<string | null>(null);
 
   // Show CC/BCC fields state
@@ -475,10 +476,15 @@ function WebmailContent() {
     return templateLanguage === 'pt' ? templateCategories : templateCategoriesEN;
   };
 
-  // Function to detect unfilled placeholders
+  // Function to detect unfilled placeholders (ignoring CSS/style blocks)
   const detectUnfilledPlaceholders = (text: string): string[] => {
-    const placeholderRegex = /\{([^}]+)\}/g;
-    const matches = text.match(placeholderRegex);
+    if (!text) return [];
+    const cleaned = text
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+      .replace(/<[^>]+>/g, ' ');
+    const placeholderRegex = /\{([a-zA-Z0-9_À-ÿ\s-]{1,40})\}/g;
+    const matches = cleaned.match(placeholderRegex);
     return matches || [];
   };
 
@@ -941,15 +947,29 @@ function WebmailContent() {
 
   const handleSendEmail = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!composeTo || !composeBody) return;
+    setComposeError('');
 
-    // Block sending for pending accounts
+    const cleanTo = composeTo.trim();
+    const plainBody = composeBody.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+
+    if (!cleanTo) {
+      setComposeError('Por favor, informe o e-mail do destinatário (Para).');
+      return;
+    }
+
+    if (!plainBody && composeAttachments.length === 0) {
+      setComposeError('Por favor, escreva uma mensagem ou anexe um ficheiro antes de enviar.');
+      return;
+    }
+
+    // Se a conta já autenticou com senha no servidor IMAP/SMTP (mailboxPassword), está ativa no servidor.
+    // Só bloqueamos se não houver autenticação ativa e o registo estiver explicitamente como 'pending'.
     const selectedAcc = accounts.find(a => a.email.toLowerCase() === selectedAccountEmail.toLowerCase());
-    const isPending = !selectedAcc || selectedAcc.status === 'pending' || !selectedAcc.status;
+    const isPending = !mailboxPassword && selectedAcc ? selectedAcc.status === 'pending' : false;
     if (isPending) {
       setSentSuccessMsg('');
       setSendingMsg(false);
-      setWebmailLoginError('Esta conta ainda não foi aprovada pelo administrador. O envio de emails estará disponível após a aprovação.');
+      setComposeError('Esta conta ainda aguarda aprovação do administrador.');
       return;
     }
 
@@ -964,30 +984,44 @@ function WebmailContent() {
       return;
     }
 
-    proceedToSendEmail();
+    await proceedToSendEmail();
   };
 
   const proceedToSendEmail = async () => {
     setSendingMsg(true);
+    setComposeError('');
     setShowPlaceholderWarning(false);
+
+    const activePassword =
+      mailboxPassword ||
+      (typeof window !== 'undefined' && selectedAccountEmail
+        ? sessionStorage.getItem(`wm_pwd_${selectedAccountEmail.toLowerCase()}`) || ''
+        : '');
+
+    if (!activePassword) {
+      setSendingMsg(false);
+      setComposeError('Sessão expirada. Por favor, volte a autenticar a sua senha do Webmail.');
+      setShowWebmailLogin(true);
+      return;
+    }
 
     try {
       // 1. Enviar via Migadu SMTP usando webmailManager
       await webmailManager.sendMessage(
         selectedAccountEmail,
-        mailboxPassword,
-        composeTo,
-        composeSubject || '(Sem assunto)',
+        activePassword,
+        composeTo.trim(),
+        composeSubject.trim() || '(Sem assunto)',
         composeBody,
         composeAttachments,
         composePriority,
-        composeCc,
-        composeBcc
+        composeCc.trim(),
+        composeBcc.trim()
       );
 
       // 2. Remover rascunho se existir
       if (editingDraftId) {
-        await webmailManager.deletePermanently(editingDraftId, selectedAccountEmail, mailboxPassword);
+        await webmailManager.deletePermanently(editingDraftId, selectedAccountEmail, activePassword);
         setEditingDraftId(null);
       }
 
@@ -998,6 +1032,7 @@ function WebmailContent() {
       setTimeout(() => {
         setShowCompose(false);
         setSentSuccessMsg('');
+        setComposeError('');
         setComposeTo('');
         setComposeCc('');
         setComposeBcc('');
@@ -1005,11 +1040,11 @@ function WebmailContent() {
         setComposeBody('');
         setComposeAttachments([]);
         refreshMessages();
-      }, 2000);
-    } catch (err) {
+      }, 1800);
+    } catch (err: any) {
       console.error('Erro ao enviar e-mail:', err);
       setSendingMsg(false);
-      setSentSuccessMsg('Erro ao enviar. Verifique as credenciais e tente novamente.');
+      setComposeError(err?.message || 'Erro ao enviar e-mail. Verifique o endereço do destinatário e tente novamente.');
     }
   };
 
@@ -1018,12 +1053,14 @@ function WebmailContent() {
     setWebmailLoginLoading(true);
     setWebmailLoginError('');
 
+    const targetLoginEmail = (webmailLoginEmail || selectedAccountEmail).trim();
+
     try {
       const res = await fetch(apiEndpoint('/api/webmail/auth'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: webmailLoginEmail,
+          email: targetLoginEmail,
           password: webmailLoginPassword
         })
       });
@@ -1033,8 +1070,11 @@ function WebmailContent() {
       if (data.success) {
         // Login bem-sucedido
         soundEffects.playLoginSuccessSound();
-        setSelectedAccountEmail(webmailLoginEmail);
+        setSelectedAccountEmail(targetLoginEmail);
         setMailboxPassword(webmailLoginPassword);
+        try {
+          sessionStorage.setItem(`wm_pwd_${targetLoginEmail.toLowerCase()}`, webmailLoginPassword);
+        } catch {}
         setShowWebmailLogin(false);
         setWebmailLoginEmail('');
         setWebmailLoginPassword('');
@@ -1050,6 +1090,11 @@ function WebmailContent() {
   };
 
   const handleWebmailLogout = () => {
+    try {
+      if (selectedAccountEmail) {
+        sessionStorage.removeItem(`wm_pwd_${selectedAccountEmail.toLowerCase()}`);
+      }
+    } catch {}
     setSelectedAccountEmail('');
     setMailboxPassword('');
     setMessages([]);
@@ -1235,7 +1280,7 @@ function WebmailContent() {
   });
 
   const currentAccountObj = accounts.find(a => a.email.toLowerCase() === selectedAccountEmail.toLowerCase());
-  const isAccountPending = currentAccountObj ? (currentAccountObj.status === 'pending' || !currentAccountObj.status) : false;
+  const isAccountPending = !mailboxPassword && currentAccountObj ? currentAccountObj.status === 'pending' : false;
 
   const unreadCount = messages.filter(m => !m.isRead).length;
   
@@ -2692,6 +2737,21 @@ function WebmailContent() {
               </div>
             ) : (
               <form onSubmit={handleSendEmail} className="space-y-2.5">
+                {composeError && (
+                  <div className="px-3 py-2 bg-rose-50 border border-rose-200 rounded-xl flex items-center justify-between gap-2">
+                    <p className="text-xs font-bold text-rose-700 flex items-center gap-1.5">
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                      <span>{composeError}</span>
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setComposeError('')}
+                      className="text-rose-400 hover:text-rose-700 p-0.5 cursor-pointer"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   <div>
                     <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-600 mb-0.5">
@@ -3077,7 +3137,7 @@ function WebmailContent() {
 
       {/* MODAL: Placeholder Warning */}
       {showPlaceholderWarning && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-[10005]">
           <div className="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl max-w-md w-full p-5 sm:p-6 animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto sm:mx-4">
             <div className="flex items-center space-x-3 mb-4">
               <div className="w-10 h-10 sm:w-12 sm:h-12 bg-amber-100 rounded-full flex items-center justify-center shrink-0">
