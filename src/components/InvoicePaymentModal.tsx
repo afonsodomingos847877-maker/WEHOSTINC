@@ -47,15 +47,6 @@ export default function InvoicePaymentModal({
   const [proofUploaded, setProofUploaded] = useState(false);
 
   useEffect(() => {
-    if (!invoice) return;
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = originalOverflow;
-    };
-  }, [invoice]);
-
-  useEffect(() => {
     if (invoice?.customerPhone) {
       setPhone(invoice.customerPhone.replace(/\D/g, ''));
     }
@@ -233,14 +224,13 @@ export default function InvoicePaymentModal({
 
   return (
     <div 
-      className="fixed inset-0 z-[100] bg-black/75 backdrop-blur-sm overflow-y-auto animate-in fade-in duration-200"
+      className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200"
       onClick={onClose}
     >
-      <div className="min-h-full w-full flex items-center justify-center p-3 sm:p-6 text-center">
-        <div 
-          className="bg-white rounded-3xl shadow-2xl max-w-xl w-full border border-gray-200 overflow-hidden text-left flex flex-col max-h-[85vh] my-auto animate-in zoom-in-95 duration-200"
-          onClick={(e) => e.stopPropagation()}
-        >
+      <div 
+        className="w-full max-w-xl bg-white rounded-3xl shadow-2xl border border-gray-200 overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Top Header */}
         <div className="bg-slate-950 text-white p-5 sm:p-6 flex items-start justify-between gap-4 border-b border-slate-800">
           <div>
@@ -702,7 +692,6 @@ export default function InvoicePaymentModal({
         </div>
       </div>
     </div>
-  </div>
   );
 }
 
