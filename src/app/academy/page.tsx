@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import AcademyNavbar from '@/components/academy/AcademyNavbar';
 import AcademyFooter from '@/components/academy/AcademyFooter';
+import TypewriterHeroTitle from '@/components/academy/TypewriterHeroTitle';
 
 interface Course {
   id: string;
@@ -100,9 +101,12 @@ export default function PublicAcademyPage() {
             <span>Formação Prática para o Mercado Real</span>
           </div>
 
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white max-w-4xl mx-auto leading-[1.15]">
-            Aprende a Criar, Escalar e Monetizar na <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400">Era Digital</span>
-          </h1>
+          <TypewriterHeroTitle
+            prefix="Aprende a Criar, Escalar e Monetizar na "
+            highlight="Era Digital"
+            className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white max-w-4xl mx-auto leading-[1.15]"
+            highlightClassName="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400"
+          />
 
           <p className="mt-4 text-sm sm:text-base text-slate-300 max-w-xl mx-auto leading-relaxed">
             Cursos diretos ao ponto com especialistas.
