@@ -1,6 +1,6 @@
 'use client';
 
-import { X, Printer, Download, CheckCircle2, Clock, ShieldCheck, FileText, Server } from 'lucide-react';
+import { X, Printer, Download, CheckCircle2, Clock, ShieldCheck, FileText, Server, CreditCard } from 'lucide-react';
 import BrandLogo from './BrandLogo';
 
 export interface ReceiptItem {
@@ -34,9 +34,10 @@ export interface ReceiptData {
 interface ReceiptModalProps {
   receipt: ReceiptData | null;
   onClose: () => void;
+  onPay?: (receipt: ReceiptData) => void;
 }
 
-export default function ReceiptModal({ receipt, onClose }: ReceiptModalProps) {
+export default function ReceiptModal({ receipt, onClose, onPay }: ReceiptModalProps) {
   if (!receipt) return null;
 
   const formattedDate = new Date(receipt.createdAt).toLocaleDateString('pt-MZ', {
@@ -269,7 +270,7 @@ export default function ReceiptModal({ receipt, onClose }: ReceiptModalProps) {
         </div>
 
         {/* Rodapé Modal de Ações (Oculto na Impressão) */}
-        <div className="bg-gray-50 border-t border-gray-200 p-4 flex justify-between items-center print:hidden">
+        <div className="bg-gray-50 border-t border-gray-200 p-4 flex flex-wrap justify-between items-center gap-2 print:hidden">
           <button
             type="button"
             onClick={onClose}
@@ -277,14 +278,28 @@ export default function ReceiptModal({ receipt, onClose }: ReceiptModalProps) {
           >
             Fechar
           </button>
-          <button
-            type="button"
-            onClick={handlePrint}
-            className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs rounded-xl shadow transition flex items-center space-x-2 cursor-pointer"
-          >
-            <Printer className="h-4 w-4" />
-            <span>Baixar / Imprimir Recibo em PDF</span>
-          </button>
+          
+          <div className="flex items-center gap-2">
+            {(isPending || isOverdue) && onPay && (
+              <button
+                type="button"
+                onClick={() => onPay(receipt)}
+                className="px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs rounded-xl shadow-md transition flex items-center space-x-1.5 cursor-pointer hover:scale-[1.02] active:scale-95"
+              >
+                <CreditCard className="h-4 w-4" />
+                <span>Pagar Fatura Agora</span>
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={handlePrint}
+              className="px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs rounded-xl shadow transition flex items-center space-x-2 cursor-pointer"
+            >
+              <Printer className="h-4 w-4" />
+              <span>Baixar / Imprimir Recibo em PDF</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

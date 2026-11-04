@@ -14,6 +14,7 @@ import DashboardNav from '@/components/DashboardNav';
 import DashboardSidebar from '@/components/DashboardSidebar';
 import PageLoader from '@/components/PageLoader';
 import ReceiptModal, { ReceiptData } from '@/components/ReceiptModal';
+import InvoicePaymentModal, { InvoicePaymentTarget } from '@/components/InvoicePaymentModal';
 import Toast from '@/components/Toast';
 import { Clock, XCircle, FileText } from 'lucide-react';
 import { soundEffects } from '@/lib/soundEffects';
@@ -45,6 +46,7 @@ export default function BillingPage() {
   const [loading, setLoading] = useState(() => !getCached('billing:user'));
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [selectedReceipt, setSelectedReceipt] = useState<ReceiptData | null>(null);
+  const [selectedInvoiceForPayment, setSelectedInvoiceForPayment] = useState<InvoicePaymentTarget | null>(null);
   const [userOrders, setUserOrders] = useState<ServiceOrder[]>(() => getCached<ServiceOrder[]>('billing:orders') || []);
   const [invoices, setInvoices] = useState<Invoice[]>(() => getCached<Invoice[]>('billing:invoices') || []);
   const [invoiceStatusFilter, setInvoiceStatusFilter] = useState<'all' | 'paid' | 'pending' | 'overdue'>('all');
@@ -412,6 +414,31 @@ export default function BillingPage() {
                               </p>
                             </div>
 
+                            {(invoice.status === 'pending' || invoice.status === 'overdue' || invoice.status === 'draft') && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  soundEffects.playClickSound?.();
+                                  setSelectedInvoiceForPayment({
+                                    id: invoice.id || (invoice as any)._id,
+                                    invoiceNumber: invoice.invoiceNumber || invoice.id,
+                                    customerName: invoice.customerName,
+                                    customerEmail: invoice.customerEmail,
+                                    customerPhone: invoice.customerPhone,
+                                    total: invoice.total,
+                                    currency: invoice.currency || 'MZN',
+                                    serviceName: invoice.items?.[0]?.service || 'Hospedagem & Serviços Web',
+                                    dueDate: invoice.dueDate
+                                  });
+                                }}
+                                className="px-3.5 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs rounded-xl transition flex items-center space-x-1.5 cursor-pointer shadow-md shadow-emerald-600/20 shrink-0 hover:scale-[1.02] active:scale-95"
+                                title="Pagar Fatura Agora com M-Pesa, eMola ou Transferência Bancária"
+                              >
+                                <CreditCard className="h-4 w-4" />
+                                <span>Pagar Fatura</span>
+                              </button>
+                            )}
+
                             <button
                               type="button"
                               onClick={() => {
@@ -531,6 +558,30 @@ export default function BillingPage() {
                               {order.createdAt ? new Date(order.createdAt).toLocaleDateString('pt-MZ', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Data não disponível'}
                             </p>
                           </div>
+                          {(order.status === 'pending' || order.status === 'suspended') && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                soundEffects.playClickSound?.();
+                                setSelectedInvoiceForPayment({
+                                  id: order.id,
+                                  invoiceNumber: order.id,
+                                  customerName: (order as any).clientName || user?.name || 'Cliente',
+                                  customerEmail: (order as any).clientEmail || user?.email || '',
+                                  customerPhone: (order as any).clientPhone || (user as any)?.phone,
+                                  total: order.amount || 0,
+                                  currency: 'MT',
+                                  serviceName: order.serviceName || 'Serviço WEHOSTHERE'
+                                });
+                              }}
+                              className="px-3.5 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs rounded-xl transition flex items-center space-x-1.5 cursor-pointer shadow-md shadow-emerald-600/20 shrink-0 hover:scale-[1.02] active:scale-95"
+                              title="Pagar Pedido Agora com M-Pesa, eMola ou Transferência Bancária"
+                            >
+                              <CreditCard className="h-4 w-4" />
+                              <span>Pagar Agora</span>
+                            </button>
+                          )}
+
                           <button
                             type="button"
                             onClick={() => {
@@ -700,6 +751,32 @@ export default function BillingPage() {
       <ReceiptModal
         receipt={selectedReceipt}
         onClose={() => setSelectedReceipt(null)}
+        onPay={(r) => {
+          setSelectedReceipt(null);
+          setSelectedInvoiceForPayment({
+            id: r.id,
+            invoiceNumber: r.id,
+            customerName: r.clientName,
+            customerEmail: r.clientEmail,
+            customerPhone: r.clientPhone,
+            total: r.amount,
+            serviceName: r.serviceName,
+            dueDate: r.dueDate
+          });
+        }}
+      />
+
+      {/* Modal de Pagamento de Fatura (M-Pesa, eMola, BIM) */}
+      <InvoicePaymentModal
+        invoice={selectedInvoiceForPayment}
+        onClose={() => setSelectedInvoiceForPayment(null)}
+        onPaymentSuccess={() => {
+          setToastMsg({
+            type: 'success',
+            title: 'Pagamento Solicitado',
+            message: 'O pedido foi enviado com sucesso! Assim que confirmares o PIN, a fatura será atualizada.'
+          });
+        }}
       />
 
       {/* Toast Notification */}
