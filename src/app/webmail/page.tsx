@@ -494,7 +494,7 @@ function WebmailContent() {
       e.preventDefault();
       e.stopPropagation();
     }
-    const currentActiveEmail = selectedAccountEmail || accounts[0]?.email || '';
+    const currentActiveEmail = (selectedAccountEmail || webmailLoginEmail || accounts[0]?.email || '').trim();
     if (currentActiveEmail && !selectedAccountEmail) {
       setSelectedAccountEmail(currentActiveEmail);
     }
@@ -514,9 +514,9 @@ function WebmailContent() {
     setPasswordError('');
     setPasswordSuccess('');
 
-    const targetEmail = selectedAccountEmail || accounts[0]?.email;
+    const targetEmail = (selectedAccountEmail || webmailLoginEmail || accounts[0]?.email || '').trim();
     if (!targetEmail || !targetEmail.includes('@')) {
-      setPasswordError('Selecione uma conta de e-mail válida para alterar a senha.');
+      setPasswordError('Informe um endereço de e-mail corporativo válido para alterar a senha.');
       return;
     }
 
@@ -629,11 +629,32 @@ function WebmailContent() {
 
   useEffect(() => {
     const currentUser = auth.getCurrentUser();
+    setUser(currentUser);
+
+    // Restaurar sessão ativa de Webmail na aba atual (útil tanto para colaboradores públicos quanto clientes)
+    let sessionActiveEmail = '';
+    try {
+      sessionActiveEmail = sessionStorage.getItem('wm_active_email') || '';
+      const targetEmailToRestore = initialEmailParam || sessionActiveEmail;
+      if (targetEmailToRestore) {
+        const savedPwd = sessionStorage.getItem(`wm_pwd_${targetEmailToRestore.toLowerCase()}`);
+        setSelectedAccountEmail(prev => prev || targetEmailToRestore);
+        setWebmailLoginEmail(prev => prev || targetEmailToRestore);
+        if (savedPwd && !mailboxPassword) {
+          setMailboxPassword(savedPwd);
+        }
+      }
+    } catch {}
+
+    // Se for um colaborador externo sem conta no portal WEHOSTHERE, o acesso a /webmail é 100% público!
     if (!currentUser) {
-      router.push('/login');
+      if (initialEmailParam) {
+        setSelectedAccountEmail(initialEmailParam);
+        setWebmailLoginEmail(initialEmailParam);
+      }
       return;
     }
-    setUser(currentUser);
+
     const userEmailFilter = currentUser.email;
 
     // Clean up stale shared localStorage data and migrate to per-user key
@@ -644,6 +665,9 @@ function WebmailContent() {
       if (initialEmailParam) {
         setSelectedAccountEmail(initialEmailParam);
         setWebmailLoginEmail(initialEmailParam);
+      } else if (sessionActiveEmail) {
+        setSelectedAccountEmail(prev => prev || sessionActiveEmail);
+        setWebmailLoginEmail(prev => prev || sessionActiveEmail);
       } else if (emailList.length > 0) {
         const firstEmail = emailList[0].email;
         setSelectedAccountEmail(prev => prev || firstEmail);
@@ -1073,6 +1097,7 @@ function WebmailContent() {
         setSelectedAccountEmail(targetLoginEmail);
         setMailboxPassword(webmailLoginPassword);
         try {
+          sessionStorage.setItem('wm_active_email', targetLoginEmail);
           sessionStorage.setItem(`wm_pwd_${targetLoginEmail.toLowerCase()}`, webmailLoginPassword);
         } catch {}
         setShowWebmailLogin(false);
@@ -1091,6 +1116,7 @@ function WebmailContent() {
 
   const handleWebmailLogout = () => {
     try {
+      sessionStorage.removeItem('wm_active_email');
       if (selectedAccountEmail) {
         sessionStorage.removeItem(`wm_pwd_${selectedAccountEmail.toLowerCase()}`);
       }
@@ -1389,7 +1415,7 @@ function WebmailContent() {
       {/* Webmail Header Bar - Mobile First */}
       <header className="bg-white text-gray-800 px-3 sm:px-4 py-2.5 sm:py-3 border-b border-gray-200 flex flex-wrap items-center justify-between gap-2 shadow-xs">
         <div className="flex items-center space-x-2.5 min-w-0">
-          <Link href="/dashboard/email" className="p-1.5 hover:bg-neutral-100 rounded-lg text-neutral-500 hover:text-neutral-900 transition shrink-0" title="Voltar ao Painel">
+          <Link href={user ? "/dashboard/email" : "/"} className="p-1.5 hover:bg-neutral-100 rounded-lg text-neutral-500 hover:text-neutral-900 transition shrink-0" title={user ? "Voltar ao Painel" : "Voltar ao Início"}>
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div className="flex items-center space-x-2 shrink-0">
@@ -1429,11 +1455,11 @@ function WebmailContent() {
                 })}
               </select>
             </div>
-          ) : (
+          ) : selectedAccountEmail ? (
             <span className="text-xs text-neutral-700 font-mono font-bold bg-neutral-100 px-2.5 py-1.5 rounded-xl border border-neutral-200 truncate max-w-[110px] sm:max-w-[180px]">
               {selectedAccountEmail}
             </span>
-          )}
+          ) : null}
 
           {/* Refresh (Apenas quando autenticado) */}
           {mailboxPassword && (
@@ -1591,7 +1617,11 @@ function WebmailContent() {
               </div>
               <h2 className="text-xl font-bold text-neutral-900 tracking-tight">Entrar no Webmail</h2>
               <p className="text-xs text-neutral-500 font-medium">
-                Autentique-se para aceder à caixa de <span className="font-mono text-neutral-900 font-bold">{selectedAccountEmail}</span>
+                {(webmailLoginEmail || selectedAccountEmail) ? (
+                  <>Autentique-se para aceder à caixa de <span className="font-mono text-neutral-900 font-bold">{webmailLoginEmail || selectedAccountEmail}</span></>
+                ) : (
+                  'Insira o seu e-mail corporativo e palavra-passe para aceder à sua caixa de correio.'
+                )}
               </p>
             </div>
 
@@ -1607,8 +1637,11 @@ function WebmailContent() {
                 <input
                   type="email"
                   value={webmailLoginEmail || selectedAccountEmail}
-                  onChange={(e) => setWebmailLoginEmail(e.target.value)}
-                  placeholder="info@seudominio.com"
+                  onChange={(e) => {
+                    setWebmailLoginEmail(e.target.value);
+                    setSelectedAccountEmail(e.target.value);
+                  }}
+                  placeholder="colaborador@suaempresa.co.mz"
                   required
                   className="w-full px-4 py-3 bg-neutral-50 border border-neutral-200 rounded-xl text-xs sm:text-sm text-neutral-900 font-bold focus:bg-white focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 outline-none transition"
                 />
@@ -2553,11 +2586,11 @@ function WebmailContent() {
               </button>
               <button
                 type="button"
-                onClick={() => { auth.logout(); router.push('/login'); }}
+                onClick={() => { handleWebmailLogout(); setShowMobileMenu(false); }}
                 className="flex items-center space-x-3 p-4 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 rounded-2xl transition cursor-pointer border border-neutral-200 active:scale-95"
               >
                 <LogOut className="h-5 w-5 text-neutral-600 shrink-0" />
-                <span className="text-sm font-bold text-neutral-800">Sair da App</span>
+                <span className="text-sm font-bold text-neutral-800">Sair do Webmail</span>
               </button>
             </div>
             <button
@@ -3314,7 +3347,7 @@ function WebmailContent() {
                 <div>
                   <h3 className="text-base sm:text-lg font-black text-gray-900">Alterar Senha do E-mail</h3>
                   <p className="text-xs font-mono font-bold text-gray-600 truncate max-w-[220px] sm:max-w-none">
-                    {selectedAccountEmail || accounts[0]?.email || 'admin@primesourceps.co.mz'}
+                    {selectedAccountEmail || webmailLoginEmail || accounts[0]?.email || 'Digite o seu e-mail abaixo'}
                   </p>
                 </div>
               </div>
@@ -3342,7 +3375,7 @@ function WebmailContent() {
               </p>
             </div>
 
-            <form onSubmit={handleChangePassword} className="space-y-4">
+            <form onSubmit={handleChangePassword} className="space-y-3.5">
               {passwordError && (
                 <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl">
                   <p className="text-xs font-bold text-rose-700">{passwordError}</p>
@@ -3354,6 +3387,23 @@ function WebmailContent() {
                   <p className="text-xs font-bold text-emerald-700">{passwordSuccess}</p>
                 </div>
               )}
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">
+                  Endereço de E-mail Corporativo
+                </label>
+                <input
+                  type="email"
+                  value={selectedAccountEmail || webmailLoginEmail}
+                  onChange={(e) => {
+                    setSelectedAccountEmail(e.target.value);
+                    setWebmailLoginEmail(e.target.value);
+                  }}
+                  required
+                  className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-900 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-bold"
+                  placeholder="colaborador@suaempresa.co.mz"
+                />
+              </div>
 
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-1.5">
