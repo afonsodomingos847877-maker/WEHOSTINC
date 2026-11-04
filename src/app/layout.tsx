@@ -7,6 +7,8 @@ import AnalyticsTracker from "@/components/AnalyticsTracker";
 import SocialProofToast from "@/components/SocialProofToast";
 import FeedbackWidget from "@/components/FeedbackWidget";
 import AdminAiTopBar from "@/components/AdminAiTopBar";
+import SmartThemeSuggestion from "@/components/SmartThemeSuggestion";
+import { ThemeProvider } from "@/context/ThemeContext";
 import { SITE_URL } from "@/lib/siteConfig";
 
 const poppins = Poppins({ 
@@ -462,6 +464,7 @@ export default function RootLayout({
           `}
         </Script>
         <Providers>
+          <ThemeProvider>
           <LanguageProvider>
             <MaintenanceGate>
               {children}
@@ -473,7 +476,9 @@ export default function RootLayout({
             <ScrollUpCards />
             <FeedbackWidget />
             <AdminAiTopBar isGlobalRoot={true} />
+            <SmartThemeSuggestion />
           </LanguageProvider>
+        </ThemeProvider>
         </Providers>
       </body>
     </html>
