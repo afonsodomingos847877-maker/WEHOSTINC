@@ -890,7 +890,7 @@ export default function Home() {
               </span>
 
               <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight leading-[1.15] mb-4">
-                Aprende Tecnologia na Prática com Projetos Reais
+                Aprende tecnologia na prática.
               </h2>
 
               <p className="text-sm sm:text-base text-slate-600 leading-relaxed mb-6 font-normal">
