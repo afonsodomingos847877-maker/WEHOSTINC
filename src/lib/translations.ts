@@ -101,8 +101,8 @@ export const translations: Record<Language, Record<string, string>> = {
     'systems.subtext': 'Ciclo mensal ou anual • Suporte técnico incluído',
 
     // Construtor IA Promo (Landing Page)
-    'builder_promo.title': 'Construa o seu site em segundos',
-    'builder_promo.desc': 'Diga o que precisa e veja o seu site nascer em tempo real.',
+    'builder_promo.title': 'Crie. Publique. Cresça.',
+    'builder_promo.desc': 'A sua presença online começa aqui.',
     'builder_promo.btn': 'Experimentar Construtor IA',
     'builder_promo.live_preview': 'Live Preview',
     'builder_promo.card_prompt_text': '"Crie um site moderno e elegante com WhatsApp"',
@@ -371,8 +371,8 @@ export const translations: Record<Language, Record<string, string>> = {
     'systems.subtext': 'Monthly or annual cycle • Technical support included',
 
     // AI Builder Promo (Landing Page)
-    'builder_promo.title': 'Build your website in seconds',
-    'builder_promo.desc': 'Describe what you need and watch your website come alive in real time.',
+    'builder_promo.title': 'Create. Publish. Grow.',
+    'builder_promo.desc': 'Your online presence starts here.',
     'builder_promo.btn': 'Try AI Builder',
     'builder_promo.live_preview': 'Live Preview',
     'builder_promo.card_prompt_text': '"Create a sleek modern website with WhatsApp"',
