@@ -2489,278 +2489,6 @@ function WebmailContent() {
         </div>
       </header>
 
-      {/* Card Flutuante Inteligente de Saudação, Novos E-mails & Pendências (Entrada & Saída Cinematográfica) */}
-      {floatingBriefing && floatingBriefing.isOpen && mailboxPassword && (() => {
-        const { greeting, period, userName } = getDynamicUserGreeting();
-        const GreetingIcon = period === 'morning' ? Sun : period === 'afternoon' ? Sunset : Moon;
-        const greetingIconColor =
-          period === 'morning'
-            ? 'text-amber-400'
-            : period === 'afternoon'
-            ? 'text-orange-400'
-            : 'text-indigo-300';
-        const hasPendingItems =
-          floatingBriefing.unreadCount > 0 ||
-          floatingBriefing.overdueCount > 0 ||
-          floatingBriefing.urgentCount > 0;
-
-        return (
-          <div
-            className={`fixed top-16 right-4 z-[9995] w-[calc(100vw-2rem)] sm:w-96 bg-neutral-950/95 backdrop-blur-2xl text-white rounded-2xl border border-emerald-500/30 shadow-[0_25px_70px_-12px_rgba(0,0,0,0.85),0_0_45px_-10px_rgba(16,185,129,0.38)] overflow-hidden ${
-              floatingBriefing.isClosing ? 'cinematic-card-exit' : 'cinematic-card-enter'
-            }`}
-          >
-            {/* Feixe de Luz Cinematográfico (Light Sweep Glint) */}
-            <div className="cinematic-light-sweep pointer-events-none absolute inset-0 z-10" />
-
-            {/* Halo Luminoso de Topo */}
-            <div className="pointer-events-none absolute -top-12 -right-12 w-36 h-36 rounded-full bg-emerald-500/20 blur-2xl" />
-
-            <div className="relative z-20 p-4 space-y-3">
-              <div className="cinematic-stagger-1 flex items-start justify-between gap-2">
-                <div className="flex items-center space-x-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500/30 to-teal-600/20 border border-emerald-400/40 flex items-center justify-center text-emerald-300 shrink-0 shadow-[0_0_20px_rgba(16,185,129,0.3)]">
-                    <Bell className="w-4 h-4 animate-bounce" />
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
-                      {floatingBriefing.type === 'new_incoming' ? (
-                        <>
-                          <Mail className="w-3 h-3 text-emerald-400" />
-                          <span>Novo E-mail Recebido</span>
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="w-3 h-3 text-emerald-400" />
-                          <span>Assistente Webmail WEHOSTHERE</span>
-                        </>
-                      )}
-                    </span>
-                    <h4 className="text-xs sm:text-sm font-extrabold text-white flex items-center gap-1.5 mt-0.5">
-                      <GreetingIcon className={`w-4 h-4 shrink-0 ${greetingIconColor}`} />
-                      <span>
-                        {floatingBriefing.type === 'new_incoming'
-                          ? `${greeting}, ${userName}! Chegou ${
-                              floatingBriefing.unreadCount === 1
-                                ? '1 novo e-mail'
-                                : `${floatingBriefing.unreadCount} novos e-mails`
-                            }`
-                          : `${greeting}, ${userName}!`}
-                      </span>
-                    </h4>
-                    {floatingBriefing.type === 'welcome' && (
-                      <p className="text-[11px] text-neutral-300 mt-0.5">
-                        {hasPendingItems
-                          ? 'Bem-vindo(a) de volta! Veja o resumo da sua caixa:'
-                          : 'Bem-vindo(a) de volta ao seu e-mail corporativo!'}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={dismissFloatingBriefing}
-                  className="text-neutral-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition cursor-pointer"
-                  title="Fechar notificação"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              <div className="cinematic-stagger-2 space-y-1.5 bg-white/[0.06] rounded-xl p-3 border border-white/10 text-xs">
-                {!hasPendingItems ? (
-                  <div className="flex items-center space-x-2 text-emerald-300 font-semibold py-0.5">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>A sua caixa de entrada está 100% em dia! Sem novos e-mails ou respostas em atraso.</span>
-                  </div>
-                ) : (
-                  <>
-                    {floatingBriefing.unreadCount > 0 && (
-                      <div className="flex items-center justify-between">
-                        <span className="flex items-center space-x-2 text-neutral-200">
-                          <Mail className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                          <span>E-mails novos / não lidos:</span>
-                        </span>
-                        <span className="font-extrabold text-emerald-400 bg-emerald-500/15 px-2 py-0.5 rounded-full">
-                          {floatingBriefing.unreadCount} {floatingBriefing.unreadCount === 1 ? 'novo' : 'novos'}
-                        </span>
-                      </div>
-                    )}
-
-                    {floatingBriefing.overdueCount > 0 && (
-                      <div className="flex items-center justify-between">
-                        <span className="flex items-center space-x-2 text-neutral-200">
-                          <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                          <span>Em atraso / sem resposta:</span>
-                        </span>
-                        <span className="font-extrabold text-amber-300 bg-amber-500/20 px-2 py-0.5 rounded-full">
-                          {floatingBriefing.overdueCount} {floatingBriefing.overdueCount === 1 ? 'pendente' : 'pendentes'}
-                        </span>
-                      </div>
-                    )}
-
-                    {floatingBriefing.urgentCount > 0 && (
-                      <div className="flex items-center justify-between">
-                        <span className="flex items-center space-x-2 text-neutral-200">
-                          <Flame className="w-3.5 h-3.5 text-rose-400 shrink-0" />
-                          <span>Alta prioridade não lidos:</span>
-                        </span>
-                        <span className="font-extrabold text-rose-300 bg-rose-500/20 px-2 py-0.5 rounded-full">
-                          {floatingBriefing.urgentCount} {floatingBriefing.urgentCount === 1 ? 'urgente' : 'urgentes'}
-                        </span>
-                      </div>
-                    )}
-
-                    {floatingBriefing.latestSender && (
-                      <div className="pt-1.5 mt-1.5 border-t border-white/10 text-[11px] text-neutral-300 truncate">
-                        <span className="text-neutral-400">Mais recente: </span>
-                        <strong className="text-white">{floatingBriefing.latestSender}</strong>
-                        {floatingBriefing.latestSubject ? ` — ${floatingBriefing.latestSubject}` : ''}
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-
-              {hasPendingItems && (
-                <div className="cinematic-stagger-3 flex items-center gap-2 pt-0.5">
-                  {floatingBriefing.unreadCount > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setCurrentFolder('inbox');
-                        setFilterType('unread');
-                        const firstUnread = messages.find(m => !m.isRead);
-                        if (firstUnread) handleSelectMessage(firstUnread);
-                        dismissFloatingBriefing();
-                      }}
-                      className="flex-1 py-2 px-3 bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-extrabold text-[11px] rounded-xl transition cursor-pointer text-center shadow-xs flex items-center justify-center gap-1.5"
-                    >
-                      <Mail className="w-3.5 h-3.5" />
-                      <span>Ver Novos ({floatingBriefing.unreadCount})</span>
-                    </button>
-                  )}
-                  {floatingBriefing.overdueCount > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setCurrentFolder('inbox');
-                        setFilterType('overdue');
-                        const firstOverdue = messages.find(m => isMessageOverdue(m));
-                        if (firstOverdue) handleSelectMessage(firstOverdue);
-                        dismissFloatingBriefing();
-                      }}
-                      className="flex-1 py-2 px-3 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-bold text-[11px] rounded-xl transition cursor-pointer text-center flex items-center justify-center gap-1.5"
-                    >
-                      <Clock className="w-3.5 h-3.5" />
-                      <span>Ver em Atraso ({floatingBriefing.overdueCount})</span>
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Barra de progresso visual de fecho automático */}
-            <div className="h-1 w-full bg-neutral-800 overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-emerald-400 via-teal-300 to-emerald-500 transition-all"
-                style={{
-                  animation: 'shrinkWidth 8.5s linear forwards',
-                }}
-              />
-            </div>
-            <style>{`
-              @keyframes cinematicEnter3D {
-                0% {
-                  opacity: 0;
-                  transform: perspective(1100px) translate3d(70px, -28px, -110px) rotateX(14deg) rotateY(-14deg) scale(0.84);
-                  filter: blur(16px);
-                }
-                60% {
-                  opacity: 1;
-                  transform: perspective(1100px) translate3d(-4px, 3px, 10px) rotateX(-2deg) rotateY(2deg) scale(1.015);
-                  filter: blur(0px);
-                }
-                100% {
-                  opacity: 1;
-                  transform: perspective(1100px) translate3d(0, 0, 0) rotateX(0deg) rotateY(0deg) scale(1);
-                  filter: blur(0px);
-                }
-              }
-              @keyframes cinematicExit3D {
-                0% {
-                  opacity: 1;
-                  transform: perspective(1100px) translate3d(0, 0, 0) scale(1);
-                  filter: blur(0px);
-                }
-                100% {
-                  opacity: 0;
-                  transform: perspective(1100px) translate3d(55px, -18px, -70px) rotateX(8deg) rotateY(-8deg) scale(0.88);
-                  filter: blur(12px);
-                }
-              }
-              @keyframes cinematicLightSweepAnim {
-                0% {
-                  transform: translateX(-130%) skewX(-22deg);
-                }
-                100% {
-                  transform: translateX(220%) skewX(-22deg);
-                }
-              }
-              @keyframes cinematicStaggerReveal {
-                0% {
-                  opacity: 0;
-                  transform: translateY(12px);
-                  filter: blur(6px);
-                }
-                100% {
-                  opacity: 1;
-                  transform: translateY(0);
-                  filter: blur(0px);
-                }
-              }
-              .cinematic-card-enter {
-                animation: cinematicEnter3D 0.85s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-                transform-origin: top right;
-                will-change: transform, opacity, filter;
-              }
-              .cinematic-card-exit {
-                animation: cinematicExit3D 0.52s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-                transform-origin: top right;
-                will-change: transform, opacity, filter;
-              }
-              .cinematic-light-sweep {
-                background: linear-gradient(
-                  110deg,
-                  transparent 20%,
-                  rgba(16, 185, 129, 0.18) 45%,
-                  rgba(255, 255, 255, 0.32) 50%,
-                  rgba(16, 185, 129, 0.14) 55%,
-                  transparent 80%
-                );
-                animation: cinematicLightSweepAnim 1.35s cubic-bezier(0.22, 1, 0.36, 1) 0.18s forwards;
-              }
-              .cinematic-stagger-1 {
-                opacity: 0;
-                animation: cinematicStaggerReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.12s forwards;
-              }
-              .cinematic-stagger-2 {
-                opacity: 0;
-                animation: cinematicStaggerReveal 0.65s cubic-bezier(0.16, 1, 0.3, 1) 0.24s forwards;
-              }
-              .cinematic-stagger-3 {
-                opacity: 0;
-                animation: cinematicStaggerReveal 0.65s cubic-bezier(0.16, 1, 0.3, 1) 0.36s forwards;
-              }
-              @keyframes shrinkWidth {
-                from { width: 100%; }
-                to { width: 0%; }
-              }
-            `}</style>
-          </div>
-        );
-      })()}
-
       {/* Alerta de Perda de Conexão à Internet (Offline) */}
       {!isOnline && (
         <div className="bg-rose-600 text-white px-4 py-2.5 flex items-center justify-between text-xs font-bold shadow-md animate-in slide-in-from-top-2 duration-200">
@@ -3614,8 +3342,257 @@ function WebmailContent() {
                   </button>
                 </div>
               </div>
-              {/* Header card */}
-              <div className="bg-white rounded-3xl p-4 sm:p-6 shadow-sm border border-gray-200 space-y-4">
+              {/* Header card (Substituído temporariamente pelo Card Cinematográfico de Boas-Vindas / Novos E-mails e depois retorna suavemente) */}
+              {floatingBriefing && floatingBriefing.isOpen && mailboxPassword ? (() => {
+                const { greeting, period, userName } = getDynamicUserGreeting();
+                const GreetingIcon = period === 'morning' ? Sun : period === 'afternoon' ? Sunset : Moon;
+                const greetingIconColor =
+                  period === 'morning'
+                    ? 'text-amber-400'
+                    : period === 'afternoon'
+                    ? 'text-orange-400'
+                    : 'text-indigo-300';
+                const hasPendingItems =
+                  floatingBriefing.unreadCount > 0 ||
+                  floatingBriefing.overdueCount > 0 ||
+                  floatingBriefing.urgentCount > 0;
+
+                return (
+                  <div
+                    className={`relative w-full bg-neutral-950 text-white rounded-3xl border border-emerald-500/35 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.45),0_0_35px_-10px_rgba(16,185,129,0.28)] overflow-hidden ${
+                      floatingBriefing.isClosing ? 'cinematic-card-exit' : 'cinematic-card-enter'
+                    }`}
+                  >
+                    {/* Feixe de Luz Cinematográfico (Light Sweep Glint) */}
+                    <div className="cinematic-light-sweep pointer-events-none absolute inset-0 z-10" />
+                    <div className="pointer-events-none absolute -top-12 -right-12 w-40 h-40 rounded-full bg-emerald-500/15 blur-2xl" />
+
+                    <div className="relative z-20 p-4 sm:p-6 space-y-3.5">
+                      <div className="cinematic-stagger-1 flex flex-wrap items-start justify-between gap-3">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500/30 to-teal-600/20 border border-emerald-400/40 flex items-center justify-center text-emerald-300 shrink-0 shadow-[0_0_20px_rgba(16,185,129,0.25)]">
+                            <Bell className="w-4 h-4 animate-bounce" />
+                          </div>
+                          <div>
+                            <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+                              {floatingBriefing.type === 'new_incoming' ? (
+                                <>
+                                  <Mail className="w-3 h-3 text-emerald-400" />
+                                  <span>Novo E-mail Recebido</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Sparkles className="w-3 h-3 text-emerald-400" />
+                                  <span>Assistente Webmail WEHOSTHERE</span>
+                                </>
+                              )}
+                            </span>
+                            <h3 className="text-sm sm:text-lg font-extrabold text-white flex items-center gap-2 mt-0.5">
+                              <GreetingIcon className={`w-4 h-4 sm:w-5 sm:h-5 shrink-0 ${greetingIconColor}`} />
+                              <span>
+                                {floatingBriefing.type === 'new_incoming'
+                                  ? `${greeting}, ${userName}! Chegou ${
+                                      floatingBriefing.unreadCount === 1
+                                        ? '1 novo e-mail'
+                                        : `${floatingBriefing.unreadCount} novos e-mails`
+                                    }`
+                                  : `${greeting}, ${userName}!`}
+                              </span>
+                            </h3>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          {hasPendingItems && floatingBriefing.unreadCount > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setCurrentFolder('inbox');
+                                setFilterType('unread');
+                                const firstUnread = messages.find((m) => !m.isRead);
+                                if (firstUnread) handleSelectMessage(firstUnread);
+                                dismissFloatingBriefing();
+                              }}
+                              className="py-1.5 px-3 bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-extrabold text-xs rounded-xl transition cursor-pointer flex items-center gap-1.5 shadow-xs"
+                            >
+                              <Mail className="w-3.5 h-3.5" />
+                              <span>Ver Novos ({floatingBriefing.unreadCount})</span>
+                            </button>
+                          )}
+                          {hasPendingItems && floatingBriefing.overdueCount > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setCurrentFolder('inbox');
+                                setFilterType('overdue');
+                                const firstOverdue = messages.find((m) => isMessageOverdue(m));
+                                if (firstOverdue) handleSelectMessage(firstOverdue);
+                                dismissFloatingBriefing();
+                              }}
+                              className="py-1.5 px-3 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-bold text-xs rounded-xl transition cursor-pointer flex items-center gap-1.5"
+                            >
+                              <Clock className="w-3.5 h-3.5" />
+                              <span>Ver em Atraso ({floatingBriefing.overdueCount})</span>
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={dismissFloatingBriefing}
+                            className="text-neutral-400 hover:text-white p-1.5 rounded-xl hover:bg-white/10 transition cursor-pointer"
+                            title="Mostrar cabeçalho do e-mail agora"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="cinematic-stagger-2 flex flex-wrap items-center justify-between gap-2 bg-white/[0.06] rounded-2xl px-3.5 py-2.5 border border-white/10 text-xs">
+                        {!hasPendingItems ? (
+                          <div className="flex items-center space-x-2 text-emerald-300 font-semibold">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                            <span>
+                              A sua caixa de entrada está 100% em dia! Sem novos e-mails ou respostas em atraso.
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="flex flex-wrap items-center gap-3">
+                            {floatingBriefing.unreadCount > 0 && (
+                              <span className="inline-flex items-center space-x-1.5 text-neutral-200">
+                                <Mail className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                                <span>Não lidos:</span>
+                                <strong className="text-emerald-400 bg-emerald-500/15 px-2 py-0.5 rounded-full">
+                                  {floatingBriefing.unreadCount} {floatingBriefing.unreadCount === 1 ? 'novo' : 'novos'}
+                                </strong>
+                              </span>
+                            )}
+                            {floatingBriefing.overdueCount > 0 && (
+                              <span className="inline-flex items-center space-x-1.5 text-neutral-200">
+                                <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                                <span>Em atraso:</span>
+                                <strong className="text-amber-300 bg-amber-500/20 px-2 py-0.5 rounded-full">
+                                  {floatingBriefing.overdueCount} {floatingBriefing.overdueCount === 1 ? 'pendente' : 'pendentes'}
+                                </strong>
+                              </span>
+                            )}
+                            {floatingBriefing.urgentCount > 0 && (
+                              <span className="inline-flex items-center space-x-1.5 text-neutral-200">
+                                <Flame className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                                <span>Urgentes:</span>
+                                <strong className="text-rose-300 bg-rose-500/20 px-2 py-0.5 rounded-full">
+                                  {floatingBriefing.urgentCount}
+                                </strong>
+                              </span>
+                            )}
+                          </div>
+                        )}
+
+                        {floatingBriefing.latestSender && (
+                          <div className="text-[11px] text-neutral-300 truncate max-w-full sm:max-w-xs">
+                            <span className="text-neutral-400">Mais recente: </span>
+                            <strong className="text-white">{floatingBriefing.latestSender}</strong>
+                            {floatingBriefing.latestSubject ? ` — ${floatingBriefing.latestSubject}` : ''}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Barra de progresso visual de retorno automático ao cabeçalho normal */}
+                    <div className="h-1 w-full bg-neutral-800 overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-emerald-400 via-teal-300 to-emerald-500 transition-all"
+                        style={{
+                          animation: 'shrinkWidth 8.5s linear forwards',
+                        }}
+                      />
+                    </div>
+                    <style>{`
+                      @keyframes cinematicEnter3D {
+                        0% {
+                          opacity: 0;
+                          transform: perspective(1100px) translate3d(0, -18px, -60px) rotateX(10deg) scale(0.96);
+                          filter: blur(10px);
+                        }
+                        60% {
+                          opacity: 1;
+                          transform: perspective(1100px) translate3d(0, 2px, 6px) rotateX(-1deg) scale(1.005);
+                          filter: blur(0px);
+                        }
+                        100% {
+                          opacity: 1;
+                          transform: perspective(1100px) translate3d(0, 0, 0) rotateX(0deg) scale(1);
+                          filter: blur(0px);
+                        }
+                      }
+                      @keyframes cinematicExit3D {
+                        0% {
+                          opacity: 1;
+                          transform: perspective(1100px) translate3d(0, 0, 0) scale(1);
+                          filter: blur(0px);
+                        }
+                        100% {
+                          opacity: 0;
+                          transform: perspective(1100px) translate3d(0, -14px, -45px) rotateX(8deg) scale(0.96);
+                          filter: blur(8px);
+                        }
+                      }
+                      @keyframes cinematicLightSweepAnim {
+                        0% {
+                          transform: translateX(-130%) skewX(-22deg);
+                        }
+                        100% {
+                          transform: translateX(220%) skewX(-22deg);
+                        }
+                      }
+                      @keyframes cinematicStaggerReveal {
+                        0% {
+                          opacity: 0;
+                          transform: translateY(10px);
+                          filter: blur(5px);
+                        }
+                        100% {
+                          opacity: 1;
+                          transform: translateY(0);
+                          filter: blur(0px);
+                        }
+                      }
+                      .cinematic-card-enter {
+                        animation: cinematicEnter3D 0.75s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+                        transform-origin: top center;
+                        will-change: transform, opacity, filter;
+                      }
+                      .cinematic-card-exit {
+                        animation: cinematicExit3D 0.48s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+                        transform-origin: top center;
+                        will-change: transform, opacity, filter;
+                      }
+                      .cinematic-light-sweep {
+                        background: linear-gradient(
+                          110deg,
+                          transparent 20%,
+                          rgba(16, 185, 129, 0.16) 45%,
+                          rgba(255, 255, 255, 0.28) 50%,
+                          rgba(16, 185, 129, 0.12) 55%,
+                          transparent 80%
+                        );
+                        animation: cinematicLightSweepAnim 1.3s cubic-bezier(0.22, 1, 0.36, 1) 0.15s forwards;
+                      }
+                      .cinematic-stagger-1 {
+                        opacity: 0;
+                        animation: cinematicStaggerReveal 0.55s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards;
+                      }
+                      .cinematic-stagger-2 {
+                        opacity: 0;
+                        animation: cinematicStaggerReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;
+                      }
+                      @keyframes shrinkWidth {
+                        from { width: 100%; }
+                        to { width: 0%; }
+                      }
+                    `}</style>
+                  </div>
+                );
+              })() : (
+              <div className="bg-white rounded-3xl p-4 sm:p-6 shadow-sm border border-gray-200 space-y-4 animate-in fade-in duration-300">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2 mb-1.5">
@@ -3733,6 +3710,7 @@ function WebmailContent() {
                   </div>
                 </div>
               </div>
+              )}
 
               {/* Escudo Inteligente Anti-Phishing & Segurança WEHOSTHERE */}
               {selectedMessage.folder === 'scheduled' && selectedMessage.scheduledFor && (
