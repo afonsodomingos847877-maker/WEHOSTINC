@@ -339,6 +339,7 @@ function WebmailContent() {
   // Floating Inbox Briefing Card State (Auto-dismisses after showing new/overdue emails)
   const [floatingBriefing, setFloatingBriefing] = useState<{
     isOpen: boolean;
+    isClosing?: boolean;
     type: 'welcome' | 'new_incoming';
     unreadCount: number;
     overdueCount: number;
@@ -348,6 +349,16 @@ function WebmailContent() {
     latestMsgId?: string;
   } | null>(null);
   const briefingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const briefingCloseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const dismissFloatingBriefing = () => {
+    if (briefingTimeoutRef.current) clearTimeout(briefingTimeoutRef.current);
+    if (briefingCloseTimeoutRef.current) clearTimeout(briefingCloseTimeoutRef.current);
+    setFloatingBriefing((prev) => (prev ? { ...prev, isClosing: true } : null));
+    briefingCloseTimeoutRef.current = setTimeout(() => {
+      setFloatingBriefing(null);
+    }, 520);
+  };
 
   // Compose Modal & Attachment State
   const [showCompose, setShowCompose] = useState(false);
@@ -1342,6 +1353,7 @@ function WebmailContent() {
 
         setFloatingBriefing({
           isOpen: true,
+          isClosing: false,
           type: 'welcome',
           unreadCount: unreadMsgs.length,
           overdueCount: overdueMsgs.length,
@@ -1353,7 +1365,7 @@ function WebmailContent() {
 
         if (briefingTimeoutRef.current) clearTimeout(briefingTimeoutRef.current);
         briefingTimeoutRef.current = setTimeout(() => {
-          setFloatingBriefing(null);
+          dismissFloatingBriefing();
         }, 8500);
       } else if (!isInitialLoadRef.current && messages.length > 0) {
         const newIncoming = messages.filter(m => !knownInboxIdsRef.current.has(m.id) && !m.isRead);
@@ -1365,6 +1377,7 @@ function WebmailContent() {
 
           setFloatingBriefing({
             isOpen: true,
+            isClosing: false,
             type: 'new_incoming',
             unreadCount: newIncoming.length,
             overdueCount: overdueMsgs.length,
@@ -1376,7 +1389,7 @@ function WebmailContent() {
 
           if (briefingTimeoutRef.current) clearTimeout(briefingTimeoutRef.current);
           briefingTimeoutRef.current = setTimeout(() => {
-            setFloatingBriefing(null);
+            dismissFloatingBriefing();
           }, 7500);
         }
         knownInboxIdsRef.current = new Set(messages.map(m => m.id));
@@ -2155,7 +2168,7 @@ function WebmailContent() {
         </div>
       </header>
 
-      {/* Card Flutuante Inteligente de Saudação, Novos E-mails & Pendências (Auto-Dismiss) */}
+      {/* Card Flutuante Inteligente de Saudação, Novos E-mails & Pendências (Entrada & Saída Cinematográfica) */}
       {floatingBriefing && floatingBriefing.isOpen && mailboxPassword && (() => {
         const { greeting, userName } = getDynamicUserGreeting();
         const hasPendingItems =
@@ -2164,11 +2177,21 @@ function WebmailContent() {
           floatingBriefing.urgentCount > 0;
 
         return (
-          <div className="fixed top-16 right-4 z-[9995] w-[calc(100vw-2rem)] sm:w-96 bg-neutral-900 text-white rounded-2xl shadow-2xl border border-neutral-700/80 overflow-hidden animate-in slide-in-from-right-5 fade-in duration-300">
-            <div className="p-4 space-y-3">
-              <div className="flex items-start justify-between gap-2">
+          <div
+            className={`fixed top-16 right-4 z-[9995] w-[calc(100vw-2rem)] sm:w-96 bg-neutral-950/95 backdrop-blur-2xl text-white rounded-2xl border border-emerald-500/30 shadow-[0_25px_70px_-12px_rgba(0,0,0,0.85),0_0_45px_-10px_rgba(16,185,129,0.38)] overflow-hidden ${
+              floatingBriefing.isClosing ? 'cinematic-card-exit' : 'cinematic-card-enter'
+            }`}
+          >
+            {/* Feixe de Luz Cinematográfico (Light Sweep Glint) */}
+            <div className="cinematic-light-sweep pointer-events-none absolute inset-0 z-10" />
+
+            {/* Halo Luminoso de Topo */}
+            <div className="pointer-events-none absolute -top-12 -right-12 w-36 h-36 rounded-full bg-emerald-500/20 blur-2xl" />
+
+            <div className="relative z-20 p-4 space-y-3">
+              <div className="cinematic-stagger-1 flex items-start justify-between gap-2">
                 <div className="flex items-center space-x-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0">
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500/30 to-teal-600/20 border border-emerald-400/40 flex items-center justify-center text-emerald-300 shrink-0 shadow-[0_0_20px_rgba(16,185,129,0.3)]">
                     <Bell className="w-4 h-4 animate-bounce" />
                   </div>
                   <div>
@@ -2187,7 +2210,7 @@ function WebmailContent() {
                         : `${greeting}, ${userName}! 👋`}
                     </h4>
                     {floatingBriefing.type === 'welcome' && (
-                      <p className="text-[11px] text-neutral-400 mt-0.5">
+                      <p className="text-[11px] text-neutral-300 mt-0.5">
                         {hasPendingItems
                           ? 'Bem-vindo(a) de volta! Veja o resumo da sua caixa:'
                           : 'Bem-vindo(a) de volta ao seu e-mail corporativo!'}
@@ -2197,7 +2220,7 @@ function WebmailContent() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setFloatingBriefing(null)}
+                  onClick={dismissFloatingBriefing}
                   className="text-neutral-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition cursor-pointer"
                   title="Fechar notificação"
                 >
@@ -2205,7 +2228,7 @@ function WebmailContent() {
                 </button>
               </div>
 
-              <div className="space-y-1.5 bg-white/[0.06] rounded-xl p-3 border border-white/10 text-xs">
+              <div className="cinematic-stagger-2 space-y-1.5 bg-white/[0.06] rounded-xl p-3 border border-white/10 text-xs">
                 {!hasPendingItems ? (
                   <div className="flex items-center space-x-2 text-emerald-300 font-semibold py-0.5">
                     <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
@@ -2261,7 +2284,7 @@ function WebmailContent() {
               </div>
 
               {hasPendingItems && (
-                <div className="flex items-center gap-2 pt-0.5">
+                <div className="cinematic-stagger-3 flex items-center gap-2 pt-0.5">
                   {floatingBriefing.unreadCount > 0 && (
                     <button
                       type="button"
@@ -2270,7 +2293,7 @@ function WebmailContent() {
                         setFilterType('unread');
                         const firstUnread = messages.find(m => !m.isRead);
                         if (firstUnread) handleSelectMessage(firstUnread);
-                        setFloatingBriefing(null);
+                        dismissFloatingBriefing();
                       }}
                       className="flex-1 py-2 px-3 bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-extrabold text-[11px] rounded-xl transition cursor-pointer text-center shadow-xs"
                     >
@@ -2285,7 +2308,7 @@ function WebmailContent() {
                         setFilterType('overdue');
                         const firstOverdue = messages.find(m => isMessageOverdue(m));
                         if (firstOverdue) handleSelectMessage(firstOverdue);
-                        setFloatingBriefing(null);
+                        dismissFloatingBriefing();
                       }}
                       className="flex-1 py-2 px-3 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-bold text-[11px] rounded-xl transition cursor-pointer text-center"
                     >
@@ -2299,13 +2322,95 @@ function WebmailContent() {
             {/* Barra de progresso visual de fecho automático */}
             <div className="h-1 w-full bg-neutral-800 overflow-hidden">
               <div
-                className="h-full bg-emerald-400 transition-all"
+                className="h-full bg-gradient-to-r from-emerald-400 via-teal-300 to-emerald-500 transition-all"
                 style={{
                   animation: 'shrinkWidth 8.5s linear forwards',
                 }}
               />
             </div>
             <style>{`
+              @keyframes cinematicEnter3D {
+                0% {
+                  opacity: 0;
+                  transform: perspective(1100px) translate3d(70px, -28px, -110px) rotateX(14deg) rotateY(-14deg) scale(0.84);
+                  filter: blur(16px);
+                }
+                60% {
+                  opacity: 1;
+                  transform: perspective(1100px) translate3d(-4px, 3px, 10px) rotateX(-2deg) rotateY(2deg) scale(1.015);
+                  filter: blur(0px);
+                }
+                100% {
+                  opacity: 1;
+                  transform: perspective(1100px) translate3d(0, 0, 0) rotateX(0deg) rotateY(0deg) scale(1);
+                  filter: blur(0px);
+                }
+              }
+              @keyframes cinematicExit3D {
+                0% {
+                  opacity: 1;
+                  transform: perspective(1100px) translate3d(0, 0, 0) scale(1);
+                  filter: blur(0px);
+                }
+                100% {
+                  opacity: 0;
+                  transform: perspective(1100px) translate3d(55px, -18px, -70px) rotateX(8deg) rotateY(-8deg) scale(0.88);
+                  filter: blur(12px);
+                }
+              }
+              @keyframes cinematicLightSweepAnim {
+                0% {
+                  transform: translateX(-130%) skewX(-22deg);
+                }
+                100% {
+                  transform: translateX(220%) skewX(-22deg);
+                }
+              }
+              @keyframes cinematicStaggerReveal {
+                0% {
+                  opacity: 0;
+                  transform: translateY(12px);
+                  filter: blur(6px);
+                }
+                100% {
+                  opacity: 1;
+                  transform: translateY(0);
+                  filter: blur(0px);
+                }
+              }
+              .cinematic-card-enter {
+                animation: cinematicEnter3D 0.85s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+                transform-origin: top right;
+                will-change: transform, opacity, filter;
+              }
+              .cinematic-card-exit {
+                animation: cinematicExit3D 0.52s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+                transform-origin: top right;
+                will-change: transform, opacity, filter;
+              }
+              .cinematic-light-sweep {
+                background: linear-gradient(
+                  110deg,
+                  transparent 20%,
+                  rgba(16, 185, 129, 0.18) 45%,
+                  rgba(255, 255, 255, 0.32) 50%,
+                  rgba(16, 185, 129, 0.14) 55%,
+                  transparent 80%
+                );
+                animation: cinematicLightSweepAnim 1.35s cubic-bezier(0.22, 1, 0.36, 1) 0.18s forwards;
+              }
+              .cinematic-stagger-1 {
+                opacity: 0;
+                animation: cinematicStaggerReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.12s forwards;
+              }
+              .cinematic-stagger-2 {
+                opacity: 0;
+                animation: cinematicStaggerReveal 0.65s cubic-bezier(0.16, 1, 0.3, 1) 0.24s forwards;
+              }
+              .cinematic-stagger-3 {
+                opacity: 0;
+                animation: cinematicStaggerReveal 0.65s cubic-bezier(0.16, 1, 0.3, 1) 0.36s forwards;
+              }
               @keyframes shrinkWidth {
                 from { width: 100%; }
                 to { width: 0%; }
