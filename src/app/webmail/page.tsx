@@ -10,7 +10,7 @@ import {
   Wand2, Bot, FileSignature, Lightbulb, Check, Wifi, WifiOff, Pin, PinOff, Flag, Flame, Lock, Key, Eye, EyeOff,
   Bell, Calendar, TrendingUp, LayoutGrid, HelpCircle, Smartphone, Laptop, Monitor,
   Globe, Languages, Sun, Sunset, Moon, MessageSquare, Image as ImageIcon, ExternalLink, BarChart3,
-  Mic, MicOff, Volume2, VolumeX, Play, Pause, Square, Headphones
+  Mic, MicOff, Volume2, VolumeX, Play, Pause, Square, Headphones, Server, Plus
 } from 'lucide-react';
 import { auth, User as AuthUser } from '@/lib/auth';
 import { dataManager, EmailAccount } from '@/lib/data';
@@ -21,6 +21,7 @@ import BrandLogo from '@/components/BrandLogo';
 import PageLoader from '@/components/PageLoader';
 import InternalDomainChat from '@/components/webmail/InternalDomainChat';
 import WebmailAnalyticsDashboard from '@/components/webmail/WebmailAnalyticsDashboard';
+import ExternalAccountsModal from '@/components/webmail/ExternalAccountsModal';
 import { apiEndpoint } from '@/lib/siteConfig';
 import dynamic from 'next/dynamic';
 
@@ -281,6 +282,8 @@ function WebmailContent() {
   const [showLoginPassword, setShowLoginPassword] = useState<boolean>(false); // Alternar visibilidade da senha
   const [webmailLoginError, setWebmailLoginError] = useState<string>(''); // Erro de login
   const [webmailLoginLoading, setWebmailLoginLoading] = useState<boolean>(false); // Loading de login
+  const [showExternalAccountsModal, setShowExternalAccountsModal] = useState<boolean>(false); // Modal de Contas Externas IMAP/SMTP
+  const [externalAccountsCount, setExternalAccountsCount] = useState<number>(0); // Total de contas externas conectadas
   const [animatedEmailPlaceholder, setAnimatedEmailPlaceholder] = useState<string>('');
 
   // Efeito máquina de escrever (Typewriter) para o placeholder de endereço de e-mail
@@ -471,6 +474,16 @@ function WebmailContent() {
         const savedAv = localStorage.getItem(`wehosthere_avatar_${selectedAccountEmail.trim().toLowerCase()}`) || '';
         setUserAvatarUrl(savedAv);
       } catch {}
+
+      // Obter contagem de contas externas conectadas ao titular
+      fetch(`/api/webmail/external-accounts?ownerEmail=${encodeURIComponent(selectedAccountEmail)}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && Array.isArray(data.accounts)) {
+            setExternalAccountsCount(data.accounts.length);
+          }
+        })
+        .catch(() => {});
     }
   }, [selectedAccountEmail]);
 
@@ -2760,6 +2773,29 @@ function WebmailContent() {
             </button>
           ) : null}
 
+          {/* Botão Conectar / Gerir Contas Externas (IMAP/SMTP) */}
+          <button
+            type="button"
+            onClick={() => {
+              soundEffects.playFolderSwitchSound();
+              setShowExternalAccountsModal(true);
+            }}
+            className="flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 bg-white hover:bg-neutral-100 text-neutral-900 border border-neutral-300 rounded-xl transition cursor-pointer text-xs font-bold shadow-2xs shrink-0 active:scale-95"
+            title="Conectar contas externas de outros provedores (IMAP/SMTP)"
+          >
+            <Server className="h-3.5 w-3.5 text-primary-600 shrink-0" />
+            <span className="hidden sm:inline">Contas Externas</span>
+            {externalAccountsCount > 0 ? (
+              <span className="text-[10px] px-1.5 py-0.2 rounded-full font-bold bg-primary-50 text-primary-700 border border-primary-200">
+                {externalAccountsCount}
+              </span>
+            ) : (
+              <span className="hidden lg:inline text-[10px] font-normal text-neutral-500">
+                + Adicionar
+              </span>
+            )}
+          </button>
+
           {/* Link Direto para o Site do Domínio da Empresa */}
           {selectedAccountEmail && selectedAccountEmail.includes('@') && (
             <a
@@ -3182,6 +3218,19 @@ function WebmailContent() {
           <BarChart3 className={`h-3.5 w-3.5 ${showAnalyticsDashboard ? 'text-emerald-400' : 'text-indigo-600'}`} />
           <span>Analytics</span>
         </button>
+
+        <button
+          onClick={() => { soundEffects.playFolderSwitchSound(); setShowExternalAccountsModal(true); }}
+          className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl whitespace-nowrap font-bold transition-all duration-200 shrink-0 border bg-neutral-100 text-neutral-700 hover:bg-neutral-200/70 border-neutral-200"
+        >
+          <Server className="h-3.5 w-3.5 text-primary-600" />
+          <span>Contas Externas</span>
+          {externalAccountsCount > 0 && (
+            <span className="text-[10px] px-1.5 py-0.2 rounded-full font-bold ml-1 bg-primary-100 text-primary-800">
+              {externalAccountsCount}
+            </span>
+          )}
+        </button>
       </div>
 
       {/* Main Layout Grid */}
@@ -3374,6 +3423,30 @@ function WebmailContent() {
               ) : (
                 <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
               )}
+            </button>
+
+            {/* Botão de Contas Externas (IMAP/SMTP) */}
+            <button
+              type="button"
+              onClick={() => {
+                soundEffects.playFolderSwitchSound();
+                setShowExternalAccountsModal(true);
+              }}
+              className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 cursor-pointer border mt-2 bg-neutral-50/80 hover:bg-neutral-100 text-neutral-800 border-neutral-200 font-bold"
+              title="Conectar e gerir contas de e-mail de outros provedores (IMAP/SMTP)"
+            >
+              <div className="flex items-center space-x-2.5 truncate">
+                <Server className="h-4 w-4 shrink-0 text-primary-600" />
+                <div className="text-left truncate">
+                  <span className="block truncate text-xs">Contas Externas</span>
+                  <span className="text-[10px] font-normal block truncate text-neutral-500">
+                    {externalAccountsCount > 0
+                      ? `${externalAccountsCount} conectada${externalAccountsCount > 1 ? 's' : ''}`
+                      : 'Adicionar conta externa'}
+                  </span>
+                </div>
+              </div>
+              <Plus className="h-3.5 w-3.5 text-neutral-400 shrink-0" />
             </button>
 
             {/* Atalho Direto para Visitar o Site do Domínio da Empresa */}
@@ -6406,6 +6479,54 @@ function WebmailContent() {
         }}
         onProfileChange={(avUrl) => {
           setUserAvatarUrl(avUrl);
+        }}
+      />
+
+      {/* Modal de Gestão e Conexão de Contas de E-mail Externas (IMAP/SMTP) */}
+      <ExternalAccountsModal
+        isOpen={showExternalAccountsModal}
+        onClose={() => {
+          setShowExternalAccountsModal(false);
+          const currentOwner = selectedAccountEmail || webmailLoginEmail || accounts[0]?.email;
+          if (currentOwner) {
+            fetch(`/api/webmail/external-accounts?ownerEmail=${encodeURIComponent(currentOwner)}`)
+              .then((res) => res.json())
+              .then((data) => {
+                if (data.success && Array.isArray(data.accounts)) {
+                  setExternalAccountsCount(data.accounts.length);
+                }
+              })
+              .catch(() => {});
+          }
+        }}
+        ownerEmail={selectedAccountEmail || webmailLoginEmail || accounts[0]?.email || 'geral@wehosthere.com'}
+        onSwitchAccount={async (externalEmail) => {
+          try {
+            const currentOwner = selectedAccountEmail || webmailLoginEmail || accounts[0]?.email || 'geral@wehosthere.com';
+            const res = await fetch('/api/webmail/external-accounts', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                action: 'switch_session',
+                ownerEmail: currentOwner,
+                email: externalEmail,
+              }),
+            });
+            const data = await res.json();
+            if (data.success && data.account) {
+              setSelectedAccountEmail(data.account.email);
+              setMailboxPassword(data.account.password);
+              if (typeof window !== 'undefined') {
+                sessionStorage.setItem('wm_active_email', data.account.email);
+                sessionStorage.setItem(`wm_pwd_${data.account.email.toLowerCase()}`, data.account.password);
+              }
+              setIsRefreshingWebmail(true);
+              refreshMessages();
+              setTimeout(() => setIsRefreshingWebmail(false), 800);
+            }
+          } catch (err) {
+            console.error('Failed to switch to external account:', err);
+          }
         }}
       />
     </div>

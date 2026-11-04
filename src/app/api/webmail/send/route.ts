@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { migaduImapSmtp } from '@/lib/migaduImapSmtp';
+import { connectDB } from '@/lib/mongodb';
+import { ExternalEmailAccount } from '@/models/ExternalEmailAccount';
+import { decryptPassword } from '@/lib/encryption';
 
 export const maxDuration = 60;
 
@@ -21,7 +24,7 @@ async function resolveAttachmentToBuffer(att: any): Promise<{
     };
   }
 
-  // 2. URL Remota (Cloudinary CDN https://res.cloudinary.com/...)
+  // 2. Remote URL (Cloudinary CDN https://res.cloudinary.com/...)
   if (att.url.startsWith('http://') || att.url.startsWith('https://')) {
     try {
       const res = await fetch(att.url);
@@ -47,7 +50,7 @@ async function resolveAttachmentToBuffer(att: any): Promise<{
   return null;
 }
 
-// POST - Send email via SMTP (supports Cloudinary URLs, multipart/form-data binary attachments, and base64 JSON)
+// POST - Send email via SMTP (supports WeHostHere Migadu mailboxes and external connected accounts)
 export async function POST(request: NextRequest) {
   try {
     const contentType = request.headers.get('content-type') || '';
@@ -119,7 +122,25 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    if (!email || !password || !to || (!emailBody && processedAttachments.length === 0)) {
+    const cleanEmail = (email || '').trim().toLowerCase();
+
+    // If password not passed in payload, look up external account credentials
+    if (!password && cleanEmail) {
+      try {
+        await connectDB();
+        const ext = await ExternalEmailAccount.findOne({
+          email: cleanEmail,
+          isActive: true
+        });
+        if (ext && ext.encryptedPassword) {
+          password = decryptPassword(ext.encryptedPassword);
+        }
+      } catch (dbErr) {
+        console.warn('[Webmail Send] Failed to lookup external account:', dbErr);
+      }
+    }
+
+    if (!cleanEmail || !password || !to || (!emailBody && processedAttachments.length === 0)) {
       return NextResponse.json(
         { error: 'E-mail, palavra-passe, destinatário e conteúdo são obrigatórios.' },
         { status: 400 }
@@ -138,7 +159,7 @@ export async function POST(request: NextRequest) {
       : '';
 
     await migaduImapSmtp.sendEmail({
-      from: email.trim(),
+      from: cleanEmail,
       to: parseRecipients(to),
       cc: parseRecipients(cc),
       bcc: parseRecipients(bcc),

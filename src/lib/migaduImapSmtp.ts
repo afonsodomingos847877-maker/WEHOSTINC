@@ -1,9 +1,18 @@
 // Migadu IMAP/SMTP Service
-// Handles real IMAP/SMTP connections to Migadu servers with clean email MIME parsing
+// Handles real IMAP/SMTP connections to Migadu servers and external custom email providers with clean email MIME parsing
 
 import { ImapFlow } from 'imapflow';
 import nodemailer from 'nodemailer';
 import { simpleParser } from 'mailparser';
+
+export interface ExternalServerConfig {
+  imapHost: string;
+  imapPort: number;
+  imapSecure?: 'ssl' | 'starttls' | 'none';
+  smtpHost: string;
+  smtpPort: number;
+  smtpSecure?: 'ssl' | 'starttls' | 'none';
+}
 
 export interface IMAPMessage {
   id: string;
@@ -56,31 +65,172 @@ export class MigaduImapSmtpService {
   }
 
   /**
+   * Resolve server configuration for a given email address.
+   * If explicit customConfig is passed, returns it immediately.
+   * Otherwise checks MongoDB ExternalEmailAccount collection.
+   * Falls back to default Migadu configuration.
+   */
+  async resolveServerConfig(email: string, explicitConfig?: ExternalServerConfig): Promise<ExternalServerConfig> {
+    if (explicitConfig && explicitConfig.imapHost && explicitConfig.smtpHost) {
+      return explicitConfig;
+    }
+
+    try {
+      const { connectDB } = await import('@/lib/mongodb');
+      await connectDB();
+      const { ExternalEmailAccount } = await import('@/models/ExternalEmailAccount');
+      const ext = await ExternalEmailAccount.findOne({
+        email: email.toLowerCase().trim(),
+        isActive: true,
+      });
+
+      if (ext) {
+        return {
+          imapHost: ext.imapHost,
+          imapPort: ext.imapPort,
+          imapSecure: ext.imapSecure,
+          smtpHost: ext.smtpHost,
+          smtpPort: ext.smtpPort,
+          smtpSecure: ext.smtpSecure,
+        };
+      }
+    } catch {
+      // Ignore DB resolution errors and fall back to default Migadu config
+    }
+
+    return {
+      imapHost: this.imapHost,
+      imapPort: this.imapPort,
+      imapSecure: 'ssl',
+      smtpHost: this.smtpHost,
+      smtpPort: this.smtpPort,
+      smtpSecure: 'ssl',
+    };
+  }
+
+  /**
+   * Create an ImapFlow client configured for the specific server
+   */
+  private createImapClient(email: string, password: string, config: ExternalServerConfig): ImapFlow {
+    const isSecure = config.imapSecure ? config.imapSecure === 'ssl' : config.imapPort === 993;
+    return new ImapFlow({
+      host: config.imapHost,
+      port: config.imapPort,
+      secure: isSecure,
+      auth: {
+        user: email,
+        pass: password,
+      },
+      logger: false,
+      tls: {
+        rejectUnauthorized: false,
+      },
+    });
+  }
+
+  /**
+   * Create a nodemailer transporter configured for the specific server
+   */
+  private createSmtpTransporter(email: string, password: string, config: ExternalServerConfig) {
+    const isSecure = config.smtpSecure ? config.smtpSecure === 'ssl' : config.smtpPort === 465;
+    return nodemailer.createTransport({
+      host: config.smtpHost,
+      port: config.smtpPort,
+      secure: isSecure,
+      auth: {
+        user: email,
+        pass: password,
+      },
+      tls: {
+        rejectUnauthorized: false,
+      },
+    });
+  }
+
+  /**
+   * Test both IMAP and SMTP connections for an external email account
+   */
+  async testExternalConnection(params: {
+    email: string;
+    password: string;
+    imapHost: string;
+    imapPort: number;
+    imapSecure?: 'ssl' | 'starttls' | 'none';
+    smtpHost: string;
+    smtpPort: number;
+    smtpSecure?: 'ssl' | 'starttls' | 'none';
+  }): Promise<{ success: boolean; imapOk: boolean; smtpOk: boolean; error?: string }> {
+    let imapOk = false;
+    let smtpOk = false;
+    let errorMessage = '';
+
+    // 1. Test IMAP
+    try {
+      const imapClient = this.createImapClient(params.email, params.password, {
+        imapHost: params.imapHost,
+        imapPort: params.imapPort,
+        imapSecure: params.imapSecure || 'ssl',
+        smtpHost: params.smtpHost,
+        smtpPort: params.smtpPort,
+        smtpSecure: params.smtpSecure || 'ssl',
+      });
+      await imapClient.connect();
+      await imapClient.logout();
+      imapOk = true;
+    } catch (imapErr: any) {
+      console.error('[External IMAP Test Failed]:', imapErr);
+      const msg = imapErr?.message || String(imapErr);
+      errorMessage = `Falha no IMAP (${params.imapHost}:${params.imapPort}): ${msg}`;
+    }
+
+    // 2. Test SMTP
+    try {
+      const transporter = this.createSmtpTransporter(params.email, params.password, {
+        imapHost: params.imapHost,
+        imapPort: params.imapPort,
+        imapSecure: params.imapSecure || 'ssl',
+        smtpHost: params.smtpHost,
+        smtpPort: params.smtpPort,
+        smtpSecure: params.smtpSecure || 'ssl',
+      });
+      await transporter.verify();
+      smtpOk = true;
+    } catch (smtpErr: any) {
+      console.error('[External SMTP Test Failed]:', smtpErr);
+      const msg = smtpErr?.message || String(smtpErr);
+      if (errorMessage) {
+        errorMessage += ` | Falha no SMTP (${params.smtpHost}:${params.smtpPort}): ${msg}`;
+      } else {
+        errorMessage = `Falha no SMTP (${params.smtpHost}:${params.smtpPort}): ${msg}`;
+      }
+    }
+
+    return {
+      success: imapOk && smtpOk,
+      imapOk,
+      smtpOk,
+      error: imapOk && smtpOk ? undefined : errorMessage,
+    };
+  }
+
+  /**
    * Authenticate a mailbox via IMAP
    */
-  async authenticateIMAP(email: string, password: string): Promise<boolean> {
+  async authenticateIMAP(email: string, password: string, customConfig?: ExternalServerConfig): Promise<boolean> {
     try {
-      const client = new ImapFlow({
-        host: this.imapHost,
-        port: this.imapPort,
-        secure: this.imapPort === 993,
-        auth: {
-          user: email,
-          pass: password
-        },
-        logger: false
-      });
+      const config = await this.resolveServerConfig(email, customConfig);
+      const client = this.createImapClient(email, password, config);
 
       try {
         await client.connect();
         await client.logout();
         return true;
       } catch (error) {
-        console.error('[MigaduIMAP] Authentication failed for:', email, error);
+        console.error('[IMAP Auth] Authentication failed for:', email, error);
         return false;
       }
     } catch (error) {
-      console.error('[MigaduIMAP] Authentication error for:', email);
+      console.error('[IMAP Auth] Error for:', email, error);
       return false;
     }
   }
@@ -122,7 +272,7 @@ export class MigaduImapSmtpService {
         }
       }
     } catch (e) {
-      console.warn('[MigaduIMAP] list mailboxes error:', e);
+      console.warn('[IMAP] list mailboxes error:', e);
     }
 
     if (target === 'SENT' || target === 'ENVIADOS') return 'Sent';
@@ -187,18 +337,11 @@ export class MigaduImapSmtpService {
     email: string,
     password: string,
     folder: string = 'INBOX',
-    limit: number = 50
+    limit: number = 50,
+    customConfig?: ExternalServerConfig
   ): Promise<IMAPMessage[]> {
-    const client = new ImapFlow({
-      host: this.imapHost,
-      port: this.imapPort,
-      secure: this.imapPort === 993,
-      auth: {
-        user: email,
-        pass: password
-      },
-      logger: false
-    });
+    const config = await this.resolveServerConfig(email, customConfig);
+    const client = this.createImapClient(email, password, config);
 
     try {
       await client.connect();
@@ -245,12 +388,12 @@ export class MigaduImapSmtpService {
                   filename: att.filename || 'anexo',
                   size: att.size || (att.content ? att.content.length : 0),
                   contentType: att.contentType || 'application/octet-stream',
-                  url: b64 ? `data:${att.contentType || 'application/octet-stream'};base64,${b64}` : ''
+                  url: b64 ? `data:${att.contentType || 'application/octet-stream'};base64,${b64}` : '',
                 });
               }
             }
           } catch (parseError) {
-            console.warn('[MigaduIMAP] Error parsing MIME with simpleParser:', parseError);
+            console.warn('[IMAP] Error parsing MIME with simpleParser:', parseError);
             cleanBody = msg.source.toString();
             cleanText = cleanBody.replace(/<[^>]+>/g, ' ').slice(0, 150);
           }
@@ -260,7 +403,12 @@ export class MigaduImapSmtpService {
         if (cleanBody.includes('Delivered-To:') || cleanBody.includes('Received:') || cleanBody.includes('Content-Type: multipart/')) {
           const parts = cleanBody.split(/\r?\n\r?\n/);
           if (parts.length > 1) {
-            const contentParts = parts.filter(p => !/^(Delivered-To|Received|X-|ARC-|DKIM|Authentication|From|To|Subject|Message-ID|MIME-Version|Content-Type):/i.test(p.trim()));
+            const contentParts = parts.filter(
+              (p) =>
+                !/^(Delivered-To|Received|X-|ARC-|DKIM|Authentication|From|To|Subject|Message-ID|MIME-Version|Content-Type):/i.test(
+                  p.trim()
+                )
+            );
             if (contentParts.length > 0) {
               cleanBody = contentParts.join('\n\n').replace(/--[a-zA-Z0-9_-]+(--)?/g, '').trim();
               cleanText = cleanBody.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
@@ -278,12 +426,13 @@ export class MigaduImapSmtpService {
           uid: msg.uid,
           from: {
             name: fromName,
-            address: fromAddress
+            address: fromAddress,
           },
-          to: envelope?.to?.map(t => ({
-            name: t.name || t.address || '',
-            address: t.address || ''
-          })) || [],
+          to:
+            envelope?.to?.map((t) => ({
+              name: t.name || t.address || '',
+              address: t.address || '',
+            })) || [],
           subject: subject,
           date: envelope?.date || new Date(),
           body: cleanBody || '(Mensagem vazia)',
@@ -291,7 +440,7 @@ export class MigaduImapSmtpService {
           isRead: msg.flags?.has('\\Seen') || false,
           starred: msg.flags?.has('\\Flagged') || false,
           folder: folder.toLowerCase(),
-          attachments: parsedAttachments
+          attachments: parsedAttachments,
         });
 
         count++;
@@ -304,7 +453,7 @@ export class MigaduImapSmtpService {
       messages.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       return messages;
     } catch (error) {
-      console.error('[MigaduIMAP] Failed to list messages for:', email, error);
+      console.error('[IMAP] Failed to list messages for:', email, error);
       try {
         await client.logout();
       } catch {}
@@ -319,18 +468,11 @@ export class MigaduImapSmtpService {
     email: string,
     password: string,
     uid: number,
-    folder: string = 'INBOX'
+    folder: string = 'INBOX',
+    customConfig?: ExternalServerConfig
   ): Promise<IMAPMessage | null> {
-    const client = new ImapFlow({
-      host: this.imapHost,
-      port: this.imapPort,
-      secure: this.imapPort === 993,
-      auth: {
-        user: email,
-        pass: password
-      },
-      logger: false
-    });
+    const config = await this.resolveServerConfig(email, customConfig);
+    const client = this.createImapClient(email, password, config);
 
     try {
       await client.connect();
@@ -367,7 +509,7 @@ export class MigaduImapSmtpService {
                   filename: att.filename || 'anexo',
                   size: att.size || (att.content ? att.content.length : 0),
                   contentType: att.contentType || 'application/octet-stream',
-                  url: b64 ? `data:${att.contentType || 'application/octet-stream'};base64,${b64}` : ''
+                  url: b64 ? `data:${att.contentType || 'application/octet-stream'};base64,${b64}` : '',
                 });
               }
             }
@@ -377,11 +519,15 @@ export class MigaduImapSmtpService {
           }
         }
 
-        // Final safety check: if cleanBody still contains raw headers, extract the body section
         if (cleanBody.includes('Delivered-To:') || cleanBody.includes('Received:') || cleanBody.includes('Content-Type: multipart/')) {
           const parts = cleanBody.split(/\r?\n\r?\n/);
           if (parts.length > 1) {
-            const contentParts = parts.filter(p => !/^(Delivered-To|Received|X-|ARC-|DKIM|Authentication|From|To|Subject|Message-ID|MIME-Version|Content-Type):/i.test(p.trim()));
+            const contentParts = parts.filter(
+              (p) =>
+                !/^(Delivered-To|Received|X-|ARC-|DKIM|Authentication|From|To|Subject|Message-ID|MIME-Version|Content-Type):/i.test(
+                  p.trim()
+                )
+            );
             if (contentParts.length > 0) {
               cleanBody = contentParts.join('\n\n').replace(/--[a-zA-Z0-9_-]+(--)?/g, '').trim();
               cleanText = cleanBody.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
@@ -399,12 +545,13 @@ export class MigaduImapSmtpService {
           uid: msg.uid,
           from: {
             name: fromName,
-            address: fromAddress
+            address: fromAddress,
           },
-          to: envelope?.to?.map(t => ({
-            name: t.name || t.address || '',
-            address: t.address || ''
-          })) || [],
+          to:
+            envelope?.to?.map((t) => ({
+              name: t.name || t.address || '',
+              address: t.address || '',
+            })) || [],
           subject: subject,
           date: envelope?.date || new Date(),
           body: cleanBody || '(Mensagem vazia)',
@@ -412,14 +559,14 @@ export class MigaduImapSmtpService {
           isRead: msg.flags?.has('\\Seen') || false,
           starred: msg.flags?.has('\\Flagged') || false,
           folder: folder.toLowerCase(),
-          attachments: parsedAttachments
+          attachments: parsedAttachments,
         };
       }
 
       await client.logout();
       return message;
     } catch (error) {
-      console.error('[MigaduIMAP] Failed to get message for:', email, error);
+      console.error('[IMAP] Failed to get message for:', email, error);
       try {
         await client.logout();
       } catch {}
@@ -435,18 +582,11 @@ export class MigaduImapSmtpService {
     password: string,
     uid: number,
     isRead: boolean,
-    folder: string = 'INBOX'
+    folder: string = 'INBOX',
+    customConfig?: ExternalServerConfig
   ): Promise<void> {
-    const client = new ImapFlow({
-      host: this.imapHost,
-      port: this.imapPort,
-      secure: this.imapPort === 993,
-      auth: {
-        user: email,
-        pass: password
-      },
-      logger: false
-    });
+    const config = await this.resolveServerConfig(email, customConfig);
+    const client = this.createImapClient(email, password, config);
 
     try {
       await client.connect();
@@ -465,7 +605,7 @@ export class MigaduImapSmtpService {
 
       await client.logout();
     } catch (error) {
-      console.error('[MigaduIMAP] Failed to mark as read for:', email, error);
+      console.error('[IMAP] Failed to mark as read for:', email, error);
       try {
         await client.logout();
       } catch {}
@@ -481,18 +621,11 @@ export class MigaduImapSmtpService {
     password: string,
     uid: number,
     starred: boolean,
-    folder: string = 'INBOX'
+    folder: string = 'INBOX',
+    customConfig?: ExternalServerConfig
   ): Promise<void> {
-    const client = new ImapFlow({
-      host: this.imapHost,
-      port: this.imapPort,
-      secure: this.imapPort === 993,
-      auth: {
-        user: email,
-        pass: password
-      },
-      logger: false
-    });
+    const config = await this.resolveServerConfig(email, customConfig);
+    const client = this.createImapClient(email, password, config);
 
     try {
       await client.connect();
@@ -511,7 +644,7 @@ export class MigaduImapSmtpService {
 
       await client.logout();
     } catch (error) {
-      console.error('[MigaduIMAP] Failed to toggle star for:', email, error);
+      console.error('[IMAP] Failed to toggle star for:', email, error);
       try {
         await client.logout();
       } catch {}
@@ -527,18 +660,11 @@ export class MigaduImapSmtpService {
     password: string,
     uid: number,
     fromFolder: string,
-    toFolder: string
+    toFolder: string,
+    customConfig?: ExternalServerConfig
   ): Promise<void> {
-    const client = new ImapFlow({
-      host: this.imapHost,
-      port: this.imapPort,
-      secure: this.imapPort === 993,
-      auth: {
-        user: email,
-        pass: password
-      },
-      logger: false
-    });
+    const config = await this.resolveServerConfig(email, customConfig);
+    const client = this.createImapClient(email, password, config);
 
     try {
       await client.connect();
@@ -547,7 +673,7 @@ export class MigaduImapSmtpService {
       await client.messageMove(uid.toString(), destPath, { uid: true });
       await client.logout();
     } catch (error) {
-      console.error('[MigaduIMAP] Failed to move message for:', email, error);
+      console.error('[IMAP] Failed to move message for:', email, error);
       try {
         await client.logout();
       } catch {}
@@ -562,18 +688,11 @@ export class MigaduImapSmtpService {
     email: string,
     password: string,
     uid: number,
-    folder: string = 'INBOX'
+    folder: string = 'INBOX',
+    customConfig?: ExternalServerConfig
   ): Promise<void> {
-    const client = new ImapFlow({
-      host: this.imapHost,
-      port: this.imapPort,
-      secure: this.imapPort === 993,
-      auth: {
-        user: email,
-        pass: password
-      },
-      logger: false
-    });
+    const config = await this.resolveServerConfig(email, customConfig);
+    const client = this.createImapClient(email, password, config);
 
     try {
       await client.connect();
@@ -581,7 +700,7 @@ export class MigaduImapSmtpService {
       await client.messageDelete(uid.toString(), { uid: true });
       await client.logout();
     } catch (error) {
-      console.error('[MigaduIMAP] Failed to delete message for:', email, error);
+      console.error('[IMAP] Failed to delete message for:', email, error);
       try {
         await client.logout();
       } catch {}
@@ -592,16 +711,9 @@ export class MigaduImapSmtpService {
   /**
    * Send an email via SMTP and save a copy to the IMAP Sent folder
    */
-  async sendEmail(options: SMTPSendOptions, password: string): Promise<void> {
-    const transporter = nodemailer.createTransport({
-      host: this.smtpHost,
-      port: this.smtpPort,
-      secure: this.smtpPort === 465,
-      auth: {
-        user: options.from,
-        pass: password
-      }
-    });
+  async sendEmail(options: SMTPSendOptions, password: string, customConfig?: ExternalServerConfig): Promise<void> {
+    const config = await this.resolveServerConfig(options.from, customConfig);
+    const transporter = this.createSmtpTransporter(options.from, password, config);
 
     const customHeaders: Record<string, string> = {};
     if (options.priority === 'high') {
@@ -624,49 +736,43 @@ export class MigaduImapSmtpService {
       html: options.html,
       attachments: options.attachments,
       priority: options.priority === 'high' ? 'high' : options.priority === 'low' ? 'low' : 'normal',
-      headers: customHeaders
+      headers: customHeaders,
     });
 
     // Save a copy to Sent folder on IMAP
     try {
-      const client = new ImapFlow({
-        host: this.imapHost,
-        port: this.imapPort,
-        secure: this.imapPort === 993,
-        auth: {
-          user: options.from,
-          pass: password
-        },
-        logger: false
-      });
+      const client = this.createImapClient(options.from, password, config);
 
       await client.connect();
       const sentFolder = await this.resolveMailboxPath(client, 'Sent');
-      
+
       // Build raw message buffer
       const mailGen = nodemailer.createTransport({ streamTransport: true, newline: 'windows' });
       const rawMessage = await new Promise<Buffer>((resolve, reject) => {
-        mailGen.sendMail({
-          from: options.from,
-          to: options.to.join(', '),
-          cc: options.cc && options.cc.length > 0 ? options.cc.join(', ') : undefined,
-          bcc: options.bcc && options.bcc.length > 0 ? options.bcc.join(', ') : undefined,
-          subject: options.subject,
-          text: options.text,
-          html: options.html,
-          attachments: options.attachments
-        }, (err, info) => {
-          if (err) return reject(err);
-          const chunks: Buffer[] = [];
-          const stream = (info as any).message;
-          if (stream && typeof stream.on === 'function') {
-            stream.on('data', (chunk: Buffer) => chunks.push(chunk));
-            stream.on('end', () => resolve(Buffer.concat(chunks)));
-            stream.on('error', reject);
-          } else {
-            resolve(Buffer.from(''));
+        mailGen.sendMail(
+          {
+            from: options.from,
+            to: options.to.join(', '),
+            cc: options.cc && options.cc.length > 0 ? options.cc.join(', ') : undefined,
+            bcc: options.bcc && options.bcc.length > 0 ? options.bcc.join(', ') : undefined,
+            subject: options.subject,
+            text: options.text,
+            html: options.html,
+            attachments: options.attachments,
+          },
+          (err, info) => {
+            if (err) return reject(err);
+            const chunks: Buffer[] = [];
+            const stream = (info as any).message;
+            if (stream && typeof stream.on === 'function') {
+              stream.on('data', (chunk: Buffer) => chunks.push(chunk));
+              stream.on('end', () => resolve(Buffer.concat(chunks)));
+              stream.on('error', reject);
+            } else {
+              resolve(Buffer.from(''));
+            }
           }
-        });
+        );
       });
 
       if (rawMessage && rawMessage.length > 0) {
@@ -686,7 +792,7 @@ export class MigaduImapSmtpService {
 
       await client.logout();
     } catch (appendErr) {
-      console.warn('[MigaduIMAP] Could not append sent message to IMAP:', appendErr);
+      console.warn('[IMAP] Could not append sent message to IMAP Sent folder:', appendErr);
     }
   }
 }
