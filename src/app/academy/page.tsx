@@ -317,7 +317,7 @@ export default function PublicAcademyPage() {
                           <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block">Investimento</span>
                           <div className="flex items-baseline gap-2">
                             <span className="text-2xl font-black text-gray-950">
-                              {(course.price || 199).toLocaleString('pt-MZ')} <span className="text-sm font-bold text-emerald-600">MT</span>
+                              {(course.price || 199).toLocaleString('pt-MZ')} <span className="text-sm font-bold text-primary-600">MT</span>
                             </span>
                             {course.originalPrice && course.originalPrice > (course.price || 0) && (
                               <span className="text-xs text-gray-400 line-through">
@@ -327,7 +327,7 @@ export default function PublicAcademyPage() {
                           </div>
                         </div>
 
-                        <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200/60">
+                        <span className="text-[11px] font-bold text-primary-700 bg-primary-50 px-2.5 py-1 rounded-full border border-primary-200/60">
                           Acesso Imediato
                         </span>
                       </div>
@@ -342,10 +342,10 @@ export default function PublicAcademyPage() {
                         </Link>
                         <Link
                           href={checkoutUrl}
-                          className="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black text-center shadow-sm hover:shadow transition flex items-center justify-center gap-1.5"
+                          className="py-2.5 px-3 rounded-xl bg-primary-600 hover:bg-primary-700 active:scale-95 text-white text-xs font-black text-center shadow-sm hover:shadow transition flex items-center justify-center gap-1.5"
                         >
                           <Zap className="w-3.5 h-3.5 fill-current" />
-                          <span>Comprar Já</span>
+                          <span>Obter Acesso</span>
                         </Link>
                       </div>
                     </div>
@@ -361,12 +361,12 @@ export default function PublicAcademyPage() {
       <section className="bg-slate-900 text-white py-16 sm:py-20 border-y border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-14">
-            <span className="text-emerald-400 text-xs font-bold uppercase tracking-wider">Simplicidade & Respeito Pelo Teu Tempo</span>
+            <span className="text-primary-400 text-xs font-bold uppercase tracking-wider">Simplicidade & Respeito Pelo Teu Tempo</span>
             <h2 className="text-2xl sm:text-4xl font-extrabold text-white mt-2">
-              Como Funciona a Compra Sem Barreiras
+              Como Funciona o Acesso Sem Barreiras
             </h2>
             <p className="mt-2 text-slate-400 text-xs sm:text-sm">
-              Sem cadastros longos. Adquire qualquer formação em menos de 1 minuto.
+              Sem cadastros longos. Obtém qualquer formação em menos de 1 minuto.
             </p>
           </div>
 
@@ -487,10 +487,10 @@ export default function PublicAcademyPage() {
           <div className="bg-white rounded-2xl p-5 border border-gray-200 shadow-xs">
             <h3 className="font-bold text-sm text-gray-900 flex items-center gap-2">
               <HelpCircle className="w-4 h-4 text-primary-600 shrink-0" />
-              Preciso de ter conta antes de comprar um curso?
+              Preciso de ter conta antes de obter acesso a um curso?
             </h3>
             <p className="mt-1.5 text-xs text-gray-600 leading-relaxed pl-6">
-              <strong>Não.</strong> Podes comprar diretamente como visitante. Após o pagamento aprovado, defines a tua senha num clique ou vinculas à tua conta existente.
+              <strong>Não.</strong> Podes obter acesso diretamente como visitante. Após o pagamento aprovado, defines a tua senha num clique ou vinculas à tua conta existente.
             </p>
           </div>
 

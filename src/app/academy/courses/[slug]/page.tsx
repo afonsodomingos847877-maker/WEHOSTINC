@@ -593,7 +593,7 @@ export default function CourseDetailsPage() {
                   <span>
                     {paymentPlan === 'installments_2x' 
                       ? `Pagar 1ª Parcela (${installmentPrice.toLocaleString('pt-MZ')} MT)`
-                      : `Comprar Curso por ${currentPrice.toLocaleString('pt-MZ')} MT`}
+                      : `Obter Acesso por ${currentPrice.toLocaleString('pt-MZ')} MT`}
                   </span>
                 </Link>
               </div>
