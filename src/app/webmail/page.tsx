@@ -1379,44 +1379,22 @@ function WebmailContent() {
             </span>
           )}
 
-          {/* Botão Rápido: Mudar Senha (Tesla Dark Primary) */}
-          <button
-            type="button"
-            onClick={handleOpenChangePassword}
-            className="flex items-center space-x-1.5 px-3 py-1.5 bg-neutral-900 hover:bg-black text-white rounded-xl transition cursor-pointer text-xs font-bold shadow-xs shrink-0 active:scale-95"
-            title="Alterar senha desta conta de e-mail"
-          >
-            <Key className="h-3.5 w-3.5 text-neutral-300 shrink-0" />
-            <span>Mudar Senha</span>
-          </button>
-
-          {/* Botão Rápido: Instalar Webmail App (Tesla White Secondary) */}
-          {!isAppInstalled && (
+          {/* Refresh (Apenas quando autenticado) */}
+          {mailboxPassword && (
             <button
-              type="button"
-              onClick={handleTriggerInstall}
-              className="flex items-center space-x-1.5 px-3 py-1.5 bg-white hover:bg-neutral-100 text-neutral-900 border border-neutral-300 rounded-xl transition cursor-pointer text-xs font-bold shadow-2xs shrink-0 active:scale-95"
-              title="Instalar o Webmail no Computador ou Telemóvel"
+              onClick={() => {
+                setIsRefreshingWebmail(true);
+                refreshMessages();
+                setTimeout(() => setIsRefreshingWebmail(false), 800);
+              }}
+              className="p-2 hover:bg-neutral-100 rounded-xl text-neutral-500 hover:text-neutral-900 transition cursor-pointer shrink-0"
+              title="Sincronizar caixa de entrada"
             >
-              <Download className="h-3.5 w-3.5 text-neutral-700 shrink-0" />
-              <span>Instalar App</span>
+              {isRefreshingWebmail ? <Loader2 className="h-4 w-4 animate-spin text-neutral-900" /> : <RefreshCw className="h-4 w-4" />}
             </button>
           )}
 
-          {/* Refresh */}
-          <button
-            onClick={() => {
-              setIsRefreshingWebmail(true);
-              refreshMessages();
-              setTimeout(() => setIsRefreshingWebmail(false), 800);
-            }}
-            className="p-2 hover:bg-neutral-100 rounded-xl text-neutral-500 hover:text-neutral-900 transition cursor-pointer shrink-0"
-            title="Sincronizar caixa de entrada"
-          >
-            {isRefreshingWebmail ? <Loader2 className="h-4 w-4 animate-spin text-neutral-900" /> : <RefreshCw className="h-4 w-4" />}
-          </button>
-
-          {/* Link Ajuda Outlook & Telemóvel (Tesla White Secondary) */}
+          {/* Link Guia de Configuração (Outlook & Celular) */}
           <Link
             href="/ajuda/configurar-email"
             target="_blank"
@@ -1426,6 +1404,36 @@ function WebmailContent() {
             <HelpCircle className="h-3.5 w-3.5 text-neutral-700 shrink-0" />
             <span>Guia Configuração</span>
           </Link>
+
+          {/* Live Connection & Sync Status Pill (Sleek Minimalist) */}
+          {mailboxPassword && (
+            <div className="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border border-neutral-200 bg-neutral-100 text-xs font-semibold text-neutral-700 shrink-0 transition-all duration-300">
+              {!isOnline ? (
+                <>
+                  <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping shrink-0" />
+                  <span className="text-[11px] font-bold text-rose-700">Offline</span>
+                </>
+              ) : (isLoadingMessages || isRefreshingWebmail) ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-neutral-700 shrink-0" />
+                  <span className="text-[11px] font-bold text-neutral-700">A sincronizar...</span>
+                </>
+              ) : (
+                <>
+                  <span className="relative flex h-2 w-2 shrink-0">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                  </span>
+                  <span className="text-[11px] font-bold text-neutral-800">IMAP Ativo</span>
+                  {lastSyncedTime && (
+                    <span className="text-[10px] text-neutral-400 font-normal">
+                      ({lastSyncedTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})
+                    </span>
+                  )}
+                </>
+              )}
+            </div>
+          )}
 
           {/* Mailbox Logout */}
           {mailboxPassword && (
@@ -1438,105 +1446,21 @@ function WebmailContent() {
             </button>
           )}
 
-          {/* Live Connection & Sync Status Pill (Sleek Tesla Minimalist) */}
-          <div className="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border border-neutral-200 bg-neutral-100 text-xs font-semibold text-neutral-700 shrink-0 transition-all duration-300">
-            {!isOnline ? (
-              <>
-                <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping shrink-0" />
-                <span className="text-[11px] font-bold text-rose-700">Offline</span>
-              </>
-            ) : (isLoadingMessages || isRefreshingWebmail) ? (
-              <>
-                <Loader2 className="h-3.5 w-3.5 animate-spin text-neutral-700 shrink-0" />
-                <span className="text-[11px] font-bold text-neutral-700">A sincronizar...</span>
-              </>
-            ) : mailboxPassword ? (
-              <>
-                <span className="relative flex h-2 w-2 shrink-0">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                </span>
-                <span className="text-[11px] font-bold text-neutral-800">IMAP Ativo</span>
-                {lastSyncedTime && (
-                  <span className="text-[10px] text-neutral-400 font-normal">
-                    ({lastSyncedTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})
-                  </span>
-                )}
-              </>
-            ) : (
-              <>
-                <Lock className="h-3 w-3 text-neutral-500 shrink-0" />
-                <span className="text-[11px] font-bold text-neutral-600">Sessão Fechada</span>
-              </>
-            )}
-          </div>
-
-          {/* Desktop-only: Date/Time */}
-          {currentDateTime && (
-            <div className="hidden lg:flex items-center space-x-1.5 px-3 py-1.5 bg-neutral-100 rounded-xl border border-neutral-200 shrink-0 text-neutral-600">
-              <Clock className="h-3.5 w-3.5 text-neutral-500" />
-              <span className="text-xs font-bold text-neutral-700">
-                {currentDateTime.toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })}
-              </span>
-              <span className="text-[10px] text-neutral-400">
-                {currentDateTime.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
-              </span>
-            </div>
-          )}
-
-          {/* Desktop-only secondary actions */}
-          <button
-            type="button"
-            onClick={handleOpenCompose}
-            className="hidden sm:flex p-2 hover:bg-neutral-100 text-neutral-600 hover:text-neutral-900 rounded-xl transition cursor-pointer shrink-0"
-            title="Escrever E-mail"
-          >
-            <Edit3 className="h-4 w-4" />
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setShowSignatureModal(true)}
-            className="hidden sm:flex p-2 hover:bg-neutral-100 text-neutral-600 hover:text-neutral-900 rounded-xl transition cursor-pointer shrink-0"
-            title="Configurar Assinatura Profissional"
-          >
-            <FileSignature className="h-4 w-4" />
-          </button>
-
-          <button
-            type="button"
-            onClick={handleOpenChangePassword}
-            className="hidden sm:flex p-2 hover:bg-neutral-100 text-neutral-600 hover:text-neutral-900 rounded-xl transition cursor-pointer shrink-0"
-            title="Alterar Senha"
-          >
-            <Key className="h-4 w-4" />
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              auth.logout();
-              router.push('/login');
-            }}
-            className="hidden sm:flex p-2 hover:bg-neutral-100 text-neutral-500 hover:text-neutral-900 rounded-xl transition cursor-pointer shrink-0"
-            title="Sair"
-          >
-            <LogOut className="h-4 w-4" />
-          </button>
-
           {/* Mobile: More Options (⋯) */}
-          <button
-            type="button"
-            onClick={() => setShowMobileMenu(true)}
-            className="sm:hidden p-2 hover:bg-gray-100 text-gray-600 rounded-xl transition cursor-pointer shrink-0"
-            title="Mais opções"
-          >
-            <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-              <circle cx="12" cy="5" r="1.5" />
-              <circle cx="12" cy="12" r="1.5" />
-              <circle cx="12" cy="19" r="1.5" />
-            </svg>
-          </button>
+          {mailboxPassword && (
+            <button
+              type="button"
+              onClick={() => setShowMobileMenu(true)}
+              className="sm:hidden p-2 hover:bg-neutral-100 text-neutral-600 rounded-xl transition cursor-pointer shrink-0"
+              title="Mais opções"
+            >
+              <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                <circle cx="12" cy="5" r="1.5" />
+                <circle cx="12" cy="12" r="1.5" />
+                <circle cx="12" cy="19" r="1.5" />
+              </svg>
+            </button>
+          )}
         </div>
       </header>
 
@@ -1601,8 +1525,99 @@ function WebmailContent() {
         </div>
       )}
 
-      {/* Mobile Folder Selector Tabs (Visível em Telas Pequenas) */}
-      <div className="md:hidden bg-white border-b border-neutral-200 px-2 py-2 flex items-center space-x-1.5 overflow-x-auto text-xs shrink-0">
+      {/* Se não autenticado: Apresenta Tela de Login Única, Centralizada e Elegante (Estilo Tesla) */}
+      {!mailboxPassword && !isAccountPending ? (
+        <div className="flex-1 flex items-center justify-center p-4 sm:p-8 bg-neutral-50/60">
+          <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-8 border border-neutral-200/90 shadow-sm text-left space-y-6 animate-in zoom-in-95 duration-150">
+            <div className="text-center space-y-1.5 pb-2 border-b border-neutral-100">
+              <div className="w-12 h-12 bg-neutral-100 text-neutral-900 rounded-2xl flex items-center justify-center mx-auto mb-3 border border-neutral-200 shadow-2xs">
+                <Lock className="h-6 w-6 text-neutral-800" />
+              </div>
+              <h2 className="text-xl font-bold text-neutral-900 tracking-tight">Entrar no Webmail</h2>
+              <p className="text-xs text-neutral-500 font-medium">
+                Autentique-se para aceder à caixa de <span className="font-mono text-neutral-900 font-bold">{selectedAccountEmail}</span>
+              </p>
+            </div>
+
+            <form onSubmit={handleWebmailLogin} className="space-y-4">
+              {webmailLoginError && (
+                <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs font-bold text-rose-700">
+                  {webmailLoginError}
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-semibold text-neutral-700 mb-1.5">Endereço de E-mail</label>
+                <input
+                  type="email"
+                  value={webmailLoginEmail || selectedAccountEmail}
+                  onChange={(e) => setWebmailLoginEmail(e.target.value)}
+                  placeholder="info@seudominio.com"
+                  required
+                  className="w-full px-4 py-3 bg-neutral-50 border border-neutral-200 rounded-xl text-xs sm:text-sm text-neutral-900 font-bold focus:bg-white focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 outline-none transition"
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-semibold text-neutral-700">Palavra-passe da Caixa</label>
+                  <button
+                    type="button"
+                    onClick={handleOpenChangePassword}
+                    className="text-xs font-medium text-neutral-500 hover:text-black hover:underline cursor-pointer"
+                  >
+                    Mudar senha
+                  </button>
+                </div>
+                <div className="relative">
+                  <input
+                    type={showLoginPassword ? 'text' : 'password'}
+                    value={webmailLoginPassword}
+                    onChange={(e) => setWebmailLoginPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    autoFocus
+                    className="w-full pl-4 pr-11 py-3 bg-neutral-50 border border-neutral-200 rounded-xl text-xs sm:text-sm text-neutral-900 font-medium focus:bg-white focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 outline-none transition"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowLoginPassword(!showLoginPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-neutral-400 hover:text-neutral-700 transition cursor-pointer"
+                    title={showLoginPassword ? "Ocultar senha" : "Ver senha"}
+                  >
+                    {showLoginPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={webmailLoginLoading}
+                className="w-full py-3 bg-neutral-900 hover:bg-black disabled:opacity-50 text-white font-bold text-xs sm:text-sm rounded-xl transition cursor-pointer shadow-xs flex items-center justify-center space-x-2 active:scale-98"
+              >
+                {webmailLoginLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>A autenticar...</span>
+                  </>
+                ) : (
+                  <>
+                    <ShieldCheck className="h-4 w-4" />
+                    <span>Entrar no Webmail</span>
+                  </>
+                )}
+              </button>
+            </form>
+
+            <p className="text-[11px] text-neutral-400 text-center pt-2 border-t border-neutral-100">
+              Protegido com encriptação SSL/TLS via servidores IMAP/SMTP dedicados.
+            </p>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Mobile Folder Selector Tabs (Visível em Telas Pequenas) */}
+          <div className="md:hidden bg-white border-b border-neutral-200 px-2 py-2 flex items-center space-x-1.5 overflow-x-auto text-xs shrink-0">
         <button
           onClick={() => { soundEffects.playFolderSwitchSound(); setCurrentFolder('inbox'); setSelectedMessage(null); }}
           className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl whitespace-nowrap font-bold transition-all duration-200 shrink-0 border ${
@@ -1990,97 +2005,10 @@ function WebmailContent() {
                   </div>
                 </div>
               ))
-            ) : !mailboxPassword && !isAccountPending ? (
-              <div className="p-4 sm:p-6 text-center flex flex-col items-center justify-center my-auto w-full max-w-sm mx-auto animate-in fade-in zoom-in-95 duration-200">
-                <div className="w-12 h-12 bg-neutral-100 text-neutral-900 rounded-2xl flex items-center justify-center mx-auto shadow-2xs border border-neutral-200 mb-2">
-                  <Lock className="h-6 w-6 text-neutral-800" />
-                </div>
-                <h4 className="font-bold text-neutral-900 text-sm sm:text-base">Caixa Bloqueada</h4>
-                <p className="text-xs text-neutral-500 mt-0.5 mb-3 leading-relaxed">
-                  Insira a senha de <strong className="font-mono text-neutral-900">{selectedAccountEmail}</strong> para aceder às mensagens.
-                </p>
-
-                <form onSubmit={handleWebmailLogin} className="w-full space-y-3 bg-white p-4 rounded-2xl border border-neutral-200 shadow-2xs text-left">
-                  {webmailLoginError && (
-                    <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs font-semibold">
-                      {webmailLoginError}
-                    </div>
-                  )}
-
-                  <div>
-                    <label className="block text-[10px] font-bold text-neutral-600 uppercase tracking-wider mb-1">
-                      Conta de Email
-                    </label>
-                    <input
-                      type="email"
-                      value={webmailLoginEmail || selectedAccountEmail}
-                      onChange={(e) => {
-                        setWebmailLoginEmail(e.target.value);
-                        setSelectedAccountEmail(e.target.value);
-                      }}
-                      className="w-full px-3 py-2 border border-neutral-200 rounded-xl focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 text-xs font-mono bg-neutral-50 text-neutral-900"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] font-bold text-neutral-600 uppercase tracking-wider mb-1">
-                      Senha do Webmail
-                    </label>
-                    <div className="relative">
-                      <input
-                        type={showLoginPassword ? 'text' : 'password'}
-                        value={webmailLoginPassword}
-                        onChange={(e) => setWebmailLoginPassword(e.target.value)}
-                        placeholder="••••••••"
-                        required
-                        className="w-full pl-3 pr-10 py-2 border border-neutral-200 rounded-xl focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 text-xs text-neutral-900"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowLoginPassword(!showLoginPassword)}
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-neutral-400 hover:text-neutral-700 cursor-pointer"
-                        title={showLoginPassword ? 'Ocultar senha' : 'Ver senha'}
-                      >
-                        {showLoginPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={webmailLoginLoading}
-                    className="w-full py-2.5 bg-neutral-900 hover:bg-black active:scale-98 disabled:bg-neutral-400 text-white font-bold text-xs rounded-xl transition cursor-pointer shadow-xs flex items-center justify-center space-x-2"
-                  >
-                    {webmailLoginLoading ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span>A autenticar...</span>
-                      </>
-                    ) : (
-                      <>
-                        <ShieldCheck className="h-4 w-4" />
-                        <span>Entrar no Webmail</span>
-                      </>
-                    )}
-                  </button>
-
-                  <div className="pt-2 text-center border-t border-neutral-100">
-                    <button
-                      type="button"
-                      onClick={handleOpenChangePassword}
-                      className="text-[11px] font-bold text-neutral-700 hover:text-black underline cursor-pointer inline-flex items-center space-x-1"
-                    >
-                      <Key className="h-3 w-3 text-neutral-500" />
-                      <span>Esqueceu ou deseja alterar a senha? Mudar Senha</span>
-                    </button>
-                  </div>
-                </form>
-              </div>
             ) : displayMessages.length === 0 ? (
-              <div className="p-8 text-center text-neutral-400 text-xs">
-                <Mail className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p>Nenhuma mensagem nesta pasta.</p>
+              <div className="p-8 text-center text-neutral-400 text-xs my-auto">
+                <Mail className="h-8 w-8 mx-auto mb-2 opacity-40" />
+                <p className="font-semibold text-neutral-600">Nenhuma mensagem nesta pasta.</p>
               </div>
             ) : (
               displayMessages.map((msg) => {
@@ -2504,101 +2432,11 @@ function WebmailContent() {
                 O provisionamento do endereço <strong className="font-mono text-primary-700">{selectedAccountEmail}</strong> está em andamento. O envio, receção e ferramentas completas do Webmail estarão disponíveis assim que o administrador validar a solicitação (prazo estipulado: <strong>em até 24 horas</strong>).
               </p>
             </div>
-          ) : !mailboxPassword && !isAccountPending ? (
-            <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 bg-gradient-to-b from-gray-50/60 via-white to-primary-50/20">
-              <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-8 shadow-xl border border-gray-200/80 text-left space-y-5 animate-in zoom-in-95 duration-200">
-                <div className="flex items-center space-x-3.5 pb-4 border-b border-gray-100">
-                  <div className="w-12 h-12 bg-gradient-to-tr from-primary-100 to-indigo-100 rounded-2xl flex items-center justify-center shrink-0 border border-primary-200/80 shadow-xs">
-                    <Mail className="h-6 w-6 text-primary-600" />
-                  </div>
-                  <div>
-                    <h3 className="text-base sm:text-lg font-black text-gray-900">Entrar no Webmail</h3>
-                    <p className="text-xs text-gray-500 font-medium">Autenticação Corporativa Segura</p>
-                  </div>
-                </div>
-
-                <form onSubmit={handleWebmailLogin} className="space-y-4">
-                  {webmailLoginError && (
-                    <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs font-bold text-rose-700">
-                      {webmailLoginError}
-                    </div>
-                  )}
-
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1.5">Endereço de E-mail</label>
-                    <input
-                      type="email"
-                      value={webmailLoginEmail || selectedAccountEmail}
-                      onChange={(e) => setWebmailLoginEmail(e.target.value)}
-                      placeholder="info@seudominio.com"
-                      required
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-900 font-bold focus:ring-2 focus:ring-primary-500 focus:bg-white transition outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1.5">Palavra-passe da Caixa</label>
-                    <div className="relative">
-                      <input
-                        type={showLoginPassword ? 'text' : 'password'}
-                        value={webmailLoginPassword}
-                        onChange={(e) => setWebmailLoginPassword(e.target.value)}
-                        placeholder="••••••••"
-                        required
-                        autoFocus
-                        className="w-full pl-4 pr-11 py-3 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-900 font-medium focus:ring-2 focus:ring-primary-500 focus:bg-white transition outline-none"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowLoginPassword(!showLoginPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 transition cursor-pointer"
-                        title={showLoginPassword ? "Ocultar senha" : "Ver senha"}
-                      >
-                        {showLoginPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={webmailLoginLoading}
-                    className="w-full py-3 bg-gray-900 hover:bg-black disabled:opacity-50 text-white font-bold text-xs sm:text-sm rounded-xl transition-all duration-200 cursor-pointer shadow-md flex items-center justify-center space-x-2 active:scale-98"
-                  >
-                    {webmailLoginLoading ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span>A autenticar...</span>
-                      </>
-                    ) : (
-                      <>
-                        <ShieldCheck className="h-4 w-4" />
-                        <span>Entrar no Webmail</span>
-                      </>
-                    )}
-                  </button>
-
-                  <div className="pt-2 text-center border-t border-gray-100 flex items-center justify-center">
-                    <button
-                      type="button"
-                      onClick={handleOpenChangePassword}
-                      className="text-xs font-bold text-gray-700 hover:text-black underline cursor-pointer inline-flex items-center space-x-1.5"
-                    >
-                      <Key className="h-3.5 w-3.5 text-gray-500" />
-                      <span>Esqueceu ou deseja alterar a senha? Mudar Senha</span>
-                    </button>
-                  </div>
-                </form>
-
-                <p className="text-[11px] text-gray-400 text-center pt-1">
-                  Protegido com encriptação SSL/TLS via servidores IMAP/SMTP dedicados.
-                </p>
-              </div>
-            </div>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-center p-8 text-gray-400">
-              <Mail className="h-16 w-16 mb-3 text-gray-300 opacity-60" />
-              <h3 className="font-bold text-gray-700 text-base mb-1">Nenhum e-mail selecionado</h3>
-              <p className="text-xs text-gray-400">Selecione uma mensagem na lista à esquerda para visualizar.</p>
+            <div className="flex-1 flex flex-col items-center justify-center text-center p-8 text-neutral-400">
+              <Mail className="h-16 w-16 mb-3 text-neutral-300 opacity-60" />
+              <h3 className="font-bold text-neutral-700 text-base mb-1">Nenhum e-mail selecionado</h3>
+              <p className="text-xs text-neutral-400">Selecione uma mensagem na lista à esquerda para visualizar.</p>
             </div>
           )}
         </main>
@@ -2614,6 +2452,8 @@ function WebmailContent() {
         >
           <Edit3 className="h-6 w-6" />
         </button>
+      )}
+      </>
       )}
 
       {/* Mobile Bottom Sheet Menu */}
