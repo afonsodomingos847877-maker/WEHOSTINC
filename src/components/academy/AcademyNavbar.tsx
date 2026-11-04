@@ -28,8 +28,8 @@ export default function AcademyNavbar() {
               <BrandLogo />
             </Link>
             <div className="h-5 w-px bg-gray-200 hidden sm:block"></div>
-            <Link href="/academy" className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 text-xs font-bold uppercase tracking-wider border border-emerald-200/60 hover:bg-emerald-100 transition">
-              <GraduationCap className="w-3.5 h-3.5 text-emerald-600" />
+            <Link href="/academy" className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary-50 text-primary-800 text-xs font-bold uppercase tracking-wider border border-primary-200/60 hover:bg-primary-100 transition">
+              <GraduationCap className="w-3.5 h-3.5 text-primary-600" />
               <span>Academia</span>
             </Link>
           </div>
@@ -70,7 +70,7 @@ export default function AcademyNavbar() {
                 </Link>
                 <a
                   href="#cursos"
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold shadow-sm transition"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary-600 hover:bg-primary-700 active:scale-95 text-white text-xs sm:text-sm font-bold shadow-sm hover:shadow transition"
                 >
                   <Sparkles className="w-4 h-4" />
                   <span>Ver Cursos</span>
@@ -84,7 +84,7 @@ export default function AcademyNavbar() {
             {session?.user ? (
               <Link
                 href="/dashboard/academy"
-                className="p-2 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-bold"
+                className="p-2 rounded-lg bg-primary-50 text-primary-700 text-xs font-bold"
               >
                 Área do Aluno
               </Link>
@@ -157,7 +157,7 @@ export default function AcademyNavbar() {
                 <a
                   href="#cursos"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="w-full text-center py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold"
+                  className="w-full text-center py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-xs font-bold transition shadow-sm"
                 >
                   Explorar Cursos Disponíveis
                 </a>
