@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
-import { Menu, X, LayoutDashboard, LogOut, User as UserIcon, GraduationCap } from 'lucide-react';
+import { Menu, X, LayoutDashboard, LogOut, User as UserIcon, LogIn, UserPlus } from 'lucide-react';
 import BrandLogo from '@/components/BrandLogo';
 import PageLoader from '@/components/PageLoader';
 import LanguageSelector from '@/components/LanguageSelector';
@@ -90,7 +90,7 @@ export default function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm transition-all">
+    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100/90 shadow-[0_1px_3px_rgba(0,0,0,0.03)] transition-all">
       {isLoggingOut && <PageLoader text="A encerrar a sua sessão com segurança..." />}
       {showLogoutToast && (
         <Toast
@@ -101,62 +101,60 @@ export default function Navbar() {
           duration={4000}
         />
       )}
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
-        <div className="flex justify-between items-center py-1.5 sm:py-2 md:py-2.5">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-14 sm:h-15">
           
           {/* Logo */}
           <BrandLogo onClick={closeMobileMenu} />
 
-          {/* Desktop Navigation Links */}
-          <nav className="hidden md:flex items-center space-x-3 lg:space-x-4 xl:space-x-6">
+          {/* Desktop Navigation Links (Apple-inspired clean spacing & minimalist typography) */}
+          <nav className="hidden md:flex items-center space-x-6 lg:space-x-8 xl:space-x-10">
             <Link 
               href="/#planos" 
-              className="text-xs lg:text-sm font-medium text-gray-700 hover:text-primary-600 transition whitespace-nowrap shrink-0"
+              className="text-[13px] font-normal text-gray-600 hover:text-gray-900 transition-colors whitespace-nowrap shrink-0"
             >
               {t('nav.plans')}
             </Link>
             <Link 
               href="/#criacao-sites" 
-              className="text-xs lg:text-sm font-semibold text-primary-600 hover:text-primary-700 transition whitespace-nowrap shrink-0"
+              className="text-[13px] font-normal text-gray-600 hover:text-gray-900 transition-colors whitespace-nowrap shrink-0"
             >
-              {t('nav.sites_compact')}
+              Sites
             </Link>
             <Link 
               href="/academy" 
-              className="text-xs lg:text-sm font-semibold text-emerald-600 hover:text-emerald-700 transition whitespace-nowrap shrink-0 flex items-center gap-1.5"
+              className="text-[13px] font-normal text-gray-600 hover:text-gray-900 transition-colors whitespace-nowrap shrink-0"
             >
-              <GraduationCap className="w-3.5 h-3.5" />
-              <span>Cursos</span>
-              <span className="text-[9px] bg-emerald-100 text-emerald-800 font-extrabold px-1.5 py-0.5 rounded-full uppercase leading-none">Novo</span>
+              Cursos
             </Link>
             <Link 
               href="/systems" 
-              className="text-xs lg:text-sm font-medium text-gray-700 hover:text-primary-600 transition whitespace-nowrap shrink-0"
+              className="text-[13px] font-normal text-gray-600 hover:text-gray-900 transition-colors whitespace-nowrap shrink-0"
             >
               {t('nav.systems')}
             </Link>
             <Link 
               href="/revista" 
-              className="text-xs lg:text-sm font-medium text-gray-700 hover:text-primary-600 transition whitespace-nowrap shrink-0"
+              className="text-[13px] font-normal text-gray-600 hover:text-gray-900 transition-colors whitespace-nowrap shrink-0"
             >
               Revista
             </Link>
             <Link 
               href="/#recursos" 
-              className="text-xs lg:text-sm font-medium text-gray-700 hover:text-primary-600 transition whitespace-nowrap shrink-0"
+              className="text-[13px] font-normal text-gray-600 hover:text-gray-900 transition-colors whitespace-nowrap shrink-0"
             >
               {t('nav.resources')}
             </Link>
             <Link 
               href="/#contacto" 
-              className="text-xs lg:text-sm font-medium text-gray-700 hover:text-primary-600 transition whitespace-nowrap shrink-0"
+              className="text-[13px] font-normal text-gray-600 hover:text-gray-900 transition-colors whitespace-nowrap shrink-0"
             >
               {t('nav.contact')}
             </Link>
           </nav>
 
           {/* Desktop CTA Action Buttons */}
-          <div className="hidden md:flex items-center space-x-1.5 lg:space-x-2 shrink-0">
+          <div className="hidden md:flex items-center space-x-2.5 lg:space-x-3 shrink-0">
             <LanguageSelector />
 
             {user ? (
@@ -176,17 +174,17 @@ export default function Navbar() {
                   )}
                   <Link
                     href={auth.isAdminUser(user) ? '/admin' : '/dashboard'}
-                    className="px-2 py-1 bg-primary-600 hover:bg-primary-700 text-white font-semibold text-[11px] rounded-md shadow-sm hover:shadow transition flex items-center space-x-1 whitespace-nowrap shrink-0"
+                    className="px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white font-medium text-[12px] rounded-full shadow-sm hover:shadow transition flex items-center space-x-1.5 whitespace-nowrap shrink-0"
                     title={auth.isAdminUser(user) ? t('nav.admin') : t('nav.dashboard')}
                   >
-                    <LayoutDashboard className="h-3 w-3 shrink-0" />
+                    <LayoutDashboard className="h-3.5 w-3.5 shrink-0" />
                     <span>{auth.isAdminUser(user) ? t('nav.admin_short') : t('nav.dashboard_short')}</span>
                   </Link>
                 </div>
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition cursor-pointer border border-gray-200 shrink-0"
+                  className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full transition cursor-pointer border border-gray-200 shrink-0"
                   title="Sair da Conta"
                 >
                   <LogOut className="h-3.5 w-3.5" />
@@ -196,15 +194,17 @@ export default function Navbar() {
               <>
                 <Link 
                   href="/login" 
-                  className="px-2.5 py-1.5 text-xs font-semibold text-gray-700 hover:text-primary-600 transition whitespace-nowrap shrink-0"
+                  className="group inline-flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-100/80 rounded-full transition-all whitespace-nowrap shrink-0"
                 >
-                  {t('nav.login')}
+                  <LogIn className="w-3.5 h-3.5 text-gray-500 group-hover:text-primary-600 transition-colors" />
+                  <span>{t('nav.login')}</span>
                 </Link>
                 <Link 
                   href="/register" 
-                  className="px-3 py-1.5 bg-primary-600 text-white text-xs font-semibold rounded-lg hover:bg-primary-700 shadow-sm hover:shadow transition whitespace-nowrap shrink-0"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-primary-600 hover:bg-primary-700 active:scale-95 text-white text-[13px] font-medium rounded-full shadow-sm hover:shadow transition-all whitespace-nowrap shrink-0"
                 >
-                  {t('nav.register')}
+                  <UserPlus className="w-3.5 h-3.5 text-white" />
+                  <span>{t('nav.register')}</span>
                 </Link>
               </>
             )}
@@ -243,20 +243,16 @@ export default function Navbar() {
             <Link
               href="/#criacao-sites"
               onClick={closeMobileMenu}
-              className="px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl text-sm sm:text-base font-semibold text-primary-700 bg-primary-50/80 border border-primary-100 flex items-center justify-between transition"
+              className="px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl text-sm sm:text-base font-medium text-gray-800 hover:bg-primary-50 hover:text-primary-600 transition"
             >
-              <span>{t('nav.sites')}</span>
+              Sites
             </Link>
             <Link
               href="/academy"
               onClick={closeMobileMenu}
-              className="px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl text-sm sm:text-base font-semibold text-emerald-800 bg-emerald-50/80 border border-emerald-200/80 hover:bg-emerald-100/70 transition flex items-center justify-between"
+              className="px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl text-sm sm:text-base font-medium text-gray-800 hover:bg-primary-50 hover:text-primary-600 transition"
             >
-              <div className="flex items-center gap-2">
-                <GraduationCap className="w-4 h-4 text-emerald-600" />
-                <span>Cursos & Academia</span>
-              </div>
-              <span className="text-[10px] bg-emerald-200/80 text-emerald-900 font-extrabold px-2 py-0.5 rounded-full uppercase">Novo</span>
+              Cursos
             </Link>
             <Link
               href="/systems"
@@ -331,16 +327,18 @@ export default function Navbar() {
                 <Link
                   href="/login"
                   onClick={closeMobileMenu}
-                  className="w-full text-center py-2.5 sm:py-3 px-3 sm:px-4 rounded-xl text-sm sm:text-base font-semibold text-gray-800 bg-gray-100 hover:bg-gray-200 transition"
+                  className="w-full text-center py-2.5 sm:py-3 px-3 sm:px-4 rounded-xl text-sm sm:text-base font-semibold text-gray-800 bg-gray-100 hover:bg-gray-200 transition flex items-center justify-center gap-2"
                 >
-                  {t('nav.login')}
+                  <LogIn className="w-4 h-4 text-gray-600" />
+                  <span>{t('nav.login')}</span>
                 </Link>
                 <Link
                   href="/register"
                   onClick={closeMobileMenu}
-                  className="w-full text-center py-2.5 sm:py-3 px-3 sm:px-4 rounded-xl text-sm sm:text-base font-semibold text-white bg-primary-600 hover:bg-primary-700 shadow-md transition"
+                  className="w-full text-center py-2.5 sm:py-3 px-3 sm:px-4 rounded-xl text-sm sm:text-base font-semibold text-white bg-primary-600 hover:bg-primary-700 shadow-md transition flex items-center justify-center gap-2"
                 >
-                  {t('nav.register')}
+                  <UserPlus className="w-4 h-4 text-white" />
+                  <span>{t('nav.register')}</span>
                 </Link>
               </>
             )}

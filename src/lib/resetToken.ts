@@ -56,3 +56,4 @@ export function verifyPasswordResetToken(token: string): { valid: boolean; email
     return { valid: false, error: 'Token de recuperação inválido ou corrompido.' };
   }
 }
+
