@@ -64,7 +64,11 @@ export default function InternalDomainChat({
   onToggleOpen,
   onUnreadChange,
 }: InternalDomainChatProps) {
-  const domain = (currentEmail.split('@')[1] || '').toLowerCase();
+  const safeEmail =
+    currentEmail && currentEmail.includes('@')
+      ? currentEmail.trim().toLowerCase()
+      : 'equipa@wehosthere.com';
+  const domain = (safeEmail.split('@')[1] || 'wehosthere.com').toLowerCase();
 
   const [selectedPeer, setSelectedPeer] = useState<string>('general'); // 'general' ou email do colega
   const [colleagues, setColleagues] = useState<ColleagueInfo[]>([]);
@@ -88,16 +92,28 @@ export default function InternalDomainChat({
   const prevTotalUnreadRef = useRef<number>(0);
   const prevLastMsgIdRef = useRef<string | null>(null);
 
+  const getLocalCacheKey = (peer: string) =>
+    `wehosthere_internal_chat_${domain}_${peer === 'general' ? 'general' : peer.toLowerCase()}`;
+
   const fetchChatState = async () => {
-    if (!currentEmail || !currentEmail.includes('@')) return;
+    if (!safeEmail || !safeEmail.includes('@')) return;
     try {
       const params = new URLSearchParams({
-        email: currentEmail,
+        email: safeEmail,
         with: selectedPeer,
         name: currentUserName || '',
       });
       const res = await fetch(apiEndpoint(`/api/webmail/chat?${params.toString()}`));
-      if (!res.ok) return;
+      if (!res.ok) {
+        // Fallback para cache local se o servidor/BD estiver temporariamente indisponível
+        try {
+          const cached = localStorage.getItem(getLocalCacheKey(selectedPeer));
+          if (cached) {
+            setMessages(JSON.parse(cached));
+          }
+        } catch {}
+        return;
+      }
       const data = await res.json();
       if (!data.success) return;
 
@@ -112,7 +128,7 @@ export default function InternalDomainChat({
         newestMsg &&
         prevLastMsgIdRef.current &&
         newestMsg.id !== prevLastMsgIdRef.current &&
-        newestMsg.fromEmail.toLowerCase() !== currentEmail.toLowerCase()
+        newestMsg.fromEmail.toLowerCase() !== safeEmail.toLowerCase()
       ) {
         soundEffects.playNewEmailSound();
       } else if (nextTotalUnread > prevTotalUnreadRef.current) {
@@ -126,6 +142,9 @@ export default function InternalDomainChat({
 
       setColleagues(nextColleagues);
       setMessages(nextMessages);
+      try {
+        localStorage.setItem(getLocalCacheKey(selectedPeer), JSON.stringify(nextMessages.slice(-80)));
+      } catch {}
       setGeneralUnread(data.generalUnreadCount || 0);
       setTotalUnread(nextTotalUnread);
       if (data.selfStatus) setSelfStatus(data.selfStatus);
@@ -134,7 +153,12 @@ export default function InternalDomainChat({
         onUnreadChange(nextTotalUnread, onlineCount);
       }
     } catch {
-      // Silencioso em caso de oscilação de rede
+      try {
+        const cached = localStorage.getItem(getLocalCacheKey(selectedPeer));
+        if (cached) {
+          setMessages(JSON.parse(cached));
+        }
+      } catch {}
     }
   };
 
@@ -220,13 +244,28 @@ export default function InternalDomainChat({
     setPendingAttachment(null);
     setIsSending(true);
 
+    const optimisticMsg: InternalChatMessage = {
+      id: `local-${Date.now()}`,
+      domain,
+      channel: selectedPeer === 'general' ? 'general' : `dm:${safeEmail}:${selectedPeer}`,
+      fromEmail: safeEmail,
+      fromName: currentUserName || safeEmail.split('@')[0],
+      toEmail: selectedPeer === 'general' ? 'all' : selectedPeer,
+      text: textToSend,
+      attachmentUrl: attToSend?.url,
+      attachmentName: attToSend?.name,
+      attachmentType: attToSend?.type,
+      readBy: [safeEmail],
+      createdAt: new Date().toISOString(),
+    };
+
     try {
       const res = await fetch(apiEndpoint('/api/webmail/chat'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'send',
-          fromEmail: currentEmail,
+          fromEmail: safeEmail,
           fromName: currentUserName,
           toEmail: selectedPeer === 'general' ? 'all' : selectedPeer,
           text: textToSend,
@@ -236,16 +275,29 @@ export default function InternalDomainChat({
         }),
       });
       const data = await res.json();
-      if (data.success && data.message) {
-        setMessages((prev) => [...prev, data.message]);
-        prevLastMsgIdRef.current = data.message.id;
-        soundEffects.playSendEmailSound();
-        setTimeout(() => {
-          messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-        }, 60);
-      }
+      const savedMsg = data?.success && data?.message ? data.message : optimisticMsg;
+      setMessages((prev) => {
+        const next = [...prev, savedMsg];
+        try {
+          localStorage.setItem(getLocalCacheKey(selectedPeer), JSON.stringify(next.slice(-80)));
+        } catch {}
+        return next;
+      });
+      prevLastMsgIdRef.current = savedMsg.id;
+      soundEffects.playSendEmailSound();
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 60);
     } catch (err) {
-      console.error('[InternalChat] Erro ao enviar mensagem:', err);
+      console.error('[InternalChat] Erro ao enviar mensagem (salvo localmente):', err);
+      setMessages((prev) => {
+        const next = [...prev, optimisticMsg];
+        try {
+          localStorage.setItem(getLocalCacheKey(selectedPeer), JSON.stringify(next.slice(-80)));
+        } catch {}
+        return next;
+      });
+      soundEffects.playSendEmailSound();
     } finally {
       setIsSending(false);
     }
@@ -287,7 +339,7 @@ export default function InternalDomainChat({
     return 'bg-emerald-500';
   };
 
-  if (!currentEmail || !domain) return null;
+  if (!domain && !isOpen) return null;
 
   return (
     <>

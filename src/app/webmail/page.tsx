@@ -5685,7 +5685,9 @@ function WebmailContent() {
             )}
           </>
         )}
-      </div>
+          </div>
+        </div>
+      )}
 
       {/* MODAL: Attachment Preview */}
       {previewAttachment && (
@@ -6355,21 +6357,17 @@ function WebmailContent() {
       )}
 
       {/* Chat Interno Corporativo por Domínio (Sem Enviar E-mail) */}
-      {mailboxPassword && selectedAccountEmail && (
-        <InternalDomainChat
-          currentEmail={selectedAccountEmail}
-          currentUserName={getDynamicUserGreeting().userName}
-          isOpen={showInternalChat}
-          onToggleOpen={setShowInternalChat}
-          onUnreadChange={(unread, online) => {
-            setInternalChatUnread(unread);
-            setInternalChatOnline(online);
-          }}
-        />
-      )}
+      <InternalDomainChat
+        currentEmail={selectedAccountEmail || webmailLoginEmail || accounts[0]?.email || user?.email || 'equipa@wehosthere.com'}
+        currentUserName={getDynamicUserGreeting().userName}
+        isOpen={showInternalChat}
+        onToggleOpen={setShowInternalChat}
+        onUnreadChange={(unread, online) => {
+          setInternalChatUnread(unread);
+          setInternalChatOnline(online);
+        }}
+      />
     </div>
-  )}
-</div>
   );
 }
 
