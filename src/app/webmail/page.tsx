@@ -332,9 +332,22 @@ function WebmailContent() {
   const isInitialLoadRef = useRef<boolean>(true);
 
   // Filter & Refresh State
-  const [filterType, setFilterType] = useState<'all' | 'unread' | 'attachments' | 'starred' | 'pinned' | 'priority'>('all');
+  const [filterType, setFilterType] = useState<'all' | 'unread' | 'overdue' | 'attachments' | 'starred' | 'pinned' | 'priority'>('all');
   const [isRefreshingWebmail, setIsRefreshingWebmail] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+
+  // Floating Inbox Briefing Card State (Auto-dismisses after showing new/overdue emails)
+  const [floatingBriefing, setFloatingBriefing] = useState<{
+    isOpen: boolean;
+    type: 'welcome' | 'new_incoming';
+    unreadCount: number;
+    overdueCount: number;
+    urgentCount: number;
+    latestSender?: string;
+    latestSubject?: string;
+    latestMsgId?: string;
+  } | null>(null);
+  const briefingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Compose Modal & Attachment State
   const [showCompose, setShowCompose] = useState(false);
@@ -1233,21 +1246,112 @@ function WebmailContent() {
     }
   };
 
-  // Detect new incoming emails in inbox and play chime sound
+  // Verifica se um e-mail da caixa de entrada está em atraso / sem resposta enviada
+  const isMessageOverdue = (msg: WebmailMessage): boolean => {
+    if (!msg || msg.folder !== 'inbox') return false;
+    const fromLower = (msg.fromEmail || '').toLowerCase();
+    // Ignorar notificações automáticas do sistema
+    if (
+      fromLower.startsWith('noreply@') ||
+      fromLower.startsWith('no-reply@') ||
+      fromLower.startsWith('mailer-daemon@') ||
+      fromLower === (selectedAccountEmail || '').toLowerCase()
+    ) {
+      return false;
+    }
+
+    const msgTime = new Date(msg.date).getTime();
+    if (isNaN(msgTime)) return false;
+    const ageHours = (Date.now() - msgTime) / (1000 * 60 * 60);
+
+    // Verificar no cache local de enviados se já houve resposta após este e-mail
+    if (typeof window !== 'undefined' && selectedAccountEmail) {
+      try {
+        const sentCacheRaw = localStorage.getItem(`wehosthere_webmail_sent_cache_${selectedAccountEmail.toLowerCase()}`);
+        if (sentCacheRaw) {
+          const sentList: WebmailMessage[] = JSON.parse(sentCacheRaw);
+          const cleanSubj = (msg.subject || '').replace(/^(re|fwd|enc):\s*/gi, '').trim().toLowerCase();
+          const hasReplied = sentList.some((s) => {
+            const sentTime = new Date(s.date).getTime();
+            const toMatch = (s.toEmail || '').toLowerCase().includes(fromLower);
+            const subjMatch = cleanSubj && (s.subject || '').toLowerCase().includes(cleanSubj);
+            return sentTime >= msgTime && (toMatch || subjMatch);
+          });
+          if (hasReplied) return false;
+        }
+      } catch {}
+    }
+
+    // Não lido há mais de 2 horas OU recebido há mais de 18 horas sem resposta
+    return (!msg.isRead && ageHours >= 2) || ageHours >= 18;
+  };
+
+  // Reiniciar estado de carregamento inicial quando mudar de conta autenticada
   useEffect(() => {
-    if (currentFolder === 'inbox' && messages.length > 0) {
-      if (isInitialLoadRef.current) {
+    isInitialLoadRef.current = true;
+    knownInboxIdsRef.current = new Set();
+  }, [selectedAccountEmail]);
+
+  // Detect new incoming emails or initial login briefing in inbox and show floating card
+  useEffect(() => {
+    if (currentFolder === 'inbox' && mailboxPassword && !isLoadingMessages) {
+      if (isInitialLoadRef.current && messages.length > 0) {
         knownInboxIdsRef.current = new Set(messages.map(m => m.id));
         isInitialLoadRef.current = false;
-      } else {
-        const hasNewIncoming = messages.some(m => !knownInboxIdsRef.current.has(m.id) && !m.isRead);
-        if (hasNewIncoming) {
+
+        const unreadMsgs = messages.filter(m => !m.isRead);
+        const overdueMsgs = messages.filter(m => isMessageOverdue(m));
+        const urgentMsgs = messages.filter(m => !m.isRead && m.priority === 'high');
+
+        if (unreadMsgs.length > 0 || overdueMsgs.length > 0 || urgentMsgs.length > 0) {
+          const topMsg = unreadMsgs[0] || overdueMsgs[0] || messages[0];
+          if (unreadMsgs.length > 0) {
+            soundEffects.playNewEmailSound();
+          }
+          setFloatingBriefing({
+            isOpen: true,
+            type: 'welcome',
+            unreadCount: unreadMsgs.length,
+            overdueCount: overdueMsgs.length,
+            urgentCount: urgentMsgs.length,
+            latestSender: topMsg?.fromName,
+            latestSubject: topMsg?.subject,
+            latestMsgId: topMsg?.id,
+          });
+
+          if (briefingTimeoutRef.current) clearTimeout(briefingTimeoutRef.current);
+          briefingTimeoutRef.current = setTimeout(() => {
+            setFloatingBriefing(null);
+          }, 8500);
+        }
+      } else if (!isInitialLoadRef.current && messages.length > 0) {
+        const newIncoming = messages.filter(m => !knownInboxIdsRef.current.has(m.id) && !m.isRead);
+        if (newIncoming.length > 0) {
           soundEffects.playNewEmailSound();
+          const overdueMsgs = messages.filter(m => isMessageOverdue(m));
+          const urgentMsgs = messages.filter(m => !m.isRead && m.priority === 'high');
+          const newest = newIncoming[0];
+
+          setFloatingBriefing({
+            isOpen: true,
+            type: 'new_incoming',
+            unreadCount: newIncoming.length,
+            overdueCount: overdueMsgs.length,
+            urgentCount: urgentMsgs.length,
+            latestSender: newest?.fromName,
+            latestSubject: newest?.subject,
+            latestMsgId: newest?.id,
+          });
+
+          if (briefingTimeoutRef.current) clearTimeout(briefingTimeoutRef.current);
+          briefingTimeoutRef.current = setTimeout(() => {
+            setFloatingBriefing(null);
+          }, 7500);
         }
         knownInboxIdsRef.current = new Set(messages.map(m => m.id));
       }
     }
-  }, [messages, currentFolder]);
+  }, [messages, currentFolder, mailboxPassword, isLoadingMessages]);
 
   const handleSelectMessage = async (msg: WebmailMessage) => {
     setSelectedMessage(msg);
@@ -1763,6 +1867,7 @@ function WebmailContent() {
 
     let matchesFilter = true;
     if (filterType === 'unread') matchesFilter = !m.isRead;
+    if (filterType === 'overdue') matchesFilter = isMessageOverdue(m);
     if (filterType === 'attachments') matchesFilter = !!(m.attachments && m.attachments.length > 0);
     if (filterType === 'starred') matchesFilter = m.starred;
     if (filterType === 'pinned') matchesFilter = !!m.pinned;
@@ -2018,6 +2123,136 @@ function WebmailContent() {
           )}
         </div>
       </header>
+
+      {/* Card Flutuante Inteligente de Novos E-mails & Pendências (Auto-Dismiss) */}
+      {floatingBriefing && floatingBriefing.isOpen && mailboxPassword && (
+        <div className="fixed top-16 right-4 z-[9995] w-[calc(100vw-2rem)] sm:w-96 bg-neutral-900 text-white rounded-2xl shadow-2xl border border-neutral-700/80 overflow-hidden animate-in slide-in-from-right-5 fade-in duration-300">
+          <div className="p-4 space-y-3">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-center space-x-2.5">
+                <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0">
+                  <Bell className="w-4 h-4 animate-bounce" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-400 block">
+                    {floatingBriefing.type === 'new_incoming' ? '🔔 Novo E-mail Recebido' : '📬 Resumo da Caixa de Entrada'}
+                  </span>
+                  <h4 className="text-xs sm:text-sm font-extrabold text-white">
+                    {floatingBriefing.type === 'new_incoming'
+                      ? floatingBriefing.unreadCount === 1
+                        ? 'Chegou 1 nova mensagem!'
+                        : `Chegaram ${floatingBriefing.unreadCount} novas mensagens!`
+                      : 'Estado Atual dos seus E-mails'}
+                  </h4>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFloatingBriefing(null)}
+                className="text-neutral-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition cursor-pointer"
+                title="Fechar notificação"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-1.5 bg-white/[0.06] rounded-xl p-3 border border-white/10 text-xs">
+              {floatingBriefing.unreadCount > 0 && (
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center space-x-2 text-neutral-200">
+                    <span>📩</span>
+                    <span>E-mails novos / não lidos:</span>
+                  </span>
+                  <span className="font-extrabold text-emerald-400 bg-emerald-500/15 px-2 py-0.5 rounded-full">
+                    {floatingBriefing.unreadCount} {floatingBriefing.unreadCount === 1 ? 'novo' : 'novos'}
+                  </span>
+                </div>
+              )}
+
+              {floatingBriefing.overdueCount > 0 && (
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center space-x-2 text-neutral-200">
+                    <span>⏳</span>
+                    <span>Em atraso / sem resposta:</span>
+                  </span>
+                  <span className="font-extrabold text-amber-300 bg-amber-500/20 px-2 py-0.5 rounded-full">
+                    {floatingBriefing.overdueCount} {floatingBriefing.overdueCount === 1 ? 'pendente' : 'pendentes'}
+                  </span>
+                </div>
+              )}
+
+              {floatingBriefing.urgentCount > 0 && (
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center space-x-2 text-neutral-200">
+                    <span>⚡</span>
+                    <span>Alta prioridade não lidos:</span>
+                  </span>
+                  <span className="font-extrabold text-rose-300 bg-rose-500/20 px-2 py-0.5 rounded-full">
+                    {floatingBriefing.urgentCount} {floatingBriefing.urgentCount === 1 ? 'urgente' : 'urgentes'}
+                  </span>
+                </div>
+              )}
+
+              {floatingBriefing.latestSender && (
+                <div className="pt-1.5 mt-1.5 border-t border-white/10 text-[11px] text-neutral-300 truncate">
+                  <span className="text-neutral-400">Mais recente: </span>
+                  <strong className="text-white">{floatingBriefing.latestSender}</strong>
+                  {floatingBriefing.latestSubject ? ` — ${floatingBriefing.latestSubject}` : ''}
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 pt-0.5">
+              {floatingBriefing.unreadCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCurrentFolder('inbox');
+                    setFilterType('unread');
+                    const firstUnread = messages.find(m => !m.isRead);
+                    if (firstUnread) handleSelectMessage(firstUnread);
+                    setFloatingBriefing(null);
+                  }}
+                  className="flex-1 py-2 px-3 bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-extrabold text-[11px] rounded-xl transition cursor-pointer text-center shadow-xs"
+                >
+                  Ver Novos ({floatingBriefing.unreadCount})
+                </button>
+              )}
+              {floatingBriefing.overdueCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCurrentFolder('inbox');
+                    setFilterType('overdue');
+                    const firstOverdue = messages.find(m => isMessageOverdue(m));
+                    if (firstOverdue) handleSelectMessage(firstOverdue);
+                    setFloatingBriefing(null);
+                  }}
+                  className="flex-1 py-2 px-3 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-bold text-[11px] rounded-xl transition cursor-pointer text-center"
+                >
+                  ⏳ Ver em Atraso ({floatingBriefing.overdueCount})
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Barra de progresso visual de fecho automático */}
+          <div className="h-1 w-full bg-neutral-800 overflow-hidden">
+            <div
+              className="h-full bg-emerald-400 transition-all"
+              style={{
+                animation: 'shrinkWidth 8s linear forwards',
+              }}
+            />
+          </div>
+          <style>{`
+            @keyframes shrinkWidth {
+              from { width: 100%; }
+              to { width: 0%; }
+            }
+          `}</style>
+        </div>
+      )}
 
       {/* Alerta de Perda de Conexão à Internet (Offline) */}
       {!isOnline && (
@@ -2515,6 +2750,19 @@ function WebmailContent() {
                   </button>
                   <button
                     type="button"
+                    onClick={() => setFilterType('overdue')}
+                    className={`px-3 py-1 rounded-xl whitespace-nowrap transition cursor-pointer flex items-center space-x-1 border ${
+                      filterType === 'overdue' 
+                        ? 'bg-amber-600 text-white font-bold border-amber-600 shadow-xs' 
+                        : 'bg-white text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 border-neutral-200'
+                    }`}
+                    title="E-mails em atraso ou que aguardam resposta"
+                  >
+                    <Clock className="w-3 h-3" />
+                    <span>Em Atraso</span>
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => setFilterType('attachments')}
                     className={`px-3 py-1 rounded-xl whitespace-nowrap transition cursor-pointer flex items-center space-x-1 border ${
                       filterType === 'attachments' 
@@ -2596,6 +2844,7 @@ function WebmailContent() {
                 const hasAtt = msg.attachments && msg.attachments.length > 0;
                 const imageAttachment = msg.attachments?.find(att => att.type?.startsWith('image/'));
                 const securityCheck = analyzeEmailSecurity(msg, selectedAccountEmail, trustedSenders);
+                const isOverdue = isMessageOverdue(msg);
                 return (
                   <div
                     key={msg.id}
@@ -2660,6 +2909,12 @@ function WebmailContent() {
                             <span className="bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-bold px-1.5 py-0.2 rounded-md shrink-0 flex items-center space-x-1" title="Remetente ou conteúdo suspeito">
                               <AlertCircle className="w-2.5 h-2.5 text-amber-600" />
                               <span>Suspeito</span>
+                            </span>
+                          )}
+                          {isOverdue && securityCheck.level === 'safe' && (
+                            <span className="bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-semibold px-1.5 py-0.2 rounded-md shrink-0 flex items-center space-x-1" title="Este e-mail aguarda a sua resposta">
+                              <Clock className="w-2.5 h-2.5 text-amber-600" />
+                              <span className="hidden sm:inline">Sem resposta</span>
                             </span>
                           )}
                         </div>
