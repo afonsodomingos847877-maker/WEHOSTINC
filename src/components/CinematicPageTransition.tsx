@@ -68,17 +68,11 @@ export default function CinematicPageTransition({ children }: { children: React.
         @keyframes cinematicPageReveal {
           0% {
             opacity: 0;
-            transform: translateY(12px) scale(0.994);
-            filter: blur(4px) brightness(0.94);
-          }
-          60% {
-            opacity: 0.95;
-            filter: blur(1px) brightness(0.98);
+            transform: translateY(10px);
           }
           100% {
             opacity: 1;
-            transform: translateY(0) scale(1);
-            filter: blur(0px) brightness(1);
+            transform: none;
           }
         }
 
@@ -103,9 +97,8 @@ export default function CinematicPageTransition({ children }: { children: React.
           }
         }
 
-        .cinematic-page-container {
-          animation: cinematicPageReveal 550ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
-          will-change: transform, opacity, filter;
+        .cinematic-page-container-active {
+          animation: cinematicPageReveal 450ms cubic-bezier(0.16, 1, 0.3, 1);
         }
       `}</style>
 
@@ -142,8 +135,8 @@ export default function CinematicPageTransition({ children }: { children: React.
         />
       )}
 
-      {/* 3. Conteúdo da Página com Transição de Revelação Cinematográfica */}
-      <div key={pathname} className="cinematic-page-container w-full">
+      {/* 3. Conteúdo da Página (sem transform/filter persistente para não afetar elementos fixed) */}
+      <div key={pathname} className={showShutter ? 'cinematic-page-container-active w-full' : 'w-full'}>
         {children}
       </div>
     </>
