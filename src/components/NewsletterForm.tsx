@@ -58,14 +58,14 @@ export default function NewsletterForm() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder={t('newsletter.placeholder')}
-            className="w-full pl-8 sm:pl-9 pr-3 sm:pr-4 py-2 sm:py-2.5 bg-slate-800 border border-slate-600 rounded-lg text-white text-[10px] sm:text-xs placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/60 focus:border-primary-500/60 transition"
+            className="w-full pl-8 sm:pl-9 pr-3 sm:pr-4 py-2 sm:py-2.5 bg-slate-800 border border-slate-600 rounded-lg text-white text-[11.5px] lg:text-[12px] placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/60 focus:border-primary-500/60 transition"
             disabled={loading || status === 'success'}
           />
         </div>
         <button
           type="submit"
           disabled={loading || status === 'success'}
-          className="w-full py-2 sm:py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg sm:rounded-xl transition flex items-center justify-center space-x-1.5 sm:space-x-2 text-[10px] sm:text-xs disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+          className="w-full py-2 sm:py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg sm:rounded-xl transition flex items-center justify-center space-x-1.5 sm:space-x-2 text-[11.5px] lg:text-[12px] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
         >
           {loading ? (
             <>

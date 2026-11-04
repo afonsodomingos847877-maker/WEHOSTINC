@@ -1222,7 +1222,7 @@ export default function Home() {
                 <Server className="h-6 w-6 sm:h-8 sm:w-8 text-primary-400 group-hover:scale-110 group-hover:text-primary-300 transition-all duration-300" />
                 <span className="text-xl sm:text-2xl font-bold tracking-tight group-hover:text-primary-300 transition-colors">WEHOSTHERE</span>
               </div>
-              <p className="text-slate-400 text-xs sm:text-sm leading-relaxed mb-3 sm:mb-4">
+              <p className="text-slate-400 text-[11.5px] lg:text-[12px] leading-relaxed mb-3 sm:mb-4">
                 {t('footer.about')}
               </p>
               
@@ -1232,7 +1232,7 @@ export default function Home() {
                   href="https://www.facebook.com/profile.php?id=61592497206566&locale=pt_BR"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center space-x-1.5 sm:space-x-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10px] sm:text-xs px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl transition shadow-md group hover:scale-105 active:scale-95 hover:shadow-lg"
+                  className="inline-flex items-center space-x-1.5 sm:space-x-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] lg:text-[11.5px] px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl transition shadow-md group hover:scale-105 active:scale-95 hover:shadow-lg"
                 >
                   <Facebook className="h-3.5 w-3.5 sm:h-4 sm:w-4 fill-current group-hover:scale-110 transition-transform" />
                   <span>Facebook</span>
@@ -1241,7 +1241,7 @@ export default function Home() {
                   href="https://www.linkedin.com/company/wehosthere"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center space-x-1.5 sm:space-x-2 bg-blue-700 hover:bg-blue-800 text-white font-bold text-[10px] sm:text-xs px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl transition shadow-md group hover:scale-105 active:scale-95 hover:shadow-lg"
+                  className="inline-flex items-center space-x-1.5 sm:space-x-2 bg-blue-700 hover:bg-blue-800 text-white font-bold text-[11px] lg:text-[11.5px] px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl transition shadow-md group hover:scale-105 active:scale-95 hover:shadow-lg"
                 >
                   <Linkedin className="h-3.5 w-3.5 sm:h-4 sm:w-4 fill-current group-hover:scale-110 transition-transform" />
                   <span>LinkedIn</span>
@@ -1250,7 +1250,7 @@ export default function Home() {
                   href="https://x.com/wehosthere"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center space-x-1.5 sm:space-x-2 bg-black hover:bg-gray-900 text-white font-bold text-[10px] sm:text-xs px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl transition shadow-md group hover:scale-105 active:scale-95 hover:shadow-lg"
+                  className="inline-flex items-center space-x-1.5 sm:space-x-2 bg-black hover:bg-gray-900 text-white font-bold text-[11px] lg:text-[11.5px] px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl transition shadow-md group hover:scale-105 active:scale-95 hover:shadow-lg"
                 >
                   <svg className="h-3.5 w-3.5 sm:h-4 sm:w-4 fill-current group-hover:scale-110 transition-transform" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
@@ -1261,7 +1261,7 @@ export default function Home() {
                   href="https://www.instagram.com/wehosthere"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center space-x-1.5 sm:space-x-2 bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500 hover:from-purple-700 hover:via-pink-700 hover:to-orange-600 text-white font-bold text-[10px] sm:text-xs px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl transition shadow-md group hover:scale-105 active:scale-95 hover:shadow-lg"
+                  className="inline-flex items-center space-x-1.5 sm:space-x-2 bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500 hover:from-purple-700 hover:via-pink-700 hover:to-orange-600 text-white font-bold text-[11px] lg:text-[11.5px] px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl transition shadow-md group hover:scale-105 active:scale-95 hover:shadow-lg"
                 >
                   <Instagram className="h-3.5 w-3.5 sm:h-4 sm:w-4 fill-current group-hover:scale-110 transition-transform" />
                   <span>Instagram</span>
@@ -1271,7 +1271,7 @@ export default function Home() {
 
             <div>
               <h4 className="font-bold text-white mb-3 sm:mb-4 uppercase tracking-wider text-[10px] sm:text-xs">{t('footer.products_title')}</h4>
-              <ul className="space-y-1.5 sm:space-y-2 text-slate-400 text-[10px] sm:text-sm">
+              <ul className="space-y-1.5 sm:space-y-2 text-slate-400 text-[11.5px] lg:text-[12px]">
                 <li><Link href="/hospedagem" className="hover:text-primary-300 transition hover:translate-x-1 duration-300 block">{t('footer.prod_hosting')}</Link></li>
                 <li><Link href="/email-corporativo" className="hover:text-primary-300 transition hover:translate-x-1 duration-300 block">{t('footer.prod_email')}</Link></li>
                 <li><Link href="/vps" className="hover:text-primary-300 transition hover:translate-x-1 duration-300 block">{t('footer.prod_vps')}</Link></li>
@@ -1285,7 +1285,7 @@ export default function Home() {
             </div>
             <div>
               <h4 className="font-bold text-white mb-3 sm:mb-4 uppercase tracking-wider text-[10px] sm:text-xs">{t('footer.support_title')}</h4>
-              <ul className="space-y-1.5 sm:space-y-2 text-slate-400 text-[10px] sm:text-sm">
+              <ul className="space-y-1.5 sm:space-y-2 text-slate-400 text-[11.5px] lg:text-[12px]">
                 <li className="transition flex items-center space-x-1.5 font-bold text-slate-200">
                   <a
                     href="https://wa.me/258848335618?text=Olá%2C%20gostaria%20de%20saber%20mais%20sobre%20os%20serviços%20WEHOSTHERE"
@@ -1320,14 +1320,14 @@ export default function Home() {
             </div>
             <div>
               <h4 className="font-bold text-white mb-3 sm:mb-4 uppercase tracking-wider text-[10px] sm:text-xs">{t('newsletter.title')}</h4>
-              <p className="text-slate-400 text-[10px] sm:text-xs mb-3 sm:mb-4">
+              <p className="text-slate-400 text-[11.5px] lg:text-[12px] leading-relaxed mb-3 sm:mb-4">
                 {t('newsletter.desc')}
               </p>
               <NewsletterForm />
             </div>
             <div>
               <h4 className="font-bold text-white mb-3 sm:mb-4 uppercase tracking-wider text-[10px] sm:text-xs">{t('footer.legal_title')}</h4>
-              <ul className="space-y-1.5 sm:space-y-2 text-slate-400 text-[10px] sm:text-sm">
+              <ul className="space-y-1.5 sm:space-y-2 text-slate-400 text-[11.5px] lg:text-[12px]">
                 <li className="hover:text-primary-300 transition cursor-pointer hover:translate-x-1 duration-300">
                   <Link href="/terms" className="hover:text-primary-300">{t('footer.terms')}</Link>
                 </li>
@@ -1338,7 +1338,7 @@ export default function Home() {
               </ul>
             </div>
           </div>
-          <div className="border-t border-slate-800/80 mt-8 sm:mt-12 pt-6 sm:pt-8 text-center text-slate-400 text-[10px] sm:text-xs font-medium">
+          <div className="border-t border-slate-800/80 mt-8 sm:mt-12 pt-6 sm:pt-8 text-center text-slate-400 text-[11.5px] lg:text-[12px] font-medium">
             <p className="hover:text-slate-300 transition-colors cursor-default">&copy; {new Date().getFullYear()} {t('footer.copyright')}</p>
           </div>
         </div>
