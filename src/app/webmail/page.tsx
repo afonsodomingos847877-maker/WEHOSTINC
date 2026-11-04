@@ -1286,6 +1286,38 @@ function WebmailContent() {
     return (!msg.isRead && ageHours >= 2) || ageHours >= 18;
   };
 
+  const getDynamicUserGreeting = (): { greeting: string; userName: string } => {
+    const hour = new Date().getHours();
+    let greeting = '☀️ Bom dia';
+    if (hour >= 12 && hour < 18) {
+      greeting = '🌤️ Boa tarde';
+    } else if (hour >= 18 || hour < 5) {
+      greeting = '🌙 Boa noite';
+    }
+
+    let rawName = (signatureForm.fullName || '').trim();
+    if (!rawName && user?.name) {
+      rawName = user.name.trim();
+    }
+    if (!rawName && selectedAccountEmail) {
+      const localPart = selectedAccountEmail.split('@')[0] || '';
+      const genericPrefixes = new Set(['info', 'contacto', 'contato', 'suporte', 'comercial', 'geral', 'admin', 'vendas', 'financeiro', 'rh']);
+      if (genericPrefixes.has(localPart.toLowerCase())) {
+        const domainName = (selectedAccountEmail.split('@')[1] || '').split('.')[0] || '';
+        rawName = domainName ? `Equipa ${domainName.toUpperCase()}` : localPart;
+      } else {
+        rawName = localPart
+          .replace(/[._-]+/g, ' ')
+          .replace(/\b\w/g, (c) => c.toUpperCase());
+      }
+    }
+
+    return {
+      greeting,
+      userName: rawName || 'Utilizador',
+    };
+  };
+
   // Reiniciar estado de carregamento inicial quando mudar de conta autenticada
   useEffect(() => {
     isInitialLoadRef.current = true;
@@ -1295,35 +1327,34 @@ function WebmailContent() {
   // Detect new incoming emails or initial login briefing in inbox and show floating card
   useEffect(() => {
     if (currentFolder === 'inbox' && mailboxPassword && !isLoadingMessages) {
-      if (isInitialLoadRef.current && messages.length > 0) {
+      if (isInitialLoadRef.current) {
         knownInboxIdsRef.current = new Set(messages.map(m => m.id));
         isInitialLoadRef.current = false;
 
         const unreadMsgs = messages.filter(m => !m.isRead);
         const overdueMsgs = messages.filter(m => isMessageOverdue(m));
         const urgentMsgs = messages.filter(m => !m.isRead && m.priority === 'high');
+        const topMsg = unreadMsgs[0] || overdueMsgs[0] || messages[0];
 
-        if (unreadMsgs.length > 0 || overdueMsgs.length > 0 || urgentMsgs.length > 0) {
-          const topMsg = unreadMsgs[0] || overdueMsgs[0] || messages[0];
-          if (unreadMsgs.length > 0) {
-            soundEffects.playNewEmailSound();
-          }
-          setFloatingBriefing({
-            isOpen: true,
-            type: 'welcome',
-            unreadCount: unreadMsgs.length,
-            overdueCount: overdueMsgs.length,
-            urgentCount: urgentMsgs.length,
-            latestSender: topMsg?.fromName,
-            latestSubject: topMsg?.subject,
-            latestMsgId: topMsg?.id,
-          });
-
-          if (briefingTimeoutRef.current) clearTimeout(briefingTimeoutRef.current);
-          briefingTimeoutRef.current = setTimeout(() => {
-            setFloatingBriefing(null);
-          }, 8500);
+        if (unreadMsgs.length > 0) {
+          soundEffects.playNewEmailSound();
         }
+
+        setFloatingBriefing({
+          isOpen: true,
+          type: 'welcome',
+          unreadCount: unreadMsgs.length,
+          overdueCount: overdueMsgs.length,
+          urgentCount: urgentMsgs.length,
+          latestSender: topMsg?.fromName,
+          latestSubject: topMsg?.subject,
+          latestMsgId: topMsg?.id,
+        });
+
+        if (briefingTimeoutRef.current) clearTimeout(briefingTimeoutRef.current);
+        briefingTimeoutRef.current = setTimeout(() => {
+          setFloatingBriefing(null);
+        }, 8500);
       } else if (!isInitialLoadRef.current && messages.length > 0) {
         const newIncoming = messages.filter(m => !knownInboxIdsRef.current.has(m.id) && !m.isRead);
         if (newIncoming.length > 0) {
@@ -2124,135 +2155,165 @@ function WebmailContent() {
         </div>
       </header>
 
-      {/* Card Flutuante Inteligente de Novos E-mails & Pendências (Auto-Dismiss) */}
-      {floatingBriefing && floatingBriefing.isOpen && mailboxPassword && (
-        <div className="fixed top-16 right-4 z-[9995] w-[calc(100vw-2rem)] sm:w-96 bg-neutral-900 text-white rounded-2xl shadow-2xl border border-neutral-700/80 overflow-hidden animate-in slide-in-from-right-5 fade-in duration-300">
-          <div className="p-4 space-y-3">
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex items-center space-x-2.5">
-                <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0">
-                  <Bell className="w-4 h-4 animate-bounce" />
+      {/* Card Flutuante Inteligente de Saudação, Novos E-mails & Pendências (Auto-Dismiss) */}
+      {floatingBriefing && floatingBriefing.isOpen && mailboxPassword && (() => {
+        const { greeting, userName } = getDynamicUserGreeting();
+        const hasPendingItems =
+          floatingBriefing.unreadCount > 0 ||
+          floatingBriefing.overdueCount > 0 ||
+          floatingBriefing.urgentCount > 0;
+
+        return (
+          <div className="fixed top-16 right-4 z-[9995] w-[calc(100vw-2rem)] sm:w-96 bg-neutral-900 text-white rounded-2xl shadow-2xl border border-neutral-700/80 overflow-hidden animate-in slide-in-from-right-5 fade-in duration-300">
+            <div className="p-4 space-y-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center space-x-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0">
+                    <Bell className="w-4 h-4 animate-bounce" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-400 block">
+                      {floatingBriefing.type === 'new_incoming'
+                        ? '🔔 Novo E-mail Recebido'
+                        : '📬 Assistente Webmail WEHOSTHERE'}
+                    </span>
+                    <h4 className="text-xs sm:text-sm font-extrabold text-white">
+                      {floatingBriefing.type === 'new_incoming'
+                        ? `${greeting}, ${userName}! Chegou ${
+                            floatingBriefing.unreadCount === 1
+                              ? '1 novo e-mail'
+                              : `${floatingBriefing.unreadCount} novos e-mails`
+                          }`
+                        : `${greeting}, ${userName}! 👋`}
+                    </h4>
+                    {floatingBriefing.type === 'welcome' && (
+                      <p className="text-[11px] text-neutral-400 mt-0.5">
+                        {hasPendingItems
+                          ? 'Bem-vindo(a) de volta! Veja o resumo da sua caixa:'
+                          : 'Bem-vindo(a) de volta ao seu e-mail corporativo!'}
+                      </p>
+                    )}
+                  </div>
                 </div>
-                <div>
-                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-400 block">
-                    {floatingBriefing.type === 'new_incoming' ? '🔔 Novo E-mail Recebido' : '📬 Resumo da Caixa de Entrada'}
-                  </span>
-                  <h4 className="text-xs sm:text-sm font-extrabold text-white">
-                    {floatingBriefing.type === 'new_incoming'
-                      ? floatingBriefing.unreadCount === 1
-                        ? 'Chegou 1 nova mensagem!'
-                        : `Chegaram ${floatingBriefing.unreadCount} novas mensagens!`
-                      : 'Estado Atual dos seus E-mails'}
-                  </h4>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setFloatingBriefing(null)}
+                  className="text-neutral-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition cursor-pointer"
+                  title="Fechar notificação"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => setFloatingBriefing(null)}
-                className="text-neutral-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition cursor-pointer"
-                title="Fechar notificação"
-              >
-                <X className="w-4 h-4" />
-              </button>
+
+              <div className="space-y-1.5 bg-white/[0.06] rounded-xl p-3 border border-white/10 text-xs">
+                {!hasPendingItems ? (
+                  <div className="flex items-center space-x-2 text-emerald-300 font-semibold py-0.5">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>A sua caixa de entrada está 100% em dia! Sem novos e-mails ou respostas em atraso.</span>
+                  </div>
+                ) : (
+                  <>
+                    {floatingBriefing.unreadCount > 0 && (
+                      <div className="flex items-center justify-between">
+                        <span className="flex items-center space-x-2 text-neutral-200">
+                          <span>📩</span>
+                          <span>E-mails novos / não lidos:</span>
+                        </span>
+                        <span className="font-extrabold text-emerald-400 bg-emerald-500/15 px-2 py-0.5 rounded-full">
+                          {floatingBriefing.unreadCount} {floatingBriefing.unreadCount === 1 ? 'novo' : 'novos'}
+                        </span>
+                      </div>
+                    )}
+
+                    {floatingBriefing.overdueCount > 0 && (
+                      <div className="flex items-center justify-between">
+                        <span className="flex items-center space-x-2 text-neutral-200">
+                          <span>⏳</span>
+                          <span>Em atraso / sem resposta:</span>
+                        </span>
+                        <span className="font-extrabold text-amber-300 bg-amber-500/20 px-2 py-0.5 rounded-full">
+                          {floatingBriefing.overdueCount} {floatingBriefing.overdueCount === 1 ? 'pendente' : 'pendentes'}
+                        </span>
+                      </div>
+                    )}
+
+                    {floatingBriefing.urgentCount > 0 && (
+                      <div className="flex items-center justify-between">
+                        <span className="flex items-center space-x-2 text-neutral-200">
+                          <span>⚡</span>
+                          <span>Alta prioridade não lidos:</span>
+                        </span>
+                        <span className="font-extrabold text-rose-300 bg-rose-500/20 px-2 py-0.5 rounded-full">
+                          {floatingBriefing.urgentCount} {floatingBriefing.urgentCount === 1 ? 'urgente' : 'urgentes'}
+                        </span>
+                      </div>
+                    )}
+
+                    {floatingBriefing.latestSender && (
+                      <div className="pt-1.5 mt-1.5 border-t border-white/10 text-[11px] text-neutral-300 truncate">
+                        <span className="text-neutral-400">Mais recente: </span>
+                        <strong className="text-white">{floatingBriefing.latestSender}</strong>
+                        {floatingBriefing.latestSubject ? ` — ${floatingBriefing.latestSubject}` : ''}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+
+              {hasPendingItems && (
+                <div className="flex items-center gap-2 pt-0.5">
+                  {floatingBriefing.unreadCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCurrentFolder('inbox');
+                        setFilterType('unread');
+                        const firstUnread = messages.find(m => !m.isRead);
+                        if (firstUnread) handleSelectMessage(firstUnread);
+                        setFloatingBriefing(null);
+                      }}
+                      className="flex-1 py-2 px-3 bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-extrabold text-[11px] rounded-xl transition cursor-pointer text-center shadow-xs"
+                    >
+                      Ver Novos ({floatingBriefing.unreadCount})
+                    </button>
+                  )}
+                  {floatingBriefing.overdueCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCurrentFolder('inbox');
+                        setFilterType('overdue');
+                        const firstOverdue = messages.find(m => isMessageOverdue(m));
+                        if (firstOverdue) handleSelectMessage(firstOverdue);
+                        setFloatingBriefing(null);
+                      }}
+                      className="flex-1 py-2 px-3 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-bold text-[11px] rounded-xl transition cursor-pointer text-center"
+                    >
+                      ⏳ Ver em Atraso ({floatingBriefing.overdueCount})
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
 
-            <div className="space-y-1.5 bg-white/[0.06] rounded-xl p-3 border border-white/10 text-xs">
-              {floatingBriefing.unreadCount > 0 && (
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center space-x-2 text-neutral-200">
-                    <span>📩</span>
-                    <span>E-mails novos / não lidos:</span>
-                  </span>
-                  <span className="font-extrabold text-emerald-400 bg-emerald-500/15 px-2 py-0.5 rounded-full">
-                    {floatingBriefing.unreadCount} {floatingBriefing.unreadCount === 1 ? 'novo' : 'novos'}
-                  </span>
-                </div>
-              )}
-
-              {floatingBriefing.overdueCount > 0 && (
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center space-x-2 text-neutral-200">
-                    <span>⏳</span>
-                    <span>Em atraso / sem resposta:</span>
-                  </span>
-                  <span className="font-extrabold text-amber-300 bg-amber-500/20 px-2 py-0.5 rounded-full">
-                    {floatingBriefing.overdueCount} {floatingBriefing.overdueCount === 1 ? 'pendente' : 'pendentes'}
-                  </span>
-                </div>
-              )}
-
-              {floatingBriefing.urgentCount > 0 && (
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center space-x-2 text-neutral-200">
-                    <span>⚡</span>
-                    <span>Alta prioridade não lidos:</span>
-                  </span>
-                  <span className="font-extrabold text-rose-300 bg-rose-500/20 px-2 py-0.5 rounded-full">
-                    {floatingBriefing.urgentCount} {floatingBriefing.urgentCount === 1 ? 'urgente' : 'urgentes'}
-                  </span>
-                </div>
-              )}
-
-              {floatingBriefing.latestSender && (
-                <div className="pt-1.5 mt-1.5 border-t border-white/10 text-[11px] text-neutral-300 truncate">
-                  <span className="text-neutral-400">Mais recente: </span>
-                  <strong className="text-white">{floatingBriefing.latestSender}</strong>
-                  {floatingBriefing.latestSubject ? ` — ${floatingBriefing.latestSubject}` : ''}
-                </div>
-              )}
+            {/* Barra de progresso visual de fecho automático */}
+            <div className="h-1 w-full bg-neutral-800 overflow-hidden">
+              <div
+                className="h-full bg-emerald-400 transition-all"
+                style={{
+                  animation: 'shrinkWidth 8.5s linear forwards',
+                }}
+              />
             </div>
-
-            <div className="flex items-center gap-2 pt-0.5">
-              {floatingBriefing.unreadCount > 0 && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCurrentFolder('inbox');
-                    setFilterType('unread');
-                    const firstUnread = messages.find(m => !m.isRead);
-                    if (firstUnread) handleSelectMessage(firstUnread);
-                    setFloatingBriefing(null);
-                  }}
-                  className="flex-1 py-2 px-3 bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-extrabold text-[11px] rounded-xl transition cursor-pointer text-center shadow-xs"
-                >
-                  Ver Novos ({floatingBriefing.unreadCount})
-                </button>
-              )}
-              {floatingBriefing.overdueCount > 0 && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCurrentFolder('inbox');
-                    setFilterType('overdue');
-                    const firstOverdue = messages.find(m => isMessageOverdue(m));
-                    if (firstOverdue) handleSelectMessage(firstOverdue);
-                    setFloatingBriefing(null);
-                  }}
-                  className="flex-1 py-2 px-3 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-bold text-[11px] rounded-xl transition cursor-pointer text-center"
-                >
-                  ⏳ Ver em Atraso ({floatingBriefing.overdueCount})
-                </button>
-              )}
-            </div>
+            <style>{`
+              @keyframes shrinkWidth {
+                from { width: 100%; }
+                to { width: 0%; }
+              }
+            `}</style>
           </div>
-
-          {/* Barra de progresso visual de fecho automático */}
-          <div className="h-1 w-full bg-neutral-800 overflow-hidden">
-            <div
-              className="h-full bg-emerald-400 transition-all"
-              style={{
-                animation: 'shrinkWidth 8s linear forwards',
-              }}
-            />
-          </div>
-          <style>{`
-            @keyframes shrinkWidth {
-              from { width: 100%; }
-              to { width: 0%; }
-            }
-          `}</style>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Alerta de Perda de Conexão à Internet (Offline) */}
       {!isOnline && (
