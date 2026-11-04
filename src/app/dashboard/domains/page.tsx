@@ -17,6 +17,7 @@ import PageLoader from '@/components/PageLoader';
 import StatusBadge from '@/components/StatusBadge';
 import ApprovalCelebration from '@/components/ApprovalCelebration';
 import ConfirmModal from '@/components/ConfirmModal';
+import ReauthenticationModal from '@/components/ReauthenticationModal';
 import Toast from '@/components/Toast';
 import DomainSearch from '@/components/DomainSearch';
 import { soundEffects } from '@/lib/soundEffects';
@@ -104,16 +105,25 @@ export default function DomainsPage() {
 
   // Modal de eliminação de domínio
   const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; id: string; domain: string } | null>(null);
+  const [showReauthDeleteDomain, setShowReauthDeleteDomain] = useState(false);
+  const [pendingDeleteSite, setPendingDeleteSite] = useState<{ id: string; domain: string } | null>(null);
   const [toastMsg, setToastMsg] = useState<{ title?: string; message: string; type: 'success' | 'error' } | null>(null);
 
   const confirmDeleteDomain = () => {
     if (!deleteConfirm) return;
+    setPendingDeleteSite({ id: deleteConfirm.id, domain: deleteConfirm.domain });
+    setDeleteConfirm(null);
+    setShowReauthDeleteDomain(true);
+  };
+
+  const executeDeleteDomain = () => {
+    if (!pendingDeleteSite) return;
     try {
-      const { id, domain } = deleteConfirm;
+      const { id, domain } = pendingDeleteSite;
       dataManager.deleteSite(id, domain);
       soundEffects.playDeleteEmailSound();
       setSites(prev => prev.filter(s => s.id !== id && s.domain !== domain));
-      setDeleteConfirm(null);
+      setPendingDeleteSite(null);
       setToastMsg({ title: 'Domínio Removido', message: `O domínio ${domain} foi permanentemente eliminado.`, type: 'success' });
     } catch (err) {
       console.error('Erro ao eliminar domínio:', err);
@@ -392,6 +402,16 @@ export default function DomainsPage() {
           onClose={() => setToastMsg(null)}
         />
       )}
+      {/* Modal de Reautenticação para Exclusão de Domínio */}
+      <ReauthenticationModal
+        isOpen={showReauthDeleteDomain}
+        onClose={() => { setShowReauthDeleteDomain(false); setPendingDeleteSite(null); }}
+        userEmail={user?.email || session?.user?.email || ''}
+        onSuccess={executeDeleteDomain}
+        title="Reauthenticate"
+        actionDescription={`Para confirmar a eliminação definitiva do domínio ${pendingDeleteSite?.domain || ''} e interrupção do DNS, insira o código enviado para `}
+        lang="pt"
+      />
     </div>
   );
 }

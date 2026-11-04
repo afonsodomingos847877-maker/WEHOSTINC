@@ -12,6 +12,7 @@ import {
   UserCheck, UserPlus, Sparkles, ShieldCheck, Rocket, Percent, CreditCard, AlertTriangle
 } from 'lucide-react';
 import { auth, User } from '@/lib/auth';
+import ReauthenticationModal from '@/components/ReauthenticationModal';
 import { getUserId, getAffiliateUserInfo, isAffiliateAuthenticated } from '@/lib/affiliateAuth';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import PageLoader from '@/components/PageLoader';
@@ -115,6 +116,7 @@ export default function AffiliatesPage() {
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [showPayoutModal, setShowPayoutModal] = useState(false);
+  const [showReauthPayout, setShowReauthPayout] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'leads' | 'commissions' | 'materials' | 'performance'>('overview');
   const [payoutMethod, setPayoutMethod] = useState<'bank_transfer' | 'paypal' | 'mpesa'>('bank_transfer');
   const [payoutDetails, setPayoutDetails] = useState({
@@ -274,7 +276,18 @@ export default function AffiliatesPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handlePayout = async () => {
+  const handlePayout = () => {
+    // Valida se os campos necessários estão preenchidos antes de abrir o modal de segurança
+    const userId = session?.user?.id || getUserId(session?.user?.id);
+    if (!userId) {
+      soundEffects.playErrorSound();
+      alert('Erro: Usuário não autenticado');
+      return;
+    }
+    setShowReauthPayout(true);
+  };
+
+  const executePayout = async () => {
     try {
       const userId = session?.user?.id || getUserId(session?.user?.id);
       if (!userId) {
@@ -1290,6 +1303,16 @@ export default function AffiliatesPage() {
           </div>
         </div>
       )}
+      {/* Modal de Reautenticação para Saque de Comissões */}
+      <ReauthenticationModal
+        isOpen={showReauthPayout}
+        onClose={() => setShowReauthPayout(false)}
+        userEmail={session?.user?.email || auth.getCurrentUser()?.email || ''}
+        onSuccess={executePayout}
+        title="Reauthenticate"
+        actionDescription="Para autorizar o saque de comissões e a transferência para o seu M-Pesa, insira o código enviado para "
+        lang="pt"
+      />
     </div>
   );
 }

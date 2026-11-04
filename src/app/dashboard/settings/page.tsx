@@ -12,6 +12,7 @@ import DashboardNav from '@/components/DashboardNav';
 import DashboardSidebar from '@/components/DashboardSidebar';
 import PageLoader from '@/components/PageLoader';
 import ConfirmModal from '@/components/ConfirmModal';
+import ReauthenticationModal from '@/components/ReauthenticationModal';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { soundEffects } from '@/lib/soundEffects';
 
@@ -27,6 +28,8 @@ export default function SettingsPage() {
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState<'success' | 'error'>('success');
   const [deleteAccountConfirm, setDeleteAccountConfirm] = useState(false);
+  const [showReauthModal, setShowReauthModal] = useState(false);
+  const [reauthAction, setReauthAction] = useState<'password' | 'delete_account' | null>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
   
   const {
@@ -152,13 +155,29 @@ export default function SettingsPage() {
         return;
       }
 
-      userData.password = newPassword;
-      localStorage.setItem(`user_${user.id}`, JSON.stringify(userData));
+      // Requer Reautenticação via código de 6 dígitos
+      setReauthAction('password');
+      setShowReauthModal(true);
+    }
+  };
 
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
-      showMessage('Senha atualizada com sucesso!', 'success');
+  const handleReauthSuccess = () => {
+    if (reauthAction === 'password') {
+      if (user) {
+        const userData = JSON.parse(localStorage.getItem(`user_${user.id}`) || '{}');
+        userData.password = newPassword;
+        localStorage.setItem(`user_${user.id}`, JSON.stringify(userData));
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+        showMessage('Senha atualizada com sucesso!', 'success');
+      }
+    } else if (reauthAction === 'delete_account') {
+      if (user) {
+        auth.deleteUser(user.id, user.email);
+        auth.logout();
+        router.push('/');
+      }
     }
   };
 
@@ -558,7 +577,7 @@ export default function SettingsPage() {
               </div>
               <div className="space-y-4">
                 <button
-                  onClick={() => setDeleteAccountConfirm(true)}
+                  onClick={() => { setReauthAction('delete_account'); setShowReauthModal(true); }}
                   className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-semibold cursor-pointer"
                 >
                   Excluir Conta Permanentemente
@@ -589,6 +608,20 @@ export default function SettingsPage() {
           }
         }}
         onCancel={() => setDeleteAccountConfirm(false)}
+      />
+      {/* Modal de Reautenticação para Ações Sensíveis */}
+      <ReauthenticationModal
+        isOpen={showReauthModal}
+        onClose={() => setShowReauthModal(false)}
+        userEmail={user?.email || ''}
+        onSuccess={handleReauthSuccess}
+        title="Reauthenticate"
+        actionDescription={
+          reauthAction === 'delete_account'
+            ? 'Para confirmar a exclusão definitiva da sua conta e de todos os serviços, insira o código enviado para '
+            : 'Para autorizar a atualização da sua senha de acesso, insira o código enviado para '
+        }
+        lang="pt"
       />
     </div>
   );
