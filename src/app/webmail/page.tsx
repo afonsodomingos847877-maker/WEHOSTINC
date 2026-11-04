@@ -9,7 +9,7 @@ import {
   FileText, LogOut, ChevronRight, X, AlertCircle, Sparkles, Clock, Printer, Download, Loader2, Filter, Maximize2, Minimize2, Bold, Italic, Underline, Type,
   Wand2, Bot, FileSignature, Lightbulb, Check, Wifi, WifiOff, Pin, PinOff, Flag, Flame, Lock, Key, Eye, EyeOff,
   Bell, Calendar, TrendingUp, LayoutGrid, HelpCircle, Smartphone, Laptop, Monitor,
-  Globe, Languages, Sun, Sunset, Moon, MessageSquare, Image as ImageIcon
+  Globe, Languages, Sun, Sunset, Moon, MessageSquare, Image as ImageIcon, ExternalLink
 } from 'lucide-react';
 import { auth, User as AuthUser } from '@/lib/auth';
 import { dataManager, EmailAccount } from '@/lib/data';
@@ -2387,6 +2387,23 @@ function WebmailContent() {
             </span>
           ) : null}
 
+          {/* Link Direto para o Site do Domínio da Empresa */}
+          {selectedAccountEmail && selectedAccountEmail.includes('@') && (
+            <a
+              href={`https://${selectedAccountEmail.split('@')[1].toLowerCase()}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 rounded-xl transition cursor-pointer text-xs font-bold shadow-2xs shrink-0 active:scale-95"
+              title={`Visitar o site oficial da empresa (${selectedAccountEmail.split('@')[1].toLowerCase()})`}
+            >
+              <Globe className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+              <span className="hidden sm:inline font-mono">
+                {selectedAccountEmail.split('@')[1].toLowerCase()}
+              </span>
+              <ExternalLink className="h-3 w-3 text-emerald-600 shrink-0" />
+            </a>
+          )}
+
           {/* Refresh (Apenas quando autenticado) */}
           {mailboxPassword && (
             <button
@@ -3203,6 +3220,28 @@ function WebmailContent() {
                 <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
               )}
             </button>
+
+            {/* Atalho Direto para Visitar o Site do Domínio da Empresa */}
+            {selectedAccountEmail && selectedAccountEmail.includes('@') && (
+              <a
+                href={`https://${selectedAccountEmail.split('@')[1].toLowerCase()}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all duration-200 cursor-pointer border border-neutral-200 bg-neutral-50 hover:bg-neutral-100 text-neutral-800 mt-1"
+                title={`Abrir https://${selectedAccountEmail.split('@')[1].toLowerCase()} num novo separador`}
+              >
+                <div className="flex items-center space-x-2.5 truncate">
+                  <Globe className="h-4 w-4 text-emerald-600 shrink-0" />
+                  <div className="text-left truncate">
+                    <span className="block truncate text-xs font-bold">Visitar Site</span>
+                    <span className="text-[10px] font-mono text-neutral-500 block truncate">
+                      {selectedAccountEmail.split('@')[1].toLowerCase()}
+                    </span>
+                  </div>
+                </div>
+                <ExternalLink className="h-3.5 w-3.5 text-neutral-400 shrink-0" />
+              </a>
+            )}
           </nav>
 
           <div className={`mt-auto pt-4 border-t border-neutral-200 text-[11px] text-neutral-500 space-y-2 ${isSidebarCollapsed ? 'hidden' : ''}`}>

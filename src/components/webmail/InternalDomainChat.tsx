@@ -19,6 +19,8 @@ import {
   UserCheck,
   Sparkles,
   Image as ImageIcon,
+  Globe,
+  ExternalLink,
 } from 'lucide-react';
 import { soundEffects } from '@/lib/soundEffects';
 import { apiEndpoint } from '@/lib/siteConfig';
@@ -345,9 +347,17 @@ export default function InternalDomainChat({
                   <h3 className="text-xs sm:text-sm font-extrabold tracking-tight truncate">
                     Chat Corporativo Interno
                   </h3>
-                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shrink-0">
-                    @{domain}
-                  </span>
+                  <a
+                    href={`https://${domain}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 hover:bg-emerald-500/35 text-emerald-300 border border-emerald-500/30 shrink-0 inline-flex items-center space-x-1 transition cursor-pointer"
+                    title={`Visitar o site oficial https://${domain}`}
+                  >
+                    <Globe className="w-3 h-3 text-emerald-400" />
+                    <span>{domain}</span>
+                    <ExternalLink className="w-2.5 h-2.5 text-emerald-400" />
+                  </a>
                 </div>
                 <p className="text-[10px] text-neutral-400 truncate">
                   Comunicação instantânea sem enviar e-mail · Exclusivo para membros de @{domain}
@@ -777,3 +787,4 @@ export default function InternalDomainChat({
     </>
   );
 }
+
