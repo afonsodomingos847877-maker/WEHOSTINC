@@ -9,7 +9,7 @@ import {
   FileText, LogOut, ChevronRight, X, AlertCircle, Sparkles, Clock, Printer, Download, Loader2, Filter, Maximize2, Minimize2, Bold, Italic, Underline, Type,
   Wand2, Bot, FileSignature, Lightbulb, Check, Wifi, WifiOff, Pin, PinOff, Flag, Flame, Lock, Key, Eye, EyeOff,
   Bell, Calendar, TrendingUp, LayoutGrid, HelpCircle, Smartphone, Laptop, Monitor,
-  Globe, Languages, Sun, Sunset, Moon, MessageSquare, Image as ImageIcon, ExternalLink
+  Globe, Languages, Sun, Sunset, Moon, MessageSquare, Image as ImageIcon, ExternalLink, BarChart3
 } from 'lucide-react';
 import { auth, User as AuthUser } from '@/lib/auth';
 import { dataManager, EmailAccount } from '@/lib/data';
@@ -19,6 +19,7 @@ import { soundEffects } from '@/lib/soundEffects';
 import BrandLogo from '@/components/BrandLogo';
 import PageLoader from '@/components/PageLoader';
 import InternalDomainChat from '@/components/webmail/InternalDomainChat';
+import WebmailAnalyticsDashboard from '@/components/webmail/WebmailAnalyticsDashboard';
 import { apiEndpoint } from '@/lib/siteConfig';
 import dynamic from 'next/dynamic';
 
@@ -398,6 +399,7 @@ function WebmailContent() {
   const [showInternalChat, setShowInternalChat] = useState(false);
   const [internalChatUnread, setInternalChatUnread] = useState(0);
   const [internalChatOnline, setInternalChatOnline] = useState(0);
+  const [showAnalyticsDashboard, setShowAnalyticsDashboard] = useState(false);
 
   // Attachment preview state
   const [previewAttachment, setPreviewAttachment] = useState<WebmailAttachment | null>(null);
@@ -2404,6 +2406,26 @@ function WebmailContent() {
             </a>
           )}
 
+          {/* Botão Rápido: Dashboard de Relatórios & Analytics */}
+          {mailboxPassword && (
+            <button
+              type="button"
+              onClick={() => {
+                soundEffects.playFolderSwitchSound();
+                setShowAnalyticsDashboard(!showAnalyticsDashboard);
+              }}
+              className={`flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border transition cursor-pointer text-xs font-bold shadow-2xs shrink-0 active:scale-95 ${
+                showAnalyticsDashboard
+                  ? 'bg-neutral-900 text-white border-neutral-900'
+                  : 'bg-white hover:bg-neutral-100 text-neutral-900 border-neutral-300'
+              }`}
+              title="Abrir Dashboard de Relatórios e Gráficos do Webmail"
+            >
+              <BarChart3 className={`h-3.5 w-3.5 shrink-0 ${showAnalyticsDashboard ? 'text-emerald-400' : 'text-indigo-600'}`} />
+              <span className="hidden sm:inline">Analytics</span>
+            </button>
+          )}
+
           {/* Refresh (Apenas quando autenticado) */}
           {mailboxPassword && (
             <button
@@ -2777,6 +2799,18 @@ function WebmailContent() {
             </span>
           )}
         </button>
+
+        <button
+          onClick={() => { soundEffects.playFolderSwitchSound(); setShowAnalyticsDashboard(!showAnalyticsDashboard); }}
+          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl whitespace-nowrap font-bold transition-all duration-200 shrink-0 border ${
+            showAnalyticsDashboard
+              ? 'bg-neutral-900 text-white border-neutral-900 shadow-xs'
+              : 'bg-indigo-50 text-indigo-900 border-indigo-200 hover:bg-indigo-100'
+          }`}
+        >
+          <BarChart3 className={`h-3.5 w-3.5 ${showAnalyticsDashboard ? 'text-emerald-400' : 'text-indigo-600'}`} />
+          <span>Analytics</span>
+        </button>
       </div>
 
       {/* Main Layout Grid */}
@@ -2804,20 +2838,20 @@ function WebmailContent() {
 
           <nav className={`space-y-1 text-xs font-semibold ${isSidebarCollapsed ? 'hidden' : ''}`}>
             <button
-              onClick={() => { soundEffects.playFolderSwitchSound(); setCurrentFolder('inbox'); }}
+              onClick={() => { soundEffects.playFolderSwitchSound(); setShowAnalyticsDashboard(false); setCurrentFolder('inbox'); }}
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 cursor-pointer border ${
-                currentFolder === 'inbox' 
+                !showAnalyticsDashboard && currentFolder === 'inbox' 
                   ? 'bg-neutral-900 text-white border-neutral-900 font-bold shadow-xs' 
                   : 'hover:bg-neutral-100 text-neutral-600 hover:text-neutral-900 border-transparent'
               }`}
             >
               <div className="flex items-center space-x-2.5">
-                <Inbox className={`h-4 w-4 ${currentFolder === 'inbox' ? 'text-white' : 'text-neutral-500'}`} />
+                <Inbox className={`h-4 w-4 ${!showAnalyticsDashboard && currentFolder === 'inbox' ? 'text-white' : 'text-neutral-500'}`} />
                 <span>Entrada</span>
               </div>
               {unreadInboxCount > 0 && (
                 <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold shadow-2xs ${
-                  currentFolder === 'inbox' ? 'bg-white text-neutral-900' : 'bg-neutral-200 text-neutral-700'
+                  !showAnalyticsDashboard && currentFolder === 'inbox' ? 'bg-white text-neutral-900' : 'bg-neutral-200 text-neutral-700'
                 }`}>
                   {unreadInboxCount}
                 </span>
@@ -2825,20 +2859,20 @@ function WebmailContent() {
             </button>
 
             <button
-              onClick={() => { soundEffects.playFolderSwitchSound(); setCurrentFolder('starred'); }}
+              onClick={() => { soundEffects.playFolderSwitchSound(); setShowAnalyticsDashboard(false); setCurrentFolder('starred'); }}
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 cursor-pointer border ${
-                currentFolder === 'starred' 
+                !showAnalyticsDashboard && currentFolder === 'starred' 
                   ? 'bg-neutral-900 text-white border-neutral-900 font-bold shadow-xs' 
                   : 'hover:bg-neutral-100 text-neutral-600 hover:text-neutral-900 border-transparent'
               }`}
             >
               <div className="flex items-center space-x-2.5">
-                <Star className={`h-4 w-4 ${currentFolder === 'starred' ? 'text-white' : 'text-neutral-500'}`} />
+                <Star className={`h-4 w-4 ${!showAnalyticsDashboard && currentFolder === 'starred' ? 'text-white' : 'text-neutral-500'}`} />
                 <span>Com Estrela</span>
               </div>
               {starredCount > 0 && (
                 <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold shadow-2xs ${
-                  currentFolder === 'starred' ? 'bg-white text-neutral-900' : 'bg-neutral-200 text-neutral-700'
+                  !showAnalyticsDashboard && currentFolder === 'starred' ? 'bg-white text-neutral-900' : 'bg-neutral-200 text-neutral-700'
                 }`}>
                   {starredCount}
                 </span>
@@ -2846,20 +2880,20 @@ function WebmailContent() {
             </button>
 
             <button
-              onClick={() => { soundEffects.playFolderSwitchSound(); setCurrentFolder('sent'); }}
+              onClick={() => { soundEffects.playFolderSwitchSound(); setShowAnalyticsDashboard(false); setCurrentFolder('sent'); }}
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 cursor-pointer border ${
-                currentFolder === 'sent' 
+                !showAnalyticsDashboard && currentFolder === 'sent' 
                   ? 'bg-neutral-900 text-white border-neutral-900 font-bold shadow-xs' 
                   : 'hover:bg-neutral-100 text-neutral-600 hover:text-neutral-900 border-transparent'
               }`}
             >
               <div className="flex items-center space-x-2.5">
-                <Send className={`h-4 w-4 ${currentFolder === 'sent' ? 'text-white' : 'text-neutral-500'}`} />
+                <Send className={`h-4 w-4 ${!showAnalyticsDashboard && currentFolder === 'sent' ? 'text-white' : 'text-neutral-500'}`} />
                 <span>Enviados</span>
               </div>
               {sentCount > 0 && (
                 <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold shadow-2xs ${
-                  currentFolder === 'sent' ? 'bg-white text-neutral-900' : 'bg-neutral-200 text-neutral-700'
+                  !showAnalyticsDashboard && currentFolder === 'sent' ? 'bg-white text-neutral-900' : 'bg-neutral-200 text-neutral-700'
                 }`}>
                   {sentCount}
                 </span>
@@ -2867,20 +2901,20 @@ function WebmailContent() {
             </button>
 
             <button
-              onClick={() => { soundEffects.playFolderSwitchSound(); setCurrentFolder('scheduled'); }}
+              onClick={() => { soundEffects.playFolderSwitchSound(); setShowAnalyticsDashboard(false); setCurrentFolder('scheduled'); }}
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 cursor-pointer border ${
-                currentFolder === 'scheduled' 
+                !showAnalyticsDashboard && currentFolder === 'scheduled' 
                   ? 'bg-neutral-900 text-white border-neutral-900 font-bold shadow-xs' 
                   : 'hover:bg-neutral-100 text-neutral-600 hover:text-neutral-900 border-transparent'
               }`}
             >
               <div className="flex items-center space-x-2.5">
-                <Calendar className={`h-4 w-4 ${currentFolder === 'scheduled' ? 'text-emerald-400' : 'text-neutral-500'}`} />
+                <Calendar className={`h-4 w-4 ${!showAnalyticsDashboard && currentFolder === 'scheduled' ? 'text-emerald-400' : 'text-neutral-500'}`} />
                 <span>Agendados</span>
               </div>
               {scheduledCount > 0 && (
                 <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold shadow-2xs ${
-                  currentFolder === 'scheduled' ? 'bg-emerald-400 text-neutral-950' : 'bg-emerald-100 text-emerald-800'
+                  !showAnalyticsDashboard && currentFolder === 'scheduled' ? 'bg-emerald-400 text-neutral-950' : 'bg-emerald-100 text-emerald-800'
                 }`}>
                   {scheduledCount}
                 </span>
@@ -2888,36 +2922,58 @@ function WebmailContent() {
             </button>
 
             <button
-              onClick={() => { soundEffects.playFolderSwitchSound(); setCurrentFolder('trash'); }}
+              onClick={() => { soundEffects.playFolderSwitchSound(); setShowAnalyticsDashboard(false); setCurrentFolder('trash'); }}
               className={`w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl transition-all duration-200 cursor-pointer border ${
-                currentFolder === 'trash' 
+                !showAnalyticsDashboard && currentFolder === 'trash' 
                   ? 'bg-neutral-900 text-white border-neutral-900 font-bold shadow-xs' 
                   : 'hover:bg-neutral-100 text-neutral-600 hover:text-neutral-900 border-transparent'
               }`}
             >
-              <Trash2 className={`h-4 w-4 ${currentFolder === 'trash' ? 'text-white' : 'text-neutral-500'}`} />
+              <Trash2 className={`h-4 w-4 ${!showAnalyticsDashboard && currentFolder === 'trash' ? 'text-white' : 'text-neutral-500'}`} />
               <span>Lixeira</span>
             </button>
 
             <button
-              onClick={() => { soundEffects.playFolderSwitchSound(); setCurrentFolder('drafts'); }}
+              onClick={() => { soundEffects.playFolderSwitchSound(); setShowAnalyticsDashboard(false); setCurrentFolder('drafts'); }}
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 cursor-pointer border ${
-                currentFolder === 'drafts' 
+                !showAnalyticsDashboard && currentFolder === 'drafts' 
                   ? 'bg-neutral-900 text-white border-neutral-900 font-bold shadow-xs' 
                   : 'hover:bg-neutral-100 text-neutral-600 hover:text-neutral-900 border-transparent'
               }`}
             >
               <div className="flex items-center space-x-2.5">
-                <FileText className={`h-4 w-4 ${currentFolder === 'drafts' ? 'text-white' : 'text-neutral-500'}`} />
+                <FileText className={`h-4 w-4 ${!showAnalyticsDashboard && currentFolder === 'drafts' ? 'text-white' : 'text-neutral-500'}`} />
                 <span>Rascunhos</span>
               </div>
               {draftsCount > 0 && (
                 <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold shadow-2xs ${
-                  currentFolder === 'drafts' ? 'bg-white text-neutral-900' : 'bg-neutral-200 text-neutral-700'
+                  !showAnalyticsDashboard && currentFolder === 'drafts' ? 'bg-white text-neutral-900' : 'bg-neutral-200 text-neutral-700'
                 }`}>
                   {draftsCount}
                 </span>
               )}
+            </button>
+
+            {/* Botão Dashboard de Relatórios & Analytics */}
+            <button
+              type="button"
+              onClick={() => { soundEffects.playFolderSwitchSound(); setShowAnalyticsDashboard(!showAnalyticsDashboard); }}
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 cursor-pointer border mt-2 ${
+                showAnalyticsDashboard
+                  ? 'bg-neutral-900 text-white border-neutral-900 font-bold shadow-xs'
+                  : 'bg-indigo-50/80 hover:bg-indigo-100 text-indigo-950 border-indigo-200 font-bold'
+              }`}
+              title="Abrir Dashboard Interativo de Relatórios e Gráficos"
+            >
+              <div className="flex items-center space-x-2.5 truncate">
+                <BarChart3 className={`h-4 w-4 shrink-0 ${showAnalyticsDashboard ? 'text-emerald-400' : 'text-indigo-600'}`} />
+                <div className="text-left truncate">
+                  <span className="block truncate">Analytics &amp; Dados</span>
+                  <span className={`text-[10px] font-normal block truncate ${showAnalyticsDashboard ? 'text-neutral-300' : 'text-indigo-700'}`}>
+                    Relatórios interativos
+                  </span>
+                </div>
+              </div>
             </button>
 
             {/* Botão de Chat Interno Corporativo (@dominio) */}
@@ -3034,6 +3090,20 @@ function WebmailContent() {
           </div>
         </aside>
 
+        {showAnalyticsDashboard ? (
+          <WebmailAnalyticsDashboard
+            accountEmail={selectedAccountEmail}
+            messages={messages}
+            folderStats={folderStats}
+            onClose={() => setShowAnalyticsDashboard(false)}
+            onOpenCompose={handleOpenCompose}
+            onNavigateFolder={(f) => {
+              setCurrentFolder(f);
+              setShowAnalyticsDashboard(false);
+            }}
+          />
+        ) : (
+        <>
         {/* Message List Column - Mobile First */}
         <section className={`w-full md:w-80 lg:w-96 min-h-0 overflow-hidden bg-white border-r border-neutral-200 flex flex-col shrink-0 ${selectedMessage ? 'hidden md:flex' : 'flex'}`}>
           {/* Search Input & Filter Pills */}
@@ -4201,6 +4271,8 @@ function WebmailContent() {
             </div>
           )}
         </main>
+        </>
+        )}
       </div>
 
       {/* Mobile FAB: Escrever E-mail (Tesla Black) */}
