@@ -775,7 +775,8 @@ export default function ChapterViewPage() {
                               src={videoEmbed.embedUrl}
                               className="w-full h-full border-0"
                               allowFullScreen
-                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                              referrerPolicy="strict-origin-when-cross-origin"
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
                               title={currentLessonData.videoTitle || 'Vídeo da aula'}
                             />
                           )}

@@ -89,6 +89,7 @@ export default function CourseDetailsPage() {
     title: string;
     description?: string;
   } | null>(null);
+  const [useAlternativeVideoPlayer, setUseAlternativeVideoPlayer] = useState<boolean>(false);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState<number>(0);
   const [activePreviewIndex, setActivePreviewIndex] = useState<number>(0);
@@ -1178,18 +1179,21 @@ export default function CourseDetailsPage() {
 
             {/* MODAL CINEMA DE VÍDEO DA AULA GRATUITA */}
       {videoPreviewModal?.isOpen && (() => {
-        const videoEmbed = formatVideoEmbedUrl(videoPreviewModal.videoUrl);
+        const videoEmbed = formatVideoEmbedUrl(videoPreviewModal.videoUrl, { useNoCookie: useAlternativeVideoPlayer });
         return (
           <div 
             className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-300"
-            onClick={() => setVideoPreviewModal(null)}
+            onClick={() => {
+              setVideoPreviewModal(null);
+              setUseAlternativeVideoPlayer(false);
+            }}
           >
             <div 
               className="bg-slate-900 border border-slate-700 w-full max-w-4xl rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-200"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header do Modal */}
-              <div className="p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between gap-3 bg-slate-950/70">
+              <div className="p-3.5 sm:p-5 border-b border-slate-800 flex items-center justify-between gap-3 bg-slate-950/80">
                 <div className="flex items-center gap-2.5 min-w-0">
                   <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-black uppercase tracking-wider flex items-center gap-1 shrink-0">
                     <Sparkles className="w-3.5 h-3.5" />
@@ -1205,16 +1209,20 @@ export default function CourseDetailsPage() {
                       href={videoEmbed.originalWatchUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition"
-                      title="Abrir diretamente no YouTube"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition shadow-sm"
+                      title="Abrir diretamente no YouTube em nova aba"
                     >
-                      <ExternalLink className="w-3.5 h-3.5" />
-                      <span>Abrir no YouTube</span>
+                      <Play className="w-3.5 h-3.5 fill-current" />
+                      <span className="hidden xs:inline">Assistir no</span> YouTube
+                      <ExternalLink className="w-3 h-3 ml-0.5 opacity-80" />
                     </a>
                   )}
                   <button
                     type="button"
-                    onClick={() => setVideoPreviewModal(null)}
+                    onClick={() => {
+                      setVideoPreviewModal(null);
+                      setUseAlternativeVideoPlayer(false);
+                    }}
                     className="p-1.5 sm:p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition cursor-pointer"
                     title="Fechar Vídeo"
                   >
@@ -1223,7 +1231,7 @@ export default function CourseDetailsPage() {
                 </div>
               </div>
 
-              {/* Player de Vídeo Seguro */}
+              {/* Player de Vídeo Seguro com Fallback e Compatibilidade Total */}
               <div className="relative aspect-video w-full bg-black">
                 {videoEmbed.type === 'video' ? (
                   <video
@@ -1234,14 +1242,46 @@ export default function CourseDetailsPage() {
                   />
                 ) : (
                   <iframe
-                    key={videoEmbed.embedUrl}
+                    key={`${videoEmbed.embedUrl}_${useAlternativeVideoPlayer}`}
                     src={videoEmbed.embedUrl}
                     className="w-full h-full border-0"
                     allowFullScreen
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
                     title={videoPreviewModal.title}
                   />
                 )}
+              </div>
+
+              {/* Barra de utilitários caso o navegador restrinja iframes */}
+              <div className="px-4 py-2 bg-slate-950/90 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>Reprodução Segura WEHOSTHERE Academy</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  {videoEmbed.isYouTube && (
+                    <button
+                      type="button"
+                      onClick={() => setUseAlternativeVideoPlayer(prev => !prev)}
+                      className="text-slate-400 hover:text-slate-200 underline cursor-pointer transition text-[11px]"
+                      title="Clique caso o seu navegador ou adblocker tenha bloqueado a visualização"
+                    >
+                      {useAlternativeVideoPlayer ? '↺ Usar Servidor Padrão' : 'Alternar Servidor (se bloqueado)'}
+                    </button>
+                  )}
+                  {videoEmbed.originalWatchUrl && (
+                    <a
+                      href={videoEmbed.originalWatchUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-red-400 hover:text-red-300 font-bold flex items-center gap-1 transition"
+                    >
+                      <span>Abrir vídeo direto</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  )}
+                </div>
               </div>
 
               {/* Rodapé do Modal com Informações e CTA de Matrícula */}
