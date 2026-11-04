@@ -10,7 +10,7 @@ import {
   Wand2, Bot, FileSignature, Lightbulb, Check, Wifi, WifiOff, Pin, PinOff, Flag, Flame, Lock, Key, Eye, EyeOff,
   Bell, Calendar, TrendingUp, LayoutGrid, HelpCircle, Smartphone, Laptop, Monitor,
   Globe, Languages, Sun, Sunset, Moon, MessageSquare, Image as ImageIcon, ExternalLink, BarChart3,
-  Mic, MicOff, Volume2
+  Mic, MicOff, Volume2, VolumeX, Play, Pause, Square, Headphones
 } from 'lucide-react';
 import { auth, User as AuthUser } from '@/lib/auth';
 import { dataManager, EmailAccount } from '@/lib/data';
@@ -456,6 +456,13 @@ function WebmailContent() {
   const [isConvertingVoiceToEmail, setIsConvertingVoiceToEmail] = useState(false);
   const [voiceError, setVoiceError] = useState('');
   const speechRecognitionRef = useRef<any>(null);
+
+  // 24. Text-to-Speech (Ouvir E-mail em Áudio — Recebidos, Rascunhos e Respostas)
+  const [isSpeakingEmail, setIsSpeakingEmail] = useState(false);
+  const [isPausedSpeech, setIsPausedSpeech] = useState(false);
+  const [speakingSource, setSpeakingSource] = useState<'email' | 'compose' | 'quick_reply' | null>(null);
+  const [speechSpeed, setSpeechSpeed] = useState<1 | 1.25 | 1.5>(1);
+  const speechUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -2276,6 +2283,159 @@ function WebmailContent() {
       setIsConvertingVoiceToEmail(false);
     }
   };
+
+  // 24. Ouvir E-mail em Áudio (Text-to-Speech Natural com Controlo de Velocidade e Pausa)
+  const cleanTextForSpeech = (rawHtmlOrText: string): string => {
+    if (!rawHtmlOrText) return '';
+    const withoutRawHeaders = stripRawHeaders(rawHtmlOrText);
+    const withoutScripts = withoutRawHeaders
+      .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+      .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+      .replace(/<!--[\s\S]*?-->/g, ' ')
+      .replace(/<\/(p|div|h[1-6]|li|tr|br)>/gi, '. ')
+      .replace(/<[^>]+>/g, ' ');
+    return decodeHtmlEntities(withoutScripts)
+      .replace(/https?:\/\/\S+/gi, 'link anexado')
+      .replace(/\s+/g, ' ')
+      .replace(/\.\s*\./g, '.')
+      .trim();
+  };
+
+  const handleStopEmailSpeech = () => {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      try {
+        window.speechSynthesis.cancel();
+      } catch {}
+    }
+    speechUtteranceRef.current = null;
+    setIsSpeakingEmail(false);
+    setIsPausedSpeech(false);
+    setSpeakingSource(null);
+  };
+
+  const handleTogglePauseEmailSpeech = () => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    if (!isSpeakingEmail) return;
+
+    if (isPausedSpeech) {
+      window.speechSynthesis.resume();
+      setIsPausedSpeech(false);
+    } else {
+      window.speechSynthesis.pause();
+      setIsPausedSpeech(true);
+    }
+  };
+
+  const handleSpeakEmailText = (
+    source: 'email' | 'compose' | 'quick_reply',
+    customRate?: 1 | 1.25 | 1.5
+  ) => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+      return;
+    }
+
+    // Se já estiver a falar a mesma fonte e não for troca de velocidade, parar
+    if (isSpeakingEmail && speakingSource === source && !customRate) {
+      handleStopEmailSpeech();
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+
+    let textToRead = '';
+    let langCode = 'pt-PT';
+
+    if (source === 'email' && selectedMessage) {
+      const isTranslatedForCurrent =
+        translatedEmail && translatedEmail.msgId === selectedMessage.id;
+      const activeSubject = isTranslatedForCurrent
+        ? translatedEmail.subject
+        : selectedMessage.subject;
+      const activeBody = isTranslatedForCurrent
+        ? translatedEmail.body
+        : cleanTextForSpeech(selectedMessage.body);
+
+      if (isTranslatedForCurrent && translatedEmail.lang === 'en') {
+        langCode = 'en-US';
+        textToRead = `Email from ${selectedMessage.fromName || selectedMessage.fromEmail}. Subject: ${activeSubject || 'No subject'}. ${activeBody}`;
+      } else {
+        langCode = 'pt-PT';
+        textToRead = `E-mail de ${selectedMessage.fromName || selectedMessage.fromEmail}. Assunto: ${activeSubject || 'Sem assunto'}. ${activeBody}`;
+      }
+    } else if (source === 'compose') {
+      const cleanCompose = cleanTextForSpeech(composeBody);
+      if (!cleanCompose && !composeSubject) return;
+      textToRead = `${composeSubject ? `Assunto: ${composeSubject}. ` : ''}${cleanCompose}`;
+    } else if (source === 'quick_reply') {
+      const cleanReply = cleanTextForSpeech(replyText);
+      if (!cleanReply) return;
+      textToRead = cleanReply;
+    }
+
+    if (!textToRead.trim()) return;
+
+    const utterance = new SpeechSynthesisUtterance(textToRead);
+    const activeRate = customRate || speechSpeed;
+    utterance.rate = activeRate;
+    utterance.pitch = 1;
+    utterance.lang = langCode;
+
+    // Escolher a voz mais natural disponível para o idioma
+    const voices = window.speechSynthesis.getVoices();
+    if (voices && voices.length > 0) {
+      const langPrefix = langCode.slice(0, 2).toLowerCase();
+      const preferredVoice =
+        voices.find(
+          (v) =>
+            v.lang.toLowerCase().startsWith(langPrefix) &&
+            (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Microsoft'))
+        ) || voices.find((v) => v.lang.toLowerCase().startsWith(langPrefix));
+      if (preferredVoice) {
+        utterance.voice = preferredVoice;
+      }
+    }
+
+    utterance.onstart = () => {
+      setIsSpeakingEmail(true);
+      setIsPausedSpeech(false);
+      setSpeakingSource(source);
+    };
+
+    utterance.onend = () => {
+      setIsSpeakingEmail(false);
+      setIsPausedSpeech(false);
+      setSpeakingSource(null);
+    };
+
+    utterance.onerror = () => {
+      setIsSpeakingEmail(false);
+      setIsPausedSpeech(false);
+      setSpeakingSource(null);
+    };
+
+    speechUtteranceRef.current = utterance;
+    setIsSpeakingEmail(true);
+    setIsPausedSpeech(false);
+    setSpeakingSource(source);
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const handleCycleSpeechSpeed = () => {
+    const nextSpeed: 1 | 1.25 | 1.5 =
+      speechSpeed === 1 ? 1.25 : speechSpeed === 1.25 ? 1.5 : 1;
+    setSpeechSpeed(nextSpeed);
+    if (isSpeakingEmail && speakingSource) {
+      handleSpeakEmailText(speakingSource, nextSpeed);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, [selectedMessage?.id, showCompose]);
 
   const handleTranslateEmail = async (targetLang: 'pt' | 'en') => {
     if (!selectedMessage) return;
@@ -4179,6 +4339,25 @@ function WebmailContent() {
                       )}
                     </div>
 
+                    {/* Botão Ouvir E-mail em Áudio (Text-to-Speech) */}
+                    <button
+                      type="button"
+                      onClick={() => handleSpeakEmailText('email')}
+                      className={`px-2.5 py-1.5 rounded-xl text-[11px] font-bold transition flex items-center space-x-1.5 cursor-pointer border ${
+                        isSpeakingEmail && speakingSource === 'email'
+                          ? 'bg-emerald-500 text-neutral-950 border-emerald-400 shadow-sm'
+                          : 'bg-white/10 hover:bg-white/20 border-white/10 text-white'
+                      }`}
+                      title="Ouvir este e-mail em áudio"
+                    >
+                      {isSpeakingEmail && speakingSource === 'email' ? (
+                        <Volume2 className="h-3.5 w-3.5 animate-pulse text-neutral-950" />
+                      ) : (
+                        <Headphones className="h-3.5 w-3.5 text-emerald-400" />
+                      )}
+                      <span>{isSpeakingEmail && speakingSource === 'email' ? 'A Ouvir...' : 'Ouvir E-mail'}</span>
+                    </button>
+
                     <button
                       type="button"
                       onClick={handleSummarizeWithAI}
@@ -4214,6 +4393,59 @@ function WebmailContent() {
                     </button>
                   </div>
                 </div>
+
+                {/* Mini Player de Áudio do E-mail (Quando a leitura por voz está ativa) */}
+                {isSpeakingEmail && speakingSource === 'email' && (
+                  <div className="p-3 bg-white/[0.08] rounded-xl border border-emerald-500/30 flex flex-wrap items-center justify-between gap-2 animate-in fade-in duration-200">
+                    <div className="flex items-center space-x-2.5 min-w-0">
+                      <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-emerald-400 shrink-0">
+                        <Volume2 className={`h-4 w-4 ${!isPausedSpeech ? 'animate-pulse' : ''}`} />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-extrabold text-white truncate">
+                            {isPausedSpeech ? 'Leitura em Áudio Pausada' : 'A Ler E-mail em Voz Alta'}
+                          </span>
+                          <span className="px-1.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 text-[10px] font-extrabold">
+                            {speechSpeed}x
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-neutral-300 truncate">
+                          {selectedMessage.subject || '(Sem assunto)'} — {selectedMessage.fromName || selectedMessage.fromEmail}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-1.5">
+                      <button
+                        type="button"
+                        onClick={handleCycleSpeechSpeed}
+                        className="px-2.5 py-1 bg-white/10 hover:bg-white/20 text-white rounded-lg text-[11px] font-extrabold transition cursor-pointer border border-white/10"
+                        title="Alterar velocidade de leitura (1x, 1.25x, 1.5x)"
+                      >
+                        {speechSpeed}x
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleTogglePauseEmailSpeech}
+                        className="px-2.5 py-1 bg-emerald-500 hover:bg-emerald-400 text-neutral-950 rounded-lg text-[11px] font-extrabold transition cursor-pointer flex items-center gap-1"
+                        title={isPausedSpeech ? 'Continuar leitura' : 'Pausar leitura'}
+                      >
+                        {isPausedSpeech ? <Play className="h-3 w-3 fill-current" /> : <Pause className="h-3 w-3 fill-current" />}
+                        <span>{isPausedSpeech ? 'Continuar' : 'Pausar'}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleStopEmailSpeech}
+                        className="px-2.5 py-1 bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 border border-rose-500/30 rounded-lg text-[11px] font-bold transition cursor-pointer flex items-center gap-1"
+                        title="Parar leitura"
+                      >
+                        <Square className="h-3 w-3 fill-current" />
+                        <span>Parar</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {/* AI Summary Box */}
                 {aiSummary && (() => {
@@ -4401,6 +4633,29 @@ function WebmailContent() {
                         <>
                           <Mic className="h-3.5 w-3.5 text-emerald-400" />
                           <span>Voice to Email</span>
+                        </>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSpeakEmailText('quick_reply')}
+                      disabled={!replyText.trim() && !(isSpeakingEmail && speakingSource === 'quick_reply')}
+                      className={`px-2.5 py-1 rounded-xl text-[11px] font-bold transition cursor-pointer flex items-center gap-1.5 border disabled:opacity-40 ${
+                        isSpeakingEmail && speakingSource === 'quick_reply'
+                          ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                          : 'bg-neutral-100 hover:bg-neutral-200 text-neutral-800 border-neutral-200'
+                      }`}
+                      title="Ouvir em áudio a resposta escrita antes de enviar"
+                    >
+                      {isSpeakingEmail && speakingSource === 'quick_reply' ? (
+                        <>
+                          <VolumeX className="h-3.5 w-3.5 animate-pulse" />
+                          <span>Parar Áudio</span>
+                        </>
+                      ) : (
+                        <>
+                          <Volume2 className="h-3.5 w-3.5 text-neutral-700" />
+                          <span>Ouvir</span>
                         </>
                       )}
                     </button>
@@ -4883,6 +5138,29 @@ function WebmailContent() {
                       >
                         <Mic className={`w-3.5 h-3.5 ${isRecordingVoice && voiceTargetMode === 'compose' ? 'text-rose-400 animate-pulse' : 'text-rose-600'}`} />
                         <span>Voice to Email</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleSpeakEmailText('compose')}
+                        disabled={(!composeBody && !composeSubject) && !(isSpeakingEmail && speakingSource === 'compose')}
+                        className={`text-[11px] font-bold px-2.5 py-1 rounded-lg border transition cursor-pointer flex items-center space-x-1 disabled:opacity-50 ${
+                          isSpeakingEmail && speakingSource === 'compose'
+                            ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs'
+                            : 'text-sky-700 hover:text-sky-900 bg-sky-50 hover:bg-sky-100 border-sky-200'
+                        }`}
+                        title="Ouvir em áudio o e-mail que escreveu antes de enviar"
+                      >
+                        {isSpeakingEmail && speakingSource === 'compose' ? (
+                          <>
+                            <VolumeX className="w-3 h-3 animate-pulse text-white" />
+                            <span>Parar Áudio</span>
+                          </>
+                        ) : (
+                          <>
+                            <Volume2 className="w-3 h-3 text-sky-600" />
+                            <span>Ouvir E-mail</span>
+                          </>
+                        )}
                       </button>
                       <button
                         type="button"
