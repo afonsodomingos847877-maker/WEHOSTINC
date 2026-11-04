@@ -322,7 +322,7 @@ function WebmailContent() {
     return () => clearTimeout(timeoutId);
   }, []);
 
-  const [currentFolder, setCurrentFolder] = useState<'inbox' | 'sent' | 'starred' | 'trash' | 'drafts'>('inbox');
+  const [currentFolder, setCurrentFolder] = useState<'inbox' | 'sent' | 'starred' | 'trash' | 'drafts' | 'scheduled'>('inbox');
   const [messages, setMessages] = useState<WebmailMessage[]>([]);
   const [selectedMessage, setSelectedMessage] = useState<WebmailMessage | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -375,6 +375,10 @@ function WebmailContent() {
   const [sentSuccessMsg, setSentSuccessMsg] = useState('');
   const [composeError, setComposeError] = useState('');
   const [editingDraftId, setEditingDraftId] = useState<string | null>(null);
+  const [editingScheduledId, setEditingScheduledId] = useState<string | null>(null);
+  const [showSchedulePicker, setShowSchedulePicker] = useState(false);
+  const [composeScheduledFor, setComposeScheduledFor] = useState<string>('');
+  const scheduledDispatchingRef = useRef<Set<string>>(new Set());
 
   // Show CC/BCC fields state
   const [showCcBcc, setShowCcBcc] = useState(false);
@@ -788,6 +792,9 @@ function WebmailContent() {
     }
     setShowCompose(false);
     setEditingDraftId(null);
+    setEditingScheduledId(null);
+    setShowSchedulePicker(false);
+    setComposeScheduledFor('');
     setComposeTo('');
     setComposeCc('');
     setComposeBcc('');
@@ -1180,12 +1187,14 @@ function WebmailContent() {
     inboxUnread: number;
     starred: number;
     drafts: number;
+    scheduled: number;
     sent: number;
     trash: number;
   }>({
     inboxUnread: 0,
     starred: 0,
     drafts: 0,
+    scheduled: 0,
     sent: 0,
     trash: 0,
   });
@@ -1194,7 +1203,7 @@ function WebmailContent() {
   // Load messages whenever account, password, or folder changes
   useEffect(() => {
     if (selectedAccountEmail && mailboxPassword) {
-      const folder = currentFolder === 'starred' ? 'inbox' : currentFolder as 'inbox' | 'sent' | 'drafts' | 'trash';
+      const folder = currentFolder === 'starred' ? 'inbox' : currentFolder as 'inbox' | 'sent' | 'drafts' | 'trash' | 'scheduled';
       setIsLoadingMessages(true);
       setSelectedMessage(null);
       (async () => {
@@ -1217,6 +1226,8 @@ function WebmailContent() {
             setFolderStats(prev => ({ ...prev, trash: msgs.length }));
           } else if (folder === 'drafts') {
             setFolderStats(prev => ({ ...prev, drafts: msgs.length }));
+          } else if (folder === 'scheduled') {
+            setFolderStats(prev => ({ ...prev, scheduled: msgs.length }));
           }
         } catch (error) {
           console.error('[Webmail] Error loading messages:', error);
@@ -1228,11 +1239,14 @@ function WebmailContent() {
     }
   }, [selectedAccountEmail, mailboxPassword, currentFolder]);
 
-  // Sync initial drafts count from local storage
+  // Sync initial drafts and scheduled counts from local storage
   useEffect(() => {
     if (selectedAccountEmail) {
       webmailManager.getDrafts(selectedAccountEmail).then(localDrafts => {
         setFolderStats(prev => ({ ...prev, drafts: localDrafts.length }));
+      });
+      webmailManager.getScheduledMessages(selectedAccountEmail).then(localScheduled => {
+        setFolderStats(prev => ({ ...prev, scheduled: localScheduled.length }));
       });
     }
   }, [selectedAccountEmail]);
@@ -1241,7 +1255,7 @@ function WebmailContent() {
     if (selectedAccountEmail && mailboxPassword) {
       setIsRefreshingWebmail(true);
       try {
-        const folder = currentFolder === 'starred' ? 'inbox' : currentFolder as 'inbox' | 'sent' | 'drafts' | 'trash';
+        const folder = currentFolder === 'starred' ? 'inbox' : currentFolder as 'inbox' | 'sent' | 'drafts' | 'trash' | 'scheduled';
         const msgs = await webmailManager.getMessages(selectedAccountEmail, mailboxPassword, folder);
         const filtered = currentFolder === 'starred' ? msgs.filter(m => m.starred) : msgs;
         setMessages(filtered);
@@ -1250,7 +1264,11 @@ function WebmailContent() {
           const unread = msgs.filter(m => !m.isRead).length;
           const starred = msgs.filter(m => m.starred).length;
           setFolderStats(prev => ({ ...prev, inboxUnread: unread, starred }));
+        } else if (folder === 'scheduled') {
+          setFolderStats(prev => ({ ...prev, scheduled: msgs.length }));
         }
+        const schedAll = await webmailManager.getScheduledMessages(selectedAccountEmail);
+        setFolderStats(prev => ({ ...prev, scheduled: schedAll.length }));
       } catch (error) {
         console.error('[Webmail] Error refreshing messages:', error);
       }
@@ -1514,6 +1532,275 @@ function WebmailContent() {
       setDeleteConfirmModal(null);
     }
   };
+
+  const formatToLocalDatetimeInput = (dateObj: Date): string => {
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${dateObj.getFullYear()}-${pad(dateObj.getMonth() + 1)}-${pad(dateObj.getDate())}T${pad(
+      dateObj.getHours()
+    )}:${pad(dateObj.getMinutes())}`;
+  };
+
+  const getQuickSchedulePresets = (): Array<{ label: string; sublabel: string; value: string }> => {
+    const now = new Date();
+
+    // 1. Daqui a 1 hora
+    const inOneHour = new Date(now.getTime() + 60 * 60 * 1000);
+
+    // 2. Mais tarde hoje (17:00) ou +3 horas se já passou das 16:00
+    const laterToday = new Date(now);
+    if (now.getHours() < 16) {
+      laterToday.setHours(17, 0, 0, 0);
+    } else {
+      laterToday.setTime(now.getTime() + 3 * 60 * 60 * 1000);
+    }
+
+    // 3. Amanhã de manhã (08:30)
+    const tomorrowMorning = new Date(now);
+    tomorrowMorning.setDate(now.getDate() + 1);
+    tomorrowMorning.setHours(8, 30, 0, 0);
+
+    // 4. Amanhã à tarde (14:00)
+    const tomorrowAfternoon = new Date(now);
+    tomorrowAfternoon.setDate(now.getDate() + 1);
+    tomorrowAfternoon.setHours(14, 0, 0, 0);
+
+    // 5. Próxima Segunda-feira (08:30)
+    const nextMonday = new Date(now);
+    const daysUntilMonday = ((1 + 7 - now.getDay()) % 7) || 7;
+    nextMonday.setDate(now.getDate() + daysUntilMonday);
+    nextMonday.setHours(8, 30, 0, 0);
+
+    const fmtSub = (d: Date) =>
+      d.toLocaleDateString('pt-MZ', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+
+    return [
+      { label: 'Daqui a 1 hora', sublabel: fmtSub(inOneHour), value: formatToLocalDatetimeInput(inOneHour) },
+      { label: 'Mais tarde hoje', sublabel: fmtSub(laterToday), value: formatToLocalDatetimeInput(laterToday) },
+      { label: 'Amanhã de manhã', sublabel: fmtSub(tomorrowMorning), value: formatToLocalDatetimeInput(tomorrowMorning) },
+      { label: 'Amanhã à tarde', sublabel: fmtSub(tomorrowAfternoon), value: formatToLocalDatetimeInput(tomorrowAfternoon) },
+      { label: 'Próxima Segunda', sublabel: fmtSub(nextMonday), value: formatToLocalDatetimeInput(nextMonday) },
+    ];
+  };
+
+  const handleScheduleEmail = async (customScheduledIso?: string) => {
+    if (sendingMsg) return;
+    setComposeError('');
+
+    const cleanTo = composeTo.trim();
+    const plainBody = composeBody.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+
+    if (!cleanTo) {
+      setComposeError('Por favor, informe o e-mail do destinatário (Para) antes de agendar.');
+      return;
+    }
+
+    if (!plainBody && composeAttachments.length === 0) {
+      setComposeError('Por favor, escreva uma mensagem ou anexe um ficheiro antes de agendar.');
+      return;
+    }
+
+    const rawTarget = customScheduledIso || composeScheduledFor;
+    if (!rawTarget) {
+      setShowSchedulePicker(true);
+      setComposeError('Selecione a data e hora em que pretende enviar este e-mail.');
+      return;
+    }
+
+    const scheduledDate = new Date(rawTarget);
+    if (isNaN(scheduledDate.getTime()) || scheduledDate.getTime() <= Date.now() + 15000) {
+      setComposeError('Escolha uma data e hora futura (pelo menos 1 minuto à frente do horário atual).');
+      return;
+    }
+
+    try {
+      setSendingMsg(true);
+      await webmailManager.scheduleMessage(
+        selectedAccountEmail,
+        cleanTo,
+        composeSubject.trim() || '(Sem assunto)',
+        composeBody,
+        scheduledDate.toISOString(),
+        composeAttachments,
+        composePriority,
+        composeCc.trim(),
+        composeBcc.trim(),
+        editingScheduledId || undefined
+      );
+
+      if (editingDraftId) {
+        await webmailManager.deletePermanently(editingDraftId, selectedAccountEmail, mailboxPassword);
+        setEditingDraftId(null);
+      }
+
+      const updatedScheduled = await webmailManager.getScheduledMessages(selectedAccountEmail);
+      setFolderStats((prev) => ({ ...prev, scheduled: updatedScheduled.length }));
+
+      soundEffects.playSendEmailSound();
+      setSendingMsg(false);
+      const formattedWhen = scheduledDate.toLocaleDateString('pt-MZ', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+      setSentSuccessMsg(`E-mail agendado com sucesso para ${formattedWhen}!`);
+
+      setTimeout(() => {
+        setShowCompose(false);
+        setShowSchedulePicker(false);
+        setComposeScheduledFor('');
+        setEditingScheduledId(null);
+        setSentSuccessMsg('');
+        setComposeError('');
+        setComposeTo('');
+        setComposeCc('');
+        setComposeBcc('');
+        setComposeSubject('');
+        setComposeBody('');
+        setComposeAttachments([]);
+        refreshMessages();
+      }, 1600);
+    } catch (err: any) {
+      setSendingMsg(false);
+      setComposeError(err?.message || 'Não foi possível agendar o e-mail.');
+    }
+  };
+
+  const handleSendScheduledNow = async (msg: WebmailMessage) => {
+    if (!selectedAccountEmail) return;
+    const activePassword =
+      mailboxPassword ||
+      (typeof window !== 'undefined'
+        ? sessionStorage.getItem(`wm_pwd_${selectedAccountEmail.toLowerCase()}`) ||
+          localStorage.getItem(`wm_pwd_${selectedAccountEmail.toLowerCase()}`) ||
+          localStorage.getItem(`webmail_auth_${selectedAccountEmail}`) ||
+          ''
+        : '');
+
+    if (!activePassword) {
+      setShowWebmailLogin(true);
+      return;
+    }
+
+    try {
+      setSendingMsg(true);
+      await webmailManager.sendMessage(
+        selectedAccountEmail,
+        activePassword,
+        msg.toEmail,
+        msg.subject,
+        msg.body,
+        msg.attachments,
+        msg.priority || 'normal',
+        msg.ccEmail,
+        msg.bccEmail
+      );
+      webmailManager.removeScheduledMessage(msg.id);
+      soundEffects.playSendEmailSound();
+      setSelectedMessage(null);
+      await refreshMessages();
+    } catch (err) {
+      console.error('[Webmail] Erro ao enviar e-mail agendado imediatamente:', err);
+    } finally {
+      setSendingMsg(false);
+    }
+  };
+
+  const handleEditScheduledMessage = (msg: WebmailMessage) => {
+    setComposeTo(msg.toEmail || '');
+    setComposeCc(msg.ccEmail || '');
+    setComposeBcc(msg.bccEmail || '');
+    setShowCcBcc(!!(msg.ccEmail || msg.bccEmail));
+    setComposeSubject(msg.subject || '');
+    setComposeBody(msg.body || '');
+    setComposePriority(msg.priority || 'normal');
+    setComposeAttachments(msg.attachments || []);
+    setEditingScheduledId(msg.id);
+    if (msg.scheduledFor) {
+      const dt = new Date(msg.scheduledFor);
+      if (!isNaN(dt.getTime())) {
+        setComposeScheduledFor(formatToLocalDatetimeInput(dt));
+      }
+    }
+    setShowSchedulePicker(true);
+    setShowCompose(true);
+  };
+
+  const handleCancelScheduledMessage = async (msg: WebmailMessage) => {
+    await webmailManager.saveDraft(
+      selectedAccountEmail,
+      msg.toEmail,
+      msg.subject,
+      msg.body,
+      msg.attachments
+    );
+    webmailManager.removeScheduledMessage(msg.id);
+    const updatedDrafts = await webmailManager.getDrafts(selectedAccountEmail);
+    const updatedSched = await webmailManager.getScheduledMessages(selectedAccountEmail);
+    setFolderStats((prev) => ({
+      ...prev,
+      drafts: updatedDrafts.length,
+      scheduled: updatedSched.length,
+    }));
+    setSelectedMessage(null);
+    await refreshMessages();
+  };
+
+  // Motor Automático de Disparo de E-mails Agendados (verifica a cada 15 segundos)
+  useEffect(() => {
+    if (!selectedAccountEmail || !mailboxPassword) return;
+
+    const checkAndDispatchScheduled = async () => {
+      try {
+        const scheduledList = await webmailManager.getScheduledMessages(selectedAccountEmail);
+        const nowMs = Date.now();
+        const dueMessages = scheduledList.filter((m) => {
+          const targetMs = new Date(m.scheduledFor || '').getTime();
+          return !isNaN(targetMs) && targetMs <= nowMs && !scheduledDispatchingRef.current.has(m.id);
+        });
+
+        if (dueMessages.length === 0) return;
+
+        for (const msg of dueMessages) {
+          scheduledDispatchingRef.current.add(msg.id);
+          try {
+            await webmailManager.sendMessage(
+              selectedAccountEmail,
+              mailboxPassword,
+              msg.toEmail,
+              msg.subject,
+              msg.body,
+              msg.attachments,
+              msg.priority || 'normal',
+              msg.ccEmail,
+              msg.bccEmail
+            );
+            webmailManager.removeScheduledMessage(msg.id);
+            soundEffects.playSendEmailSound();
+          } catch (err) {
+            console.error('[Webmail] Falha ao disparar e-mail agendado:', err);
+          } finally {
+            scheduledDispatchingRef.current.delete(msg.id);
+          }
+        }
+
+        const remaining = await webmailManager.getScheduledMessages(selectedAccountEmail);
+        setFolderStats((prev) => ({
+          ...prev,
+          scheduled: remaining.length,
+          sent: prev.sent + dueMessages.length,
+        }));
+        if (currentFolder === 'scheduled' || currentFolder === 'sent') {
+          refreshMessages();
+        }
+      } catch {}
+    };
+
+    checkAndDispatchScheduled();
+    const timer = setInterval(checkAndDispatchScheduled, 15000);
+    return () => clearInterval(timer);
+  }, [selectedAccountEmail, mailboxPassword, currentFolder]);
 
   const handleSendEmail = async (e?: React.FormEvent | React.MouseEvent) => {
     if (e) {
@@ -1957,6 +2244,10 @@ function WebmailContent() {
   const sentCount = currentFolder === 'sent'
     ? messages.length
     : folderStats.sent;
+
+  const scheduledCount = currentFolder === 'scheduled'
+    ? messages.length
+    : folderStats.scheduled;
 
   // Armazenamento real via Migadu + cálculo dinâmico por mensagens carregadas
   const [migaduStorageUsedMB, setMigaduStorageUsedMB] = useState<number>(0);
@@ -2680,6 +2971,23 @@ function WebmailContent() {
         </button>
 
         <button
+          onClick={() => { soundEffects.playFolderSwitchSound(); setCurrentFolder('scheduled'); setSelectedMessage(null); }}
+          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl whitespace-nowrap font-bold transition-all duration-200 shrink-0 border ${
+            currentFolder === 'scheduled' 
+              ? 'bg-neutral-900 text-white shadow-xs border-neutral-900' 
+              : 'bg-neutral-100 text-neutral-600 hover:text-neutral-900 hover:bg-neutral-200/70 border-neutral-200/80'
+          }`}
+        >
+          <Calendar className="h-3.5 w-3.5" />
+          <span>Agendados</span>
+          {scheduledCount > 0 && (
+            <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ml-1 ${currentFolder === 'scheduled' ? 'bg-emerald-400 text-neutral-950' : 'bg-emerald-100 text-emerald-800'}`}>
+              {scheduledCount}
+            </span>
+          )}
+        </button>
+
+        <button
           onClick={() => { soundEffects.playFolderSwitchSound(); setCurrentFolder('trash'); setSelectedMessage(null); }}
           className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl whitespace-nowrap font-bold transition-all duration-200 shrink-0 border ${
             currentFolder === 'trash' 
@@ -2792,6 +3100,27 @@ function WebmailContent() {
                   currentFolder === 'sent' ? 'bg-white text-neutral-900' : 'bg-neutral-200 text-neutral-700'
                 }`}>
                   {sentCount}
+                </span>
+              )}
+            </button>
+
+            <button
+              onClick={() => { soundEffects.playFolderSwitchSound(); setCurrentFolder('scheduled'); }}
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 cursor-pointer border ${
+                currentFolder === 'scheduled' 
+                  ? 'bg-neutral-900 text-white border-neutral-900 font-bold shadow-xs' 
+                  : 'hover:bg-neutral-100 text-neutral-600 hover:text-neutral-900 border-transparent'
+              }`}
+            >
+              <div className="flex items-center space-x-2.5">
+                <Calendar className={`h-4 w-4 ${currentFolder === 'scheduled' ? 'text-emerald-400' : 'text-neutral-500'}`} />
+                <span>Agendados</span>
+              </div>
+              {scheduledCount > 0 && (
+                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold shadow-2xs ${
+                  currentFolder === 'scheduled' ? 'bg-emerald-400 text-neutral-950' : 'bg-emerald-100 text-emerald-800'
+                }`}>
+                  {scheduledCount}
                 </span>
               )}
             </button>
@@ -3080,8 +3409,26 @@ function WebmailContent() {
                             <span className="w-1.5 h-1.5 rounded-full bg-neutral-900 shrink-0 inline-block" />
                           )}
                           <span className={`text-xs sm:text-sm truncate ${msg.isRead ? 'text-neutral-700 font-medium' : 'text-neutral-900 font-bold'}`}>
-                            {msg.fromName}
+                            {msg.folder === 'scheduled' || msg.folder === 'sent'
+                              ? `Para: ${msg.toEmail}`
+                              : msg.fromName}
                           </span>
+                          {msg.folder === 'scheduled' && msg.scheduledFor && (
+                            <span
+                              className="bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-bold px-1.5 py-0.2 rounded-md shrink-0 flex items-center space-x-1"
+                              title="Envio programado automaticamente"
+                            >
+                              <Calendar className="w-2.5 h-2.5 text-emerald-600" />
+                              <span>
+                                {new Date(msg.scheduledFor).toLocaleDateString('pt-MZ', {
+                                  day: '2-digit',
+                                  month: 'short',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })}
+                              </span>
+                            </span>
+                          )}
                           {msg.pinned && (
                             <span className="bg-neutral-100 text-neutral-800 text-[10px] font-bold px-1.5 py-0.2 rounded-md shrink-0 border border-neutral-200 flex items-center space-x-1">
                               <Pin className="w-2.5 h-2.5" />
@@ -3303,6 +3650,64 @@ function WebmailContent() {
               </div>
 
               {/* Escudo Inteligente Anti-Phishing & Segurança WEHOSTHERE */}
+              {selectedMessage.folder === 'scheduled' && selectedMessage.scheduledFor && (
+                <div className="bg-emerald-50/95 border border-emerald-300 rounded-2xl p-4 sm:p-5 text-emerald-950 shadow-xs space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                        <Calendar className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-200/80 text-emerald-900 inline-flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          <span>Envio Programado</span>
+                        </span>
+                        <h3 className="text-xs sm:text-sm font-extrabold mt-0.5">
+                          Agendado para{' '}
+                          {new Date(selectedMessage.scheduledFor).toLocaleDateString('pt-MZ', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </h3>
+                        <p className="text-[11px] text-emerald-800">
+                          Para: <strong className="font-mono">{selectedMessage.toEmail}</strong>
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleSendScheduledNow(selectedMessage)}
+                        disabled={sendingMsg}
+                        className="px-3 py-1.5 bg-neutral-900 hover:bg-black text-white rounded-xl text-[11px] font-bold transition flex items-center space-x-1.5 cursor-pointer shadow-xs"
+                      >
+                        <Send className="w-3.5 h-3.5" />
+                        <span>{sendingMsg ? 'A enviar...' : 'Enviar Agora'}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleEditScheduledMessage(selectedMessage)}
+                        className="px-3 py-1.5 bg-white hover:bg-emerald-100 text-emerald-900 border border-emerald-300 rounded-xl text-[11px] font-bold transition flex items-center space-x-1.5 cursor-pointer"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                        <span>Editar / Reagendar</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleCancelScheduledMessage(selectedMessage)}
+                        className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-[11px] font-bold transition flex items-center space-x-1.5 cursor-pointer"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                        <span>Cancelar Agendamento</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
               {(() => {
                 const sec = analyzeEmailSecurity(selectedMessage, selectedAccountEmail, trustedSenders);
                 if (sec.level === 'safe') return null;
@@ -4297,6 +4702,90 @@ function WebmailContent() {
                   )}
                 </div>
 
+                {/* Painel Inteligente de Agendamento de Envio (Schedule Send) */}
+                {showSchedulePicker && (
+                  <div className="p-3.5 bg-neutral-950 text-white rounded-2xl border border-emerald-500/30 shadow-lg space-y-3 animate-in fade-in zoom-in-95 duration-150">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-7 h-7 rounded-lg bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-400">
+                          <Calendar className="w-3.5 h-3.5" />
+                        </div>
+                        <div>
+                          <span className="text-xs font-extrabold text-white block">Programar Envio do E-mail</span>
+                          <span className="text-[10px] text-neutral-400">
+                            Escolha um atalho inteligente ou defina a data e hora exatas
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowSchedulePicker(false);
+                          setComposeScheduledFor('');
+                        }}
+                        className="text-neutral-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition cursor-pointer"
+                        title="Fechar agendamento"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    {/* Atalhos Rápidos Inteligentes */}
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
+                      {getQuickSchedulePresets().map((preset, idx) => {
+                        const isSelected = composeScheduledFor === preset.value;
+                        return (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => setComposeScheduledFor(preset.value)}
+                            className={`p-2 rounded-xl border text-left transition cursor-pointer ${
+                              isSelected
+                                ? 'bg-emerald-500 text-neutral-950 border-emerald-400 font-extrabold shadow-xs'
+                                : 'bg-white/[0.06] hover:bg-white/10 text-neutral-200 border-white/10'
+                            }`}
+                          >
+                            <span className="text-[11px] font-bold block truncate">{preset.label}</span>
+                            <span
+                              className={`text-[10px] block truncate ${
+                                isSelected ? 'text-neutral-900 font-semibold' : 'text-neutral-400'
+                              }`}
+                            >
+                              {preset.sublabel}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Seletor de Data e Hora Personalizada */}
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 pt-1 border-t border-white/10">
+                      <div className="flex items-center space-x-2 flex-1">
+                        <Clock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                        <span className="text-[11px] font-bold text-neutral-300 whitespace-nowrap">
+                          Data e hora personalizada:
+                        </span>
+                        <input
+                          type="datetime-local"
+                          value={composeScheduledFor}
+                          min={formatToLocalDatetimeInput(new Date(Date.now() + 60000))}
+                          onChange={(e) => setComposeScheduledFor(e.target.value)}
+                          className="flex-1 px-2.5 py-1.5 bg-white/10 border border-white/20 rounded-xl text-xs font-bold text-white outline-none focus:border-emerald-400 cursor-pointer"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleScheduleEmail()}
+                        disabled={!composeScheduledFor || sendingMsg || uploadingAttachment}
+                        className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-neutral-950 font-extrabold text-xs rounded-xl transition cursor-pointer flex items-center justify-center space-x-1.5 shadow-xs"
+                      >
+                        <Calendar className="w-3.5 h-3.5" />
+                        <span>Confirmar Agendamento</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex flex-col sm:flex-row gap-2 pt-1">
                   <button
                     type="button"
@@ -4316,12 +4805,45 @@ function WebmailContent() {
                   </button>
                   <button
                     type="button"
+                    onClick={() => {
+                      if (!showSchedulePicker && !composeScheduledFor) {
+                        const presets = getQuickSchedulePresets();
+                        if (presets.length > 0) setComposeScheduledFor(presets[0].value);
+                        setShowSchedulePicker(true);
+                      } else if (showSchedulePicker && composeScheduledFor) {
+                        handleScheduleEmail();
+                      } else {
+                        setShowSchedulePicker(!showSchedulePicker);
+                      }
+                    }}
+                    disabled={sendingMsg || uploadingAttachment}
+                    className={`sm:flex-1 py-2.5 font-bold text-xs rounded-xl transition cursor-pointer shadow-2xs flex items-center justify-center space-x-1.5 border ${
+                      showSchedulePicker || composeScheduledFor
+                        ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600'
+                        : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border-emerald-300'
+                    }`}
+                    title="Programar o envio deste e-mail para uma data e hora específica"
+                  >
+                    <Calendar className="h-3.5 w-3.5 shrink-0" />
+                    <span>
+                      {composeScheduledFor
+                        ? `Agendar (${new Date(composeScheduledFor).toLocaleDateString('pt-MZ', {
+                            day: '2-digit',
+                            month: 'short',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })})`
+                        : 'Agendar Envio'}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
                     onClick={handleSendEmail}
                     disabled={sendingMsg || uploadingAttachment}
                     className="sm:flex-1 py-2.5 bg-neutral-900 hover:bg-black disabled:opacity-50 text-white font-bold text-xs rounded-xl transition cursor-pointer shadow-xs flex items-center justify-center space-x-2"
                   >
                     <Send className="h-3.5 w-3.5" />
-                    <span>{sendingMsg ? 'A Enviar...' : 'Enviar E-mail'}</span>
+                    <span>{sendingMsg ? 'A Enviar...' : 'Enviar Agora'}</span>
                   </button>
                 </div>
               </form>

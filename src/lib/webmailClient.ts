@@ -14,15 +14,18 @@ export interface WebmailMessage {
   fromName: string;
   fromEmail: string;
   toEmail: string;
+  ccEmail?: string;
+  bccEmail?: string;
   subject: string;
   body: string;
   textPreview?: string;
   date: string;
+  scheduledFor?: string;
   isRead: boolean;
   starred: boolean;
   pinned?: boolean;
   priority?: 'high' | 'normal' | 'low';
-  folder: 'inbox' | 'sent' | 'drafts' | 'trash';
+  folder: 'inbox' | 'sent' | 'drafts' | 'trash' | 'scheduled';
   avatarColor?: string;
   attachments?: WebmailAttachment[];
 }
@@ -33,6 +36,7 @@ export const ATTACHMENT_MAX_COUNT = 10; // Maximo de 10 anexos por email
 export const ATTACHMENT_TOTAL_MAX_SIZE = 25 * 1024 * 1024; // 25MB total por email
 
 const WEBMAIL_STORAGE_KEY = 'wehosthere_webmail_drafts';
+const WEBMAIL_SCHEDULED_KEY = 'wehosthere_webmail_scheduled';
 const WEBMAIL_PINNED_KEY = 'wehosthere_webmail_pinned';
 const WEBMAIL_PRIORITY_KEY = 'wehosthere_webmail_priorities';
 
@@ -140,7 +144,7 @@ export const webmailManager = {
   getMessages: async (
     accountEmail?: string,
     password?: string,
-    folder: 'inbox' | 'sent' | 'drafts' | 'trash' = 'inbox'
+    folder: 'inbox' | 'sent' | 'drafts' | 'trash' | 'scheduled' = 'inbox'
   ): Promise<WebmailMessage[]> => {
     const pinnedSet = webmailManager.getPinnedSet(accountEmail);
     const priorityMap = webmailManager.getPriorityMap(accountEmail);
@@ -171,6 +175,18 @@ export const webmailManager = {
         return new Date(b.date).getTime() - new Date(a.date).getTime();
       });
     };
+
+    // 0. Agendados (Fila de envio programado)
+    if (folder === 'scheduled') {
+      const scheduledList = await webmailManager.getScheduledMessages(accountEmail);
+      return [...scheduledList]
+        .map(enrichMessage)
+        .sort((a, b) => {
+          const tA = new Date(a.scheduledFor || a.date).getTime();
+          const tB = new Date(b.scheduledFor || b.date).getTime();
+          return tA - tB;
+        });
+    }
 
     // 1. Rascunhos (Local + IMAP se disponível)
     if (folder === 'drafts') {
@@ -511,6 +527,14 @@ export const webmailManager = {
           localStorage.setItem(WEBMAIL_STORAGE_KEY, JSON.stringify(filtered));
         }
       } catch {}
+      try {
+        const storedSched = localStorage.getItem(WEBMAIL_SCHEDULED_KEY);
+        if (storedSched) {
+          const schedList: WebmailMessage[] = JSON.parse(storedSched);
+          const filteredSched = schedList.filter((m) => m.id !== msgId);
+          localStorage.setItem(WEBMAIL_SCHEDULED_KEY, JSON.stringify(filteredSched));
+        }
+      } catch {}
       // Remove from local sent cache
       if (accountEmail) {
         try {
@@ -605,5 +629,112 @@ export const webmailManager = {
     } catch {
       return [];
     }
+  },
+
+  scheduleMessage: async (
+    accountEmail: string,
+    toEmail: string,
+    subject: string,
+    body: string,
+    scheduledForIso: string,
+    attachments?: WebmailAttachment[],
+    priority: 'high' | 'normal' | 'low' = 'normal',
+    ccEmail?: string,
+    bccEmail?: string,
+    existingId?: string
+  ): Promise<WebmailMessage> => {
+    let scheduledList: WebmailMessage[] = [];
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem(WEBMAIL_SCHEDULED_KEY);
+        scheduledList = stored ? JSON.parse(stored) : [];
+      } catch {
+        scheduledList = [];
+      }
+    }
+
+    // Preservar URLs remotas (Cloudinary https://) e data URLs moderadas
+    const safeAttachments = attachments?.map((att) => ({
+      name: att.name,
+      size: att.size,
+      type: att.type,
+      url:
+        att.url && (att.url.startsWith('http://') || att.url.startsWith('https://') || att.url.length <= 350000)
+          ? att.url
+          : '',
+    }));
+
+    const msgData: WebmailMessage = {
+      id: existingId || `sched-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      accountEmail,
+      fromName: (accountEmail || '').split('@')[0] || 'Agendado',
+      fromEmail: accountEmail,
+      toEmail,
+      ccEmail,
+      bccEmail,
+      subject: subject || '(Sem assunto)',
+      body,
+      date: new Date().toISOString(),
+      scheduledFor: scheduledForIso,
+      isRead: true,
+      starred: false,
+      priority,
+      folder: 'scheduled',
+      avatarColor: 'bg-emerald-600',
+      attachments: safeAttachments,
+    };
+
+    const existingIdx = existingId ? scheduledList.findIndex((m) => m.id === existingId) : -1;
+    if (existingIdx !== -1) {
+      scheduledList[existingIdx] = msgData;
+    } else {
+      scheduledList.unshift(msgData);
+    }
+
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(WEBMAIL_SCHEDULED_KEY, JSON.stringify(scheduledList.slice(0, 30)));
+      } catch {
+        // Se algum anexo data: excedeu a quota, sanitizar estritamente mantendo URLs https://
+        const compactList = scheduledList.slice(0, 20).map((item) => ({
+          ...item,
+          attachments: item.attachments?.map((a) => ({
+            ...a,
+            url: a.url && (a.url.startsWith('http://') || a.url.startsWith('https://')) ? a.url : '',
+          })),
+        }));
+        try {
+          localStorage.setItem(WEBMAIL_SCHEDULED_KEY, JSON.stringify(compactList));
+        } catch {}
+      }
+    }
+
+    return msgData;
+  },
+
+  getScheduledMessages: async (accountEmail?: string): Promise<WebmailMessage[]> => {
+    try {
+      const stored = typeof window !== 'undefined' ? localStorage.getItem(WEBMAIL_SCHEDULED_KEY) : null;
+      const list: WebmailMessage[] = stored ? JSON.parse(stored) : [];
+      const filtered = accountEmail
+        ? list.filter((m) => (m.accountEmail || '').toLowerCase() === accountEmail.toLowerCase())
+        : list;
+      return filtered.sort(
+        (a, b) => new Date(a.scheduledFor || a.date).getTime() - new Date(b.scheduledFor || b.date).getTime()
+      );
+    } catch {
+      return [];
+    }
+  },
+
+  removeScheduledMessage: (msgId: string): void => {
+    if (typeof window === 'undefined') return;
+    try {
+      const stored = localStorage.getItem(WEBMAIL_SCHEDULED_KEY);
+      if (!stored) return;
+      const list: WebmailMessage[] = JSON.parse(stored);
+      const filtered = list.filter((m) => m.id !== msgId);
+      localStorage.setItem(WEBMAIL_SCHEDULED_KEY, JSON.stringify(filtered));
+    } catch {}
   },
 };
