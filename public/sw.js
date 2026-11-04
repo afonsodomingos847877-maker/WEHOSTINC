@@ -1,5 +1,5 @@
 // Service Worker para WEHOSTHERE PWA
-const CACHE_NAME = 'wehosthere-v6';
+const CACHE_NAME = 'wehosthere-v7';
 const urlsToCache = [
   '/',
   '/webmail',

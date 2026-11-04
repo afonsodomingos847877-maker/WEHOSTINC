@@ -46,6 +46,37 @@ export const FOLDER_IMAP_MAP: Record<string, string> = {
 
 const WEBMAIL_SENT_KEY = 'wehosthere_webmail_sent_cache';
 
+/**
+ * Remove payloads base64 pesados antes de gravar no localStorage (evita QuotaExceededError)
+ */
+function sanitizeAttachmentsForStorage(attachments?: WebmailAttachment[]): WebmailAttachment[] | undefined {
+  if (!attachments || attachments.length === 0) return undefined;
+  return attachments.map((att) => ({
+    name: att.name,
+    size: att.size,
+    type: att.type,
+    url: att.url && att.url.length <= 32768 ? att.url : '',
+  }));
+}
+
+/**
+ * Converte uma data URL (data:mime;base64,...) em Blob binário para envio multipart sem inflação de 33% do Base64
+ */
+function dataUrlToBlob(dataUrl: string, fallbackType = 'application/octet-stream'): Blob {
+  const parts = dataUrl.split(',');
+  const header = parts[0] || '';
+  const base64 = parts[1] || '';
+  const mimeMatch = header.match(/data:([^;]+);/);
+  const mime = mimeMatch ? mimeMatch[1] : fallbackType;
+  const binaryStr = typeof atob === 'function' ? atob(base64) : Buffer.from(base64, 'base64').toString('binary');
+  const len = binaryStr.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binaryStr.charCodeAt(i);
+  }
+  return new Blob([bytes], { type: mime });
+}
+
 export const webmailManager = {
   isRealEmailAvailable: (email: string, password: string): boolean => {
     return !!(email && password);
@@ -250,25 +281,57 @@ export const webmailManager = {
     cc?: string,
     bcc?: string
   ): Promise<WebmailMessage> => {
-    const res = await fetch(apiEndpoint('/api/webmail/send'), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: accountEmail,
-        password,
-        to: toEmail,
-        cc,
-        bcc,
-        subject,
-        body,
-        priority,
-        attachments,
-      }),
-    });
+    let res: Response;
+
+    if (attachments && attachments.length > 0 && typeof FormData !== 'undefined') {
+      // Enviar como multipart/form-data binário para evitar o aumento de +33% do Base64 e erro 413
+      const formData = new FormData();
+      formData.append('email', accountEmail);
+      formData.append('password', password);
+      formData.append('to', toEmail);
+      if (cc) formData.append('cc', cc);
+      if (bcc) formData.append('bcc', bcc);
+      formData.append('subject', subject);
+      formData.append('body', body);
+      formData.append('priority', priority);
+
+      for (const att of attachments) {
+        if (att.url && att.url.startsWith('data:')) {
+          const blob = dataUrlToBlob(att.url, att.type);
+          formData.append('files', blob, att.name || 'anexo');
+        }
+      }
+
+      res = await fetch(apiEndpoint('/api/webmail/send'), {
+        method: 'POST',
+        body: formData,
+      });
+    } else {
+      res = await fetch(apiEndpoint('/api/webmail/send'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: accountEmail,
+          password,
+          to: toEmail,
+          cc,
+          bcc,
+          subject,
+          body,
+          priority,
+          attachments,
+        }),
+      });
+    }
 
     if (!res.ok) {
+      if (res.status === 413) {
+        throw new Error(
+          'Os anexos excedem o limite máximo de envio direto do servidor (~4.2 MB por mensagem). Por favor, comprima o PDF ou envie os ficheiros em e-mails separados.'
+        );
+      }
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.error || 'Nao foi possivel enviar o email.');
+      throw new Error(err.error || 'Não foi possível enviar o e-mail.');
     }
 
     const sentMessage: WebmailMessage = {
@@ -285,18 +348,23 @@ export const webmailManager = {
       priority,
       folder: 'sent',
       avatarColor: 'bg-primary-600',
-      attachments: attachments && attachments.length > 0 ? attachments : undefined,
+      attachments: sanitizeAttachmentsForStorage(attachments),
     };
 
-    // Salvar no cache local de enviados
+    // Salvar no cache local de enviados sem estourar a quota do localStorage
     if (typeof window !== 'undefined') {
       try {
         const cacheKey = `${WEBMAIL_SENT_KEY}_${accountEmail.toLowerCase()}`;
         const existing = localStorage.getItem(cacheKey);
         const list: WebmailMessage[] = existing ? JSON.parse(existing) : [];
         list.unshift(sentMessage);
-        localStorage.setItem(cacheKey, JSON.stringify(list.slice(0, 100)));
-      } catch {}
+        localStorage.setItem(cacheKey, JSON.stringify(list.slice(0, 35)));
+      } catch {
+        try {
+          const cacheKey = `${WEBMAIL_SENT_KEY}_${accountEmail.toLowerCase()}`;
+          localStorage.setItem(cacheKey, JSON.stringify([sentMessage]));
+        } catch {}
+      }
     }
 
     return sentMessage;
@@ -385,13 +453,15 @@ export const webmailManager = {
     }
     // If moving from sent, remove from local sent cache
     if (typeof window !== 'undefined' && accountEmail && fromImapFolder === 'Sent') {
-      const sentKey = `${WEBMAIL_SENT_KEY}_${accountEmail.toLowerCase()}`;
-      const stored = localStorage.getItem(sentKey);
-      if (stored) {
-        const sentList: WebmailMessage[] = JSON.parse(stored);
-        const filtered = sentList.filter((m) => m.id !== msgId && (uid ? m.uid !== uid : true));
-        localStorage.setItem(sentKey, JSON.stringify(filtered));
-      }
+      try {
+        const sentKey = `${WEBMAIL_SENT_KEY}_${accountEmail.toLowerCase()}`;
+        const stored = localStorage.getItem(sentKey);
+        if (stored) {
+          const sentList: WebmailMessage[] = JSON.parse(stored);
+          const filtered = sentList.filter((m) => m.id !== msgId && (uid ? m.uid !== uid : true));
+          localStorage.setItem(sentKey, JSON.stringify(filtered));
+        }
+      } catch {}
     }
   },
 
@@ -424,21 +494,25 @@ export const webmailManager = {
     }
     // Remove from local drafts if it is a draft
     if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem(WEBMAIL_STORAGE_KEY);
-      if (stored) {
-        const drafts: WebmailMessage[] = JSON.parse(stored);
-        const filtered = drafts.filter((m) => m.id !== msgId);
-        localStorage.setItem(WEBMAIL_STORAGE_KEY, JSON.stringify(filtered));
-      }
+      try {
+        const stored = localStorage.getItem(WEBMAIL_STORAGE_KEY);
+        if (stored) {
+          const drafts: WebmailMessage[] = JSON.parse(stored);
+          const filtered = drafts.filter((m) => m.id !== msgId);
+          localStorage.setItem(WEBMAIL_STORAGE_KEY, JSON.stringify(filtered));
+        }
+      } catch {}
       // Remove from local sent cache
       if (accountEmail) {
-        const sentKey = `${WEBMAIL_SENT_KEY}_${accountEmail.toLowerCase()}`;
-        const storedSent = localStorage.getItem(sentKey);
-        if (storedSent) {
-          const sentList: WebmailMessage[] = JSON.parse(storedSent);
-          const filteredSent = sentList.filter((m) => m.id !== msgId && (uid ? m.uid !== uid : true));
-          localStorage.setItem(sentKey, JSON.stringify(filteredSent));
-        }
+        try {
+          const sentKey = `${WEBMAIL_SENT_KEY}_${accountEmail.toLowerCase()}`;
+          const storedSent = localStorage.getItem(sentKey);
+          if (storedSent) {
+            const sentList: WebmailMessage[] = JSON.parse(storedSent);
+            const filteredSent = sentList.filter((m) => m.id !== msgId && (uid ? m.uid !== uid : true));
+            localStorage.setItem(sentKey, JSON.stringify(filteredSent));
+          }
+        } catch {}
       }
     }
   },
@@ -451,20 +525,27 @@ export const webmailManager = {
     attachments?: WebmailAttachment[],
     password?: string
   ): Promise<WebmailMessage> => {
-    const stored = typeof window !== 'undefined' ? localStorage.getItem(WEBMAIL_STORAGE_KEY) : null;
-    const drafts: WebmailMessage[] = stored ? JSON.parse(stored) : [];
+    let drafts: WebmailMessage[] = [];
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem(WEBMAIL_STORAGE_KEY);
+        drafts = stored ? JSON.parse(stored) : [];
+      } catch {
+        drafts = [];
+      }
+    }
 
     const existingIdx = drafts.findIndex(
       (m) =>
         m.folder === 'drafts' &&
-        m.accountEmail.toLowerCase() === accountEmail.toLowerCase() &&
-        m.toEmail.toLowerCase() === toEmail.toLowerCase() &&
-        m.subject.toLowerCase() === subject.toLowerCase()
+        (m.accountEmail || '').toLowerCase() === (accountEmail || '').toLowerCase() &&
+        (m.toEmail || '').toLowerCase() === (toEmail || '').toLowerCase() &&
+        (m.subject || '').toLowerCase() === (subject || '').toLowerCase()
     );
 
     const draftData = {
       accountEmail,
-      fromName: accountEmail.split('@')[0],
+      fromName: (accountEmail || '').split('@')[0] || 'Rascunho',
       fromEmail: accountEmail,
       toEmail,
       subject,
@@ -474,7 +555,7 @@ export const webmailManager = {
       starred: false,
       folder: 'drafts' as const,
       avatarColor: 'bg-gray-500',
-      attachments: attachments && attachments.length > 0 ? attachments : undefined,
+      attachments: sanitizeAttachmentsForStorage(attachments),
     };
 
     if (existingIdx !== -1) {
@@ -483,19 +564,37 @@ export const webmailManager = {
       drafts.unshift({ id: `draft-${Date.now()}`, ...draftData });
     }
 
+    // Manter no máximo 20 rascunhos leves sem base64 pesado
+    const trimmedDrafts = drafts.slice(0, 20).map((d) => ({
+      ...d,
+      attachments: sanitizeAttachmentsForStorage(d.attachments),
+    }));
+
     if (typeof window !== 'undefined') {
-      localStorage.setItem(WEBMAIL_STORAGE_KEY, JSON.stringify(drafts));
+      try {
+        localStorage.setItem(WEBMAIL_STORAGE_KEY, JSON.stringify(trimmedDrafts));
+      } catch {
+        try {
+          // Caso o localStorage esteja cheio por rascunhos antigos com base64, limpar e guardar apenas o atual
+          localStorage.removeItem(WEBMAIL_STORAGE_KEY);
+          localStorage.setItem(WEBMAIL_STORAGE_KEY, JSON.stringify([trimmedDrafts[0]]));
+        } catch {}
+      }
     }
 
     return existingIdx !== -1 ? drafts[existingIdx] : drafts[0];
   },
 
   getDrafts: async (accountEmail?: string, password?: string): Promise<WebmailMessage[]> => {
-    const stored = typeof window !== 'undefined' ? localStorage.getItem(WEBMAIL_STORAGE_KEY) : null;
-    const drafts: WebmailMessage[] = stored ? JSON.parse(stored) : [];
-    if (accountEmail) {
-      return drafts.filter((m) => m.accountEmail.toLowerCase() === accountEmail.toLowerCase());
+    try {
+      const stored = typeof window !== 'undefined' ? localStorage.getItem(WEBMAIL_STORAGE_KEY) : null;
+      const drafts: WebmailMessage[] = stored ? JSON.parse(stored) : [];
+      if (accountEmail) {
+        return drafts.filter((m) => (m.accountEmail || '').toLowerCase() === accountEmail.toLowerCase());
+      }
+      return drafts;
+    } catch {
+      return [];
     }
-    return drafts;
   },
 };

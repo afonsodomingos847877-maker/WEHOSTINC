@@ -310,37 +310,102 @@ function WebmailContent() {
     return () => clearInterval(autoSaveInterval);
   }, [showCompose, composeTo, composeSubject, composeBody, composeAttachments, selectedAccountEmail]);
 
+  // Limpar eventuais rascunhos antigos com base64 pesado no localStorage ao iniciar
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const rawDrafts = localStorage.getItem('wehosthere_webmail_drafts');
+        if (rawDrafts && rawDrafts.length > 500000) {
+          const parsed = JSON.parse(rawDrafts);
+          if (Array.isArray(parsed)) {
+            const cleaned = parsed.slice(0, 15).map((d: any) => ({
+              ...d,
+              attachments: Array.isArray(d.attachments)
+                ? d.attachments.map((a: any) => ({ name: a.name, size: a.size, type: a.type, url: '' }))
+                : undefined,
+            }));
+            localStorage.setItem('wehosthere_webmail_drafts', JSON.stringify(cleaned));
+          }
+        }
+      } catch {
+        try {
+          localStorage.removeItem('wehosthere_webmail_drafts');
+        } catch {}
+      }
+    }
+  }, []);
+
+  const readFileAsDataUrl = (file: File): Promise<{ dataUrl: string; size: number; type: string }> => {
+    return new Promise((resolve, reject) => {
+      // Se for uma imagem grande (> 500 KB), comprimir de forma inteligente via canvas para evitar erro 413 no envio
+      if (file.type.startsWith('image/') && file.type !== 'image/gif' && file.size > 500 * 1024) {
+        const img = new Image();
+        const objectUrl = URL.createObjectURL(file);
+        img.onload = () => {
+          URL.revokeObjectURL(objectUrl);
+          try {
+            const maxDim = 1800;
+            let width = img.width;
+            let height = img.height;
+            if (width > maxDim || height > maxDim) {
+              if (width > height) {
+                height = Math.round((height * maxDim) / width);
+                width = maxDim;
+              } else {
+                width = Math.round((width * maxDim) / height);
+                height = maxDim;
+              }
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+              ctx.drawImage(img, 0, 0, width, height);
+              const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.82);
+              const approxSize = Math.round(((compressedDataUrl.split(',')[1] || '').length * 3) / 4);
+              if (approxSize < file.size) {
+                resolve({ dataUrl: compressedDataUrl, size: approxSize, type: 'image/jpeg' });
+                return;
+              }
+            }
+          } catch {}
+          // Fallback para leitura direta
+          const reader = new FileReader();
+          reader.onload = () => resolve({ dataUrl: String(reader.result || ''), size: file.size, type: file.type });
+          reader.onerror = () => reject(new Error('Falha ao ler ficheiro'));
+          reader.readAsDataURL(file);
+        };
+        img.onerror = () => {
+          URL.revokeObjectURL(objectUrl);
+          const reader = new FileReader();
+          reader.onload = () => resolve({ dataUrl: String(reader.result || ''), size: file.size, type: file.type });
+          reader.onerror = () => reject(new Error('Falha ao ler ficheiro'));
+          reader.readAsDataURL(file);
+        };
+        img.src = objectUrl;
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = () => resolve({ dataUrl: String(reader.result || ''), size: file.size, type: file.type || 'application/octet-stream' });
+      reader.onerror = () => reject(new Error('Falha ao ler ficheiro'));
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleComposeFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const fileList = e.target.files;
+    if (!fileList || fileList.length === 0) return;
 
     setAttachmentError('');
 
-    // Validação de número máximo de anexos
-    if (composeAttachments.length >= ATTACHMENT_MAX_COUNT) {
-      setAttachmentError(`Máximo de ${ATTACHMENT_MAX_COUNT} anexos permitidos por email.`);
-      return;
-    }
-
-    // Validação de tamanho individual (máximo 10MB)
-    if (file.size > ATTACHMENT_MAX_SIZE) {
-      setAttachmentError(`O ficheiro é muito grande! O tamanho máximo permitido é ${ATTACHMENT_MAX_SIZE / (1024 * 1024)}MB.`);
-      return;
-    }
-
-    // Validação de tamanho total
-    const currentTotalSize = composeAttachments.reduce((sum, att) => sum + (att.size || 0), 0);
-    if (currentTotalSize + file.size > ATTACHMENT_TOTAL_MAX_SIZE) {
-      setAttachmentError(`O tamanho total dos anexos excede o limite de ${ATTACHMENT_TOTAL_MAX_SIZE / (1024 * 1024)}MB.`);
-      return;
-    }
-
-    // Validação de tipo
     const allowedTypes = [
       'application/pdf',
       'image/jpeg',
       'image/png',
       'image/gif',
+      'image/webp',
       'application/msword',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       'application/vnd.ms-excel',
@@ -348,43 +413,56 @@ function WebmailContent() {
       'text/plain',
       'application/zip'
     ];
-    
-    if (!allowedTypes.includes(file.type) && !file.type.startsWith('image/')) {
-      setAttachmentError('Tipo de ficheiro não permitido. Formatos aceitos: PDF, Imagens, Word, Excel, Texto, ZIP.');
-      return;
-    }
+
+    // Limite seguro de payload binário para funções serverless (4.2 MB total após compressão de imagens)
+    const SERVER_MAX_TOTAL_BYTES = Math.floor(4.2 * 1024 * 1024);
 
     setUploadingAttachment(true);
-    const formData = new FormData();
-    formData.append('file', file);
-
     try {
-      const res = await fetch(apiEndpoint('/api/webmail/upload-attachment'), {
-        method: 'POST',
-        body: formData
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success && data.content) {
-          // Store base64 content in the URL field for later processing
-          const base64Url = `data:${data.type};base64,${data.content}`;
-          soundEffects.playAttachSound();
-          setComposeAttachments(prev => [
-            ...prev,
-            {
-              url: base64Url,
-              name: data.name || file.name,
-              size: data.size || file.size,
-              type: data.type || file.type
-            }
-          ]);
+      const filesArray = Array.from(fileList);
+      if (composeAttachments.length + filesArray.length > ATTACHMENT_MAX_COUNT) {
+        setAttachmentError(`Máximo de ${ATTACHMENT_MAX_COUNT} anexos permitidos por e-mail.`);
+        return;
+      }
+
+      let runningTotalSize = composeAttachments.reduce((sum, att) => sum + (att.size || 0), 0);
+      const newAttachments: WebmailAttachment[] = [];
+
+      for (const file of filesArray) {
+        if (!allowedTypes.includes(file.type) && !file.type.startsWith('image/')) {
+          setAttachmentError(`Tipo de ficheiro não permitido (${file.name}). Formatos aceites: PDF, Imagens, Word, Excel, Texto, ZIP.`);
+          return;
         }
-      } else {
-        setAttachmentError('Erro ao fazer upload do ficheiro. Tente novamente.');
+
+        if (file.size > ATTACHMENT_MAX_SIZE) {
+          setAttachmentError(`O ficheiro "${file.name}" é muito grande! O tamanho máximo permitido é ${ATTACHMENT_MAX_SIZE / (1024 * 1024)}MB.`);
+          return;
+        }
+
+        const processed = await readFileAsDataUrl(file);
+        if (runningTotalSize + processed.size > SERVER_MAX_TOTAL_BYTES) {
+          setAttachmentError(
+            `O tamanho total dos anexos (${((runningTotalSize + processed.size) / (1024 * 1024)).toFixed(1)} MB) excede o limite de envio direto do servidor (4.2 MB). Comprima o PDF ou envie em e-mails separados.`
+          );
+          return;
+        }
+
+        runningTotalSize += processed.size;
+        newAttachments.push({
+          url: processed.dataUrl,
+          name: file.name,
+          size: processed.size,
+          type: processed.type,
+        });
+      }
+
+      if (newAttachments.length > 0) {
+        soundEffects.playAttachSound();
+        setComposeAttachments(prev => [...prev, ...newAttachments]);
       }
     } catch (err) {
       console.error('Erro no upload de anexo do webmail:', err);
-      setAttachmentError('Erro de conexão ao fazer upload. Verifique sua internet.');
+      setAttachmentError('Erro ao anexar o ficheiro. Tente novamente.');
     } finally {
       setUploadingAttachment(false);
       e.target.value = '';
@@ -500,9 +578,23 @@ function WebmailContent() {
     });
   };
 
+  const formatTemplateBodyToHtml = (rawBody: string): string => {
+    if (!rawBody) return '';
+    // Se já for um template HTML completo (ex: tabelas), apenas remover eventuais ** soltos fora de tags
+    if (/<(table|div|p|ul|ol|h[1-6])\b/i.test(rawBody)) {
+      return rawBody.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    }
+    return rawBody
+      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+      .split(/\n\n+/)
+      .map(paragraph => `<p>${paragraph.trim().replace(/\n/g, '<br/>')}</p>`)
+      .join('');
+  };
+
   const handleSelectTemplate = (template: EmailTemplate) => {
     setComposeSubject(templateLanguage === 'pt' ? template.subject : template.subjectEN);
-    setComposeBody(templateLanguage === 'pt' ? template.body : template.bodyEN);
+    const rawBody = templateLanguage === 'pt' ? template.body : template.bodyEN;
+    setComposeBody(formatTemplateBodyToHtml(rawBody));
     setShowTemplateSelector(false);
   };
 
@@ -3114,6 +3206,7 @@ function WebmailContent() {
                         <span>{uploadingAttachment ? 'A carregar...' : '📎 Anexar Ficheiro'}</span>
                         <input
                           type="file"
+                          multiple
                           className="hidden"
                           onChange={handleComposeFileUpload}
                           disabled={uploadingAttachment}
