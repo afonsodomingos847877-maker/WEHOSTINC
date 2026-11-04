@@ -33,6 +33,7 @@ export default function ReauthenticationModal({
   const [error, setError] = useState<string>('');
   const [success, setSuccess] = useState<boolean>(false);
   const [resendCooldown, setResendCooldown] = useState<number>(0);
+  const [verificationToken, setVerificationToken] = useState<string>('');
   const [isShaking, setIsShaking] = useState<boolean>(false);
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);

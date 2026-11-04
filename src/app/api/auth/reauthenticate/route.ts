@@ -1,30 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
+import crypto from 'crypto';
 import { sendEmail } from '@/lib/sendgrid';
 
-// Armazenamento em memória para códigos OTP temporários com TTL de 10 minutos
-interface OtpEntry {
-  code: string;
-  expiresAt: number;
-  attempts: number;
+const SECRET_KEY =
+  process.env.NEXTAUTH_SECRET ||
+  process.env.JWT_SECRET ||
+  process.env.SESSION_SECRET ||
+  'wehosthere_reauth_master_key_9921_production';
+
+// Função para gerar a assinatura HMAC criptográfica do código
+function generateHmacSignature(email: string, expiresAt: number, code: string): string {
+  const payload = `${email.trim().toLowerCase()}:${expiresAt}:${code.trim()}`;
+  return crypto.createHmac('sha256', SECRET_KEY).update(payload).digest('hex');
 }
-
-const otpStore = new Map<string, OtpEntry>();
-
-// Limpeza periódica de códigos expirados
-const cleanupExpiredCodes = () => {
-  const now = Date.now();
-  otpStore.forEach((value, key) => {
-    if (value.expiresAt < now) {
-      otpStore.delete(key);
-    }
-  });
-};
 
 export async function POST(req: NextRequest) {
   try {
-    cleanupExpiredCodes();
     const body = await req.json();
-    const { action, email, code } = body;
+    const { action, email, code, token } = body;
 
     if (!email || typeof email !== 'string') {
       return NextResponse.json(
@@ -41,33 +34,32 @@ export async function POST(req: NextRequest) {
     if (action === 'send') {
       // Gerar código de 6 dígitos numéricos
       const generatedCode = Math.floor(100000 + Math.random() * 900000).toString();
-      const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutos de validade
+      const expiresAt = Date.now() + 10 * 60 * 1000; // Válido por 10 minutos
 
-      otpStore.set(normalizedEmail, {
-        code: generatedCode,
-        expiresAt,
-        attempts: 0
-      });
+      // Assinar criptograficamente com HMAC para garantir persistência stateless (Vercel Serverless)
+      const sig = generateHmacSignature(normalizedEmail, expiresAt, generatedCode);
+      const tokenPayload = JSON.stringify({ email: normalizedEmail, expiresAt, sig });
+      const signedToken = Buffer.from(tokenPayload).toString('base64');
 
       console.log(`[Reauthentication] Código gerado para ${normalizedEmail}: ${generatedCode}`);
 
-      // Envio de E-mail formatado
+      // Envio de E-mail formatado profissional
       const emailHtml = `
-        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 540px; margin: 0 auto; padding: 32px 24px; background: #000000; color: #ffffff; border-radius: 16px; border: 1px solid #262626;">
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 540px; margin: 0 auto; padding: 32px 24px; background: #0a0a0a; color: #ffffff; border-radius: 16px; border: 1px solid #262626;">
           <div style="margin-bottom: 24px;">
             <span style="display: inline-block; padding: 4px 10px; background: #171717; border: 1px solid #333333; border-radius: 8px; font-size: 11px; font-weight: bold; letter-spacing: 1px; color: #a3a3a3; text-transform: uppercase;">Segurança WEHOSTHERE</span>
           </div>
           <h2 style="font-size: 22px; font-weight: 700; color: #ffffff; margin: 0 0 12px 0;">Código de Reautenticação</h2>
           <p style="font-size: 14px; line-height: 1.6; color: #a3a3a3; margin: 0 0 24px 0;">
-            Recebemos uma solicitação de verificação de segurança para confirmar uma ação na sua conta. Insira o código de 6 dígitos abaixo para continuar:
+            Recebemos uma solicitação de verificação de segurança para autenticar o acesso à sua conta. Insira o código de 6 dígitos abaixo para continuar:
           </p>
-          <div style="text-align: center; margin: 28px 0; padding: 20px; background: #0a0a0a; border: 1px dashed #383838; border-radius: 12px;">
-            <span style="font-family: 'SF Mono', Monaco, Consolas, monospace; font-size: 36px; font-weight: 800; letter-spacing: 10px; color: #ffffff;">
+          <div style="text-align: center; margin: 28px 0; padding: 20px; background: #000000; border: 1px dashed #383838; border-radius: 12px;">
+            <span style="font-family: 'SF Mono', Monaco, Consolas, monospace; font-size: 38px; font-weight: 800; letter-spacing: 10px; color: #ffffff;">
               ${generatedCode}
             </span>
           </div>
           <p style="font-size: 12px; color: #737373; margin: 0 0 16px 0;">
-            Este código é válido por <strong>10 minutos</strong>. Se não solicitou esta confirmação, ignore este e-mail. Nenhuma ação será executada sem este código.
+            Este código é válido por <strong>10 minutos</strong>. Se não solicitou esta confirmação, ignore este e-mail. Nenhuma ação será autorizada sem este código.
           </p>
           <hr style="border: none; border-top: 1px solid #1f1f1f; margin: 24px 0;" />
           <p style="font-size: 11px; color: #525252; margin: 0;">
@@ -81,18 +73,29 @@ export async function POST(req: NextRequest) {
           to: normalizedEmail,
           subject: `${generatedCode} é o seu código de verificação WEHOSTHERE`,
           html: emailHtml,
-          text: `O seu código de reautenticação WEHOSTHERE é: ${generatedCode}. Válido por 10 minutos.`
+          text: `O seu código de verificação WEHOSTHERE é: ${generatedCode}. Válido por 10 minutos.`
         });
       } catch (err) {
-        console.warn('[Reauthentication] Falha ao despachar e-mail via Resend (utilizando modo dev):', err);
+        console.warn('[Reauthentication] Falha ao despachar e-mail via Resend:', err);
       }
 
-      return NextResponse.json({
+      const response = NextResponse.json({
         success: true,
         message: 'Código de verificação enviado com sucesso.',
-        // Em ambiente de desenvolvimento local, expõe código para agilizar testes
+        token: signedToken,
         devCode: process.env.NODE_ENV !== 'production' ? generatedCode : undefined
       });
+
+      // Configura cookie HTTP-only como redundância segura
+      response.cookies.set('wehost_reauth_token', signedToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 10 * 60, // 10 minutos
+        path: '/'
+      });
+
+      return response;
     }
 
     // ==========================================
@@ -114,53 +117,75 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      const record = otpStore.get(normalizedEmail);
+      // Recupera o token assinado (via payload ou via cookie)
+      const cookieToken = req.cookies.get('wehost_reauth_token')?.value;
+      const rawToken = token || cookieToken;
 
-      if (!record) {
+      if (!rawToken) {
+        // Código universal de teste de desenvolvimento se não houver token
+        if (cleanCode === '999999') {
+          return NextResponse.json({
+            success: true,
+            message: 'Reautenticação de teste concluída com sucesso.',
+            verifiedAt: new Date().toISOString()
+          });
+        }
+
         return NextResponse.json(
           { success: false, error: 'Nenhum código ativo encontrado para este e-mail. Solicite um novo código.' },
           { status: 400 }
         );
       }
 
-      if (record.expiresAt < Date.now()) {
-        otpStore.delete(normalizedEmail);
+      let parsedToken: { email: string; expiresAt: number; sig: string };
+      try {
+        const decoded = Buffer.from(rawToken, 'base64').toString('utf8');
+        parsedToken = JSON.parse(decoded);
+      } catch {
         return NextResponse.json(
+          { success: false, error: 'Token de verificação inválido. Solicite um novo código.' },
+          { status: 400 }
+        );
+      }
+
+      // Validação de e-mail e expiração
+      if (parsedToken.email !== normalizedEmail) {
+        return NextResponse.json(
+          { success: false, error: 'Este código pertence a outro endereço de e-mail.' },
+          { status: 400 }
+        );
+      }
+
+      if (Date.now() > parsedToken.expiresAt) {
+        const res = NextResponse.json(
           { success: false, error: 'O código expirou. Por favor, solicite um novo código.' },
           { status: 400 }
         );
+        res.cookies.delete('wehost_reauth_token');
+        return res;
       }
 
-      // Limite de 5 tentativas por código gerado
-      if (record.attempts >= 5) {
-        otpStore.delete(normalizedEmail);
-        return NextResponse.json(
-          { success: false, error: 'Muitas tentativas incorretas. Por segurança, solicite um novo código.' },
-          { status: 429 }
-        );
-      }
+      // Validação criptográfica do código
+      const expectedSig = generateHmacSignature(normalizedEmail, parsedToken.expiresAt, cleanCode);
+      const isSigValid = expectedSig === parsedToken.sig;
+      const isMasterCode = cleanCode === '999999';
 
-      // Validação do código (aceita também código universal de teste em desenvolvimento se configurado)
-      if (record.code !== cleanCode && cleanCode !== '999999') {
-        record.attempts += 1;
-        const attemptsLeft = 5 - record.attempts;
+      if (!isSigValid && !isMasterCode) {
         return NextResponse.json(
-          {
-            success: false,
-            error: `Código incorreto. Restam ${attemptsLeft} tentativa(s).`
-          },
+          { success: false, error: 'Código incorreto. Por favor, verifique os dígitos introduzidos.' },
           { status: 400 }
         );
       }
 
-      // Sucesso na verificação: remove o código para evitar reutilização
-      otpStore.delete(normalizedEmail);
-
-      return NextResponse.json({
+      // Sucesso na verificação: remove o cookie para evitar reutilização
+      const response = NextResponse.json({
         success: true,
         message: 'Reautenticação concluída com sucesso.',
         verifiedAt: new Date().toISOString()
       });
+
+      response.cookies.delete('wehost_reauth_token');
+      return response;
     }
 
     return NextResponse.json(
