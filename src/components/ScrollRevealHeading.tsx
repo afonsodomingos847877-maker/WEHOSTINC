@@ -6,17 +6,25 @@ import { Sparkles } from 'lucide-react';
 interface ScrollRevealHeadingProps {
   text: string;
   badge?: string;
+  badgeIcon?: React.ReactNode;
   subtitle?: string;
   className?: string;
+  titleClassName?: string;
   highlightWords?: string[];
+  align?: 'center' | 'left';
+  showAccentLine?: boolean;
 }
 
 export default function ScrollRevealHeading({
   text,
-  badge = 'Diferenciais Exclusivos',
+  badge,
+  badgeIcon,
   subtitle,
   className = '',
-  highlightWords = ['WEHOSTHERE?', 'WEHOSTHERE']
+  titleClassName = '',
+  highlightWords = ['WEHOSTHERE?', 'WEHOSTHERE', 'prática.', 'prática'],
+  align = 'center',
+  showAccentLine = true
 }: ScrollRevealHeadingProps) {
   const [isInView, setIsInView] = useState(false);
   const [scrollDirection, setScrollDirection] = useState<'down' | 'up'>('down');
@@ -54,8 +62,8 @@ export default function ScrollRevealHeading({
         }
       },
       {
-        threshold: 0.2,
-        rootMargin: '0px 0px -50px 0px'
+        threshold: 0.15,
+        rootMargin: '0px 0px -40px 0px'
       }
     );
 
@@ -64,9 +72,13 @@ export default function ScrollRevealHeading({
   }, []);
 
   const words = text.split(' ');
+  const isLeft = align === 'left';
 
   return (
-    <div ref={containerRef} className={`text-center select-none ${className}`}>
+    <div
+      ref={containerRef}
+      className={`${isLeft ? 'text-left items-start' : 'text-center items-center'} flex flex-col select-none ${className}`}
+    >
       {/* Badge decorativo animado */}
       {badge && (
         <div
@@ -78,13 +90,19 @@ export default function ScrollRevealHeading({
               : 'opacity-0 scale-90 -translate-y-4'
           }`}
         >
-          <Sparkles className="w-3 h-3 text-primary-500 animate-pulse" />
+          {badgeIcon || <Sparkles className="w-3.5 h-3.5 text-primary-500 animate-pulse" />}
           <span>{badge}</span>
         </div>
       )}
 
       {/* Título com animação dividida por palavras e direção de rolagem */}
-      <h2 className="text-xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 tracking-tight leading-tight flex flex-wrap justify-center gap-x-2 gap-y-1">
+      <h2
+        className={`font-black text-gray-900 tracking-tight leading-[1.15] flex flex-wrap ${
+          isLeft ? 'justify-start' : 'justify-center'
+        } gap-x-2 gap-y-1 ${
+          titleClassName || 'text-xl sm:text-3xl lg:text-4xl'
+        }`}
+      >
         {words.map((word, index) => {
           const cleanWord = word.trim();
           const isHighlight = highlightWords.some(
@@ -117,18 +135,22 @@ export default function ScrollRevealHeading({
       </h2>
 
       {/* Linha de acento animada expansível */}
-      <div className="flex justify-center mt-3.5 mb-2">
-        <div
-          className={`h-1 bg-gradient-to-r from-primary-600 via-blue-500 to-primary-600 rounded-full transition-all duration-800 ease-out shadow-xs ${
-            isInView ? 'w-16 opacity-100' : 'w-0 opacity-0'
-          }`}
-        />
-      </div>
+      {showAccentLine && (
+        <div className={`flex ${isLeft ? 'justify-start' : 'justify-center'} mt-3 mb-2 w-full`}>
+          <div
+            className={`h-1 bg-gradient-to-r from-primary-600 via-blue-500 to-primary-600 rounded-full transition-all duration-800 ease-out shadow-xs ${
+              isInView ? 'w-16 opacity-100' : 'w-0 opacity-0'
+            }`}
+          />
+        </div>
+      )}
 
       {/* Subtítulo opcional com fade suave */}
       {subtitle && (
         <p
-          className={`text-xs sm:text-sm text-gray-500 max-w-lg mx-auto transition-all duration-700 delay-300 ease-out mt-2 ${
+          className={`text-sm sm:text-base text-slate-600 leading-relaxed font-normal transition-all duration-700 delay-200 ease-out mt-3 ${
+            isLeft ? 'max-w-xl' : 'max-w-lg mx-auto'
+          } ${
             isInView
               ? 'opacity-100 translate-y-0'
               : scrollDirection === 'down'

@@ -889,18 +889,16 @@ export default function Home() {
 
             {/* Coluna de Texto & Conteúdo */}
             <div className="lg:col-span-5 flex flex-col items-start text-left order-1 lg:order-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-primary-50 text-primary-700 border border-primary-200 mb-3 shadow-xs">
-                <GraduationCap className="w-4 h-4 text-primary-600" />
-                <span>Academia WEHOSTHERE</span>
-              </span>
-
-              <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight leading-[1.15] mb-4">
-                Aprende tecnologia na prática.
-              </h2>
-
-              <p className="text-sm sm:text-base text-slate-600 leading-relaxed mb-6 font-normal">
-                Desenvolve competências reais em Inteligência Artificial, Engenharia Cloud, Desenvolvimento Web e Automações com os especialistas que operam a infraestrutura da WEHOSTHERE em Moçambique.
-              </p>
+              <ScrollRevealHeading
+                text="Aprende na prática."
+                badge="Academia WEHOSTHERE"
+                badgeIcon={<GraduationCap className="w-4 h-4 text-primary-600" />}
+                subtitle="Aprende com especialistas e desenvolve competências reais em IA, Cloud, Desenvolvimento Web e Automações. Transforma conhecimento em soluções tecnológicas."
+                align="left"
+                titleClassName="text-2xl sm:text-4xl lg:text-5xl"
+                highlightWords={['prática.']}
+                className="mb-6 w-full"
+              />
 
               {/* 3 Pontos Chave */}
               <div className="space-y-3 mb-8 w-full">
