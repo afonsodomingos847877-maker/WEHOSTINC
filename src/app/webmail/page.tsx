@@ -5,10 +5,11 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
   Mail, Inbox, Send, Star, Trash2, Edit3, Search, RefreshCw, 
-  ArrowLeft, CheckCircle2, ShieldCheck, User, Paperclip, Reply, Forward,
+  ArrowLeft, CheckCircle2, ShieldCheck, ShieldAlert, User, Paperclip, Reply, Forward,
   FileText, LogOut, ChevronRight, X, AlertCircle, Sparkles, Clock, Printer, Download, Loader2, Filter, Maximize2, Minimize2, Bold, Italic, Underline, Type,
   Wand2, Bot, FileSignature, Lightbulb, Check, Wifi, WifiOff, Pin, PinOff, Flag, Flame, Lock, Key, Eye, EyeOff,
-  Bell, Calendar, TrendingUp, LayoutGrid, HelpCircle, Smartphone, Laptop, Monitor
+  Bell, Calendar, TrendingUp, LayoutGrid, HelpCircle, Smartphone, Laptop, Monitor,
+  Globe, Languages, Sun, Sunset, Moon, MessageSquare, Image as ImageIcon
 } from 'lucide-react';
 import { auth, User as AuthUser } from '@/lib/auth';
 import { dataManager, EmailAccount } from '@/lib/data';
@@ -1297,13 +1298,20 @@ function WebmailContent() {
     return (!msg.isRead && ageHours >= 2) || ageHours >= 18;
   };
 
-  const getDynamicUserGreeting = (): { greeting: string; userName: string } => {
+  const getDynamicUserGreeting = (): {
+    greeting: string;
+    period: 'morning' | 'afternoon' | 'evening';
+    userName: string;
+  } => {
     const hour = new Date().getHours();
-    let greeting = '☀️ Bom dia';
+    let greeting = 'Bom dia';
+    let period: 'morning' | 'afternoon' | 'evening' = 'morning';
     if (hour >= 12 && hour < 18) {
-      greeting = '🌤️ Boa tarde';
+      greeting = 'Boa tarde';
+      period = 'afternoon';
     } else if (hour >= 18 || hour < 5) {
-      greeting = '🌙 Boa noite';
+      greeting = 'Boa noite';
+      period = 'evening';
     }
 
     let rawName = (signatureForm.fullName || '').trim();
@@ -1325,6 +1333,7 @@ function WebmailContent() {
 
     return {
       greeting,
+      period,
       userName: rawName || 'Utilizador',
     };
   };
@@ -2170,7 +2179,14 @@ function WebmailContent() {
 
       {/* Card Flutuante Inteligente de Saudação, Novos E-mails & Pendências (Entrada & Saída Cinematográfica) */}
       {floatingBriefing && floatingBriefing.isOpen && mailboxPassword && (() => {
-        const { greeting, userName } = getDynamicUserGreeting();
+        const { greeting, period, userName } = getDynamicUserGreeting();
+        const GreetingIcon = period === 'morning' ? Sun : period === 'afternoon' ? Sunset : Moon;
+        const greetingIconColor =
+          period === 'morning'
+            ? 'text-amber-400'
+            : period === 'afternoon'
+            ? 'text-orange-400'
+            : 'text-indigo-300';
         const hasPendingItems =
           floatingBriefing.unreadCount > 0 ||
           floatingBriefing.overdueCount > 0 ||
@@ -2195,19 +2211,30 @@ function WebmailContent() {
                     <Bell className="w-4 h-4 animate-bounce" />
                   </div>
                   <div>
-                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-400 block">
-                      {floatingBriefing.type === 'new_incoming'
-                        ? '🔔 Novo E-mail Recebido'
-                        : '📬 Assistente Webmail WEHOSTHERE'}
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+                      {floatingBriefing.type === 'new_incoming' ? (
+                        <>
+                          <Mail className="w-3 h-3 text-emerald-400" />
+                          <span>Novo E-mail Recebido</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-3 h-3 text-emerald-400" />
+                          <span>Assistente Webmail WEHOSTHERE</span>
+                        </>
+                      )}
                     </span>
-                    <h4 className="text-xs sm:text-sm font-extrabold text-white">
-                      {floatingBriefing.type === 'new_incoming'
-                        ? `${greeting}, ${userName}! Chegou ${
-                            floatingBriefing.unreadCount === 1
-                              ? '1 novo e-mail'
-                              : `${floatingBriefing.unreadCount} novos e-mails`
-                          }`
-                        : `${greeting}, ${userName}! 👋`}
+                    <h4 className="text-xs sm:text-sm font-extrabold text-white flex items-center gap-1.5 mt-0.5">
+                      <GreetingIcon className={`w-4 h-4 shrink-0 ${greetingIconColor}`} />
+                      <span>
+                        {floatingBriefing.type === 'new_incoming'
+                          ? `${greeting}, ${userName}! Chegou ${
+                              floatingBriefing.unreadCount === 1
+                                ? '1 novo e-mail'
+                                : `${floatingBriefing.unreadCount} novos e-mails`
+                            }`
+                          : `${greeting}, ${userName}!`}
+                      </span>
                     </h4>
                     {floatingBriefing.type === 'welcome' && (
                       <p className="text-[11px] text-neutral-300 mt-0.5">
@@ -2239,7 +2266,7 @@ function WebmailContent() {
                     {floatingBriefing.unreadCount > 0 && (
                       <div className="flex items-center justify-between">
                         <span className="flex items-center space-x-2 text-neutral-200">
-                          <span>📩</span>
+                          <Mail className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                           <span>E-mails novos / não lidos:</span>
                         </span>
                         <span className="font-extrabold text-emerald-400 bg-emerald-500/15 px-2 py-0.5 rounded-full">
@@ -2251,7 +2278,7 @@ function WebmailContent() {
                     {floatingBriefing.overdueCount > 0 && (
                       <div className="flex items-center justify-between">
                         <span className="flex items-center space-x-2 text-neutral-200">
-                          <span>⏳</span>
+                          <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                           <span>Em atraso / sem resposta:</span>
                         </span>
                         <span className="font-extrabold text-amber-300 bg-amber-500/20 px-2 py-0.5 rounded-full">
@@ -2263,7 +2290,7 @@ function WebmailContent() {
                     {floatingBriefing.urgentCount > 0 && (
                       <div className="flex items-center justify-between">
                         <span className="flex items-center space-x-2 text-neutral-200">
-                          <span>⚡</span>
+                          <Flame className="w-3.5 h-3.5 text-rose-400 shrink-0" />
                           <span>Alta prioridade não lidos:</span>
                         </span>
                         <span className="font-extrabold text-rose-300 bg-rose-500/20 px-2 py-0.5 rounded-full">
@@ -2295,9 +2322,10 @@ function WebmailContent() {
                         if (firstUnread) handleSelectMessage(firstUnread);
                         dismissFloatingBriefing();
                       }}
-                      className="flex-1 py-2 px-3 bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-extrabold text-[11px] rounded-xl transition cursor-pointer text-center shadow-xs"
+                      className="flex-1 py-2 px-3 bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-extrabold text-[11px] rounded-xl transition cursor-pointer text-center shadow-xs flex items-center justify-center gap-1.5"
                     >
-                      Ver Novos ({floatingBriefing.unreadCount})
+                      <Mail className="w-3.5 h-3.5" />
+                      <span>Ver Novos ({floatingBriefing.unreadCount})</span>
                     </button>
                   )}
                   {floatingBriefing.overdueCount > 0 && (
@@ -2310,9 +2338,10 @@ function WebmailContent() {
                         if (firstOverdue) handleSelectMessage(firstOverdue);
                         dismissFloatingBriefing();
                       }}
-                      className="flex-1 py-2 px-3 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-bold text-[11px] rounded-xl transition cursor-pointer text-center"
+                      className="flex-1 py-2 px-3 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-bold text-[11px] rounded-xl transition cursor-pointer text-center flex items-center justify-center gap-1.5"
                     >
-                      ⏳ Ver em Atraso ({floatingBriefing.overdueCount})
+                      <Clock className="w-3.5 h-3.5" />
+                      <span>Ver em Atraso ({floatingBriefing.overdueCount})</span>
                     </button>
                   )}
                 </div>
@@ -3166,13 +3195,14 @@ function WebmailContent() {
                       )}
                       {selectedMessage.priority === 'high' && (
                         <span className="bg-rose-100 text-rose-800 text-xs font-black px-2.5 py-0.5 rounded-full border border-rose-200 flex items-center space-x-1 shrink-0">
-                          <span>⚡</span>
+                          <Flame className="w-3 h-3 text-rose-600 fill-rose-600" />
                           <span>Alta Prioridade</span>
                         </span>
                       )}
                       {selectedMessage.priority === 'low' && (
-                        <span className="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-0.5 rounded-full border border-blue-200 shrink-0">
-                          🔵 Baixa Prioridade
+                        <span className="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-0.5 rounded-full border border-blue-200 flex items-center space-x-1 shrink-0">
+                          <Flag className="w-3 h-3 text-blue-600" />
+                          <span>Baixa Prioridade</span>
                         </span>
                       )}
                     </div>
@@ -3297,13 +3327,23 @@ function WebmailContent() {
                         <div>
                           <div className="flex items-center gap-2">
                             <span
-                              className={`text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                              className={`text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full inline-flex items-center gap-1 ${
                                 isHigh
                                   ? 'bg-rose-200/80 text-rose-900'
                                   : 'bg-amber-200/80 text-amber-900'
                               }`}
                             >
-                              {isHigh ? '🛡️ Risco Elevado Detetado' : '⚠️ Alerta de Segurança IA'}
+                              {isHigh ? (
+                                <>
+                                  <ShieldAlert className="w-3 h-3 text-rose-800 shrink-0" />
+                                  <span>Risco Elevado Detetado</span>
+                                </>
+                              ) : (
+                                <>
+                                  <AlertCircle className="w-3 h-3 text-amber-800 shrink-0" />
+                                  <span>Alerta de Segurança IA</span>
+                                </>
+                              )}
                             </span>
                           </div>
                           <h3 className="text-xs sm:text-sm font-extrabold mt-0.5">{sec.title}</h3>
@@ -3377,7 +3417,7 @@ function WebmailContent() {
                     {/* Seletor de Tradução Instantânea (Português / Inglês) */}
                     <div className="flex items-center bg-white/10 border border-white/15 rounded-xl p-0.5 mr-0.5">
                       <span className="text-[10px] font-bold text-neutral-300 px-2 flex items-center gap-1">
-                        <span>🌐</span>
+                        <Globe className="h-3 w-3 text-emerald-400 shrink-0" />
                         <span className="hidden sm:inline">Traduzir:</span>
                       </span>
                       <button
@@ -3394,7 +3434,7 @@ function WebmailContent() {
                         {isTranslatingEmail === 'pt' ? (
                           <Loader2 className="h-3 w-3 animate-spin" />
                         ) : (
-                          <span>🇵🇹</span>
+                          <Languages className="h-3 w-3 opacity-85" />
                         )}
                         <span>Português</span>
                       </button>
@@ -3412,7 +3452,7 @@ function WebmailContent() {
                         {isTranslatingEmail === 'en' ? (
                           <Loader2 className="h-3 w-3 animate-spin" />
                         ) : (
-                          <span>🇬🇧</span>
+                          <Languages className="h-3 w-3 opacity-85" />
                         )}
                         <span>Inglês</span>
                       </button>
@@ -3491,7 +3531,7 @@ function WebmailContent() {
                     <div className="p-3.5 sm:p-4 bg-white/[0.07] rounded-xl border border-white/15 text-xs text-neutral-100 relative space-y-2.5">
                       <div className="flex items-center justify-between pr-6">
                         <div className="flex items-center space-x-2">
-                          <span className="text-sm">📌</span>
+                          <Pin className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
                           <span className="font-bold text-white tracking-wide text-xs sm:text-[13px]">
                             Resumo Inteligente da Mensagem
                           </span>
@@ -3517,7 +3557,7 @@ function WebmailContent() {
 
                       {actionLine && (
                         <div className="pt-2 mt-2 border-t border-white/10 flex items-start space-x-2 text-[11px] sm:text-xs text-amber-200/95">
-                          <span className="shrink-0">💡</span>
+                          <Lightbulb className="h-3.5 w-3.5 text-amber-400 shrink-0 mt-0.5" />
                           <div>
                             <span className="font-bold text-white">Ação recomendada: </span>
                             <span>{actionLine}</span>
@@ -3535,11 +3575,11 @@ function WebmailContent() {
                   <div className="space-y-3">
                     <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 bg-emerald-50/90 border border-emerald-200 rounded-2xl text-xs">
                       <div className="flex items-center space-x-2 text-emerald-900 font-bold">
-                        <span>{translatedEmail.lang === 'pt' ? '🇵🇹' : '🇬🇧'}</span>
+                        <Languages className="h-4 w-4 text-emerald-700 shrink-0" />
                         <span>
                           {translatedEmail.lang === 'pt'
-                            ? 'E-mail traduzido para Português'
-                            : 'E-mail traduzido para Inglês (English)'}
+                            ? 'E-mail traduzido para Português (PT)'
+                            : 'E-mail traduzido para Inglês (EN)'}
                         </span>
                       </div>
                       <div className="flex items-center space-x-1.5">
@@ -3547,9 +3587,10 @@ function WebmailContent() {
                           type="button"
                           onClick={() => handleTranslateEmail(translatedEmail.lang === 'pt' ? 'en' : 'pt')}
                           disabled={isTranslatingEmail !== null}
-                          className="px-2.5 py-1 bg-white hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg text-[11px] font-bold transition cursor-pointer"
+                          className="px-2.5 py-1 bg-white hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg text-[11px] font-bold transition cursor-pointer inline-flex items-center gap-1"
                         >
-                          {translatedEmail.lang === 'pt' ? '🇬🇧 Ver em Inglês' : '🇵🇹 Ver em Português'}
+                          <Globe className="h-3 w-3 text-emerald-600" />
+                          <span>{translatedEmail.lang === 'pt' ? 'Ver em Inglês' : 'Ver em Português'}</span>
                         </button>
                         <button
                           type="button"
@@ -3603,7 +3644,7 @@ function WebmailContent() {
                           </div>
                           <div className="flex items-center space-x-1">
                             {att.type?.startsWith('image/') && (
-                              <span className="text-[10px] text-neutral-400">📷</span>
+                              <ImageIcon className="h-3.5 w-3.5 text-neutral-400" />
                             )}
                             <Download className="h-3.5 w-3.5 text-neutral-400 group-hover:text-neutral-900 shrink-0" />
                           </div>
@@ -3639,10 +3680,10 @@ function WebmailContent() {
                         key={idx}
                         type="button"
                         onClick={() => setReplyText(sug)}
-                        className="px-3 py-1.5 bg-neutral-100 hover:bg-neutral-200/80 text-neutral-900 text-[11px] font-semibold rounded-xl border border-neutral-200/80 shadow-2xs whitespace-nowrap transition-all duration-150 cursor-pointer active:scale-95 flex items-center space-x-1 shrink-0"
+                        className="px-3 py-1.5 bg-neutral-100 hover:bg-neutral-200/80 text-neutral-900 text-[11px] font-semibold rounded-xl border border-neutral-200/80 shadow-2xs whitespace-nowrap transition-all duration-150 cursor-pointer active:scale-95 flex items-center space-x-1.5 shrink-0"
                         title="Usar esta resposta"
                       >
-                        <span>💬</span>
+                        <MessageSquare className="h-3 w-3 text-neutral-500 shrink-0" />
                         <span>{sug}</span>
                       </button>
                     ))}
@@ -4041,7 +4082,7 @@ function WebmailContent() {
                         title="Aprimorar redação com IA"
                       >
                         {isImprovingDraft ? <Loader2 className="w-3 h-3 animate-spin text-purple-600" /> : <Sparkles className="w-3 h-3 text-purple-600" />}
-                        <span>{isImprovingDraft ? 'Aprimorando...' : '✨ Melhorar com IA'}</span>
+                        <span>{isImprovingDraft ? 'Aprimorando...' : 'Melhorar com IA'}</span>
                       </button>
                       <button
                         type="button"
@@ -4050,7 +4091,7 @@ function WebmailContent() {
                         className="text-[11px] font-bold text-emerald-700 hover:text-emerald-900 bg-emerald-50 hover:bg-emerald-100 px-2 py-1 rounded-lg border border-emerald-200 transition cursor-pointer flex items-center space-x-1 disabled:opacity-50"
                         title="Traduzir mensagem escrita para Português"
                       >
-                        {isTranslatingDraft === 'pt' ? <Loader2 className="w-3 h-3 animate-spin text-emerald-600" /> : <span>🇵🇹</span>}
+                        {isTranslatingDraft === 'pt' ? <Loader2 className="w-3 h-3 animate-spin text-emerald-600" /> : <Languages className="w-3 h-3 text-emerald-600" />}
                         <span>PT</span>
                       </button>
                       <button
@@ -4060,7 +4101,7 @@ function WebmailContent() {
                         className="text-[11px] font-bold text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 px-2 py-1 rounded-lg border border-indigo-200 transition cursor-pointer flex items-center space-x-1 disabled:opacity-50"
                         title="Traduzir mensagem escrita para Inglês (English)"
                       >
-                        {isTranslatingDraft === 'en' ? <Loader2 className="w-3 h-3 animate-spin text-indigo-600" /> : <span>🇬🇧</span>}
+                        {isTranslatingDraft === 'en' ? <Loader2 className="w-3 h-3 animate-spin text-indigo-600" /> : <Languages className="w-3 h-3 text-indigo-600" />}
                         <span>EN</span>
                       </button>
                       <button
@@ -4171,7 +4212,7 @@ function WebmailContent() {
                         ) : (
                           <Paperclip className="w-3 h-3 text-emerald-600" />
                         )}
-                        <span>{uploadingAttachment ? 'A carregar...' : '📎 Anexar Ficheiro'}</span>
+                        <span>{uploadingAttachment ? 'A carregar...' : 'Anexar Ficheiro'}</span>
                         <input
                           type="file"
                           multiple
