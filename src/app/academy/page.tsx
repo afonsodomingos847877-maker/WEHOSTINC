@@ -457,7 +457,7 @@ export default function PublicAcademyPage() {
           </div>
 
           {/* Certificate mock preview */}
-          <div className="w-full lg:w-96 shrink-0 bg-white text-slate-900 rounded-2xl p-6 shadow-2xl border-4 border-amber-400/40 transform rotate-1 hover:rotate-0 transition duration-300 relative z-10">
+          <div className="w-full lg:w-96 shrink-0 bg-white text-slate-900 rounded-2xl p-6 shadow-2xl border-4 border-white transform rotate-1 hover:rotate-0 transition duration-300 relative z-10">
             <div className="border border-slate-200 p-4 rounded-xl text-center">
               <div className="text-[10px] tracking-widest text-slate-400 uppercase font-black">WEHOSTHERE ACADEMY</div>
               <h4 className="text-base font-black text-primary-950 mt-1">CERTIFICADO DE CONCLUSÃO</h4>
