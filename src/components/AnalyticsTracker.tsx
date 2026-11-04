@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { auth } from '@/lib/auth';
 import { apiEndpoint } from '@/lib/siteConfig';
 import FacebookPixel from '@/lib/facebookPixel';
@@ -19,6 +20,7 @@ function getSessionId(): string {
 
 export default function AnalyticsTracker() {
   const pathname = usePathname();
+  const { data: session } = useSession();
   const presenceInterval = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastPage = useRef<string>('');
 
@@ -36,6 +38,7 @@ export default function AnalyticsTracker() {
 
     const sessionId = getSessionId();
     const currentUser = auth.getCurrentUser();
+    const email = currentUser?.email || session?.user?.email || '';
 
     fetch(apiEndpoint('/api/analytics/visits'), {
       method: 'POST',
@@ -43,11 +46,11 @@ export default function AnalyticsTracker() {
       body: JSON.stringify({
         page: pathname,
         sessionId,
-        userEmail: currentUser?.email || '',
+        userEmail: email,
         referrer: document.referrer || '',
       }),
     }).catch(() => {}); // silencioso
-  }, [pathname]);
+  }, [pathname, session]);
 
   // Actualizar presença do utilizador ou visitante (tempo real)
   useEffect(() => {
@@ -61,17 +64,21 @@ export default function AnalyticsTracker() {
       if (!sessionId) return;
 
       const currentUser = auth.getCurrentUser();
-      const isAdmin = currentUser && auth.isAdminUser(currentUser);
+      const isAdmin = (currentUser && auth.isAdminUser(currentUser)) || (session?.user as any)?.role === 'admin';
       if (isAdmin) return; // Não incluir o administrador a navegar na lista de utilizadores online
 
-      const isGuest = !currentUser || !currentUser.email;
+      const email = currentUser?.email || session?.user?.email || '';
+      const isGuest = !email;
+      const name = currentUser?.name || session?.user?.name || email;
+      const avatar = currentUser?.avatar || (session?.user as any)?.image || (session?.user as any)?.avatar || '';
 
       fetch(apiEndpoint('/api/analytics/presence'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userEmail: isGuest ? '' : currentUser.email,
-          userName: isGuest ? '' : (currentUser.name || currentUser.email),
+          userEmail: isGuest ? '' : email,
+          userName: isGuest ? '' : name,
+          userAvatar: isGuest ? '' : avatar,
           currentPage: pathname,
           sessionId,
           isGuest,
@@ -88,7 +95,7 @@ export default function AnalyticsTracker() {
     return () => {
       if (presenceInterval.current) clearInterval(presenceInterval.current);
     };
-  }, [pathname]);
+  }, [pathname, session]);
 
   return null; // componente invisível
 }

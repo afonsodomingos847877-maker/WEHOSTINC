@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import UserPresenceModel from '@/lib/models/UserPresence';
 import AnalyticsVisitModel from '@/lib/models/AnalyticsVisit';
+import UserModel from '@/lib/models/User';
 
 let FALLBACK_PRESENCE: any[] = [];
 const ONLINE_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutos = "online"
@@ -11,7 +12,7 @@ async function tryMongo() {
   catch { return false; }
 }
 
-// GET /api/analytics/presence — lista quem está online agora em tempo real
+// GET /api/analytics/presence — lista quem está online agora em tempo real com fotos dos utilizadores registados
 export async function GET() {
   const cutoff = new Date(Date.now() - ONLINE_THRESHOLD_MS).toISOString();
 
@@ -23,7 +24,6 @@ export async function GET() {
       }).sort({ lastSeen: -1 }).lean();
 
       // 2. Obter visitas directas recentes nos últimos 5 minutos de AnalyticsVisitModel
-      // para capturar instantaneamente visitantes mesmo antes do heartbeat de 30s
       const recentVisits = await AnalyticsVisitModel.find({
         timestamp: { $gte: cutoff }
       }).sort({ timestamp: -1 }).limit(100).lean();
@@ -38,6 +38,8 @@ export async function GET() {
           onlineMap.set(key, {
             userEmail: p.userEmail,
             userName: p.userName || (p.isGuest ? 'Visitante' : p.userEmail),
+            userAvatar: (p as any).userAvatar || '',
+            role: (p as any).role || 'user',
             currentPage: p.currentPage || '/',
             lastSeen: p.lastSeen,
             sessionId: p.sessionId,
@@ -58,6 +60,8 @@ export async function GET() {
           onlineMap.set(key, {
             userEmail: key,
             userName: isGuest ? `Visitante #${(v.sessionId || 'anon').slice(-4).toUpperCase()}` : v.userEmail,
+            userAvatar: '',
+            role: 'user',
             currentPage: v.page || '/',
             lastSeen: v.timestamp,
             sessionId: v.sessionId || '',
@@ -67,18 +71,63 @@ export async function GET() {
         }
       }
 
+      // 3. Cruzar com UserModel para garantir fotos de perfil dos utilizadores registados
+      const registeredEmails = Array.from(onlineMap.values())
+        .filter(u => !u.isGuest && u.userEmail && !u.userEmail.includes('@guest.local'))
+        .map(u => u.userEmail.toLowerCase());
+
+      if (registeredEmails.length > 0) {
+        try {
+          const dbUsers = await UserModel.find({ email: { $in: registeredEmails } })
+            .select('email avatar name role')
+            .lean();
+          const userDbMap = new Map(dbUsers.map(u => [u.email.toLowerCase(), u]));
+
+          Array.from(onlineMap.values()).forEach(item => {
+            if (!item.isGuest && item.userEmail) {
+              const dbUser = userDbMap.get(item.userEmail.toLowerCase());
+              if (dbUser) {
+                if (dbUser.avatar && !item.userAvatar) item.userAvatar = dbUser.avatar;
+                if (dbUser.name && (!item.userName || item.userName === item.userEmail)) item.userName = dbUser.name;
+                if (dbUser.role) item.role = dbUser.role;
+              }
+            }
+          });
+        } catch (_) {}
+      }
+
       const online = Array.from(onlineMap.values()).sort((a, b) => (b.lastSeen > a.lastSeen ? 1 : -1));
 
       // Histórico de utilizadores vistos recentemente (últimas 30 sessões distintas)
       const allPresence = await UserPresenceModel.find({}).sort({ lastSeen: -1 }).limit(40).lean();
-      const recent = allPresence.map((p: any) => ({
-        userEmail: p.userEmail,
-        userName: p.userName || (p.isGuest ? 'Visitante' : p.userEmail),
-        currentPage: p.currentPage || '/',
-        lastSeen: p.lastSeen,
-        sessionId: p.sessionId,
-        isGuest: !!p.isGuest,
-      }));
+      
+      const recentRegisteredEmails = allPresence
+        .filter(p => !p.isGuest && p.userEmail && !p.userEmail.includes('@guest.local'))
+        .map(p => p.userEmail.toLowerCase());
+
+      let recentUserDbMap = new Map<string, any>();
+      if (recentRegisteredEmails.length > 0) {
+        try {
+          const dbUsers = await UserModel.find({ email: { $in: recentRegisteredEmails } })
+            .select('email avatar name role')
+            .lean();
+          recentUserDbMap = new Map(dbUsers.map(u => [u.email.toLowerCase(), u]));
+        } catch (_) {}
+      }
+
+      const recent = allPresence.map((p: any) => {
+        const dbUser = !p.isGuest ? recentUserDbMap.get(p.userEmail?.toLowerCase()) : null;
+        return {
+          userEmail: p.userEmail,
+          userName: dbUser?.name || p.userName || (p.isGuest ? 'Visitante' : p.userEmail),
+          userAvatar: dbUser?.avatar || p.userAvatar || '',
+          role: dbUser?.role || p.role || 'user',
+          currentPage: p.currentPage || '/',
+          lastSeen: p.lastSeen,
+          sessionId: p.sessionId,
+          isGuest: !!p.isGuest,
+        };
+      });
 
       return NextResponse.json({
         online,
@@ -102,7 +151,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { userEmail, userName, currentPage, sessionId, isAdmin } = body;
+    const { userEmail, userName, userAvatar, currentPage, sessionId, isAdmin } = body;
 
     // Não registar o próprio administrador como cliente online
     if (isAdmin) {
@@ -115,14 +164,30 @@ export async function POST(req: NextRequest) {
       ? `visitante_${cleanSession.slice(-8)}@guest.local`
       : userEmail.toLowerCase().trim();
 
-    const effectiveName = isGuest
+    let resolvedAvatar = userAvatar || '';
+    let resolvedRole = 'user';
+    let effectiveName = isGuest
       ? (userName && userName.trim() ? userName.trim() : `Visitante #${cleanSession.slice(-4).toUpperCase()}`)
       : (userName && userName.trim() ? userName.trim() : effectiveEmail);
+
+    // Se é um utilizador registado, buscar foto do UserModel caso não venha no body
+    if (!isGuest && await tryMongo()) {
+      try {
+        const dbUser = await UserModel.findOne({ email: effectiveEmail }).select('avatar name role').lean();
+        if (dbUser) {
+          if (!resolvedAvatar && dbUser.avatar) resolvedAvatar = dbUser.avatar;
+          if (dbUser.name && (!userName || userName === effectiveEmail)) effectiveName = dbUser.name;
+          if (dbUser.role) resolvedRole = dbUser.role;
+        }
+      } catch (err) {}
+    }
 
     const now = new Date().toISOString();
     const presenceData = {
       userEmail: effectiveEmail,
       userName: effectiveName,
+      userAvatar: resolvedAvatar,
+      role: resolvedRole,
       lastSeen: now,
       currentPage: currentPage || '/',
       sessionId: cleanSession,

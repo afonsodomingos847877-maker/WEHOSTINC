@@ -3,6 +3,8 @@ import mongoose, { Schema, Document, Model } from 'mongoose';
 export interface IUserPresence extends Document {
   userEmail: string;
   userName: string;
+  userAvatar?: string;
+  role?: string;
   lastSeen: string;
   currentPage: string;
   sessionId: string;
@@ -13,6 +15,8 @@ export interface IUserPresence extends Document {
 const UserPresenceSchema = new Schema<IUserPresence>({
   userEmail: { type: String, required: true, unique: true, lowercase: true, trim: true },
   userName: { type: String, default: '' },
+  userAvatar: { type: String, default: '' },
+  role: { type: String, default: 'user' },
   lastSeen: { type: String, default: () => new Date().toISOString() },
   currentPage: { type: String, default: '/' },
   sessionId: { type: String, default: '' },

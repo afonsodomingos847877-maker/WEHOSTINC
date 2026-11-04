@@ -291,8 +291,8 @@ export default function AdminPage() {
   const [academyTab, setAcademyTab] = useState<'orders' | 'enrollments' | 'certificates'>('orders');
 
   // Analytics State
-  const [onlineUsers, setOnlineUsers] = useState<Array<{ userEmail: string; userName: string; lastSeen: string; currentPage: string; isOnline: boolean; isGuest?: boolean }>>([]);
-  const [recentPresence, setRecentPresence] = useState<Array<{ userEmail: string; userName: string; lastSeen: string; currentPage: string; isOnline: boolean; isGuest?: boolean }>>([]);
+  const [onlineUsers, setOnlineUsers] = useState<Array<{ userEmail: string; userName: string; userAvatar?: string; role?: string; lastSeen: string; currentPage: string; isOnline: boolean; isGuest?: boolean }>>([]);
+  const [recentPresence, setRecentPresence] = useState<Array<{ userEmail: string; userName: string; userAvatar?: string; role?: string; lastSeen: string; currentPage: string; isOnline?: boolean; isGuest?: boolean }>>([]);
   const [visitStats, setVisitStats] = useState<{ total: number; uniqueVisitors: number; topPages: Array<{ page: string; count: number }>; milestones?: any }>({ total: 0, uniqueVisitors: 0, topPages: [] });
   const [visitStatsPeriod, setVisitStatsPeriod] = useState<'today' | 'week' | 'month' | 'all'>('all');
 
@@ -1759,15 +1759,25 @@ export default function AdminPage() {
                           ? 'bg-gradient-to-br from-slate-600 to-slate-800'
                           : 'bg-gradient-to-br from-primary-500 to-purple-600'
                       }`}>
-                        {u.userName?.charAt(0)?.toUpperCase() || '?'}
+                        {u.userAvatar ? (
+                          <img
+                            src={u.userAvatar}
+                            alt={u.userName}
+                            className="w-full h-full rounded-full object-cover"
+                          />
+                        ) : (
+                          u.userName?.charAt(0)?.toUpperCase() || '?'
+                        )}
                       </div>
                       <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full animate-pulse" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
                         <p className="text-[10px] sm:text-sm font-semibold text-gray-900 truncate">{u.userName}</p>
-                        {u.isGuest && (
+                        {u.isGuest ? (
                           <span className="text-[8px] bg-slate-100 text-slate-600 font-medium px-1 rounded">Visitante</span>
+                        ) : (
+                          <span className="text-[8px] bg-blue-50 text-blue-700 font-bold px-1.5 py-0.5 rounded border border-blue-200/60">Registado</span>
                         )}
                       </div>
                       <p className="text-[10px] sm:text-xs text-gray-500 truncate font-mono">{u.currentPage}</p>
@@ -1795,10 +1805,23 @@ export default function AdminPage() {
                           <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center font-bold text-[10px] sm:text-xs flex-shrink-0 ${
                             u.isGuest ? 'bg-slate-200 text-slate-600' : 'bg-primary-100 text-primary-700'
                           }`}>
-                            {u.userName?.charAt(0)?.toUpperCase() || '?'}
+                            {u.userAvatar ? (
+                          <img
+                            src={u.userAvatar}
+                            alt={u.userName}
+                            className="w-full h-full rounded-full object-cover"
+                          />
+                        ) : (
+                          u.userName?.charAt(0)?.toUpperCase() || '?'
+                        )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-[10px] sm:text-xs font-semibold text-gray-700 truncate">{u.userName}</p>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <p className="text-[10px] sm:text-xs font-semibold text-gray-700 truncate">{u.userName}</p>
+                              {!u.isGuest && (
+                                <span className="text-[8px] bg-blue-50 text-blue-700 font-bold px-1 rounded border border-blue-200/50">Registado</span>
+                              )}
+                            </div>
                             <p className="text-[9px] sm:text-[10px] text-gray-400 truncate font-mono">{u.currentPage}</p>
                           </div>
                           <span className="text-[9px] sm:text-[10px] text-gray-400 whitespace-nowrap">{timeLabel}</span>
