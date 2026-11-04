@@ -3,7 +3,51 @@ import { migaduImapSmtp } from '@/lib/migaduImapSmtp';
 
 export const maxDuration = 60;
 
-// POST - Send email via SMTP (supports both multipart/form-data binary attachments and application/json)
+async function resolveAttachmentToBuffer(att: any): Promise<{
+  filename: string;
+  content: Buffer;
+  contentType?: string;
+} | null> {
+  if (!att || !att.url || typeof att.url !== 'string') return null;
+
+  // 1. Data URL (data:mime;base64,...)
+  if (att.url.startsWith('data:')) {
+    const base64Data = att.url.split(',')[1];
+    if (!base64Data) return null;
+    return {
+      filename: att.name || 'anexo',
+      content: Buffer.from(base64Data, 'base64'),
+      contentType: att.type || 'application/octet-stream',
+    };
+  }
+
+  // 2. URL Remota (Cloudinary CDN https://res.cloudinary.com/...)
+  if (att.url.startsWith('http://') || att.url.startsWith('https://')) {
+    try {
+      const res = await fetch(att.url);
+      if (!res.ok) {
+        console.error(`[Webmail Send] Falha ao baixar anexo Cloudinary (${res.status}):`, att.url);
+        return null;
+      }
+      const arrayBuffer = await res.arrayBuffer();
+      const contentType = att.type && att.type.includes('/')
+        ? att.type
+        : res.headers.get('content-type') || 'application/octet-stream';
+      return {
+        filename: att.name || 'anexo',
+        content: Buffer.from(arrayBuffer),
+        contentType,
+      };
+    } catch (err) {
+      console.error('[Webmail Send] Erro ao buscar anexo remoto:', err);
+      return null;
+    }
+  }
+
+  return null;
+}
+
+// POST - Send email via SMTP (supports Cloudinary URLs, multipart/form-data binary attachments, and base64 JSON)
 export async function POST(request: NextRequest) {
   try {
     const contentType = request.headers.get('content-type') || '';
@@ -45,6 +89,19 @@ export async function POST(request: NextRequest) {
           });
         }
       }
+
+      const remoteAttachmentsRaw = formData.get('remoteAttachments');
+      if (remoteAttachmentsRaw && typeof remoteAttachmentsRaw === 'string') {
+        try {
+          const parsedRemote = JSON.parse(remoteAttachmentsRaw);
+          if (Array.isArray(parsedRemote)) {
+            const resolved = await Promise.all(parsedRemote.map(resolveAttachmentToBuffer));
+            for (const item of resolved) {
+              if (item) processedAttachments.push(item);
+            }
+          }
+        } catch {}
+      }
     } else {
       const body = await request.json();
       email = body.email;
@@ -56,21 +113,9 @@ export async function POST(request: NextRequest) {
       emailBody = body.body;
       priority = body.priority || 'normal';
 
-      if (Array.isArray(body.attachments)) {
-        processedAttachments = body.attachments
-          .map((att: any) => {
-            if (att?.url && typeof att.url === 'string' && att.url.startsWith('data:')) {
-              const base64Data = att.url.split(',')[1];
-              if (!base64Data) return null;
-              return {
-                filename: att.name || 'anexo',
-                content: Buffer.from(base64Data, 'base64'),
-                contentType: att.type || 'application/octet-stream',
-              };
-            }
-            return null;
-          })
-          .filter((a: any): a is NonNullable<typeof a> => a !== null);
+      if (Array.isArray(body.attachments) && body.attachments.length > 0) {
+        const resolved = await Promise.all(body.attachments.map(resolveAttachmentToBuffer));
+        processedAttachments = resolved.filter((a): a is NonNullable<typeof a> => a !== null);
       }
     }
 

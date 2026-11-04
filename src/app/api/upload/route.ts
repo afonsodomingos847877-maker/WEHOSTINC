@@ -1,6 +1,30 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 
+// GET - Retorna assinatura segura para upload direto do navegador para o Cloudinary (evita limite de 4.5MB da Vercel)
+export async function GET() {
+  try {
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME || 'dnvnftvky';
+    const apiKey = process.env.CLOUDINARY_API_KEY || '259851568455899';
+    const apiSecret = process.env.CLOUDINARY_API_SECRET || '3hRsXzUVd3pnwn9IKQWN7UAeJLc';
+
+    const timestamp = Math.floor(Date.now() / 1000).toString();
+    const strToSign = `timestamp=${timestamp}${apiSecret}`;
+    const signature = crypto.createHash('sha1').update(strToSign).digest('hex');
+
+    return NextResponse.json({
+      success: true,
+      cloudName,
+      apiKey,
+      timestamp,
+      signature,
+    });
+  } catch (error) {
+    console.error('Erro ao gerar assinatura Cloudinary:', error);
+    return NextResponse.json({ error: 'Erro ao gerar assinatura de upload' }, { status: 500 });
+  }
+}
+
 export async function POST(req: Request) {
   try {
     const formData = await req.formData();

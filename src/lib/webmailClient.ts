@@ -29,7 +29,7 @@ export interface WebmailMessage {
 
 // Limites de anexos
 export const ATTACHMENT_MAX_SIZE = 10 * 1024 * 1024; // 10MB em bytes
-export const ATTACHMENT_MAX_COUNT = 5; // Maximo de 5 anexos por email
+export const ATTACHMENT_MAX_COUNT = 10; // Maximo de 10 anexos por email
 export const ATTACHMENT_TOTAL_MAX_SIZE = 25 * 1024 * 1024; // 25MB total por email
 
 const WEBMAIL_STORAGE_KEY = 'wehosthere_webmail_drafts';
@@ -283,8 +283,10 @@ export const webmailManager = {
   ): Promise<WebmailMessage> => {
     let res: Response;
 
-    if (attachments && attachments.length > 0 && typeof FormData !== 'undefined') {
-      // Enviar como multipart/form-data binário para evitar o aumento de +33% do Base64 e erro 413
+    const hasDataUrlAttachments = attachments?.some((a) => a.url && a.url.startsWith('data:'));
+
+    if (attachments && attachments.length > 0 && hasDataUrlAttachments && typeof FormData !== 'undefined') {
+      // Enviar como multipart/form-data binário (e incluir também eventuais anexos Cloudinary remotos)
       const formData = new FormData();
       formData.append('email', accountEmail);
       formData.append('password', password);
@@ -295,11 +297,17 @@ export const webmailManager = {
       formData.append('body', body);
       formData.append('priority', priority);
 
+      const remoteAtts: WebmailAttachment[] = [];
       for (const att of attachments) {
         if (att.url && att.url.startsWith('data:')) {
           const blob = dataUrlToBlob(att.url, att.type);
           formData.append('files', blob, att.name || 'anexo');
+        } else if (att.url && (att.url.startsWith('http://') || att.url.startsWith('https://'))) {
+          remoteAtts.push(att);
         }
+      }
+      if (remoteAtts.length > 0) {
+        formData.append('remoteAttachments', JSON.stringify(remoteAtts));
       }
 
       res = await fetch(apiEndpoint('/api/webmail/send'), {
@@ -307,6 +315,7 @@ export const webmailManager = {
         body: formData,
       });
     } else {
+      // Quando os anexos já estão no Cloudinary (URLs https:// leves), o JSON tem apenas ~1KB
       res = await fetch(apiEndpoint('/api/webmail/send'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

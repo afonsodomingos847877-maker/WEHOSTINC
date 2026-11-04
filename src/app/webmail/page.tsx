@@ -402,6 +402,40 @@ function WebmailContent() {
     });
   };
 
+  const uploadFileToCloudinaryDirect = async (file: File): Promise<{ url: string; size: number; type: string } | null> => {
+    try {
+      const sigRes = await fetch(apiEndpoint('/api/upload'), { method: 'GET' });
+      if (!sigRes.ok) return null;
+      const sigData = await sigRes.json();
+      if (!sigData.success || !sigData.cloudName || !sigData.signature) return null;
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('api_key', sigData.apiKey);
+      formData.append('timestamp', sigData.timestamp);
+      formData.append('signature', sigData.signature);
+
+      const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${sigData.cloudName}/auto/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!uploadRes.ok) return null;
+      const uploadData = await uploadRes.json();
+      const cloudUrl = uploadData.secure_url || uploadData.url;
+      if (!cloudUrl) return null;
+
+      return {
+        url: cloudUrl,
+        size: uploadData.bytes || file.size,
+        type: file.type || 'application/octet-stream',
+      };
+    } catch (err) {
+      console.warn('[Webmail] Cloudinary direct upload fallback:', err);
+      return null;
+    }
+  };
+
   const handleComposeFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const fileList = e.target.files;
     if (!fileList || fileList.length === 0) return;
@@ -422,9 +456,6 @@ function WebmailContent() {
       'application/zip'
     ];
 
-    // Limite seguro de payload binário para funções serverless (4.2 MB total após compressão de imagens)
-    const SERVER_MAX_TOTAL_BYTES = Math.floor(4.2 * 1024 * 1024);
-
     setUploadingAttachment(true);
     try {
       const filesArray = Array.from(fileList);
@@ -443,25 +474,38 @@ function WebmailContent() {
         }
 
         if (file.size > ATTACHMENT_MAX_SIZE) {
-          setAttachmentError(`O ficheiro "${file.name}" é muito grande! O tamanho máximo permitido é ${ATTACHMENT_MAX_SIZE / (1024 * 1024)}MB.`);
+          setAttachmentError(`O ficheiro "${file.name}" é muito grande! O tamanho máximo por ficheiro é ${ATTACHMENT_MAX_SIZE / (1024 * 1024)}MB.`);
           return;
         }
 
-        const processed = await readFileAsDataUrl(file);
-        if (runningTotalSize + processed.size > SERVER_MAX_TOTAL_BYTES) {
+        if (runningTotalSize + file.size > ATTACHMENT_TOTAL_MAX_SIZE) {
           setAttachmentError(
-            `O tamanho total dos anexos (${((runningTotalSize + processed.size) / (1024 * 1024)).toFixed(1)} MB) excede o limite de envio direto do servidor (4.2 MB). Comprima o PDF ou envie em e-mails separados.`
+            `O tamanho total dos anexos excede o limite de ${ATTACHMENT_TOTAL_MAX_SIZE / (1024 * 1024)}MB por e-mail.`
           );
           return;
         }
 
-        runningTotalSize += processed.size;
-        newAttachments.push({
-          url: processed.dataUrl,
-          name: file.name,
-          size: processed.size,
-          type: processed.type,
-        });
+        // 1. Tentar upload direto para o Cloudinary CDN (suporta até 25MB no total sem erro 413 na Vercel)
+        const cloudResult = await uploadFileToCloudinaryDirect(file);
+        if (cloudResult) {
+          runningTotalSize += cloudResult.size;
+          newAttachments.push({
+            url: cloudResult.url,
+            name: file.name,
+            size: cloudResult.size,
+            type: cloudResult.type,
+          });
+        } else {
+          // 2. Fallback local com compressão inteligente de imagens
+          const processed = await readFileAsDataUrl(file);
+          runningTotalSize += processed.size;
+          newAttachments.push({
+            url: processed.dataUrl,
+            name: file.name,
+            size: processed.size,
+            type: processed.type,
+          });
+        }
       }
 
       if (newAttachments.length > 0) {
