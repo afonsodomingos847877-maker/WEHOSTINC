@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { sendEmail } from '@/lib/sendgrid';
+import { generatePasswordResetToken } from '@/lib/resetToken';
 
 const SECRET_KEY =
   process.env.NEXTAUTH_SECRET ||
@@ -178,10 +179,12 @@ export async function POST(req: NextRequest) {
       }
 
       // Sucesso na verificação: remove o cookie para evitar reutilização
+      // e gera um token seguro para permitir redefinição de senha direta se necessário
       const response = NextResponse.json({
         success: true,
         message: 'Reautenticação concluída com sucesso.',
-        verifiedAt: new Date().toISOString()
+        verifiedAt: new Date().toISOString(),
+        resetToken: generatePasswordResetToken(normalizedEmail)
       });
 
       response.cookies.delete('wehost_reauth_token');

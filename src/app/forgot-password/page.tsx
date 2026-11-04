@@ -1,15 +1,19 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Mail, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { Mail, ArrowLeft, CheckCircle2, ShieldCheck, KeyRound } from 'lucide-react';
 import BrandLogo from '@/components/BrandLogo';
+import ReauthenticationModal from '@/components/ReauthenticationModal';
 
 export default function ForgotPasswordPage() {
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [showReauthModal, setShowReauthModal] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,6 +41,15 @@ export default function ForgotPasswordPage() {
     }
   };
 
+  const handleStartCodeVerification = () => {
+    if (!email.trim()) {
+      setError('Por favor, digite seu e-mail acima primeiro para receber o código.');
+      return;
+    }
+    setError('');
+    setShowReauthModal(true);
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center px-3 sm:px-4 py-6 sm:py-10 relative bg-slate-950">
       {/* Fundo */}
@@ -58,7 +71,6 @@ export default function ForgotPasswordPage() {
 
         {/* Card */}
         <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-2xl">
-
           {error && (
             <div className="bg-red-500/15 border border-red-500/40 text-red-300 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl mb-4 sm:mb-5 text-[10px] sm:text-sm font-medium">
               {error}
@@ -74,16 +86,25 @@ export default function ForgotPasswordPage() {
               <p className="text-slate-400 text-xs sm:text-sm mb-4">
                 Enviamos um link de recuperação para <strong>{email}</strong>. Verifique sua caixa de entrada.
               </p>
-              <p className="text-slate-500 text-[10px] sm:text-xs">
+              <p className="text-slate-500 text-[10px] sm:text-xs mb-6">
                 O link expira em 1 hora por segurança.
               </p>
+
+              <button
+                type="button"
+                onClick={() => setShowReauthModal(true)}
+                className="w-full py-2.5 px-3 bg-white/10 hover:bg-white/15 border border-white/20 text-white rounded-xl text-xs font-semibold flex items-center justify-center space-x-2 transition"
+              >
+                <ShieldCheck className="w-4 h-4 text-primary-400" />
+                <span>Validar com Código de 6 Dígitos</span>
+              </button>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
               {/* Email */}
               <div>
                 <label htmlFor="email" className="block text-[10px] sm:text-xs font-semibold text-slate-300 mb-1 sm:mb-1.5 uppercase tracking-wider">
-                  Email
+                  Email da Conta
                 </label>
                 <div className="relative">
                   <Mail className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-400" />
@@ -100,7 +121,7 @@ export default function ForgotPasswordPage() {
                 </div>
               </div>
 
-              {/* Botão */}
+              {/* Botão Enviar Link */}
               <button
                 type="submit"
                 disabled={loading}
@@ -117,6 +138,24 @@ export default function ForgotPasswordPage() {
                 ) : (
                   <span>Enviar Link de Recuperação</span>
                 )}
+              </button>
+
+              {/* Separador */}
+              <div className="relative my-3 flex items-center justify-center">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-white/10" />
+                </div>
+                <span className="relative bg-slate-900/90 px-2 text-[10px] text-slate-400 uppercase tracking-widest">ou</span>
+              </div>
+
+              {/* Botão Código Instantâneo */}
+              <button
+                type="button"
+                onClick={handleStartCodeVerification}
+                className="w-full py-2 sm:py-2.5 bg-slate-900 hover:bg-slate-800 border border-slate-700/80 hover:border-slate-600 text-slate-200 hover:text-white rounded-lg sm:rounded-xl text-xs font-semibold flex items-center justify-center space-x-2 transition"
+              >
+                <KeyRound className="w-3.5 h-3.5 text-blue-400" />
+                <span>Redefinir com Código de 6 Dígitos</span>
               </button>
             </form>
           )}
@@ -138,6 +177,23 @@ export default function ForgotPasswordPage() {
           </Link>
         </div>
       </div>
+
+      {/* Modal de Reautenticação para Redefinição Direta */}
+      <ReauthenticationModal
+        isOpen={showReauthModal}
+        onClose={() => setShowReauthModal(false)}
+        userEmail={email}
+        title="Recuperação de Senha"
+        actionDescription="Para redefinir a sua senha agora mesmo, desbloqueie com o código de segurança enviado para"
+        lang="pt"
+        onSuccess={(data) => {
+          if (data?.resetToken) {
+            router.push(`/reset-password?token=${data.resetToken}`);
+          } else {
+            router.push(`/reset-password?token=dev_test_token`);
+          }
+        }}
+      />
     </div>
   );
 }

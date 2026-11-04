@@ -8,7 +8,7 @@ export interface ReauthenticationModalProps {
   isOpen: boolean;
   onClose: () => void;
   userEmail: string;
-  onSuccess: () => Promise<boolean | void> | void;
+  onSuccess: (data?: { success?: boolean; resetToken?: string; [key: string]: any }) => Promise<boolean | void> | void;
   title?: string;
   actionDescription?: string;
   initialStep?: 'request_code' | 'enter_code';
@@ -145,6 +145,7 @@ export default function ReauthenticationModal({
       setLoading(true);
       setError('');
 
+      let verifyResponseData: any = null;
       if (autoDispatchApi) {
         const res = await fetch('/api/auth/reauthenticate', {
           method: 'POST',
@@ -159,6 +160,7 @@ export default function ReauthenticationModal({
         if (!res.ok || !data.success) {
           throw new Error(data.error || (isPt ? 'Código incorreto ou expirado.' : 'Incorrect or expired code.'));
         }
+        verifyResponseData = data;
       }
 
       soundEffects.playLoginSuccessSound();
@@ -166,7 +168,7 @@ export default function ReauthenticationModal({
 
       setTimeout(async () => {
         try {
-          await onSuccess();
+          await onSuccess(verifyResponseData);
         } finally {
           onClose();
         }

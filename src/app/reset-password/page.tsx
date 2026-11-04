@@ -3,14 +3,16 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Lock, Eye, EyeOff, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Lock, Eye, EyeOff, CheckCircle2, AlertCircle, ShieldCheck, Mail } from 'lucide-react';
 import BrandLogo from '@/components/BrandLogo';
+import ReauthenticationModal from '@/components/ReauthenticationModal';
 
 export default function ResetPasswordPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const token = searchParams.get('token');
+  const initialToken = searchParams.get('token');
 
+  const [token, setToken] = useState<string | null>(initialToken);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -20,12 +22,17 @@ export default function ResetPasswordPage() {
   const [success, setSuccess] = useState(false);
   const [tokenValid, setTokenValid] = useState<boolean | null>(null);
 
+  // Fallback de verificação com código de 6 dígitos
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [otpEmail, setOtpEmail] = useState('');
+  const [showEmailPrompt, setShowEmailPrompt] = useState(false);
+
   useEffect(() => {
     if (!token) {
       setError('Token inválido ou ausente');
       setTokenValid(false);
     } else {
-      // Validar token
+      // Validar token stateless assinado
       fetch('/api/auth/reset-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -35,6 +42,7 @@ export default function ResetPasswordPage() {
         .then(data => {
           if (data.valid) {
             setTokenValid(true);
+            setError('');
           } else {
             setError(data.error || 'Token inválido ou expirado');
             setTokenValid(false);
@@ -85,12 +93,26 @@ export default function ResetPasswordPage() {
     }
   };
 
+  const handleStartOtpFlow = () => {
+    if (!otpEmail.trim()) {
+      setShowEmailPrompt(true);
+      return;
+    }
+    setShowOtpModal(true);
+  };
+
   if (tokenValid === null) {
     return (
       <div className="min-h-screen flex items-center justify-center px-3 sm:px-4 py-6 sm:py-10 relative bg-slate-950">
         <div className="absolute inset-0 bg-cover bg-center opacity-30" style={{ backgroundImage: "url('/servidores-banner.png')" }} />
         <div className="absolute inset-0 bg-gradient-to-br from-slate-950/90 via-slate-900/85 to-primary-950/80" />
-        <div className="relative z-10 text-white">Validando token...</div>
+        <div className="relative z-10 text-white font-medium flex items-center space-x-2">
+          <svg className="animate-spin h-5 w-5 text-primary-500" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          <span>A validar chave de segurança...</span>
+        </div>
       </div>
     );
   }
@@ -110,14 +132,78 @@ export default function ResetPasswordPage() {
               <AlertCircle className="h-8 w-8 text-red-400" />
             </div>
             <p className="text-red-300 text-sm mb-4">{error}</p>
-            <Link
-              href="/forgot-password"
-              className="inline-block text-primary-400 hover:text-primary-300 text-sm font-semibold"
-            >
-              Solicitar novo link
-            </Link>
+
+            {showEmailPrompt ? (
+              <div className="space-y-3 mb-4 text-left">
+                <label className="text-[11px] font-semibold text-slate-300 uppercase tracking-wider block">
+                  Email da sua conta:
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <input
+                    type="email"
+                    value={otpEmail}
+                    onChange={(e) => setOtpEmail(e.target.value)}
+                    placeholder="seu@email.com"
+                    className="w-full pl-9 pr-3 py-2 bg-slate-800 border border-slate-600 rounded-xl text-white text-xs outline-none focus:ring-2 focus:ring-primary-500"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (otpEmail.trim()) setShowOtpModal(true);
+                  }}
+                  className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold transition"
+                >
+                  Enviar Código de 6 Dígitos
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-2.5 mb-4">
+                <button
+                  type="button"
+                  onClick={handleStartOtpFlow}
+                  className="w-full py-2.5 px-3 bg-white/10 hover:bg-white/15 border border-white/20 text-white rounded-xl text-xs font-semibold flex items-center justify-center space-x-2 transition"
+                >
+                  <ShieldCheck className="w-4 h-4 text-blue-400" />
+                  <span>Validar com Código de 6 Dígitos</span>
+                </button>
+              </div>
+            )}
+
+            <div className="pt-3 border-t border-white/10 space-y-2">
+              <Link
+                href="/forgot-password"
+                className="inline-block text-primary-400 hover:text-primary-300 text-xs font-semibold"
+              >
+                Solicitar novo link por e-mail
+              </Link>
+              <div>
+                <Link
+                  href="/login"
+                  className="text-slate-400 hover:text-slate-300 text-[11px]"
+                >
+                  Voltar para Login
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
+
+        <ReauthenticationModal
+          isOpen={showOtpModal}
+          onClose={() => setShowOtpModal(false)}
+          userEmail={otpEmail}
+          title="Recuperação de Senha"
+          actionDescription="Para redefinir a sua senha agora mesmo, desbloqueie com o código de segurança enviado para"
+          lang="pt"
+          onSuccess={(data) => {
+            if (data?.resetToken) {
+              setToken(data.resetToken);
+              setTokenValid(true);
+            }
+          }}
+        />
       </div>
     );
   }
