@@ -3191,7 +3191,7 @@ function WebmailContent() {
           <button
             type="button"
             onClick={handleOpenCompose}
-            className={`w-full py-2.5 bg-gray-900 hover:bg-black text-white font-bold text-xs sm:text-sm rounded-xl shadow-md transition-all duration-200 flex items-center justify-center space-x-2 cursor-pointer border border-gray-800 ${isSidebarCollapsed ? 'px-2' : ''}`}
+            className={`w-full py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md transition-all duration-200 flex items-center justify-center space-x-2 cursor-pointer border border-primary-600 ${isSidebarCollapsed ? 'px-2' : ''}`}
           >
             <Edit3 className="h-4 w-4 shrink-0" />
             {!isSidebarCollapsed && <span>Escrever E-mail</span>}
@@ -4816,12 +4816,12 @@ function WebmailContent() {
         )}
       </div>
 
-      {/* Mobile FAB: Escrever E-mail (Tesla Black) */}
+      {/* Mobile FAB: Escrever E-mail (Azul do Sistema) */}
       {!showCompose && (
         <button
           type="button"
           onClick={handleOpenCompose}
-          className="sm:hidden fixed bottom-6 right-6 z-40 w-14 h-14 bg-neutral-900 hover:bg-black text-white rounded-full shadow-2xl flex items-center justify-center transition-all duration-200 active:scale-95 border-2 border-white"
+          className="sm:hidden fixed bottom-6 right-6 z-40 w-14 h-14 bg-primary-600 hover:bg-primary-700 text-white rounded-full shadow-2xl flex items-center justify-center transition-all duration-200 active:scale-95 border-2 border-white"
           title="Escrever E-mail"
         >
           <Edit3 className="h-6 w-6" />
@@ -4848,9 +4848,9 @@ function WebmailContent() {
               <button
                 type="button"
                 onClick={() => { handleOpenCompose(); setShowMobileMenu(false); }}
-                className="flex items-center space-x-3 p-4 bg-neutral-900 hover:bg-black text-white rounded-2xl transition cursor-pointer active:scale-95 shadow-xs"
+                className="flex items-center space-x-3 p-4 bg-primary-600 hover:bg-primary-700 text-white rounded-2xl transition cursor-pointer active:scale-95 shadow-xs"
               >
-                <Edit3 className="h-5 w-5 text-neutral-300 shrink-0" />
+                <Edit3 className="h-5 w-5 text-white shrink-0" />
                 <span className="text-sm font-bold text-white">Novo Email</span>
               </button>
               <button
