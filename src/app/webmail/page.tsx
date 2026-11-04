@@ -101,6 +101,49 @@ function WebmailContent() {
   const [showLoginPassword, setShowLoginPassword] = useState<boolean>(false); // Alternar visibilidade da senha
   const [webmailLoginError, setWebmailLoginError] = useState<string>(''); // Erro de login
   const [webmailLoginLoading, setWebmailLoginLoading] = useState<boolean>(false); // Loading de login
+  const [animatedEmailPlaceholder, setAnimatedEmailPlaceholder] = useState<string>('');
+
+  // Efeito máquina de escrever (Typewriter) para o placeholder de endereço de e-mail
+  useEffect(() => {
+    const placeholders = [
+      'colaborador@suaempresa.co.mz',
+      'direccao@suaempresa.com',
+      'comercial@empresa.co.mz',
+      'info@seudominio.co.mz',
+      'financeiro@suaempresa.co.mz',
+    ];
+    let currentIndex = 0;
+    let charIndex = 0;
+    let isDeleting = false;
+    let timeoutId: NodeJS.Timeout;
+
+    const tick = () => {
+      const currentFullText = placeholders[currentIndex];
+      if (!isDeleting) {
+        charIndex++;
+        setAnimatedEmailPlaceholder(currentFullText.slice(0, charIndex));
+        if (charIndex === currentFullText.length) {
+          isDeleting = true;
+          timeoutId = setTimeout(tick, 1800);
+          return;
+        }
+        timeoutId = setTimeout(tick, 65);
+      } else {
+        charIndex--;
+        setAnimatedEmailPlaceholder(currentFullText.slice(0, charIndex));
+        if (charIndex === 0) {
+          isDeleting = false;
+          currentIndex = (currentIndex + 1) % placeholders.length;
+          timeoutId = setTimeout(tick, 350);
+          return;
+        }
+        timeoutId = setTimeout(tick, 35);
+      }
+    };
+
+    timeoutId = setTimeout(tick, 300);
+    return () => clearTimeout(timeoutId);
+  }, []);
 
   const [currentFolder, setCurrentFolder] = useState<'inbox' | 'sent' | 'starred' | 'trash' | 'drafts'>('inbox');
   const [messages, setMessages] = useState<WebmailMessage[]>([]);
@@ -641,10 +684,15 @@ function WebmailContent() {
           sessionStorage.getItem(`wm_pwd_${targetEmailToRestore.toLowerCase()}`) ||
           localStorage.getItem(`wm_pwd_${targetEmailToRestore.toLowerCase()}`) ||
           localStorage.getItem(`webmail_auth_${targetEmailToRestore}`);
-        setSelectedAccountEmail(prev => prev || targetEmailToRestore);
-        setWebmailLoginEmail(prev => prev || targetEmailToRestore);
-        if (savedPwd && !mailboxPassword) {
-          setMailboxPassword(savedPwd);
+        if (savedPwd) {
+          setSelectedAccountEmail(prev => prev || targetEmailToRestore);
+          setWebmailLoginEmail(prev => prev || targetEmailToRestore);
+          if (!mailboxPassword) {
+            setMailboxPassword(savedPwd);
+          }
+        } else if (initialEmailParam) {
+          setSelectedAccountEmail(initialEmailParam);
+          setWebmailLoginEmail(initialEmailParam);
         }
       }
     } catch {}
@@ -668,13 +716,6 @@ function WebmailContent() {
       if (initialEmailParam) {
         setSelectedAccountEmail(initialEmailParam);
         setWebmailLoginEmail(initialEmailParam);
-      } else if (sessionActiveEmail) {
-        setSelectedAccountEmail(prev => prev || sessionActiveEmail);
-        setWebmailLoginEmail(prev => prev || sessionActiveEmail);
-      } else if (emailList.length > 0) {
-        const firstEmail = emailList[0].email;
-        setSelectedAccountEmail(prev => prev || firstEmail);
-        setWebmailLoginEmail(prev => prev || firstEmail);
       }
     };
 
@@ -1641,14 +1682,14 @@ function WebmailContent() {
                 <label className="block text-xs font-semibold text-neutral-700 mb-1.5">Endereço de E-mail</label>
                 <input
                   type="email"
-                  value={webmailLoginEmail || selectedAccountEmail}
+                  value={webmailLoginEmail}
                   onChange={(e) => {
                     setWebmailLoginEmail(e.target.value);
                     setSelectedAccountEmail(e.target.value);
                   }}
-                  placeholder="colaborador@suaempresa.co.mz"
+                  placeholder={`${animatedEmailPlaceholder}|`}
                   required
-                  className="w-full px-4 py-3 bg-neutral-50 border border-neutral-200 rounded-xl text-xs sm:text-sm text-neutral-900 font-bold focus:bg-white focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 outline-none transition"
+                  className="w-full px-4 py-3 bg-neutral-50 border border-neutral-200 rounded-xl text-xs sm:text-sm text-neutral-900 font-bold placeholder:text-neutral-400 placeholder:font-medium focus:bg-white focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 outline-none transition"
                 />
               </div>
 
@@ -3270,9 +3311,9 @@ function WebmailContent() {
                   type="email"
                   value={webmailLoginEmail}
                   onChange={(e) => setWebmailLoginEmail(e.target.value)}
-                  placeholder="info@wehosthere.com"
+                  placeholder={`${animatedEmailPlaceholder}|`}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm placeholder:text-gray-400 placeholder:font-medium"
                 />
               </div>
 
