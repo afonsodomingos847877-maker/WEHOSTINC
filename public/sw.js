@@ -1,5 +1,5 @@
 // Service Worker para WEHOSTHERE PWA
-const CACHE_NAME = 'wehosthere-v4';
+const CACHE_NAME = 'wehosthere-v6';
 const urlsToCache = [
   '/',
   '/webmail',
@@ -65,25 +65,25 @@ self.addEventListener('fetch', (event) => {
     return;
   }
   
-  // Ignorar requisições para API
-  if (url.pathname.startsWith('/api/')) {
+  // Ignorar requisições para API e payloads RSC do Next.js
+  if (url.pathname.startsWith('/api/') || url.searchParams.has('_rsc')) {
     return;
   }
   
-  // Para requisições de navegação, usar Network First
-  if (event.request.mode === 'navigate') {
+  // Para requisições de navegação ou bundles JS do Next.js, usar sempre Network First
+  if (event.request.mode === 'navigate' || url.pathname.startsWith('/_next/')) {
     event.respondWith(
       fetch(event.request)
         .then((response) => {
-          // Clonar resposta e adicionar ao cache
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseClone);
-          });
+          if (response && response.status === 200) {
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseClone);
+            });
+          }
           return response;
         })
         .catch(() => {
-          // Se falhar, tentar do cache
           return caches.match(event.request);
         })
     );

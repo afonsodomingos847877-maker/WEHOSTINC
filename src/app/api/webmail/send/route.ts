@@ -34,23 +34,27 @@ export async function POST(request: NextRequest) {
       return [];
     };
 
+    const plainText = typeof emailBody === 'string'
+      ? emailBody.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+      : '';
+
     await migaduImapSmtp.sendEmail({
-      from: email,
+      from: email.trim(),
       to: parseRecipients(to),
       cc: parseRecipients(cc),
       bcc: parseRecipients(bcc),
-      subject,
-      text: emailBody,
+      subject: subject || '(Sem assunto)',
+      text: plainText || emailBody,
       html: emailBody,
       priority: priority || 'normal',
       attachments: processedAttachments
     }, password);
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (error: any) {
     console.error('[Webmail Send] Error:', error);
     return NextResponse.json(
-      { error: 'Failed to send email' },
+      { error: error?.message || 'Falha ao enviar e-mail pelo servidor SMTP.' },
       { status: 500 }
     );
   }

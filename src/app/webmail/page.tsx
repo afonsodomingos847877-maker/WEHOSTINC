@@ -634,10 +634,13 @@ function WebmailContent() {
     // Restaurar sessão ativa de Webmail na aba atual (útil tanto para colaboradores públicos quanto clientes)
     let sessionActiveEmail = '';
     try {
-      sessionActiveEmail = sessionStorage.getItem('wm_active_email') || '';
+      sessionActiveEmail = sessionStorage.getItem('wm_active_email') || localStorage.getItem('wm_active_email') || '';
       const targetEmailToRestore = initialEmailParam || sessionActiveEmail;
       if (targetEmailToRestore) {
-        const savedPwd = sessionStorage.getItem(`wm_pwd_${targetEmailToRestore.toLowerCase()}`);
+        const savedPwd =
+          sessionStorage.getItem(`wm_pwd_${targetEmailToRestore.toLowerCase()}`) ||
+          localStorage.getItem(`wm_pwd_${targetEmailToRestore.toLowerCase()}`) ||
+          localStorage.getItem(`webmail_auth_${targetEmailToRestore}`);
         setSelectedAccountEmail(prev => prev || targetEmailToRestore);
         setWebmailLoginEmail(prev => prev || targetEmailToRestore);
         if (savedPwd && !mailboxPassword) {
@@ -969,8 +972,12 @@ function WebmailContent() {
     }
   };
 
-  const handleSendEmail = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSendEmail = async (e?: React.FormEvent | React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    if (sendingMsg) return;
     setComposeError('');
 
     const cleanTo = composeTo.trim();
@@ -983,17 +990,6 @@ function WebmailContent() {
 
     if (!plainBody && composeAttachments.length === 0) {
       setComposeError('Por favor, escreva uma mensagem ou anexe um ficheiro antes de enviar.');
-      return;
-    }
-
-    // Se a conta já autenticou com senha no servidor IMAP/SMTP (mailboxPassword), está ativa no servidor.
-    // Só bloqueamos se não houver autenticação ativa e o registo estiver explicitamente como 'pending'.
-    const selectedAcc = accounts.find(a => a.email.toLowerCase() === selectedAccountEmail.toLowerCase());
-    const isPending = !mailboxPassword && selectedAcc ? selectedAcc.status === 'pending' : false;
-    if (isPending) {
-      setSentSuccessMsg('');
-      setSendingMsg(false);
-      setComposeError('Esta conta ainda aguarda aprovação do administrador.');
       return;
     }
 
@@ -1019,7 +1015,10 @@ function WebmailContent() {
     const activePassword =
       mailboxPassword ||
       (typeof window !== 'undefined' && selectedAccountEmail
-        ? sessionStorage.getItem(`wm_pwd_${selectedAccountEmail.toLowerCase()}`) || ''
+        ? sessionStorage.getItem(`wm_pwd_${selectedAccountEmail.toLowerCase()}`) ||
+          localStorage.getItem(`wm_pwd_${selectedAccountEmail.toLowerCase()}`) ||
+          localStorage.getItem(`webmail_auth_${selectedAccountEmail}`) ||
+          ''
         : '');
 
     if (!activePassword) {
@@ -1064,7 +1063,7 @@ function WebmailContent() {
         setComposeBody('');
         setComposeAttachments([]);
         refreshMessages();
-      }, 1800);
+      }, 1500);
     } catch (err: any) {
       console.error('Erro ao enviar e-mail:', err);
       setSendingMsg(false);
@@ -1099,6 +1098,9 @@ function WebmailContent() {
         try {
           sessionStorage.setItem('wm_active_email', targetLoginEmail);
           sessionStorage.setItem(`wm_pwd_${targetLoginEmail.toLowerCase()}`, webmailLoginPassword);
+          localStorage.setItem('wm_active_email', targetLoginEmail);
+          localStorage.setItem(`wm_pwd_${targetLoginEmail.toLowerCase()}`, webmailLoginPassword);
+          localStorage.setItem(`webmail_auth_${targetLoginEmail}`, webmailLoginPassword);
         } catch {}
         setShowWebmailLogin(false);
         setWebmailLoginEmail('');
@@ -1117,8 +1119,11 @@ function WebmailContent() {
   const handleWebmailLogout = () => {
     try {
       sessionStorage.removeItem('wm_active_email');
+      localStorage.removeItem('wm_active_email');
       if (selectedAccountEmail) {
         sessionStorage.removeItem(`wm_pwd_${selectedAccountEmail.toLowerCase()}`);
+        localStorage.removeItem(`wm_pwd_${selectedAccountEmail.toLowerCase()}`);
+        localStorage.removeItem(`webmail_auth_${selectedAccountEmail}`);
       }
     } catch {}
     setSelectedAccountEmail('');
@@ -2812,12 +2817,11 @@ function WebmailContent() {
                       </button>
                     </div>
                     <input
-                      type="email"
+                      type="text"
                       value={composeTo}
                       onChange={(e) => setComposeTo(e.target.value)}
                       placeholder="email@exemplo.com"
                       className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-900 outline-none focus:ring-2 focus:ring-primary-500 font-sans"
-                      required
                     />
                   </div>
                 </div>
@@ -2829,7 +2833,7 @@ function WebmailContent() {
                         CC (Cópia)
                       </label>
                       <input
-                        type="email"
+                        type="text"
                         value={composeCc}
                         onChange={(e) => setComposeCc(e.target.value)}
                         placeholder="email@exemplo.com"
@@ -2842,7 +2846,7 @@ function WebmailContent() {
                         BCC (Cópia Oculta)
                       </label>
                       <input
-                        type="email"
+                        type="text"
                         value={composeBcc}
                         onChange={(e) => setComposeBcc(e.target.value)}
                         placeholder="email@exemplo.com"
@@ -3091,7 +3095,8 @@ function WebmailContent() {
                     <span>Salvar Rascunho</span>
                   </button>
                   <button
-                    type="submit"
+                    type="button"
+                    onClick={handleSendEmail}
                     disabled={sendingMsg || uploadingAttachment}
                     className="sm:flex-1 py-2.5 bg-neutral-900 hover:bg-black disabled:opacity-50 text-white font-bold text-xs rounded-xl transition cursor-pointer shadow-xs flex items-center justify-center space-x-2"
                   >
