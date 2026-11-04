@@ -98,63 +98,63 @@ export default function Navbar() {
           title="Sessão Encerrada"
           message="A sua conta foi desvinculada com segurança. Até breve!"
           onClose={() => setShowLogoutToast(false)}
-          duration={4000}
+          duration={3800}
         />
       )}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-14 sm:h-15">
+        <div className="flex justify-between items-center h-13 sm:h-14">
           
           {/* Logo */}
           <BrandLogo onClick={closeMobileMenu} />
 
-          {/* Desktop Navigation Links (Apple-inspired clean spacing & minimalist typography) */}
+          {/* Desktop Navigation Links (Apple-inspired delicate typography & spacious layout) */}
           <nav className="hidden md:flex items-center space-x-6 lg:space-x-8 xl:space-x-10">
             <Link 
               href="/#planos" 
-              className="text-[13px] font-normal text-gray-600 hover:text-gray-900 transition-colors whitespace-nowrap shrink-0"
+              className="text-[11.5px] lg:text-[12px] font-normal text-gray-600 hover:text-gray-900 tracking-tight transition-colors whitespace-nowrap shrink-0"
             >
               {t('nav.plans')}
             </Link>
             <Link 
               href="/#criacao-sites" 
-              className="text-[13px] font-normal text-gray-600 hover:text-gray-900 transition-colors whitespace-nowrap shrink-0"
+              className="text-[11.5px] lg:text-[12px] font-normal text-gray-600 hover:text-gray-900 tracking-tight transition-colors whitespace-nowrap shrink-0"
             >
               Sites
             </Link>
             <Link 
               href="/academy" 
-              className="text-[13px] font-normal text-gray-600 hover:text-gray-900 transition-colors whitespace-nowrap shrink-0"
+              className="text-[11.5px] lg:text-[12px] font-normal text-gray-600 hover:text-gray-900 tracking-tight transition-colors whitespace-nowrap shrink-0"
             >
               Cursos
             </Link>
             <Link 
               href="/systems" 
-              className="text-[13px] font-normal text-gray-600 hover:text-gray-900 transition-colors whitespace-nowrap shrink-0"
+              className="text-[11.5px] lg:text-[12px] font-normal text-gray-600 hover:text-gray-900 tracking-tight transition-colors whitespace-nowrap shrink-0"
             >
               {t('nav.systems')}
             </Link>
             <Link 
               href="/revista" 
-              className="text-[13px] font-normal text-gray-600 hover:text-gray-900 transition-colors whitespace-nowrap shrink-0"
+              className="text-[11.5px] lg:text-[12px] font-normal text-gray-600 hover:text-gray-900 tracking-tight transition-colors whitespace-nowrap shrink-0"
             >
               Revista
             </Link>
             <Link 
               href="/#recursos" 
-              className="text-[13px] font-normal text-gray-600 hover:text-gray-900 transition-colors whitespace-nowrap shrink-0"
+              className="text-[11.5px] lg:text-[12px] font-normal text-gray-600 hover:text-gray-900 tracking-tight transition-colors whitespace-nowrap shrink-0"
             >
               {t('nav.resources')}
             </Link>
             <Link 
               href="/#contacto" 
-              className="text-[13px] font-normal text-gray-600 hover:text-gray-900 transition-colors whitespace-nowrap shrink-0"
+              className="text-[11.5px] lg:text-[12px] font-normal text-gray-600 hover:text-gray-900 tracking-tight transition-colors whitespace-nowrap shrink-0"
             >
               {t('nav.contact')}
             </Link>
           </nav>
 
           {/* Desktop CTA Action Buttons */}
-          <div className="hidden md:flex items-center space-x-2.5 lg:space-x-3 shrink-0">
+          <div className="hidden md:flex items-center space-x-2 lg:space-x-2.5 shrink-0">
             <LanguageSelector />
 
             {user ? (
@@ -165,19 +165,19 @@ export default function Navbar() {
                       <img
                         src={user.avatar}
                         alt="Avatar"
-                        className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border-2 border-primary-200 hover:border-primary-400 transition"
+                        className="w-7 h-7 rounded-full object-cover border-2 border-primary-200 hover:border-primary-400 transition"
                       />
                       <div className="absolute inset-0 bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
-                        <UserIcon className="h-3.5 w-3.5 text-white" />
+                        <UserIcon className="h-3 w-3 text-white" />
                       </div>
                     </div>
                   )}
                   <Link
                     href={auth.isAdminUser(user) ? '/admin' : '/dashboard'}
-                    className="px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white font-medium text-[12px] rounded-full shadow-sm hover:shadow transition flex items-center space-x-1.5 whitespace-nowrap shrink-0"
+                    className="px-2.5 py-1 bg-primary-600 hover:bg-primary-700 text-white font-medium text-[11px] rounded-full shadow-sm hover:shadow transition flex items-center space-x-1 whitespace-nowrap shrink-0"
                     title={auth.isAdminUser(user) ? t('nav.admin') : t('nav.dashboard')}
                   >
-                    <LayoutDashboard className="h-3.5 w-3.5 shrink-0" />
+                    <LayoutDashboard className="h-3 w-3 shrink-0" />
                     <span>{auth.isAdminUser(user) ? t('nav.admin_short') : t('nav.dashboard_short')}</span>
                   </Link>
                 </div>
@@ -187,23 +187,23 @@ export default function Navbar() {
                   className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full transition cursor-pointer border border-gray-200 shrink-0"
                   title="Sair da Conta"
                 >
-                  <LogOut className="h-3.5 w-3.5" />
+                  <LogOut className="h-3 w-3" />
                 </button>
               </>
             ) : (
               <>
                 <Link 
                   href="/login" 
-                  className="group inline-flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-100/80 rounded-full transition-all whitespace-nowrap shrink-0"
+                  className="group inline-flex items-center gap-1.5 px-2.5 py-1 text-[11.5px] lg:text-[12px] font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-100/80 rounded-full transition-all whitespace-nowrap shrink-0"
                 >
-                  <LogIn className="w-3.5 h-3.5 text-gray-500 group-hover:text-primary-600 transition-colors" />
+                  <LogIn className="w-3 h-3 text-gray-500 group-hover:text-primary-600 transition-colors" />
                   <span>{t('nav.login')}</span>
                 </Link>
                 <Link 
                   href="/register" 
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-primary-600 hover:bg-primary-700 active:scale-95 text-white text-[13px] font-medium rounded-full shadow-sm hover:shadow transition-all whitespace-nowrap shrink-0"
+                  className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary-600 hover:bg-primary-700 active:scale-95 text-white text-[11.5px] lg:text-[12px] font-medium rounded-full shadow-sm hover:shadow transition-all whitespace-nowrap shrink-0"
                 >
-                  <UserPlus className="w-3.5 h-3.5 text-white" />
+                  <UserPlus className="w-3 h-3 text-white" />
                   <span>{t('nav.register')}</span>
                 </Link>
               </>
@@ -236,49 +236,49 @@ export default function Navbar() {
             <Link
               href="#planos"
               onClick={closeMobileMenu}
-              className="px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl text-sm sm:text-base font-medium text-gray-800 hover:bg-primary-50 hover:text-primary-600 transition"
+              className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium text-gray-800 hover:bg-primary-50 hover:text-primary-600 transition"
             >
               {t('nav.plans')}
             </Link>
             <Link
               href="/#criacao-sites"
               onClick={closeMobileMenu}
-              className="px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl text-sm sm:text-base font-medium text-gray-800 hover:bg-primary-50 hover:text-primary-600 transition"
+              className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium text-gray-800 hover:bg-primary-50 hover:text-primary-600 transition"
             >
               Sites
             </Link>
             <Link
               href="/academy"
               onClick={closeMobileMenu}
-              className="px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl text-sm sm:text-base font-medium text-gray-800 hover:bg-primary-50 hover:text-primary-600 transition"
+              className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium text-gray-800 hover:bg-primary-50 hover:text-primary-600 transition"
             >
               Cursos
             </Link>
             <Link
               href="/systems"
               onClick={closeMobileMenu}
-              className="px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl text-sm sm:text-base font-medium text-gray-800 hover:bg-primary-50 hover:text-primary-600 transition"
+              className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium text-gray-800 hover:bg-primary-50 hover:text-primary-600 transition"
             >
               {t('nav.systems')}
             </Link>
             <Link
               href="/revista"
               onClick={closeMobileMenu}
-              className="px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl text-sm sm:text-base font-medium text-gray-800 hover:bg-primary-50 hover:text-primary-600 transition"
+              className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium text-gray-800 hover:bg-primary-50 hover:text-primary-600 transition"
             >
               Revista
             </Link>
             <Link
               href="#recursos"
               onClick={closeMobileMenu}
-              className="px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl text-sm sm:text-base font-medium text-gray-800 hover:bg-primary-50 hover:text-primary-600 transition"
+              className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium text-gray-800 hover:bg-primary-50 hover:text-primary-600 transition"
             >
               {t('nav.resources')}
             </Link>
             <Link
               href="#contacto"
               onClick={closeMobileMenu}
-              className="px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl text-sm sm:text-base font-medium text-gray-800 hover:bg-primary-50 hover:text-primary-600 transition"
+              className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium text-gray-800 hover:bg-primary-50 hover:text-primary-600 transition"
             >
               {t('nav.contact')}
             </Link>
@@ -292,33 +292,33 @@ export default function Navbar() {
                     <img
                       src={user.avatar}
                       alt="Avatar"
-                      className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover border-2 border-primary-200 shrink-0"
+                      className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-primary-200 shrink-0"
                     />
                     <div className="min-w-0 flex-1">
-                      <p className="text-[10px] sm:text-xs text-gray-600 font-medium">{t('nav.dashboard')}:</p>
+                      <p className="text-[10px] text-gray-600 font-medium">{t('nav.dashboard')}:</p>
                       <p className="text-xs sm:text-sm text-gray-900 font-bold truncate">{user.name}</p>
-                      <p className="text-[9px] sm:text-[10px] text-gray-500 truncate">{user.email}</p>
+                      <p className="text-[9px] text-gray-500 truncate">{user.email}</p>
                     </div>
                   </div>
                 ) : (
-                  <div className="px-3 sm:px-4 py-1.5 sm:py-2 bg-gray-50 rounded-xl border border-gray-200 text-[10px] sm:text-xs text-gray-600 font-medium truncate">
+                  <div className="px-3 sm:px-4 py-1.5 bg-gray-50 rounded-xl border border-gray-200 text-[10px] sm:text-xs text-gray-600 font-medium truncate">
                     {t('nav.dashboard')}: <strong className="text-gray-900 font-bold block">{user.email}</strong>
                   </div>
                 )}
                 <Link
                   href={auth.isAdminUser(user) ? '/admin' : '/dashboard'}
                   onClick={closeMobileMenu}
-                  className="w-full text-center py-2.5 sm:py-3 px-3 sm:px-4 rounded-xl text-sm sm:text-base font-bold text-white bg-primary-600 hover:bg-primary-700 shadow-md transition flex items-center justify-center space-x-1.5 sm:space-x-2"
+                  className="w-full text-center py-2.5 sm:py-3 px-3 sm:px-4 rounded-xl text-xs sm:text-sm font-bold text-white bg-primary-600 hover:bg-primary-700 shadow-md transition flex items-center justify-center space-x-1.5"
                 >
-                  <LayoutDashboard className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <LayoutDashboard className="h-4 w-4" />
                   <span>{auth.isAdminUser(user) ? t('nav.admin') : t('nav.dashboard')}</span>
                 </Link>
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="w-full text-center py-2.5 sm:py-3 px-3 sm:px-4 rounded-xl text-sm sm:text-base font-semibold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 transition flex items-center justify-center space-x-1.5 sm:space-x-2 cursor-pointer"
+                  className="w-full text-center py-2 sm:py-2.5 px-3 sm:px-4 rounded-xl text-xs sm:text-sm font-semibold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 transition flex items-center justify-center space-x-1.5 cursor-pointer"
                 >
-                  <LogOut className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <LogOut className="h-4 w-4" />
                   <span>{t('nav.logout')}</span>
                 </button>
               </>
@@ -327,17 +327,17 @@ export default function Navbar() {
                 <Link
                   href="/login"
                   onClick={closeMobileMenu}
-                  className="w-full text-center py-2.5 sm:py-3 px-3 sm:px-4 rounded-xl text-sm sm:text-base font-semibold text-gray-800 bg-gray-100 hover:bg-gray-200 transition flex items-center justify-center gap-2"
+                  className="w-full text-center py-2 sm:py-2.5 px-3 sm:px-4 rounded-xl text-xs sm:text-sm font-semibold text-gray-800 bg-gray-100 hover:bg-gray-200 transition flex items-center justify-center gap-1.5"
                 >
-                  <LogIn className="w-4 h-4 text-gray-600" />
+                  <LogIn className="w-3.5 h-3.5 text-gray-600" />
                   <span>{t('nav.login')}</span>
                 </Link>
                 <Link
                   href="/register"
                   onClick={closeMobileMenu}
-                  className="w-full text-center py-2.5 sm:py-3 px-3 sm:px-4 rounded-xl text-sm sm:text-base font-semibold text-white bg-primary-600 hover:bg-primary-700 shadow-md transition flex items-center justify-center gap-2"
+                  className="w-full text-center py-2 sm:py-2.5 px-3 sm:px-4 rounded-xl text-xs sm:text-sm font-semibold text-white bg-primary-600 hover:bg-primary-700 shadow-md transition flex items-center justify-center gap-1.5"
                 >
-                  <UserPlus className="w-4 h-4 text-white" />
+                  <UserPlus className="w-3.5 h-3.5 text-white" />
                   <span>{t('nav.register')}</span>
                 </Link>
               </>
