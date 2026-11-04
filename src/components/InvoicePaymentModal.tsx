@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   X, CreditCard, Smartphone, Landmark, CheckCircle2, 
   Clock, ShieldCheck, Copy, Check, ArrowRight, Upload, 
@@ -52,6 +52,14 @@ export default function InvoicePaymentModal({
   const formattedAmount = (invoice.total || 0).toLocaleString('pt-MZ');
   const currency = invoice.currency || 'MT';
   const bimNib = '433372004293948';
+
+  useEffect(() => {
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, []);
 
   const handleCopy = (text: string, fieldName: string) => {
     navigator.clipboard.writeText(text);
@@ -217,11 +225,15 @@ export default function InvoicePaymentModal({
   )}`;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5 overflow-y-auto animate-in fade-in duration-200">
-      <div 
-        className="bg-white rounded-3xl shadow-2xl max-w-xl w-full border border-gray-200 overflow-hidden my-auto animate-in zoom-in-95 duration-200 flex flex-col max-h-[92vh]"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <div 
+      className="fixed inset-0 z-[100] bg-black/75 backdrop-blur-sm overflow-y-auto animate-in fade-in duration-200"
+      onClick={onClose}
+    >
+      <div className="min-h-full w-full flex items-center justify-center p-3 sm:p-6 text-center">
+        <div 
+          className="bg-white rounded-3xl shadow-2xl max-w-xl w-full border border-gray-200 overflow-hidden text-left flex flex-col max-h-[85vh] my-auto animate-in zoom-in-95 duration-200"
+          onClick={(e) => e.stopPropagation()}
+        >
         {/* Top Header */}
         <div className="bg-slate-950 text-white p-5 sm:p-6 flex items-start justify-between gap-4 border-b border-slate-800">
           <div>
@@ -683,5 +695,7 @@ export default function InvoicePaymentModal({
         </div>
       </div>
     </div>
+  </div>
   );
 }
+

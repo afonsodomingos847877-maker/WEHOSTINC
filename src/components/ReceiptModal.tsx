@@ -75,9 +75,16 @@ export default function ReceiptModal({ receipt, onClose, onPay }: ReceiptModalPr
   const isCancelled = receipt.status === 'cancelled';
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-      {/* Container Principal */}
-      <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full border border-gray-200 overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-200 print:shadow-none print:border-none print:m-0 print:w-full print:max-w-none">
+    <div 
+      className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-xs overflow-y-auto"
+      onClick={onClose}
+    >
+      <div className="min-h-full w-full flex items-center justify-center p-3 sm:p-4 text-center">
+        {/* Container Principal */}
+        <div 
+          className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full border border-gray-200 overflow-hidden text-left my-auto animate-in fade-in zoom-in-95 duration-200 print:shadow-none print:border-none print:m-0 print:w-full print:max-w-none"
+          onClick={(e) => e.stopPropagation()}
+        >
         
         {/* Barra Superior de Ações (Oculta na Impressão) */}
         <div className="bg-slate-900 text-white px-6 py-3.5 flex items-center justify-between print:hidden">
@@ -303,5 +310,6 @@ export default function ReceiptModal({ receipt, onClose, onPay }: ReceiptModalPr
         </div>
       </div>
     </div>
+  </div>
   );
 }
