@@ -1144,7 +1144,7 @@ export default function InternalDomainChat({
                   disabled={
                     isSending || (!messageText.trim() && !pendingAttachment)
                   }
-                  className="px-4 py-2.5 bg-neutral-900 hover:bg-black disabled:opacity-50 text-white font-bold text-xs rounded-xl transition cursor-pointer flex items-center space-x-1.5 shadow-xs shrink-0"
+                  className="px-4 py-2.5 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white font-bold text-xs rounded-xl transition cursor-pointer flex items-center space-x-1.5 shadow-xs shrink-0"
                 >
                   {isSending ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />

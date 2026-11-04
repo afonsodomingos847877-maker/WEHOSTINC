@@ -4786,7 +4786,7 @@ function WebmailContent() {
                     type="button"
                     onClick={handleSendQuickReply}
                     disabled={!replyText.trim() || quickReplySending}
-                    className="ml-auto px-5 py-2.5 bg-neutral-900 hover:bg-black disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-xs transition cursor-pointer flex items-center space-x-1.5 active:scale-98"
+                    className="ml-auto px-5 py-2.5 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-xs transition cursor-pointer flex items-center space-x-1.5 active:scale-98"
                   >
                     <Send className="h-3.5 w-3.5" />
                     <span>{quickReplySending ? 'A enviar...' : 'Enviar Resposta'}</span>
@@ -5713,7 +5713,7 @@ function WebmailContent() {
                     type="button"
                     onClick={handleSendEmail}
                     disabled={sendingMsg || uploadingAttachment}
-                    className="sm:flex-1 py-2.5 bg-neutral-900 hover:bg-black disabled:opacity-50 text-white font-bold text-xs rounded-xl transition cursor-pointer shadow-xs flex items-center justify-center space-x-2"
+                    className="sm:flex-1 py-2.5 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white font-bold text-xs rounded-xl transition cursor-pointer shadow-xs flex items-center justify-center space-x-2"
                   >
                     <Send className="h-3.5 w-3.5" />
                     <span>{sendingMsg ? 'A Enviar...' : 'Enviar Agora'}</span>
