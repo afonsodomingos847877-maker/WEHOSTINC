@@ -6,7 +6,7 @@ import {
   ShieldCheck, Eye, EyeOff, Loader2, ArrowRight, ExternalLink, X, Globe,
   Check, Lock, ChevronDown
 } from 'lucide-react';
-import { EMAIL_PROVIDER_PRESETS } from '@/app/api/webmail/external-accounts/route';
+import { EMAIL_PROVIDER_PRESETS } from '@/lib/externalEmailPresets';
 
 export interface ExternalAccountItem {
   id: string;
