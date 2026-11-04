@@ -68,11 +68,9 @@ export default function CinematicPageTransition({ children }: { children: React.
         @keyframes cinematicPageReveal {
           0% {
             opacity: 0;
-            transform: translateY(10px);
           }
           100% {
             opacity: 1;
-            transform: none;
           }
         }
 

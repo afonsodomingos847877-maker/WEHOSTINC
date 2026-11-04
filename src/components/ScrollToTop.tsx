@@ -1,18 +1,28 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { ChevronUp, ChevronDown } from 'lucide-react';
 
 export default function ScrollToTop() {
+  const pathname = usePathname();
   const [isVisible, setIsVisible] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
 
   useEffect(() => {
     const handleScroll = () => {
+      if (
+        document.body.style.overflow === 'hidden' ||
+        document.documentElement.style.overflow === 'hidden'
+      ) {
+        setIsVisible(false);
+        return;
+      }
+
       const totalScroll = document.documentElement.scrollHeight - window.innerHeight;
       const currentScroll = window.scrollY;
 
-      if (currentScroll > 100) {
+      if (currentScroll > 100 && totalScroll > 50) {
         setIsVisible(true);
       } else {
         setIsVisible(false);
@@ -27,8 +37,14 @@ export default function ScrollToTop() {
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
+    const observer = new MutationObserver(handleScroll);
+    observer.observe(document.body, { attributes: true, attributeFilter: ['style', 'class'] });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['style', 'class'] });
     handleScroll();
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      observer.disconnect();
+    };
   }, []);
 
   const scrollToTop = () => {
@@ -45,7 +61,7 @@ export default function ScrollToTop() {
     });
   };
 
-  if (!isVisible) return null;
+  if (!isVisible || pathname?.startsWith('/webmail')) return null;
 
   const roundedPercentage = Math.round(scrollProgress);
 

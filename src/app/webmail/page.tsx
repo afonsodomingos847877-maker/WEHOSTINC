@@ -1711,7 +1711,7 @@ function WebmailContent() {
       </div>
 
       {/* Main Layout Grid */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 min-h-0 flex overflow-hidden">
         {/* Desktop Sidebar Nav */}
         <aside className={`hidden md:flex bg-white text-gray-600 flex-col p-3 border-r border-gray-200 space-y-4 shrink-0 transition-all duration-300 ${isSidebarCollapsed ? 'w-16' : 'w-56'}`}>
           <button
@@ -1894,7 +1894,7 @@ function WebmailContent() {
         </aside>
 
         {/* Message List Column - Mobile First */}
-        <section className={`w-full md:w-80 lg:w-96 bg-white border-r border-neutral-200 flex flex-col shrink-0 ${selectedMessage ? 'hidden md:flex' : 'flex'}`}>
+        <section className={`w-full md:w-80 lg:w-96 min-h-0 overflow-hidden bg-white border-r border-neutral-200 flex flex-col shrink-0 ${selectedMessage ? 'hidden md:flex' : 'flex'}`}>
           {/* Search Input & Filter Pills */}
           <div className="p-3 border-b border-neutral-100 space-y-2">
             <div className="relative">
@@ -2112,7 +2112,7 @@ function WebmailContent() {
         </section>
 
         {/* Message Viewer Pane - Mobile First */}
-        <main className={`w-full flex-1 bg-gray-50 flex flex-col overflow-y-auto ${selectedMessage ? 'flex' : 'hidden md:flex'}`}>
+        <main className={`w-full flex-1 min-h-0 bg-gray-50 flex flex-col overflow-y-auto ${selectedMessage ? 'flex' : 'hidden md:flex'}`}>
           {selectedMessage ? (
             <div className="p-4 sm:p-6 max-w-4xl mx-auto w-full flex-1 flex flex-col space-y-4 sm:space-y-6">
               
