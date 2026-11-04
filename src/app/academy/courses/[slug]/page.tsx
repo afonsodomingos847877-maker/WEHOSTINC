@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { formatVideoEmbedUrl } from '@/lib/videoEmbed';
 import Link from 'next/link';
 import { 
-  BookOpen, Clock, Award, Maximize2, Camera, X, ShieldCheck, CheckCircle2, Play, Sparkles, 
+  BookOpen, Clock, Award, Maximize2, Camera, X, ShieldCheck, CheckCircle2, Play, Pause, Sparkles, 
   Lock, Star, Users, ArrowRight, ArrowLeft, ChevronDown, 
   ChevronUp, Zap, HelpCircle, FileText, Video, Smartphone, Tag, Ticket, ExternalLink
 } from 'lucide-react';
@@ -92,6 +92,7 @@ export default function CourseDetailsPage() {
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState<number>(0);
   const [activePreviewIndex, setActivePreviewIndex] = useState<number>(0);
+  const [isSlideshowPlaying, setIsSlideshowPlaying] = useState<boolean>(false);
   const [paymentPlan, setPaymentPlan] = useState<'full' | 'installments_2x'>('full');
   const [appliedCoupon, setAppliedCoupon] = useState<{
     code: string;
@@ -101,23 +102,62 @@ export default function CourseDetailsPage() {
     finalAmount: number;
   } | null>(null);
 
-  
+  const goToLightboxPhoto = (idx: number) => {
+    if (!course?.instructorGallery || course.instructorGallery.length === 0) return;
+    const total = course.instructorGallery.length;
+    const cleanIdx = (idx + total) % total;
+    setLightboxIndex(cleanIdx);
+    setActivePreviewIndex(cleanIdx);
+    setLightboxImage(course.instructorGallery[cleanIdx]);
+  };
+
+  const closeLightbox = () => {
+    setLightboxImage(null);
+    setIsSlideshowPlaying(false);
+  };
+
+  // Apresentação automática (Slideshow) com transição suave
+  useEffect(() => {
+    if (!isSlideshowPlaying || !lightboxImage || !course?.instructorGallery || course.instructorGallery.length <= 1) {
+      return;
+    }
+
+    const interval = setInterval(() => {
+      const total = course.instructorGallery!.length;
+      setLightboxIndex((prev) => {
+        const next = (prev + 1) % total;
+        setActivePreviewIndex(next);
+        setLightboxImage(course.instructorGallery![next]);
+        return next;
+      });
+    }, 3200);
+
+    return () => clearInterval(interval);
+  }, [isSlideshowPlaying, lightboxImage, course?.instructorGallery]);
+
+  // Pré-carregamento automático de imagens adjacentes para transição instantânea
+  useEffect(() => {
+    if (!lightboxImage || !course?.instructorGallery || course.instructorGallery.length <= 1) return;
+    const total = course.instructorGallery.length;
+    const nextImg = new Image();
+    nextImg.src = course.instructorGallery[(lightboxIndex + 1) % total];
+    const prevImg = new Image();
+    prevImg.src = course.instructorGallery[(lightboxIndex - 1 + total) % total];
+  }, [lightboxIndex, lightboxImage, course?.instructorGallery]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!lightboxImage) return;
       if (e.key === 'Escape') {
-        setLightboxImage(null);
+        closeLightbox();
         setVideoPreviewModal(null);
       } else if (e.key === 'ArrowLeft' && course?.instructorGallery && course.instructorGallery.length > 1) {
-        const total = course.instructorGallery.length;
-        const prevIdx = (lightboxIndex - 1 + total) % total;
-        setLightboxIndex(prevIdx);
-        setLightboxImage(course.instructorGallery[prevIdx]);
+        goToLightboxPhoto(lightboxIndex - 1);
       } else if (e.key === 'ArrowRight' && course?.instructorGallery && course.instructorGallery.length > 1) {
-        const total = course.instructorGallery.length;
-        const nextIdx = (lightboxIndex + 1) % total;
-        setLightboxIndex(nextIdx);
-        setLightboxImage(course.instructorGallery[nextIdx]);
+        goToLightboxPhoto(lightboxIndex + 1);
+      } else if (e.key === ' ') {
+        e.preventDefault();
+        setIsSlideshowPlaying((prev) => !prev);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -906,9 +946,13 @@ export default function CourseDetailsPage() {
                   title="Clique para ver em tela cheia"
                 >
                   <img
+                    key={activePreviewIndex}
                     src={course.instructorGallery[activePreviewIndex] || course.instructorGallery[0]}
                     alt={`Foto de Atuação ${activePreviewIndex + 1}`}
-                    className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                    className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                    style={{
+                      animation: 'cinematicPhotoEntrance 500ms cubic-bezier(0.16, 1, 0.3, 1) forwards'
+                    }}
                   />
                   <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white">
                     <div className="px-3 py-1.5 rounded-full bg-white/20 backdrop-blur-md flex items-center gap-1.5 text-xs font-bold shadow-lg">
@@ -990,75 +1034,144 @@ export default function CourseDetailsPage() {
         </div>
       </section>
 
-      {/* MODAL DE TELA CHEIA (LIGHTBOX) PARA FOTOS DO FORMADOR */}
+      {/* MODAL DE TELA CHEIA (LIGHTBOX) PARA FOTOS DO FORMADOR COM TRANSIÇÃO CINEMATOGRÁFICA */}
       {lightboxImage && (
         <div 
-          className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200"
-          onClick={() => setLightboxImage(null)}
+          className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-md flex flex-col items-center justify-between p-3 sm:p-6 animate-in fade-in duration-300 select-none"
+          onClick={closeLightbox}
         >
-          {/* Botão Fechar */}
-          <button
-            type="button"
-            onClick={() => setLightboxImage(null)}
-            className="absolute top-4 right-4 z-20 p-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition cursor-pointer shadow-lg"
-            title="Fechar (ESC)"
-          >
-            <X className="w-6 h-6" />
-          </button>
+          {/* Estilos Globais da Transição Cinematográfica */}
+          <style>{`
+            @keyframes cinematicPhotoEntrance {
+              0% {
+                opacity: 0;
+                transform: scale(0.96) translateY(6px);
+                filter: blur(5px) brightness(0.9);
+              }
+              100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+                filter: blur(0px) brightness(1);
+              }
+            }
+          `}</style>
 
-          {/* Navegação Foto Anterior */}
+          {/* Barra Superior com Informação e Botão Fechar */}
+          <div className="w-full flex items-center justify-between z-20 pt-1 px-2 sm:px-4">
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] sm:text-xs font-bold text-white/80 bg-white/10 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/10 flex items-center gap-1.5 shadow-lg">
+                <Camera className="w-3.5 h-3.5 text-primary-400" />
+                <span>{course.instructorName || 'Formador'} • Galeria</span>
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={closeLightbox}
+              className="p-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-lg border border-white/10"
+              title="Fechar (ESC)"
+            >
+              <X className="w-5 h-5 sm:w-6 sm:h-6" />
+            </button>
+          </div>
+
+          {/* Navegação Seta Esquerda */}
           {course && course.instructorGallery && course.instructorGallery.length > 1 && (
             <button
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                const total = course.instructorGallery!.length;
-                const prevIdx = (lightboxIndex - 1 + total) % total;
-                setLightboxIndex(prevIdx);
-                setActivePreviewIndex(prevIdx);
-                setLightboxImage(course.instructorGallery![prevIdx]);
+                goToLightboxPhoto(lightboxIndex - 1);
               }}
-              className="absolute left-3 sm:left-6 z-20 p-3 rounded-full bg-white/10 hover:bg-white/25 text-white transition cursor-pointer shadow-xl backdrop-blur-xs"
+              className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-20 p-3 sm:p-3.5 rounded-full bg-black/60 hover:bg-neutral-800 text-white/80 hover:text-white transition-all hover:scale-110 active:scale-95 cursor-pointer shadow-2xl backdrop-blur-md border border-white/15"
               title="Foto anterior (Seta para a esquerda)"
             >
-              <ArrowLeft className="w-6 h-6" />
+              <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
           )}
 
-          {/* Imagem em Destaque Centralizada */}
+          {/* Imagem Centralizada com Transição Cinematográfica */}
           <div 
-            className="max-w-5xl max-h-[85vh] relative flex flex-col items-center justify-center"
+            className="flex-1 w-full max-w-5xl flex items-center justify-center my-auto relative overflow-hidden py-2"
             onClick={(e) => e.stopPropagation()}
           >
-            <img
-              src={lightboxImage}
-              alt="Foto do Formador em Tela Cheia"
-              className="max-w-full max-h-[80vh] object-contain rounded-2xl shadow-2xl border border-white/10 select-none animate-in zoom-in-95 duration-200"
-            />
-            {course && course.instructorGallery && course.instructorGallery.length > 1 && (
-              <p className="text-xs text-white/70 mt-3 font-medium tracking-wide">
-                Foto {lightboxIndex + 1} de {course.instructorGallery.length} • Use as setas ou clique fora para fechar
-              </p>
-            )}
+            <div className="relative max-w-full max-h-[72vh] sm:max-h-[76vh] flex items-center justify-center">
+              <img
+                key={lightboxIndex}
+                src={lightboxImage}
+                alt={`Foto do Formador ${lightboxIndex + 1}`}
+                className="max-w-full max-h-[70vh] sm:max-h-[75vh] object-contain rounded-2xl sm:rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.9)] border border-white/10 select-none"
+                style={{
+                  animation: 'cinematicPhotoEntrance 600ms cubic-bezier(0.16, 1, 0.3, 1) forwards'
+                }}
+              />
+            </div>
           </div>
 
-          {/* Navegação Próxima Foto */}
+          {/* Navegação Seta Direita */}
           {course && course.instructorGallery && course.instructorGallery.length > 1 && (
             <button
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                const total = course.instructorGallery!.length;
-                const nextIdx = (lightboxIndex + 1) % total;
-                setLightboxIndex(nextIdx);
-                setActivePreviewIndex(nextIdx);
-                setLightboxImage(course.instructorGallery![nextIdx]);
+                goToLightboxPhoto(lightboxIndex + 1);
               }}
-              className="absolute right-3 sm:right-6 z-20 p-3 rounded-full bg-white/10 hover:bg-white/25 text-white transition cursor-pointer shadow-xl backdrop-blur-xs"
+              className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-20 p-3 sm:p-3.5 rounded-full bg-black/60 hover:bg-neutral-800 text-white/80 hover:text-white transition-all hover:scale-110 active:scale-95 cursor-pointer shadow-2xl backdrop-blur-md border border-white/15"
               title="Próxima foto (Seta para a direita)"
             >
-              <ArrowRight className="w-6 h-6" />
+              <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
+          )}
+
+          {/* BARRA DE CONTROLOS ESTILO APPLE NA PARTE DE BAIXO */}
+          {course && course.instructorGallery && course.instructorGallery.length > 1 && (
+            <div 
+              className="z-20 pb-2 sm:pb-3 flex flex-col items-center gap-2"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Botões de Transição Estilo Apple */}
+              <div className="flex items-center gap-2.5">
+                {/* Pílula com os Indicadores de Pontos & Barra Ativa */}
+                <div className="bg-neutral-900/85 hover:bg-neutral-900 backdrop-blur-xl border border-white/15 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-full flex items-center gap-2 shadow-2xl">
+                  {course.instructorGallery.map((_, idx) => {
+                    const isActive = idx === lightboxIndex;
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => goToLightboxPhoto(idx)}
+                        className={`transition-all duration-400 ease-out cursor-pointer rounded-full ${
+                          isActive
+                            ? 'w-7 sm:w-8 h-1.5 sm:h-2 bg-white shadow-[0_0_10px_rgba(255,255,255,0.85)]'
+                            : 'w-1.5 sm:w-2 h-1.5 sm:h-2 bg-white/35 hover:bg-white/70 hover:scale-125'
+                        }`}
+                        title={`Ir para foto ${idx + 1}`}
+                      />
+                    );
+                  })}
+                </div>
+
+                {/* Botão Circular Play / Pause (Apresentação Automática) */}
+                <button
+                  type="button"
+                  onClick={() => setIsSlideshowPlaying((prev) => !prev)}
+                  className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-neutral-900/85 hover:bg-neutral-800 backdrop-blur-xl border border-white/15 flex items-center justify-center text-white transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-2xl ${
+                    isSlideshowPlaying ? 'ring-2 ring-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.5)]' : ''
+                  }`}
+                  title={isSlideshowPlaying ? "Pausar apresentação automática" : "Iniciar apresentação automática"}
+                >
+                  {isSlideshowPlaying ? (
+                    <Pause className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-white text-white" />
+                  ) : (
+                    <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-white text-white ml-0.5" />
+                  )}
+                </button>
+              </div>
+
+              {/* Legenda com Contador */}
+              <p className="text-[11px] sm:text-xs text-white/55 font-medium tracking-wide">
+                Foto {lightboxIndex + 1} de {course.instructorGallery.length} • Use as setas do teclado ou clique fora para fechar
+              </p>
+            </div>
           )}
         </div>
       )}
