@@ -17,6 +17,26 @@ function decodeHtmlEntitiesServer(text: string): string {
     .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(Number(dec)));
 }
 
+function cleanEmailHtmlToReadableText(raw: string): string {
+  const withoutStyleAndScript = raw
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<!--[\s\S]*?-->/g, '');
+
+  const withParagraphs = withoutStyleAndScript
+    .replace(/<\/(p|div|h[1-6]|section|article|header|footer|table|tr)>/gi, '\n\n')
+    .replace(/<\/li>/gi, '\n')
+    .replace(/<li[^>]*>/gi, '• ')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/td>/gi, '  ')
+    .replace(/<[^>]+>/g, '');
+
+  return decodeHtmlEntitiesServer(withParagraphs)
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 function cleanEmailHtmlToLines(raw: string): string[] {
   const withoutStyleAndScript = raw
     .replace(/<style[\s\S]*?<\/style>/gi, ' ')
@@ -65,7 +85,53 @@ function stripMarkdownAsterisks(text: string): string {
     .trim();
 }
 
-// POST - Webmail AI Assistant (Summarize, Smart Reply, Improve Writing)
+async function translateTextNeural(text: string, targetLang: 'pt' | 'en'): Promise<string> {
+  if (!text || !text.trim()) return '';
+  const cleanInput = text.trim();
+
+  // 1. Motor Neural Direto (Google GTX Neural Translate - rápido, preserva quebras de linha e gratuito)
+  try {
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(cleanInput)}`;
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+      },
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && Array.isArray(data[0])) {
+        const translatedParts = data[0]
+          .map((segment: any) => (Array.isArray(segment) && segment[0] ? String(segment[0]) : ''))
+          .join('');
+        if (translatedParts.trim()) {
+          return translatedParts.trim();
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[AI Translate] GTX fallback:', err);
+  }
+
+  // 2. Fallback para MyMemory Neural API
+  try {
+    const sourceLang = targetLang === 'pt' ? 'en' : 'pt';
+    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(cleanInput.slice(0, 1500))}&langpair=${sourceLang}|${targetLang}`;
+    const res = await fetch(url);
+    if (res.ok) {
+      const data = await res.json();
+      if (data?.responseData?.translatedText) {
+        return decodeHtmlEntitiesServer(String(data.responseData.translatedText)).trim();
+      }
+    }
+  } catch (err) {
+    console.warn('[AI Translate] MyMemory fallback:', err);
+  }
+
+  return cleanInput;
+}
+
+// POST - Webmail AI Assistant (Summarize, Translate, Smart Reply, Improve Writing)
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -75,11 +141,31 @@ export async function POST(request: NextRequest) {
       subject = '', 
       from = '', 
       tone = 'professional',
+      targetLang = 'pt',
       prompt = ''
     } = body;
 
-    if (!content && !prompt) {
+    if (!content && !prompt && !subject) {
       return NextResponse.json({ error: 'Conteúdo é obrigatório' }, { status: 400 });
+    }
+
+    // Ação de Tradução Instantânea (Português <-> Inglês)
+    if (action === 'translate') {
+      const lang: 'pt' | 'en' = targetLang === 'en' ? 'en' : 'pt';
+      const readableBody = cleanEmailHtmlToReadableText(content);
+      const cleanSubj = decodeHtmlEntitiesServer(subject || '').trim();
+
+      const [translatedBody, translatedSubject] = await Promise.all([
+        readableBody ? translateTextNeural(readableBody, lang) : Promise.resolve(''),
+        cleanSubj ? translateTextNeural(cleanSubj, lang) : Promise.resolve(''),
+      ]);
+
+      return NextResponse.json({
+        success: true,
+        result: stripMarkdownAsterisks(translatedBody),
+        translatedSubject: stripMarkdownAsterisks(translatedSubject || cleanSubj),
+        targetLang: lang,
+      });
     }
 
     const structuredLines = cleanEmailHtmlToLines(content);

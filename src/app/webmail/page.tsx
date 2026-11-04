@@ -223,6 +223,14 @@ function WebmailContent() {
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const [isGeneratingReply, setIsGeneratingReply] = useState(false);
   const [isImprovingDraft, setIsImprovingDraft] = useState(false);
+  const [translatedEmail, setTranslatedEmail] = useState<{
+    msgId: string;
+    lang: 'pt' | 'en';
+    subject: string;
+    body: string;
+  } | null>(null);
+  const [isTranslatingEmail, setIsTranslatingEmail] = useState<'pt' | 'en' | null>(null);
+  const [isTranslatingDraft, setIsTranslatingDraft] = useState<'pt' | 'en' | null>(null);
 
   // Debug webmail login modal
   useEffect(() => {
@@ -1401,6 +1409,80 @@ function WebmailContent() {
     }
   };
 
+  const handleTranslateEmail = async (targetLang: 'pt' | 'en') => {
+    if (!selectedMessage) return;
+    // Se já estiver traduzido para este idioma, alternar de volta para o original
+    if (translatedEmail && translatedEmail.msgId === selectedMessage.id && translatedEmail.lang === targetLang) {
+      setTranslatedEmail(null);
+      return;
+    }
+
+    setIsTranslatingEmail(targetLang);
+    try {
+      const rawBody = stripRawHeaders(selectedMessage.body);
+      const res = await fetch('/api/ai/email-assistant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'translate',
+          targetLang,
+          content: rawBody,
+          subject: selectedMessage.subject,
+        }),
+      });
+      const data = await res.json();
+      if (data.success && data.result) {
+        setTranslatedEmail({
+          msgId: selectedMessage.id,
+          lang: targetLang,
+          subject: data.translatedSubject ? cleanAiText(data.translatedSubject) : selectedMessage.subject,
+          body: cleanAiText(data.result),
+        });
+        soundEffects.playAICompleteSound();
+      }
+    } catch (err) {
+      console.error('Error translating email:', err);
+    } finally {
+      setIsTranslatingEmail(null);
+    }
+  };
+
+  const handleTranslateDraft = async (targetLang: 'pt' | 'en') => {
+    if (!composeBody && !composeSubject) return;
+    setIsTranslatingDraft(targetLang);
+    try {
+      const res = await fetch('/api/ai/email-assistant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'translate',
+          targetLang,
+          content: composeBody,
+          subject: composeSubject,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        if (data.result) {
+          const cleaned = cleanAiText(data.result);
+          const htmlParagraphs = cleaned
+            .split(/\n\n+/)
+            .map((p: string) => `<p>${p.trim().replace(/\n/g, '<br/>')}</p>`)
+            .join('');
+          setComposeBody(htmlParagraphs);
+        }
+        if (data.translatedSubject && composeSubject) {
+          setComposeSubject(cleanAiText(data.translatedSubject));
+        }
+        soundEffects.playAICompleteSound();
+      }
+    } catch (err) {
+      console.error('Error translating draft:', err);
+    } finally {
+      setIsTranslatingDraft(null);
+    }
+  };
+
   const handleSaveSignature = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSavingSignature(true);
@@ -2416,8 +2498,15 @@ function WebmailContent() {
                       )}
                     </div>
                     <h2 className="text-lg sm:text-2xl font-extrabold text-gray-900 leading-tight break-words">
-                      {selectedMessage.subject}
+                      {translatedEmail && translatedEmail.msgId === selectedMessage.id
+                        ? translatedEmail.subject
+                        : selectedMessage.subject}
                     </h2>
+                    {translatedEmail && translatedEmail.msgId === selectedMessage.id && translatedEmail.subject !== selectedMessage.subject && (
+                      <p className="text-[11px] text-neutral-400 font-medium mt-0.5 truncate">
+                        Original: {selectedMessage.subject}
+                      </p>
+                    )}
                   </div>
                   <div className="hidden sm:flex items-center space-x-2 shrink-0">
                     <button
@@ -2513,11 +2602,65 @@ function WebmailContent() {
                   </div>
 
                   <div className="flex flex-wrap items-center gap-1.5">
+                    {/* Seletor de Tradução Instantânea (Português / Inglês) */}
+                    <div className="flex items-center bg-white/10 border border-white/15 rounded-xl p-0.5 mr-0.5">
+                      <span className="text-[10px] font-bold text-neutral-300 px-2 flex items-center gap-1">
+                        <span>🌐</span>
+                        <span className="hidden sm:inline">Traduzir:</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleTranslateEmail('pt')}
+                        disabled={isTranslatingEmail !== null}
+                        className={`px-2 py-1 rounded-lg text-[11px] font-bold transition flex items-center space-x-1 cursor-pointer ${
+                          translatedEmail?.msgId === selectedMessage.id && translatedEmail?.lang === 'pt'
+                            ? 'bg-emerald-500 text-white shadow-xs'
+                            : 'text-white/90 hover:bg-white/15'
+                        }`}
+                        title="Traduzir e-mail para Português"
+                      >
+                        {isTranslatingEmail === 'pt' ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <span>🇵🇹</span>
+                        )}
+                        <span>Português</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleTranslateEmail('en')}
+                        disabled={isTranslatingEmail !== null}
+                        className={`px-2 py-1 rounded-lg text-[11px] font-bold transition flex items-center space-x-1 cursor-pointer ${
+                          translatedEmail?.msgId === selectedMessage.id && translatedEmail?.lang === 'en'
+                            ? 'bg-emerald-500 text-white shadow-xs'
+                            : 'text-white/90 hover:bg-white/15'
+                        }`}
+                        title="Traduzir e-mail para Inglês (English)"
+                      >
+                        {isTranslatingEmail === 'en' ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <span>🇬🇧</span>
+                        )}
+                        <span>Inglês</span>
+                      </button>
+                      {translatedEmail?.msgId === selectedMessage.id && (
+                        <button
+                          type="button"
+                          onClick={() => setTranslatedEmail(null)}
+                          className="px-2 py-1 rounded-lg text-[10px] font-semibold text-amber-300 hover:bg-white/10 transition cursor-pointer"
+                          title="Voltar ao idioma original"
+                        >
+                          Original
+                        </button>
+                      )}
+                    </div>
+
                     <button
                       type="button"
                       onClick={handleSummarizeWithAI}
                       disabled={isGeneratingSummary}
-                      className="px-2.5 py-1.5 bg-white/10 hover:bg-white/20 border border-white/10 text-white rounded-xl text-[11px] font-bold transition flex items-center space-x-1 disabled:opacity-50"
+                      className="px-2.5 py-1.5 bg-white/10 hover:bg-white/20 border border-white/10 text-white rounded-xl text-[11px] font-bold transition flex items-center space-x-1 disabled:opacity-50 cursor-pointer"
                     >
                       {isGeneratingSummary ? <Loader2 className="h-3 w-3 animate-spin" /> : <Lightbulb className="h-3 w-3 text-neutral-300" />}
                       <span>{isGeneratingSummary ? 'Resumindo...' : 'Resumir'}</span>
@@ -2526,7 +2669,7 @@ function WebmailContent() {
                       type="button"
                       onClick={() => handleGenerateAIReply('formal')}
                       disabled={isGeneratingReply}
-                      className="px-2.5 py-1.5 bg-white/10 hover:bg-white/20 border border-white/10 text-white rounded-xl text-[11px] font-semibold transition"
+                      className="px-2.5 py-1.5 bg-white/10 hover:bg-white/20 border border-white/10 text-white rounded-xl text-[11px] font-semibold transition cursor-pointer"
                     >
                       Formal
                     </button>
@@ -2534,7 +2677,7 @@ function WebmailContent() {
                       type="button"
                       onClick={() => handleGenerateAIReply('friendly')}
                       disabled={isGeneratingReply}
-                      className="px-2.5 py-1.5 bg-white/10 hover:bg-white/20 border border-white/10 text-white rounded-xl text-[11px] font-semibold transition"
+                      className="px-2.5 py-1.5 bg-white/10 hover:bg-white/20 border border-white/10 text-white rounded-xl text-[11px] font-semibold transition cursor-pointer"
                     >
                       Amigável
                     </button>
@@ -2542,7 +2685,7 @@ function WebmailContent() {
                       type="button"
                       onClick={() => handleGenerateAIReply('quick_accept')}
                       disabled={isGeneratingReply}
-                      className="px-3 py-1.5 bg-white hover:bg-neutral-100 text-neutral-900 rounded-xl text-[11px] font-bold transition shadow-xs"
+                      className="px-3 py-1.5 bg-white hover:bg-neutral-100 text-neutral-900 rounded-xl text-[11px] font-bold transition shadow-xs cursor-pointer"
                     >
                       Confirmar
                     </button>
@@ -2616,7 +2759,40 @@ function WebmailContent() {
 
               {/* Body card */}
               <div className="bg-white rounded-3xl p-4 sm:p-6 shadow-2xs border border-neutral-200 flex-1 space-y-4">
-                {(() => {
+                {translatedEmail && translatedEmail.msgId === selectedMessage.id ? (
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 bg-emerald-50/90 border border-emerald-200 rounded-2xl text-xs">
+                      <div className="flex items-center space-x-2 text-emerald-900 font-bold">
+                        <span>{translatedEmail.lang === 'pt' ? '🇵🇹' : '🇬🇧'}</span>
+                        <span>
+                          {translatedEmail.lang === 'pt'
+                            ? 'E-mail traduzido para Português'
+                            : 'E-mail traduzido para Inglês (English)'}
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleTranslateEmail(translatedEmail.lang === 'pt' ? 'en' : 'pt')}
+                          disabled={isTranslatingEmail !== null}
+                          className="px-2.5 py-1 bg-white hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg text-[11px] font-bold transition cursor-pointer"
+                        >
+                          {translatedEmail.lang === 'pt' ? '🇬🇧 Ver em Inglês' : '🇵🇹 Ver em Português'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setTranslatedEmail(null)}
+                          className="px-2.5 py-1 bg-neutral-900 hover:bg-neutral-800 text-white rounded-lg text-[11px] font-bold transition cursor-pointer"
+                        >
+                          Ver Original
+                        </button>
+                      </div>
+                    </div>
+                    <div className="whitespace-pre-line text-sm text-neutral-900 leading-relaxed font-sans font-normal">
+                      {translatedEmail.body}
+                    </div>
+                  </div>
+                ) : (() => {
                   let cleanBody = stripRawHeaders(selectedMessage.body);
                   if (cleanBody.includes('&lt;') && cleanBody.includes('&gt;')) {
                     cleanBody = decodeHtmlEntities(cleanBody);
@@ -3094,6 +3270,26 @@ function WebmailContent() {
                       >
                         {isImprovingDraft ? <Loader2 className="w-3 h-3 animate-spin text-purple-600" /> : <Sparkles className="w-3 h-3 text-purple-600" />}
                         <span>{isImprovingDraft ? 'Aprimorando...' : '✨ Melhorar com IA'}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleTranslateDraft('pt')}
+                        disabled={isTranslatingDraft !== null || (!composeBody && !composeSubject)}
+                        className="text-[11px] font-bold text-emerald-700 hover:text-emerald-900 bg-emerald-50 hover:bg-emerald-100 px-2 py-1 rounded-lg border border-emerald-200 transition cursor-pointer flex items-center space-x-1 disabled:opacity-50"
+                        title="Traduzir mensagem escrita para Português"
+                      >
+                        {isTranslatingDraft === 'pt' ? <Loader2 className="w-3 h-3 animate-spin text-emerald-600" /> : <span>🇵🇹</span>}
+                        <span>PT</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleTranslateDraft('en')}
+                        disabled={isTranslatingDraft !== null || (!composeBody && !composeSubject)}
+                        className="text-[11px] font-bold text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 px-2 py-1 rounded-lg border border-indigo-200 transition cursor-pointer flex items-center space-x-1 disabled:opacity-50"
+                        title="Traduzir mensagem escrita para Inglês (English)"
+                      >
+                        {isTranslatingDraft === 'en' ? <Loader2 className="w-3 h-3 animate-spin text-indigo-600" /> : <span>🇬🇧</span>}
+                        <span>EN</span>
                       </button>
                       <button
                         type="button"
