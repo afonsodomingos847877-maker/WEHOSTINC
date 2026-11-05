@@ -96,6 +96,12 @@ export default function InternalDomainChat({
   const [showAddColleague, setShowAddColleague] = useState<boolean>(false);
   const [customColleagueLocal, setCustomColleagueLocal] = useState<string>('');
 
+  // Visibilidade do pill flutuante — pode ser escondido pelo utilizador
+  const [isPillVisible, setIsPillVisible] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return true;
+    try { return localStorage.getItem('wehost_chat_pill_visible') !== 'false'; } catch { return true; }
+  });
+
   // Estados de Foto de Perfil e Nome Personalizado do Utilizador
   const [selfAvatarUrl, setSelfAvatarUrl] = useState<string>('');
   const [selfDisplayName, setSelfDisplayName] = useState<string>(currentUserName || '');
@@ -212,6 +218,14 @@ export default function InternalDomainChat({
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages.length, isOpen, selectedPeer]);
+
+  // Reaparecer automaticamente o pill quando chegar nova mensagem não lida
+  useEffect(() => {
+    if (totalUnread > 0 && !isOpen) {
+      setIsPillVisible(true);
+      try { localStorage.setItem('wehost_chat_pill_visible', 'true'); } catch {}
+    }
+  }, [totalUnread, isOpen]);
 
   const handleUpdateStatus = async (newStatus: 'online' | 'busy' | 'away') => {
     setSelfStatus(newStatus);
@@ -501,40 +515,40 @@ export default function InternalDomainChat({
 
   return (
     <>
-      {/* Botão Flutuante Rápido de Chat Interno da Equipa (@dominio) */}
-      {!isOpen && (
-        <button
-          type="button"
-          onClick={() => onToggleOpen(true)}
-          className="fixed bottom-5 right-5 z-[9980] flex items-center space-x-2.5 px-4 py-3 bg-neutral-950 hover:bg-black text-white rounded-2xl shadow-[0_18px_45px_rgba(0,0,0,0.45)] border border-emerald-500/40 transition-all duration-200 cursor-pointer group active:scale-95"
-          title={`Abrir Chat Interno da Equipa @${domain}`}
-        >
-          <div className="relative flex items-center justify-center w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-400">
-            <MessageSquare className="w-4 h-4" />
-            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
-            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-500" />
-          </div>
-          <div className="text-left hidden sm:block">
-            <div className="flex items-center space-x-1.5">
-              <span className="text-xs font-extrabold tracking-tight text-white">
-                Chat da Equipa
+      {/* Botão Flutuante Mini do Chat Interno da Equipa */}
+      {!isOpen && isPillVisible && (
+        <div className="fixed bottom-5 right-5 z-[9980] flex items-center space-x-1">
+          {/* Mini pill — apenas ícone + badge */}
+          <button
+            type="button"
+            onClick={() => onToggleOpen(true)}
+            className="relative flex items-center justify-center w-10 h-10 bg-neutral-950 hover:bg-black text-white rounded-2xl shadow-[0_8px_24px_rgba(0,0,0,0.5)] border border-emerald-500/40 transition-all duration-200 cursor-pointer active:scale-95"
+            title={`Abrir Chat da Equipa @${domain}`}
+          >
+            <MessageSquare className="w-4 h-4 text-emerald-400" />
+            {totalUnread > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] flex items-center justify-center px-1 bg-emerald-500 text-neutral-950 font-black text-[10px] rounded-full shadow animate-bounce">
+                {totalUnread}
               </span>
-              <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-white/10 text-emerald-300">
-                @{domain}
-              </span>
-            </div>
-            <span className="text-[10px] text-neutral-400 block">
-              {onlineColleaguesCount > 0
-                ? `${onlineColleaguesCount} colega(s) online agora`
-                : 'Comunicação interna instantânea'}
-            </span>
-          </div>
-          {totalUnread > 0 && (
-            <span className="px-2 py-0.5 bg-emerald-500 text-neutral-950 font-black text-xs rounded-full shadow-xs animate-bounce">
-              {totalUnread}
-            </span>
-          )}
-        </button>
+            )}
+            {/* Dot online */}
+            {totalUnread === 0 && (
+              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-neutral-950" />
+            )}
+          </button>
+          {/* Botão fechar pill */}
+          <button
+            type="button"
+            onClick={() => {
+              setIsPillVisible(false);
+              try { localStorage.setItem('wehost_chat_pill_visible', 'false'); } catch {}
+            }}
+            className="flex items-center justify-center w-5 h-5 bg-neutral-700 hover:bg-neutral-600 text-neutral-300 rounded-full shadow text-[10px] transition-all duration-150 cursor-pointer"
+            title="Esconder chat"
+          >
+            <X className="w-3 h-3" />
+          </button>
+        </div>
       )}
 
       {/* Janela / Gaveta do Chat Interno Corporativo (@dominio) */}
