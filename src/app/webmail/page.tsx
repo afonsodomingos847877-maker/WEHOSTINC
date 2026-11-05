@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, Suspense } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
@@ -423,6 +423,11 @@ function WebmailContent() {
 
   // Show CC/BCC fields state
   const [showCcBcc, setShowCcBcc] = useState(false);
+
+  // Autocomplete de contactos no campo "Para"
+  const [toSuggestions, setToSuggestions] = useState<{ email: string; name: string }[]>([]);
+  const [showToSuggestions, setShowToSuggestions] = useState(false);
+  const toInputRef = useRef<HTMLInputElement>(null);
 
   // Template state
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
@@ -2821,6 +2826,55 @@ function WebmailContent() {
   };
 
 
+  // ── Contactos históricos extraídos dos emails sincronizados ──────────────
+  // Chave localStorage: wehost_contacts_<email>
+  const contactsCacheKey = selectedAccountEmail
+    ? `wehost_contacts_${selectedAccountEmail.toLowerCase()}`
+    : null;
+
+  // Extrai contactos únicos das mensagens actuais (sent + received)
+  const knownContacts = useMemo<{ email: string; name: string }[]>(() => {
+    const map = new Map<string, string>();
+    // Carregar contactos persistidos
+    if (typeof window !== 'undefined' && contactsCacheKey) {
+      try {
+        const stored = localStorage.getItem(contactsCacheKey);
+        if (stored) {
+          const arr: { email: string; name: string }[] = JSON.parse(stored);
+          arr.forEach((c) => { if (c.email) map.set(c.email.toLowerCase(), c.name || c.email); });
+        }
+      } catch {}
+    }
+    // Adicionar contactos das mensagens actuais
+    messages.forEach((msg) => {
+      const fe = (msg.fromEmail || '').trim().toLowerCase();
+      const fn = (msg.fromName || '').trim();
+      const te = (msg.toEmail || '').trim().toLowerCase();
+      const tn = (msg.toName || '').trim();
+      if (fe && fe !== selectedAccountEmail?.toLowerCase()) map.set(fe, fn || fe);
+      if (te && te !== selectedAccountEmail?.toLowerCase()) map.set(te, tn || te);
+    });
+    return Array.from(map.entries()).map(([email, name]) => ({ email, name }));
+  }, [messages, contactsCacheKey, selectedAccountEmail]);
+
+  // Persistir contactos no localStorage sempre que a lista crescer
+  useEffect(() => {
+    if (!contactsCacheKey || knownContacts.length === 0) return;
+    try { localStorage.setItem(contactsCacheKey, JSON.stringify(knownContacts)); } catch {}
+  }, [knownContacts, contactsCacheKey]);
+
+  // Filtrar sugestões conforme o que o utilizador digita no campo "Para"
+  const handleToChange = useCallback((val: string) => {
+    setComposeTo(val);
+    if (!val.trim()) { setShowToSuggestions(false); setToSuggestions([]); return; }
+    const q = val.toLowerCase();
+    const filtered = knownContacts
+      .filter((c) => c.email.includes(q) || c.name.toLowerCase().includes(q))
+      .slice(0, 8);
+    setToSuggestions(filtered);
+    setShowToSuggestions(filtered.length > 0);
+  }, [knownContacts]);
+
   return (
     <div className="h-screen overflow-hidden bg-gray-50 flex flex-col font-sans">
       {/* Webmail Header Bar - Mobile First */}
@@ -3044,6 +3098,14 @@ function WebmailContent() {
           )}
         </div>
       </header>
+
+{/* Indicador de processamento (canto superior‑direito) */}
+{(isLoadingMessages || isRefreshingWebmail) && (
+  <div className="fixed top-4 right-4 flex items-center space-x-2 bg-white bg-opacity-90 border border-gray-200 rounded-lg px-3 py-1 shadow-md animate-[fadeIn_0.3s_ease-out] z-[1000]">
+    <Loader2 className="w-4 h-4 animate-spin text-primary-600" />
+    <span className="text-sm text-gray-700">A processar mensagens…</span>
+  </div>
+)}
 
       {/* Alerta de Perda de Conexão à Internet (Offline) */}
       {!isOnline && (
@@ -5335,13 +5397,23 @@ function WebmailContent() {
                       >
                         {showCcBcc ? 'Ocultar CC/BCC' : '+ CC/BCC'}
                       </button>
+                      {/* Ícone para abrir lista de contactos */}
+                      <button
+                        type="button"
+                        onClick={() => setShowToPicker(true)}
+                        className="ml-2 p-1 text-gray-600 hover:text-primary-600 rounded"
+                        title="Selecionar contacto"
+                      >
+                        <Users className="w-4 h-4" />
+                      </button>
                     </div>
-                    <input
-                      type="text"
+                    {/* Campo “Para” com ContactPicker */}
+                    <ContactPicker
+                      contacts={knownContacts}
                       value={composeTo}
-                      onChange={(e) => setComposeTo(e.target.value)}
-                      placeholder="email@exemplo.com"
-                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-900 outline-none focus:ring-2 focus:ring-primary-500 font-sans"
+                      onSelect={(email) => setComposeTo(email)}
+                      open={showToPicker}
+                      setOpen={setShowToPicker}
                     />
                   </div>
                 </div>
