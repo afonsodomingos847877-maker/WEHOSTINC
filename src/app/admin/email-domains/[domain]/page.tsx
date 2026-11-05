@@ -1210,11 +1210,13 @@ export default function EmailDomainDetailPage() {
                     <p className="font-bold text-gray-700 mb-1">IMAP Personalizado:</p>
                     <p className="font-mono text-primary-700 font-bold">mail.{domainName}</p>
                     <p className="text-gray-500 text-[11px] mt-0.5">Porta: <strong className="text-gray-800">993</strong> • SSL/TLS</p>
+                    <p className="text-[10px] text-gray-400 mt-1 font-mono">Registo A: 37.16.1.82</p>
                   </div>
                   <div className="bg-white p-3 rounded-lg border border-gray-200">
                     <p className="font-bold text-gray-700 mb-1">SMTP Personalizado:</p>
                     <p className="font-mono text-primary-700 font-bold">smtp.{domainName}</p>
                     <p className="text-gray-500 text-[11px] mt-0.5">Porta: <strong className="text-gray-800">465</strong> • SSL/TLS</p>
+                    <p className="text-[10px] text-gray-400 mt-1 font-mono">Registo A: 37.16.1.82</p>
                   </div>
                 </div>
               </div>

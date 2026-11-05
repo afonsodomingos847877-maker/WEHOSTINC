@@ -20,3 +20,4 @@ primary_region = "jnb" # Joanesburgo (baixa latência para Moçambique)
   cpu_kind = "shared"
   cpus = 1
   memory_mb = 256
+

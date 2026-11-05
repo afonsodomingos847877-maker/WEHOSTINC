@@ -52,3 +52,4 @@ O Fly.io oferece máquinas TCP gratuitas com IPv4/IPv6 partilhados.
    sudo systemctl restart haproxy
    ```
 5. No DNS, aponte `mail.dominio.com` e `smtp.dominio.com` com registo **A** para o IP público da sua máquina Oracle Cloud.
+

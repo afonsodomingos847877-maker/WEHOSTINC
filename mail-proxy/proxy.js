@@ -147,3 +147,4 @@ imapServer.listen(CONFIG.imap.port, '0.0.0.0', () => {
 smtpServer.listen(CONFIG.smtp.port, '0.0.0.0', () => {
   console.log(`🚀 Proxy SMTP WeHostHere ativo na porta ${CONFIG.smtp.port} -> ${CONFIG.smtp.targetHost}:${CONFIG.smtp.targetPort}`);
 });
+

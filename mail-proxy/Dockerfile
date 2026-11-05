@@ -6,3 +6,4 @@ COPY proxy.js ./
 RUN mkdir -p certs
 EXPOSE 993 465
 CMD ["node", "proxy.js"]
+
