@@ -3667,8 +3667,21 @@ function WebmailContent() {
           </div>
 
           {/* List */}
-          <div className="flex-1 overflow-y-auto divide-y divide-neutral-100">
-            {isLoadingMessages ? (
+          <div className="flex-1 overflow-y-auto divide-y divide-neutral-100 relative">
+            {/* Barra de Processamento / Sincronização Ativa */}
+            {(isLoadingMessages || isRefreshingWebmail) && (
+              <div className="sticky top-0 z-10 bg-gradient-to-r from-blue-50 via-teal-50 to-blue-50 border-b border-blue-200 px-4 py-2 flex items-center justify-between text-xs text-blue-900 shadow-2xs backdrop-blur-md">
+                <div className="flex items-center space-x-2">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-600 shrink-0" />
+                  <span className="font-bold text-[11px] tracking-tight">A processar e a sincronizar e-mails...</span>
+                </div>
+                <div className="w-24 h-1.5 bg-blue-200 rounded-full overflow-hidden relative">
+                  <div className="h-full bg-gradient-to-r from-blue-600 to-teal-500 rounded-full animate-pulse w-full"></div>
+                </div>
+              </div>
+            )}
+
+            {isLoadingMessages && displayMessages.length === 0 ? (
               // Skeleton Loading
               Array.from({ length: 5 }).map((_, i) => (
                 <div key={i} className="p-4 mx-2 my-2 animate-pulse">
