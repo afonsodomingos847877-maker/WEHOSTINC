@@ -4689,7 +4689,12 @@ function WebmailContent() {
                         <button
                           key={idx}
                           type="button"
-                          onClick={() => setPreviewAttachment(att)}
+                          onClick={() => {
+                            const attUrl = att.url && att.url.startsWith('/api/webmail/attachment') && !att.url.includes('&password=') && mailboxPassword
+                              ? `${att.url}&password=${encodeURIComponent(mailboxPassword)}`
+                              : att.url;
+                            setPreviewAttachment({ ...att, url: attUrl });
+                          }}
                           className="p-2.5 bg-neutral-50 hover:bg-neutral-100 rounded-xl border border-neutral-200 flex items-center justify-between transition group cursor-pointer"
                         >
                           <div className="flex items-center space-x-2 truncate">

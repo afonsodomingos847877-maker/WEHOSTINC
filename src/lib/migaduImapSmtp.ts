@@ -337,7 +337,7 @@ export class MigaduImapSmtpService {
     email: string,
     password: string,
     folder: string = 'INBOX',
-    limit: number = 50,
+    limit: number = 25,
     customConfig?: ExternalServerConfig
   ): Promise<IMAPMessage[]> {
     const config = await this.resolveServerConfig(email, customConfig);
@@ -382,13 +382,19 @@ export class MigaduImapSmtpService {
             cleanFromEmail = parsed.from?.value?.[0]?.address || '';
 
             if (parsed.attachments && parsed.attachments.length > 0) {
-              for (const att of parsed.attachments) {
-                const b64 = att.content ? att.content.toString('base64') : '';
+              for (let attIdx = 0; attIdx < parsed.attachments.length; attIdx++) {
+                const att = parsed.attachments[attIdx];
+                // Performance: Apenas gerar base64 para thumbnails leves (<= 64KB) para inline view;
+                // Anexos reais usam rota de download sob demanda para não sobrecarregar a memória
+                const isSmallInline = (att.size || 0) <= 65536 && (att.contentType?.startsWith('image/') || att.related);
+                const b64 = isSmallInline && att.content ? att.content.toString('base64') : '';
+                const downloadUrl = `/api/webmail/attachment?email=${encodeURIComponent(email)}&folder=${encodeURIComponent(folder)}&uid=${msg.uid}&part=${attIdx}&filename=${encodeURIComponent(att.filename || 'anexo')}`;
+
                 parsedAttachments.push({
                   filename: att.filename || 'anexo',
                   size: att.size || (att.content ? att.content.length : 0),
                   contentType: att.contentType || 'application/octet-stream',
-                  url: b64 ? `data:${att.contentType || 'application/octet-stream'};base64,${b64}` : '',
+                  url: b64 ? `data:${att.contentType || 'application/octet-stream'};base64,${b64}` : downloadUrl,
                 });
               }
             }
