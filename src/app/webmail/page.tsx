@@ -5107,10 +5107,35 @@ function WebmailContent() {
               </p>
             </div>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-center p-8 text-neutral-400">
-              <Mail className="h-16 w-16 mb-3 text-neutral-300 opacity-60" />
-              <h3 className="font-bold text-neutral-700 text-base mb-1">Nenhum e-mail selecionado</h3>
-              <p className="text-xs text-neutral-400">Selecione uma mensagem na lista à esquerda para visualizar.</p>
+            {/* Empty state com background ao estilo Outlook */}
+            <div className="flex-1 relative overflow-hidden flex flex-col items-center justify-center text-center">
+              {/* Imagem de fundo */}
+              <img
+                src="/webbackground.jpg"
+                alt="background"
+                className="absolute inset-0 w-full h-full object-cover"
+                draggable={false}
+              />
+              {/* Overlay escuro semitransparente para legibilidade */}
+              <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/60" />
+              {/* Conteúdo por cima */}
+              <div className="relative z-10 flex flex-col items-center gap-4 px-8">
+                <div className="w-20 h-20 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-2xl">
+                  <Mail className="h-10 w-10 text-white/80" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-white text-lg mb-1 drop-shadow-lg">Nenhum e-mail selecionado</h3>
+                  <p className="text-sm text-white/70 drop-shadow max-w-xs">Selecione uma mensagem na lista à esquerda para visualizar.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleOpenCompose}
+                  className="mt-2 flex items-center gap-2 px-5 py-2.5 bg-white/15 hover:bg-white/25 backdrop-blur-md border border-white/30 text-white text-sm font-medium rounded-full shadow-lg transition-all duration-200 active:scale-95"
+                >
+                  <Edit3 className="h-4 w-4" />
+                  Escrever E-mail
+                </button>
+              </div>
             </div>
           )}
         </main>
