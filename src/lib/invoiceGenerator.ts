@@ -21,6 +21,17 @@ export interface InvoiceData {
   notes?: string;
 }
 
+function sanitizeText(str: any): string {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/[\u201C\u201D]/g, '"')
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/[\u2013\u2014]/g, '-')
+    .replace(/[\u00A0]/g, ' ')
+    .replace(/[\u2026]/g, '...')
+    .replace(/[^\x00-\xFF]/g, ' '); // Garante compatibilidade total com WinAnsi do Helvetica
+}
+
 export async function generateInvoicePdf(data: InvoiceData): Promise<string> {
   const pdfDoc = await PDFDocument.create();
   const page = pdfDoc.addPage([595.28, 841.89]); // A4 size
@@ -28,6 +39,16 @@ export async function generateInvoicePdf(data: InvoiceData): Promise<string> {
   
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  
+  const drawText = (text: any, options: any) => {
+    try {
+      drawText(sanitizeText(text), options);
+    } catch {
+      try {
+        drawText(String(text || '').replace(/[^\x20-\x7E]/g, ' '), options);
+      } catch {}
+    }
+  };
   
   const primaryColor = rgb(0.114, 0.227, 0.541); // #1d3a8a
   const textColor = rgb(0.2, 0.2, 0.2);
@@ -56,7 +77,7 @@ export async function generateInvoicePdf(data: InvoiceData): Promise<string> {
   });
 
   // Company Name
-  page.drawText('WEHOSTHERE', {
+  drawText('WEHOSTHERE', {
     x: 50,
     y: height - 60,
     size: 28,
@@ -64,7 +85,7 @@ export async function generateInvoicePdf(data: InvoiceData): Promise<string> {
     color: rgb(1, 1, 1),
   });
   
-  page.drawText('Hospedagem de Sites & Email Profissional', {
+  drawText('Hospedagem de Sites & Email Profissional', {
     x: 50,
     y: height - 85,
     size: 10,
@@ -73,7 +94,7 @@ export async function generateInvoicePdf(data: InvoiceData): Promise<string> {
   });
 
   // Title "FATURA"
-  page.drawText('FATURA', {
+  drawText('FATURA', {
     x: width - 250,
     y: height - 60,
     size: 20,
@@ -81,7 +102,7 @@ export async function generateInvoicePdf(data: InvoiceData): Promise<string> {
     color: rgb(1, 1, 1),
   });
 
-  page.drawText(`Nº: ${data.invoiceNumber}`, {
+  drawText(`Nº: ${data.invoiceNumber}`, {
     x: width - 250,
     y: height - 85,
     size: 12,
@@ -90,23 +111,23 @@ export async function generateInvoicePdf(data: InvoiceData): Promise<string> {
   });
 
   // Customer Details
-  page.drawText('Faturado a:', { x: 50, y: height - 180, size: 12, font: boldFont, color: textColor });
-  page.drawText(data.customerName, { x: 50, y: height - 200, size: 14, font, color: textColor });
-  page.drawText(data.customerEmail, { x: 50, y: height - 220, size: 11, font, color: lightColor });
+  drawText('Faturado a:', { x: 50, y: height - 180, size: 12, font: boldFont, color: textColor });
+  drawText(data.customerName, { x: 50, y: height - 200, size: 14, font, color: textColor });
+  drawText(data.customerEmail, { x: 50, y: height - 220, size: 11, font, color: lightColor });
   if (data.customerPhone) {
-    page.drawText(data.customerPhone, { x: 50, y: height - 240, size: 11, font, color: lightColor });
+    drawText(data.customerPhone, { x: 50, y: height - 240, size: 11, font, color: lightColor });
   }
   
   // Invoice Details
-  page.drawText('Detalhes da Fatura:', { x: width - 250, y: height - 180, size: 12, font: boldFont, color: textColor });
-  page.drawText(`Data de Emissão: ${formatDate(data.issuedAt)}`, { x: width - 250, y: height - 200, size: 11, font, color: textColor });
+  drawText('Detalhes da Fatura:', { x: width - 250, y: height - 180, size: 12, font: boldFont, color: textColor });
+  drawText(`Data de Emissão: ${formatDate(data.issuedAt)}`, { x: width - 250, y: height - 200, size: 11, font, color: textColor });
   
   if (data.servicePeriodStart && data.servicePeriodEnd) {
-    page.drawText(`Período: ${formatDate(data.servicePeriodStart)} - ${formatDate(data.servicePeriodEnd)}`, { x: width - 250, y: height - 220, size: 11, font, color: textColor });
+    drawText(`Período: ${formatDate(data.servicePeriodStart)} - ${formatDate(data.servicePeriodEnd)}`, { x: width - 250, y: height - 220, size: 11, font, color: textColor });
   }
   
   if (data.dueDate) {
-    page.drawText(`Vencimento: ${formatDate(data.dueDate)}`, { x: width - 250, y: height - 240, size: 11, font, color: textColor });
+    drawText(`Vencimento: ${formatDate(data.dueDate)}`, { x: width - 250, y: height - 240, size: 11, font, color: textColor });
   }
 
   // Status
@@ -118,7 +139,7 @@ export async function generateInvoicePdf(data: InvoiceData): Promise<string> {
     cancelled: 'CANCELADO'
   };
   const statusColor = data.status === 'paid' ? successColor : (data.status === 'overdue' ? warningColor : textColor);
-  page.drawText(`Estado: ${statusLabels[data.status]}`, { x: width - 250, y: height - 260, size: 12, font: boldFont, color: statusColor });
+  drawText(`Estado: ${statusLabels[data.status]}`, { x: width - 250, y: height - 260, size: 12, font: boldFont, color: statusColor });
 
   if (data.paymentMethod) {
     const paymentMethodLabels = {
@@ -129,7 +150,7 @@ export async function generateInvoicePdf(data: InvoiceData): Promise<string> {
       manual: 'Pagamento Manual'
     };
     const label = paymentMethodLabels[data.paymentMethod as keyof typeof paymentMethodLabels] || data.paymentMethod;
-    page.drawText(`Método: ${label}`, { x: width - 250, y: height - 280, size: 11, font, color: lightColor });
+    drawText(`Método: ${label}`, { x: width - 250, y: height - 280, size: 11, font, color: lightColor });
   }
 
   // Line Separator
@@ -142,10 +163,10 @@ export async function generateInvoicePdf(data: InvoiceData): Promise<string> {
 
   // Table Headers
   const tableY = height - 360;
-  page.drawText('Descrição', { x: 50, y: tableY, size: 11, font: boldFont, color: textColor });
-  page.drawText('Qtd', { x: 350, y: tableY, size: 11, font: boldFont, color: textColor });
-  page.drawText('Preço Unit.', { x: 400, y: tableY, size: 11, font: boldFont, color: textColor });
-  page.drawText('Subtotal', { x: width - 150, y: tableY, size: 11, font: boldFont, color: textColor });
+  drawText('Descrição', { x: 50, y: tableY, size: 11, font: boldFont, color: textColor });
+  drawText('Qtd', { x: 350, y: tableY, size: 11, font: boldFont, color: textColor });
+  drawText('Preço Unit.', { x: 400, y: tableY, size: 11, font: boldFont, color: textColor });
+  drawText('Subtotal', { x: width - 150, y: tableY, size: 11, font: boldFont, color: textColor });
 
   page.drawLine({
     start: { x: 50, y: tableY - 10 },
@@ -159,16 +180,16 @@ export async function generateInvoicePdf(data: InvoiceData): Promise<string> {
   data.items.forEach((item, index) => {
     // Descrição (quebra linha se necessário)
     const description = `${item.service} - ${item.description}`;
-    page.drawText(description, { x: 50, y: currentY, size: 10, font, color: textColor });
+    drawText(description, { x: 50, y: currentY, size: 10, font, color: textColor });
     
     // Quantidade
-    page.drawText(item.quantity.toString(), { x: 350, y: currentY, size: 10, font, color: textColor });
+    drawText(item.quantity.toString(), { x: 350, y: currentY, size: 10, font, color: textColor });
     
     // Preço unitário
-    page.drawText(formatCurrency(item.unitPrice), { x: 400, y: currentY, size: 10, font, color: textColor });
+    drawText(formatCurrency(item.unitPrice), { x: 400, y: currentY, size: 10, font, color: textColor });
     
     // Subtotal
-    page.drawText(formatCurrency(item.subtotal), { x: width - 150, y: currentY, size: 10, font, color: textColor });
+    drawText(formatCurrency(item.subtotal), { x: width - 150, y: currentY, size: 10, font, color: textColor });
 
     currentY -= 25;
 
@@ -195,25 +216,25 @@ export async function generateInvoicePdf(data: InvoiceData): Promise<string> {
   currentY -= 25;
 
   // Subtotal
-  page.drawText('Subtotal:', { x: width - 250, y: currentY, size: 12, font, color: textColor });
-  page.drawText(formatCurrency(data.subtotal), { x: width - 150, y: currentY, size: 12, font, color: textColor });
+  drawText('Subtotal:', { x: width - 250, y: currentY, size: 12, font, color: textColor });
+  drawText(formatCurrency(data.subtotal), { x: width - 150, y: currentY, size: 12, font, color: textColor });
   currentY -= 20;
 
   // Desconto
   if (data.discount > 0) {
-    page.drawText('Desconto:', { x: width - 250, y: currentY, size: 12, font, color: warningColor });
-    page.drawText(`-${formatCurrency(data.discount)}`, { x: width - 150, y: currentY, size: 12, font, color: warningColor });
+    drawText('Desconto:', { x: width - 250, y: currentY, size: 12, font, color: warningColor });
+    drawText(`-${formatCurrency(data.discount)}`, { x: width - 150, y: currentY, size: 12, font, color: warningColor });
     currentY -= 20;
   }
 
   // Total
-  page.drawText('TOTAL:', { x: width - 250, y: currentY, size: 16, font: boldFont, color: textColor });
-  page.drawText(formatCurrency(data.total), { x: width - 150, y: currentY, size: 16, font: boldFont, color: primaryColor });
+  drawText('TOTAL:', { x: width - 250, y: currentY, size: 16, font: boldFont, color: textColor });
+  drawText(formatCurrency(data.total), { x: width - 150, y: currentY, size: 16, font: boldFont, color: primaryColor });
 
   // Observações
   if (data.notes) {
     currentY -= 40;
-    page.drawText('Observações:', { x: 50, y: currentY, size: 11, font: boldFont, color: textColor });
+    drawText('Observações:', { x: 50, y: currentY, size: 11, font: boldFont, color: textColor });
     currentY -= 15;
     
     // Quebrar observações em linhas
@@ -223,7 +244,7 @@ export async function generateInvoicePdf(data: InvoiceData): Promise<string> {
     
     words.forEach(word => {
       if ((currentLine + word).length > maxCharsPerLine) {
-        page.drawText(currentLine, { x: 50, y: currentY, size: 10, font, color: lightColor });
+        drawText(currentLine, { x: 50, y: currentY, size: 10, font, color: lightColor });
         currentY -= 15;
         currentLine = word + ' ';
       } else {
@@ -232,16 +253,16 @@ export async function generateInvoicePdf(data: InvoiceData): Promise<string> {
     });
     
     if (currentLine) {
-      page.drawText(currentLine, { x: 50, y: currentY, size: 10, font, color: lightColor });
+      drawText(currentLine, { x: 50, y: currentY, size: 10, font, color: lightColor });
     }
   }
 
   // Footer
   const footerY = 80;
-  page.drawText('Obrigado pela sua preferência!', { x: 50, y: footerY + 20, size: 14, font: boldFont, color: primaryColor });
-  page.drawText('WEHOSTHERE - Maputo, Moçambique', { x: 50, y: footerY, size: 10, font, color: lightColor });
-  page.drawText('Email: info@wehosthere.com | Web: wehosthere.com', { x: 50, y: footerY - 15, size: 10, font, color: lightColor });
-  page.drawText('NIF: 123456789', { x: 50, y: footerY - 30, size: 10, font, color: lightColor });
+  drawText('Obrigado pela sua preferência!', { x: 50, y: footerY + 20, size: 14, font: boldFont, color: primaryColor });
+  drawText('WEHOSTHERE - Maputo, Moçambique', { x: 50, y: footerY, size: 10, font, color: lightColor });
+  drawText('Email: info@wehosthere.com | Web: wehosthere.com', { x: 50, y: footerY - 15, size: 10, font, color: lightColor });
+  drawText('NIF: 123456789', { x: 50, y: footerY - 30, size: 10, font, color: lightColor });
 
   const pdfBytes = await pdfDoc.saveAsBase64();
   return pdfBytes;

@@ -384,20 +384,29 @@ export default function BillingPage() {
 
                       const handleDownloadInvoicePdf = async () => {
                         try {
-                          const res = await fetch(`/api/invoices/${invoice.id}/pdf`);
+                          const email = user?.email || auth.getCurrentUser()?.email || '';
+                          const invoiceKey = encodeURIComponent(invoice.id || invoice.invoiceNumber);
+                          const res = await fetch(`/api/invoices/${invoiceKey}/pdf?email=${encodeURIComponent(email)}`, {
+                            headers: {
+                              'x-user-email': email
+                            }
+                          });
                           if (res.ok) {
                             const blob = await res.blob();
                             const url = window.URL.createObjectURL(blob);
                             const a = document.createElement('a');
                             a.href = url;
-                            a.download = `Fatura-${invoice.invoiceNumber}.pdf`;
+                            a.download = `Fatura-${invoice.invoiceNumber || invoice.id}.pdf`;
                             document.body.appendChild(a);
                             a.click();
                             window.URL.revokeObjectURL(url);
                             document.body.removeChild(a);
-                            soundEffects.playSuccessSound();
+                            soundEffects.playSuccessSound?.();
+                            setToastMsg({ type: 'success', message: 'Fatura baixada com sucesso!' });
                           } else {
-                            setToastMsg({ type: 'error', message: 'Erro ao baixar PDF' });
+                            const errData = await res.json().catch(() => null);
+                            console.error('Erro ao baixar PDF:', errData);
+                            setToastMsg({ type: 'error', message: errData?.error || 'Erro ao baixar PDF' });
                           }
                         } catch (e) {
                           console.error('Erro ao baixar PDF:', e);

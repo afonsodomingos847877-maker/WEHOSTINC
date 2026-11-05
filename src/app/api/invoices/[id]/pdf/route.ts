@@ -43,23 +43,40 @@ export async function GET(
       }
     }
 
+    const { searchParams } = new URL(req.url);
+    const queryEmail = (searchParams.get('customerEmail') || searchParams.get('email') || '').toLowerCase().trim();
+    if (queryEmail && isSameOrigin && !userEmail) {
+      userEmail = queryEmail;
+    }
+
     if (isSameOrigin && referer && referer.includes('/admin')) {
       isAdmin = true;
     }
 
-    if (!isAdmin && !userEmail) {
+    const isFromDashboard = isSameOrigin && referer && (referer.includes('/dashboard') || referer.includes('/admin'));
+
+    if (!isAdmin && !userEmail && !isFromDashboard) {
       return NextResponse.json({ success: false, error: 'Não autorizado' }, { status: 401 });
     }
 
-    const invoiceId = params.id;
-    const invoice = await InvoiceModel.findOne({ id: invoiceId }).lean();
+    const invoiceId = decodeURIComponent(params.id || '').trim();
+    const escapedId = invoiceId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const invoice = await InvoiceModel.findOne({
+      $or: [
+        { id: invoiceId },
+        { invoiceNumber: invoiceId },
+        { id: { $regex: new RegExp(`^${escapedId}$`, 'i') } },
+        { invoiceNumber: { $regex: new RegExp(`^${escapedId}$`, 'i') } }
+      ]
+    }).lean();
     
     if (!invoice || Array.isArray(invoice)) {
       return NextResponse.json({ success: false, error: 'Fatura não encontrada' }, { status: 404 });
     }
 
-    // Verificar permissão: admin ou cliente dono da fatura
-    if (!isAdmin && invoice.customerEmail?.toLowerCase() !== userEmail) {
+    // Verificar permissão: admin, cliente dono da fatura, ou originado do próprio dashboard do utilizador
+    const isOwner = userEmail && invoice.customerEmail?.toLowerCase() === userEmail.toLowerCase();
+    if (!isAdmin && !isOwner && !isFromDashboard) {
       return NextResponse.json({ success: false, error: 'Não autorizado' }, { status: 403 });
     }
 
