@@ -101,9 +101,51 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // 3. Fallback: Se não estiver pré-cadastrado no MongoDB, tentar autenticar diretamente na Migadu
+    const isMigaduAuthenticated = await migaduImapSmtp.authenticateIMAP(cleanEmail, password);
+    if (isMigaduAuthenticated) {
+      // Auto-cadastra a mailbox para que todas as funcionalidades do Webmail fiquem ativas
+      let autoMailbox = await EmailMailbox.findOne({ email: cleanEmail });
+      if (!autoMailbox) {
+        const domainPart = cleanEmail.split('@')[1] || '';
+        const namePart = cleanEmail.split('@')[0] || '';
+        try {
+          autoMailbox = await EmailMailbox.create({
+            email: cleanEmail,
+            domain: domainPart,
+            name: namePart,
+            status: 'active',
+            maySend: true,
+            mayReceive: true,
+            mayAccessImap: true,
+            lastLoginAt: new Date()
+          });
+        } catch (createErr) {
+          console.warn('[Webmail Auth] Auto-create mailbox warning:', createErr);
+        }
+      } else {
+        autoMailbox.status = 'active';
+        autoMailbox.lastLoginAt = new Date();
+        await autoMailbox.save();
+      }
+
+      return NextResponse.json({
+        success: true,
+        mailbox: {
+          email: cleanEmail,
+          name: autoMailbox?.name || cleanEmail.split('@')[0],
+          maySend: true,
+          mayReceive: true,
+          mayAccessImap: true,
+          isExternal: false,
+          providerName: 'WeHostHere Corporativo'
+        }
+      });
+    }
+
     return NextResponse.json(
-      { error: 'Conta de e-mail não encontrada no sistema' },
-      { status: 404 }
+      { error: 'Conta de e-mail não encontrada ou credenciais inválidas' },
+      { status: 401 }
     );
   } catch (error) {
     console.error('[Webmail Auth] Error:', error);
