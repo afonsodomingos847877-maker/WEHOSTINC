@@ -104,3 +104,4 @@ export async function GET(req: Request) {
     return NextResponse.json({ success: false, error: 'Erro ao gerar perfil Apple' }, { status: 500 });
   }
 }
+

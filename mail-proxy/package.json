@@ -1,0 +1,12 @@
+{
+  "name": "wehosthere-mail-proxy",
+  "version": "1.0.0",
+  "description": "Zero-Cost IMAP & SMTP TLS Reverse Proxy for WeHostHere custom domain hostnames",
+  "main": "proxy.js",
+  "scripts": {
+    "start": "node proxy.js"
+  },
+  "dependencies": {
+    "selfsigned": "^2.4.1"
+  }
+}

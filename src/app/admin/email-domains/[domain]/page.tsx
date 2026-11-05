@@ -1050,6 +1050,176 @@ export default function EmailDomainDetailPage() {
               </div>
             </div>
 
+            {/* PASSO 5: AUTODISCOVER & AUTOCONFIG (DESCOBERTA AUTOMÁTICA) */}
+            <div className="bg-white rounded-2xl shadow-xs border border-gray-200 p-6 space-y-4">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="h-8 w-8 rounded-xl bg-cyan-100 text-cyan-800 font-black flex items-center justify-center text-sm">
+                    5
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-gray-900 flex items-center space-x-2">
+                      <span>Passo 5: Descoberta Automática (Outlook & Thunderbird)</span>
+                      <span className="text-[10px] bg-cyan-100 text-cyan-800 font-bold px-2 py-0.5 rounded-full uppercase">Zero-Config</span>
+                    </h3>
+                    <p className="text-xs text-gray-500">
+                      Permite que o Outlook, Android e Thunderbird configurem a conta sozinhos só com o e-mail e senha.
+                    </p>
+                  </div>
+                </div>
+                <span className="px-2.5 py-1 text-xs font-bold rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                  Opcional / Recomendado
+                </span>
+              </div>
+
+              <div className="space-y-3">
+                <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-2.5">
+                  <div className="flex items-center space-x-2">
+                    <span className="px-2 py-0.5 bg-cyan-600 text-white text-[11px] font-bold rounded-md">CNAME</span>
+                    <span className="text-xs font-semibold text-gray-700">Microsoft Outlook & Celular (Autodiscover)</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                    <div className="sm:col-span-1">
+                      <span className="text-gray-400 block font-medium mb-1">Nome / Host:</span>
+                      <div className="flex items-center justify-between bg-white border border-gray-200 px-3 py-2 rounded-lg font-mono text-gray-800">
+                        <span>autodiscover</span>
+                        <button
+                          onClick={() => handleCopy('autodiscover', 'auto_disc_name')}
+                          className="text-gray-400 hover:text-gray-700"
+                          title="Copiar Nome"
+                        >
+                          {copiedKey === 'auto_disc_name' ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
+                        </button>
+                      </div>
+                    </div>
+                    <div className="sm:col-span-2">
+                      <span className="text-gray-400 block font-medium mb-1">Valor / Destino CNAME:</span>
+                      <div className="flex items-center justify-between bg-white border border-gray-200 px-3 py-2 rounded-lg font-mono text-gray-800">
+                        <span className="truncate mr-2">wehosthere.com</span>
+                        <button
+                          onClick={() => handleCopy('wehosthere.com', 'auto_disc_val')}
+                          className="text-gray-400 hover:text-gray-700 shrink-0"
+                          title="Copiar Valor"
+                        >
+                          {copiedKey === 'auto_disc_val' ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-2.5">
+                  <div className="flex items-center space-x-2">
+                    <span className="px-2 py-0.5 bg-cyan-600 text-white text-[11px] font-bold rounded-md">CNAME</span>
+                    <span className="text-xs font-semibold text-gray-700">Mozilla Thunderbird & K-9 Mail (Autoconfig)</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                    <div className="sm:col-span-1">
+                      <span className="text-gray-400 block font-medium mb-1">Nome / Host:</span>
+                      <div className="flex items-center justify-between bg-white border border-gray-200 px-3 py-2 rounded-lg font-mono text-gray-800">
+                        <span>autoconfig</span>
+                        <button
+                          onClick={() => handleCopy('autoconfig', 'auto_cfg_name')}
+                          className="text-gray-400 hover:text-gray-700"
+                          title="Copiar Nome"
+                        >
+                          {copiedKey === 'auto_cfg_name' ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
+                        </button>
+                      </div>
+                    </div>
+                    <div className="sm:col-span-2">
+                      <span className="text-gray-400 block font-medium mb-1">Valor / Destino CNAME:</span>
+                      <div className="flex items-center justify-between bg-white border border-gray-200 px-3 py-2 rounded-lg font-mono text-gray-800">
+                        <span className="truncate mr-2">wehosthere.com</span>
+                        <button
+                          onClick={() => handleCopy('wehosthere.com', 'auto_cfg_val')}
+                          className="text-gray-400 hover:text-gray-700 shrink-0"
+                          title="Copiar Valor"
+                        >
+                          {copiedKey === 'auto_cfg_val' ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* PASSO 6: SERVIDORES DE ENTRADA & SAÍDA (OUTLOOK / CLIENTES DE E-MAIL) */}
+            <div className="bg-white rounded-2xl shadow-xs border border-gray-200 p-6 space-y-5">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="h-8 w-8 rounded-xl bg-emerald-100 text-emerald-800 font-black flex items-center justify-center text-sm">
+                    6
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-gray-900">
+                      Passo 6: Servidores de Entrada & Saída (Configuração de Clientes)
+                    </h3>
+                    <p className="text-xs text-gray-500">
+                      Dados que o cliente ou suporte técnico insere no Outlook ou telemóvel.
+                    </p>
+                  </div>
+                </div>
+                <span className="px-2.5 py-1 text-xs font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  Compatibilidade Total
+                </span>
+              </div>
+
+              {/* Opção Oficial Migadu */}
+              <div className="border border-emerald-200 bg-emerald-50/40 rounded-xl p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-extrabold text-emerald-900 uppercase tracking-wide flex items-center space-x-1.5">
+                    <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
+                    <span>Opção 1: Configuração Oficial Migadu (Recomendada)</span>
+                  </span>
+                  <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                    Sem risco de certificado
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  <div className="bg-white p-3 rounded-lg border border-emerald-200/80">
+                    <p className="font-bold text-gray-700 mb-1">Servidor IMAP (Entrada):</p>
+                    <p className="font-mono text-gray-900 font-bold">imap.migadu.com</p>
+                    <p className="text-gray-500 text-[11px] mt-0.5">Porta: <strong className="text-gray-800">993</strong> • SSL/TLS</p>
+                  </div>
+                  <div className="bg-white p-3 rounded-lg border border-emerald-200/80">
+                    <p className="font-bold text-gray-700 mb-1">Servidor SMTP (Saída):</p>
+                    <p className="font-mono text-gray-900 font-bold">smtp.migadu.com</p>
+                    <p className="text-gray-500 text-[11px] mt-0.5">Porta: <strong className="text-gray-800">465</strong> (SSL/TLS) ou 587 (STARTTLS)</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Opção Hostnames Próprios */}
+              <div className="border border-gray-200 bg-gray-50 rounded-xl p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-extrabold text-gray-900 uppercase tracking-wide flex items-center space-x-1.5">
+                    <span className="h-2 w-2 rounded-full bg-primary-500"></span>
+                    <span>Opção 2: Hostnames Próprios (mail.{domainName} & smtp.{domainName})</span>
+                  </span>
+                  <span className="text-[11px] font-bold text-gray-600 bg-gray-200 px-2 py-0.5 rounded-full">
+                    Via Proxy WeHostHere
+                  </span>
+                </div>
+                <p className="text-xs text-gray-500">
+                  Para os clientes que preferem ver o próprio domínio no Outlook sem aviso de certificado SSL, as ligações são roteadas via gateway TCP dedicado:
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  <div className="bg-white p-3 rounded-lg border border-gray-200">
+                    <p className="font-bold text-gray-700 mb-1">IMAP Personalizado:</p>
+                    <p className="font-mono text-primary-700 font-bold">mail.{domainName}</p>
+                    <p className="text-gray-500 text-[11px] mt-0.5">Porta: <strong className="text-gray-800">993</strong> • SSL/TLS</p>
+                  </div>
+                  <div className="bg-white p-3 rounded-lg border border-gray-200">
+                    <p className="font-bold text-gray-700 mb-1">SMTP Personalizado:</p>
+                    <p className="font-mono text-primary-700 font-bold">smtp.{domainName}</p>
+                    <p className="text-gray-500 text-[11px] mt-0.5">Porta: <strong className="text-gray-800">465</strong> • SSL/TLS</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
           </div>
 
           {/* Sidebar (Col 3) */}

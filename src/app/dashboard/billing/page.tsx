@@ -195,29 +195,55 @@ export default function BillingPage() {
   // Helper para verificar se a fatura foi liquidada (quer por InvoiceModel, quer por OrderModel aprovado no admin)
   const isInvoiceActuallyPaid = (inv: Invoice): boolean => {
     if (inv.status === 'paid') return true;
-    return userOrders.some(o => 
-      ((o.status as string) === 'completed' || (o.status as string) === 'approved') &&
-      (
-        o.id?.toLowerCase() === inv.invoiceNumber?.toLowerCase() ||
-        o.id?.toLowerCase() === inv.id?.toLowerCase() ||
-        (o as any).reference?.toLowerCase() === inv.invoiceNumber?.toLowerCase() ||
-        (o as any).reference?.toLowerCase() === inv.id?.toLowerCase()
-      )
-    );
+    const invNum = inv.invoiceNumber?.toLowerCase() || '';
+    const invId = inv.id?.toLowerCase() || '';
+    const invDigits = (invNum + ' ' + invId).match(/\d{5,}/)?.[0] || '';
+
+    return userOrders.some(o => {
+      const isOrderPaid = (o.status as string) === 'completed' || (o.status as string) === 'approved';
+      if (!isOrderPaid) return false;
+
+      const oId = o.id?.toLowerCase() || '';
+      const oRef = ((o as any).reference || '')?.toLowerCase();
+      const oDigits = (oId + ' ' + oRef).match(/\d{5,}/)?.[0] || '';
+
+      return (
+        oId === invNum ||
+        oId === invId ||
+        oRef === invNum ||
+        oRef === invId ||
+        (invNum && oId.includes(invNum)) ||
+        (invId && oId.includes(invId)) ||
+        (invDigits && oDigits && invDigits === oDigits)
+      );
+    });
   };
 
   // Helper para verificar se o pedido foi liquidado (quer por OrderModel, quer por fatura marcada como paga)
   const isOrderActuallyPaid = (order: ServiceOrder): boolean => {
     if ((order.status as string) === 'completed' || (order.status as string) === 'approved') return true;
-    return invoices.some(inv => 
-      inv.status === 'paid' &&
-      (
-        inv.invoiceNumber?.toLowerCase() === order.id?.toLowerCase() ||
-        inv.id?.toLowerCase() === order.id?.toLowerCase() ||
-        inv.invoiceNumber?.toLowerCase() === (order as any).reference?.toLowerCase() ||
-        inv.id?.toLowerCase() === (order as any).reference?.toLowerCase()
-      )
-    );
+    const oId = order.id?.toLowerCase() || '';
+    const oRef = ((order as any).reference || '')?.toLowerCase();
+    const oDigits = (oId + ' ' + oRef).match(/\d{5,}/)?.[0] || '';
+
+    return invoices.some(inv => {
+      const isInvPaid = inv.status === 'paid' || isInvoiceActuallyPaid(inv);
+      if (!isInvPaid) return false;
+
+      const invNum = inv.invoiceNumber?.toLowerCase() || '';
+      const invId = inv.id?.toLowerCase() || '';
+      const invDigits = (invNum + ' ' + invId).match(/\d{5,}/)?.[0] || '';
+
+      return (
+        invNum === oId ||
+        invId === oId ||
+        invNum === oRef ||
+        invId === oRef ||
+        (invNum && oId.includes(invNum)) ||
+        (invId && oId.includes(invId)) ||
+        (invDigits && oDigits && invDigits === oDigits)
+      );
+    });
   };
 
   const effectiveInvoices = invoices.map(inv => {
