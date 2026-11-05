@@ -5416,31 +5416,56 @@ function WebmailContent() {
                       <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-700">
                         Para (Destinatário)
                       </label>
+                      <div className="flex items-center space-x-2">
+                        <button
+                          type="button"
+                          onClick={() => setShowCcBcc(!showCcBcc)}
+                          className="text-[10px] font-bold text-primary-600 hover:text-primary-800 cursor-pointer"
+                        >
+                          {showCcBcc ? 'Ocultar CC/BCC' : '+ CC/BCC'}
+                        </button>
+                        {/* Ícone para abrir lista de contactos */}
+                        <button
+                          type="button"
+                          onClick={() => setShowToPicker(!showToPicker)}
+                          className="p-1 text-gray-500 hover:text-primary-600 hover:bg-gray-100 rounded-lg transition"
+                          title="Selecionar contacto dos emails"
+                        >
+                          <Users className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Campo de Entrada Manual com seletor de contactos acoplado */}
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={composeTo}
+                        onChange={(e) => handleToChange(e.target.value)}
+                        placeholder="email@exemplo.com"
+                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-900 outline-none focus:ring-2 focus:ring-primary-500 font-sans pr-10"
+                      />
                       <button
                         type="button"
-                        onClick={() => setShowCcBcc(!showCcBcc)}
-                        className="text-[10px] font-bold text-primary-600 hover:text-primary-800 cursor-pointer"
-                      >
-                        {showCcBcc ? 'Ocultar CC/BCC' : '+ CC/BCC'}
-                      </button>
-                      {/* Ícone para abrir lista de contactos */}
-                      <button
-                        type="button"
-                        onClick={() => setShowToPicker(true)}
-                        className="ml-2 p-1 text-gray-600 hover:text-primary-600 rounded"
-                        title="Selecionar contacto"
+                        onClick={() => setShowToPicker(!showToPicker)}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-primary-600 transition"
+                        title="Ver contactos guardados"
                       >
                         <Users className="w-4 h-4" />
                       </button>
+
+                      {/* Dropdown de selecção rápida de contactos */}
+                      <ContactPicker
+                        contacts={knownContacts}
+                        value={composeTo}
+                        onSelect={(email: string) => {
+                          setComposeTo(email);
+                          setShowToPicker(false);
+                        }}
+                        open={showToPicker}
+                        setOpen={setShowToPicker}
+                      />
                     </div>
-                    {/* Campo “Para” com ContactPicker */}
-                    <ContactPicker
-                      contacts={knownContacts}
-                      value={composeTo}
-                      onSelect={(email: string) => setComposeTo(email)}
-                      open={showToPicker}
-                      setOpen={setShowToPicker}
-                    />
                   </div>
                 </div>
 
