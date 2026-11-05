@@ -569,8 +569,12 @@ function WebmailContent() {
     phone: '',
     website: '',
     logoUrl: '',
+    signatureImage: '',
+    signatureType: 'image' as 'image' | 'text',
+    autoInsert: true,
     isEnabled: true
   });
+  const [signatureActiveTab, setSignatureActiveTab] = useState<'image' | 'text'>('image');
   const [isSavingSignature, setIsSavingSignature] = useState(false);
 
   // Current date/time & Network connectivity
@@ -895,20 +899,42 @@ function WebmailContent() {
     setComposeAttachments([]);
   };
 
+  const getSignatureHtml = useCallback(() => {
+    if (!signatureForm.isEnabled) return '';
+    if (signatureForm.signatureType === 'image' && signatureForm.signatureImage) {
+      return `<p><br></p><p><img src="${signatureForm.signatureImage}" alt="Assinatura" style="max-width: 500px; width: 100%; height: auto; display: block; border-radius: 4px;" /></p>`;
+    }
+    if (signatureForm.signatureImage && !signatureForm.fullName) {
+      return `<p><br></p><p><img src="${signatureForm.signatureImage}" alt="Assinatura" style="max-width: 500px; width: 100%; height: auto; display: block; border-radius: 4px;" /></p>`;
+    }
+    if (signatureForm.fullName || signatureForm.companyName) {
+      return `<p><br></p><div style="font-family: Arial, sans-serif; font-size: 13px; color: #222; border-left: 3px solid #7c3aed; padding-left: 10px; margin-top: 15px;">
+        <strong style="color: #111; font-size: 14px;">${signatureForm.fullName || ''}</strong><br/>
+        <span style="color: #555;">${signatureForm.jobTitle ? signatureForm.jobTitle + ' • ' : ''}${signatureForm.companyName || ''}</span><br/>
+        ${signatureForm.phone ? `<span style="color: #666; font-size: 12px;">📞 ${signatureForm.phone}</span><br/>` : ''}
+        ${signatureForm.website ? `<a href="${signatureForm.website.startsWith('http') ? signatureForm.website : 'https://' + signatureForm.website}" target="_blank" style="color: #7c3aed; font-size: 12px; text-decoration: none;">🌐 ${signatureForm.website}</a><br/>` : ''}
+        ${signatureForm.signatureImage ? `<br/><img src="${signatureForm.signatureImage}" alt="Assinatura" style="max-width: 450px; width: 100%; height: auto; margin-top: 8px; display: block;" />` : ''}
+      </div>`;
+    }
+    return '';
+  }, [signatureForm]);
+
   const handleInsertSignature = () => {
-    if (!signatureForm.fullName && !signatureForm.companyName) {
+    const sig = getSignatureHtml();
+    if (!sig) {
       setShowSignatureModal(true);
       return;
     }
-    const sigText = `\n\n--\n${signatureForm.fullName || ''}\n${signatureForm.jobTitle ? signatureForm.jobTitle + ' | ' : ''}${signatureForm.companyName || ''}\n${signatureForm.phone ? 'Tel: ' + signatureForm.phone + '\n' : ''}${signatureForm.website ? 'Web: ' + signatureForm.website : ''}`;
-    setComposeBody(prev => prev + sigText);
+    setComposeBody(prev => (prev ? prev + sig : sig));
   };
 
   const handleReplyMessage = () => {
     if (!selectedMessage) return;
     setComposeTo(selectedMessage.fromEmail);
     setComposeSubject(`Re: ${selectedMessage.subject}`);
-    setComposeBody(`\n\n--- Mensagem Original ---\nDe: ${selectedMessage.fromName} <${selectedMessage.fromEmail}>\nData: ${new Date(selectedMessage.date).toLocaleString()}\n\n${selectedMessage.body}`);
+    const sig = getSignatureHtml();
+    const sigBlock = (sig && signatureForm.autoInsert) ? `${sig}<p><br></p>` : '';
+    setComposeBody(`<p><br></p>${sigBlock}<hr style="border:0;border-top:1px solid #e5e7eb;margin:15px 0;"/><p><strong>De:</strong> ${selectedMessage.fromName} &lt;${selectedMessage.fromEmail}&gt;<br/><strong>Data:</strong> ${new Date(selectedMessage.date).toLocaleString()}<br/><strong>Assunto:</strong> ${selectedMessage.subject}</p><blockquote>${selectedMessage.body}</blockquote>`);
     setComposeCc('');
     setComposeBcc('');
     setComposeAttachments([]);
@@ -920,7 +946,9 @@ function WebmailContent() {
     setComposeTo(selectedMessage.fromEmail);
     setComposeCc(selectedAccountEmail); // Adicionar remetente original em CC
     setComposeSubject(`Re: ${selectedMessage.subject}`);
-    setComposeBody(`\n\n--- Mensagem Original ---\nDe: ${selectedMessage.fromName} <${selectedMessage.fromEmail}>\nPara: ${selectedMessage.toEmail}\nData: ${new Date(selectedMessage.date).toLocaleString()}\n\n${selectedMessage.body}`);
+    const sig = getSignatureHtml();
+    const sigBlock = (sig && signatureForm.autoInsert) ? `${sig}<p><br></p>` : '';
+    setComposeBody(`<p><br></p>${sigBlock}<hr style="border:0;border-top:1px solid #e5e7eb;margin:15px 0;"/><p><strong>De:</strong> ${selectedMessage.fromName} &lt;${selectedMessage.fromEmail}&gt;<br/><strong>Para:</strong> ${selectedMessage.toEmail}<br/><strong>Data:</strong> ${new Date(selectedMessage.date).toLocaleString()}<br/><strong>Assunto:</strong> ${selectedMessage.subject}</p><blockquote>${selectedMessage.body}</blockquote>`);
     setComposeBcc('');
     setComposeAttachments([]);
     setShowCompose(true);
@@ -1270,6 +1298,10 @@ function WebmailContent() {
     if (!mailboxPassword) {
       openLoginModal();
       return;
+    }
+    const sig = getSignatureHtml();
+    if (sig && signatureForm.autoInsert && (!composeBody || composeBody === '<p><br></p>' || composeBody === '')) {
+      setComposeBody('<p><br></p>' + sig);
     }
     setShowCompose(true);
   };
@@ -2177,20 +2209,49 @@ function WebmailContent() {
   // Load signature for active account
   useEffect(() => {
     if (selectedAccountEmail) {
+      // 1. Tentar localStorage primeiro para disponibilidade instantânea e offline
+      if (typeof window !== 'undefined') {
+        try {
+          const cached = localStorage.getItem(`wehost_signature_${selectedAccountEmail.toLowerCase()}`);
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            setSignatureForm(prev => ({ ...prev, ...parsed }));
+            if (parsed.signatureImage) {
+              setSignatureActiveTab('image');
+            }
+          }
+        } catch {}
+      }
+
+      // 2. Sincronizar com a API do servidor
       fetch(`/api/webmail/signature?email=${encodeURIComponent(selectedAccountEmail)}`)
         .then(r => r.json())
         .then(data => {
           if (data.success && data.signature) {
             setUserSignature(data.signature);
-            setSignatureForm({
-              fullName: data.signature.fullName || '',
-              jobTitle: data.signature.jobTitle || '',
-              companyName: data.signature.companyName || '',
-              phone: data.signature.phone || '',
-              website: data.signature.website || '',
-              logoUrl: data.signature.logoUrl || '',
-              isEnabled: data.signature.isEnabled !== false
+            setSignatureForm(prev => {
+              const updated = {
+                ...prev,
+                fullName: data.signature.fullName || prev.fullName || '',
+                jobTitle: data.signature.jobTitle || prev.jobTitle || '',
+                companyName: data.signature.companyName || prev.companyName || '',
+                phone: data.signature.phone || prev.phone || '',
+                website: data.signature.website || prev.website || '',
+                logoUrl: data.signature.logoUrl || prev.logoUrl || '',
+                signatureImage: data.signature.signatureImage || prev.signatureImage || '',
+                signatureType: (data.signature.signatureType || (data.signature.signatureImage ? 'image' : prev.signatureType)) as 'image' | 'text',
+                isEnabled: data.signature.isEnabled !== false
+              };
+              if (typeof window !== 'undefined') {
+                try {
+                  localStorage.setItem(`wehost_signature_${selectedAccountEmail.toLowerCase()}`, JSON.stringify(updated));
+                } catch {}
+              }
+              return updated;
             });
+            if (data.signature.signatureImage) {
+              setSignatureActiveTab('image');
+            }
           }
         })
         .catch(() => {});
@@ -2669,9 +2730,37 @@ function WebmailContent() {
     }
   };
 
+  const handleSignatureImageUpload = (file: File) => {
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      alert('A imagem da assinatura deve ter no máximo 2MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      if (result) {
+        setSignatureForm(prev => ({
+          ...prev,
+          signatureImage: result,
+          signatureType: 'image'
+        }));
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSaveSignature = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSavingSignature(true);
+
+    // Salvar localmente de imediato
+    if (typeof window !== 'undefined' && selectedAccountEmail) {
+      try {
+        localStorage.setItem(`wehost_signature_${selectedAccountEmail.toLowerCase()}`, JSON.stringify(signatureForm));
+      } catch {}
+    }
+
     try {
       const res = await fetch('/api/webmail/signature', {
         method: 'POST',
@@ -2684,12 +2773,12 @@ function WebmailContent() {
       const data = await res.json();
       if (data.success) {
         setUserSignature(data.signature);
-        setShowSignatureModal(false);
       }
     } catch (err) {
       console.error('Error saving signature:', err);
     } finally {
       setIsSavingSignature(false);
+      setShowSignatureModal(false);
     }
   };
 
@@ -6510,7 +6599,7 @@ function WebmailContent() {
 
       {/* MODAL: Gerador e Gestor de Assinatura de E-mail */}
       {showSignatureModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-end sm:items-center justify-center z-[10010] p-2 sm:p-4 animate-in fade-in duration-200">
           <div className="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl max-w-lg w-full p-5 sm:p-6 animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 max-h-[92vh] overflow-y-auto border border-gray-100 sm:mx-4">
             <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100">
               <div className="flex items-center space-x-3">
@@ -6531,96 +6620,228 @@ function WebmailContent() {
               </button>
             </div>
 
-            <form onSubmit={handleSaveSignature} className="space-y-3 text-xs">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
-                <div>
-                  <label className="block text-gray-700 font-bold mb-1">Nome Completo</label>
-                  <input
-                    type="text"
-                    value={signatureForm.fullName}
-                    onChange={(e) => setSignatureForm({ ...signatureForm, fullName: e.target.value })}
-                    placeholder="Seu Nome"
-                    required
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-purple-500 font-medium"
-                  />
-                </div>
+            {/* Alternador de Modo: Assinatura em Imagem vs Assinatura em Texto */}
+            <div className="flex p-1 bg-gray-100 rounded-xl mb-4 text-xs font-bold">
+              <button
+                type="button"
+                onClick={() => {
+                  setSignatureActiveTab('image');
+                  setSignatureForm(prev => ({ ...prev, signatureType: 'image' }));
+                }}
+                className={`flex-1 py-2 px-3 rounded-lg flex items-center justify-center space-x-2 transition cursor-pointer ${
+                  signatureActiveTab === 'image'
+                    ? 'bg-white text-purple-700 shadow-xs'
+                    : 'text-gray-500 hover:text-gray-800'
+                }`}
+              >
+                <ImageIcon className="w-3.5 h-3.5" />
+                <span>Assinatura em Imagem / Digital</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSignatureActiveTab('text');
+                  setSignatureForm(prev => ({ ...prev, signatureType: 'text' }));
+                }}
+                className={`flex-1 py-2 px-3 rounded-lg flex items-center justify-center space-x-2 transition cursor-pointer ${
+                  signatureActiveTab === 'text'
+                    ? 'bg-white text-purple-700 shadow-xs'
+                    : 'text-gray-500 hover:text-gray-800'
+                }`}
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>Dados em Texto</span>
+              </button>
+            </div>
 
-                <div>
-                  <label className="block text-gray-700 font-bold mb-1">Cargo / Função</label>
-                  <input
-                    type="text"
-                    value={signatureForm.jobTitle}
-                    onChange={(e) => setSignatureForm({ ...signatureForm, jobTitle: e.target.value })}
-                    placeholder="Diretor Geral, Comercial, etc."
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-purple-500 font-medium"
-                  />
-                </div>
-              </div>
+            <form onSubmit={handleSaveSignature} className="space-y-3.5 text-xs">
+              {/* ABA 1: ASSINATURA EM IMAGEM */}
+              {signatureActiveTab === 'image' && (
+                <div className="space-y-3 animate-in fade-in duration-150">
+                  <div className="p-3 bg-purple-50/70 border border-purple-100 rounded-2xl text-[11px] text-purple-900 leading-relaxed">
+                    Carregue a sua assinatura digital ou banner corporativo em imagem (PNG, JPG, WebP). Ela será anexada automaticamente ao final dos seus novos e-mails e respostas.
+                  </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
-                <div>
-                  <label className="block text-gray-700 font-bold mb-1">Empresa</label>
-                  <input
-                    type="text"
-                    value={signatureForm.companyName}
-                    onChange={(e) => setSignatureForm({ ...signatureForm, companyName: e.target.value })}
-                    placeholder="Nome da sua Empresa"
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-purple-500 font-medium"
-                  />
-                </div>
+                  {signatureForm.signatureImage ? (
+                    <div className="space-y-2">
+                      <div className="p-3 bg-gray-50 border border-gray-200 rounded-2xl flex flex-col items-center justify-center overflow-hidden">
+                        <img
+                          src={signatureForm.signatureImage}
+                          alt="Assinatura Digital"
+                          className="max-h-48 max-w-full object-contain rounded-lg border border-gray-200 shadow-xs bg-white"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <label className="flex-1 py-2 px-3 bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold rounded-xl text-center cursor-pointer border border-purple-200 transition">
+                          <span>Trocar Imagem</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleSignatureImageUpload(file);
+                            }}
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setSignatureForm(prev => ({ ...prev, signatureImage: '' }))}
+                          className="py-2 px-3 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold rounded-xl border border-rose-200 transition cursor-pointer"
+                        >
+                          Remover
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-2.5">
+                      <label className="border-2 border-dashed border-purple-200 hover:border-purple-400 bg-purple-50/30 hover:bg-purple-50/60 transition rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer group">
+                        <div className="w-12 h-12 rounded-full bg-purple-100 group-hover:bg-purple-200 text-purple-600 flex items-center justify-center mb-2 transition">
+                          <ImageIcon className="w-6 h-6" />
+                        </div>
+                        <span className="text-xs font-bold text-gray-800 mb-0.5">Clique para carregar a sua imagem de assinatura</span>
+                        <span className="text-[11px] text-gray-500">PNG, JPG, SVG ou WebP (máx. 2MB)</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleSignatureImageUpload(file);
+                          }}
+                        />
+                      </label>
 
-                <div>
-                  <label className="block text-gray-700 font-bold mb-1">Telefone / WhatsApp</label>
-                  <input
-                    type="text"
-                    value={signatureForm.phone}
-                    onChange={(e) => setSignatureForm({ ...signatureForm, phone: e.target.value })}
-                    placeholder="+258 84 000 0000"
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-purple-500 font-medium"
-                  />
+                      <div>
+                        <label className="block text-gray-600 font-semibold mb-1 text-[11px]">Ou cole a URL direta de uma imagem hospedada:</label>
+                        <input
+                          type="text"
+                          value={signatureForm.signatureImage}
+                          onChange={(e) => setSignatureForm(prev => ({ ...prev, signatureImage: e.target.value, signatureType: 'image' }))}
+                          placeholder="https://exemplo.com/minha-assinatura.png"
+                          className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-purple-500 font-medium"
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
+              )}
 
-              <div>
-                <label className="block text-gray-700 font-bold mb-1">Website / Link</label>
+              {/* ABA 2: DADOS EM TEXTO */}
+              {signatureActiveTab === 'text' && (
+                <div className="space-y-2.5 animate-in fade-in duration-150">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
+                    <div>
+                      <label className="block text-gray-700 font-bold mb-1">Nome Completo</label>
+                      <input
+                        type="text"
+                        value={signatureForm.fullName}
+                        onChange={(e) => setSignatureForm({ ...signatureForm, fullName: e.target.value })}
+                        placeholder="Seu Nome"
+                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-purple-500 font-medium"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-gray-700 font-bold mb-1">Cargo / Função</label>
+                      <input
+                        type="text"
+                        value={signatureForm.jobTitle}
+                        onChange={(e) => setSignatureForm({ ...signatureForm, jobTitle: e.target.value })}
+                        placeholder="Diretor Geral, Comercial, etc."
+                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-purple-500 font-medium"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
+                    <div>
+                      <label className="block text-gray-700 font-bold mb-1">Empresa</label>
+                      <input
+                        type="text"
+                        value={signatureForm.companyName}
+                        onChange={(e) => setSignatureForm({ ...signatureForm, companyName: e.target.value })}
+                        placeholder="Nome da sua Empresa"
+                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-purple-500 font-medium"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-gray-700 font-bold mb-1">Telefone / WhatsApp</label>
+                      <input
+                        type="text"
+                        value={signatureForm.phone}
+                        onChange={(e) => setSignatureForm({ ...signatureForm, phone: e.target.value })}
+                        placeholder="+258 84 000 0000"
+                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-purple-500 font-medium"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-gray-700 font-bold mb-1">Website / Link</label>
+                    <input
+                      type="text"
+                      value={signatureForm.website}
+                      onChange={(e) => setSignatureForm({ ...signatureForm, website: e.target.value })}
+                      placeholder="https://suaempresa.co.mz"
+                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-purple-500 font-medium"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* OPÇÕES: Inserir automaticamente */}
+              <div className="pt-2 border-t border-gray-100 flex items-center justify-between">
+                <div>
+                  <span className="font-bold text-gray-800 block text-xs">Inserção Automática</span>
+                  <span className="text-[11px] text-gray-500">Adicionar automaticamente a novos e-mails e respostas</span>
+                </div>
                 <input
-                  type="text"
-                  value={signatureForm.website}
-                  onChange={(e) => setSignatureForm({ ...signatureForm, website: e.target.value })}
-                  placeholder="https://suaempresa.co.mz"
-                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-purple-500 font-medium"
+                  type="checkbox"
+                  checked={signatureForm.autoInsert}
+                  onChange={(e) => setSignatureForm(prev => ({ ...prev, autoInsert: e.target.checked }))}
+                  className="w-4 h-4 rounded text-purple-600 focus:ring-purple-500 cursor-pointer"
                 />
               </div>
 
               {/* Live Signature Preview */}
               <div className="pt-1">
-                <label className="block text-gray-700 font-bold mb-1">Pré-visualização:</label>
-                <div className="p-3.5 bg-gray-50 rounded-2xl border border-gray-200 space-y-1 text-gray-800 font-sans border-l-4 border-l-purple-600">
-                  <div className="font-bold text-sm text-gray-900">{signatureForm.fullName || 'Seu Nome'}</div>
-                  <div className="text-gray-600 text-xs">
-                    {signatureForm.jobTitle ? `${signatureForm.jobTitle} • ` : ''}{signatureForm.companyName || 'Sua Empresa'}
+                <label className="block text-gray-700 font-bold mb-1 text-[11px]">Pré-visualização:</label>
+                {signatureForm.signatureType === 'image' && signatureForm.signatureImage ? (
+                  <div className="p-3 bg-gray-50 rounded-2xl border border-gray-200 flex justify-center overflow-hidden">
+                    <img
+                      src={signatureForm.signatureImage}
+                      alt="Pré-visualização"
+                      className="max-h-28 object-contain rounded"
+                    />
                   </div>
-                  {signatureForm.phone && (
-                    <div className="text-gray-500 text-[11px]">📞 {signatureForm.phone}</div>
-                  )}
-                  {signatureForm.website && (
-                    <div className="text-purple-600 font-semibold text-[11px]"> {signatureForm.website}</div>
-                  )}
-                </div>
+                ) : (
+                  <div className="p-3.5 bg-gray-50 rounded-2xl border border-gray-200 space-y-1 text-gray-800 font-sans border-l-4 border-l-purple-600">
+                    <div className="font-bold text-sm text-gray-900">{signatureForm.fullName || 'Seu Nome'}</div>
+                    <div className="text-gray-600 text-xs">
+                      {signatureForm.jobTitle ? `${signatureForm.jobTitle} • ` : ''}{signatureForm.companyName || 'Sua Empresa'}
+                    </div>
+                    {signatureForm.phone && (
+                      <div className="text-gray-500 text-[11px]">📞 {signatureForm.phone}</div>
+                    )}
+                  </div>
+                )}
               </div>
+              
 
               <div className="flex items-center space-x-3 pt-2">
                 <button
                   type="button"
                   onClick={() => setShowSignatureModal(false)}
-                  className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs rounded-xl transition"
+                  className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs rounded-xl transition cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  disabled={isSavingSignature || !signatureForm.fullName}
-                  className="flex-1 py-2.5 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-bold text-xs rounded-xl transition shadow-sm flex items-center justify-center space-x-1.5"
+                  disabled={isSavingSignature || (!signatureForm.fullName && !signatureForm.signatureImage)}
+                  className="flex-1 py-2.5 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-bold text-xs rounded-xl transition shadow-sm flex items-center justify-center space-x-1.5 cursor-pointer"
                 >
                   {isSavingSignature ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                   <span>{isSavingSignature ? 'Salvando...' : 'Salvar Assinatura'}</span>

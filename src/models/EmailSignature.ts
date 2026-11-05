@@ -10,6 +10,8 @@ export interface IEmailSignature extends Document {
   phone?: string;
   website?: string;
   logoUrl?: string;
+  signatureImage?: string;
+  signatureType?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -24,6 +26,8 @@ const EmailSignatureSchema = new Schema<IEmailSignature>({
   phone: { type: String },
   website: { type: String },
   logoUrl: { type: String },
+  signatureImage: { type: String },
+  signatureType: { type: String, default: 'image' },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });

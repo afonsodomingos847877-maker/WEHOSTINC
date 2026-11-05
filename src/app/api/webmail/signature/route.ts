@@ -29,7 +29,19 @@ export async function POST(request: NextRequest) {
   try {
     await connectDB();
     const body = await request.json();
-    const { email, signatureHtml, isEnabled = true, fullName, jobTitle, companyName, phone, website, logoUrl } = body;
+    const {
+      email,
+      signatureHtml,
+      isEnabled = true,
+      fullName,
+      jobTitle,
+      companyName,
+      phone,
+      website,
+      logoUrl,
+      signatureImage,
+      signatureType = 'image'
+    } = body;
 
     if (!email) {
       return NextResponse.json({ error: 'E-mail é obrigatório' }, { status: 400 });
@@ -47,6 +59,8 @@ export async function POST(request: NextRequest) {
         phone,
         website,
         logoUrl,
+        signatureImage: signatureImage || '',
+        signatureType: signatureType || 'image',
         updatedAt: new Date()
       },
       { upsert: true, new: true }
