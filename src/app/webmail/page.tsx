@@ -5110,7 +5110,7 @@ function WebmailContent() {
             <div className="flex-1 relative overflow-hidden flex flex-col items-center justify-center text-center">
               {/* Imagem de fundo */}
               <img
-                src="/webbackground.jpg"
+                src="/webbackground2.jpg"
                 alt="background"
                 className="absolute inset-0 w-full h-full object-cover"
                 draggable={false}
