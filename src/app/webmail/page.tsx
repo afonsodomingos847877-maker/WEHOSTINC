@@ -1300,6 +1300,34 @@ function WebmailContent() {
     }
   }, [selectedAccountEmail]);
 
+  // Sincronização Automática em Segundo Plano (Auto-Sync a cada 15 segundos)
+  useEffect(() => {
+    if (!selectedAccountEmail || !mailboxPassword) return;
+
+    const autoSyncTimer = setInterval(() => {
+      const folder = currentFolder === 'starred' ? 'inbox' : currentFolder as 'inbox' | 'sent' | 'drafts' | 'trash' | 'scheduled';
+      webmailManager.getMessages(selectedAccountEmail, mailboxPassword, folder).then(msgs => {
+        const filtered = currentFolder === 'starred' ? msgs.filter(m => m.starred) : msgs;
+        setMessages(prev => {
+          const hasNew = prev.length !== filtered.length || (prev[0] && filtered[0] && prev[0].id !== filtered[0].id);
+          if (hasNew) {
+            setLastSyncedTime(new Date());
+            if (folder === 'inbox') {
+              const unread = filtered.filter(m => !m.isRead).length;
+              setFolderStats(st => ({ ...st, inboxUnread: unread }));
+            }
+            return filtered;
+          }
+          return prev;
+        });
+      }).catch(err => {
+        console.warn('[Webmail Auto-Sync] Sync check:', err);
+      });
+    }, 15000);
+
+    return () => clearInterval(autoSyncTimer);
+  }, [selectedAccountEmail, mailboxPassword, currentFolder]);
+
   const refreshMessages = async () => {
     if (selectedAccountEmail && mailboxPassword) {
       setIsRefreshingWebmail(true);
