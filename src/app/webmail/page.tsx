@@ -1620,7 +1620,7 @@ function WebmailContent() {
     nextMonday.setHours(8, 30, 0, 0);
 
     const fmtSub = (d: Date) =>
-      d.toLocaleDateString('pt-MZ', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+      d.toLocaleDateString('pt-MZ', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false });
 
     return [
       { label: 'Daqui a 1 hora', sublabel: fmtSub(inOneHour), value: formatToLocalDatetimeInput(inOneHour) },
@@ -1692,6 +1692,7 @@ function WebmailContent() {
         year: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
+        hour12: false,
       });
       setSentSuccessMsg(`E-mail agendado com sucesso para ${formattedWhen}!`);
 
@@ -2881,7 +2882,7 @@ function WebmailContent() {
                   <span className="text-[11px] font-bold text-neutral-800">IMAP Ativo</span>
                   {lastSyncedTime && (
                     <span className="text-[10px] text-neutral-400 font-normal">
-                      ({lastSyncedTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})
+                      ({lastSyncedTime.toLocaleTimeString('pt-MZ', { hour: '2-digit', minute: '2-digit', hour12: false })})
                     </span>
                   )}
                 </>
@@ -3790,7 +3791,7 @@ function WebmailContent() {
                         <div className="flex items-center space-x-1.5 ml-2 shrink-0">
                           {hasAtt && <Paperclip className="h-3.5 w-3.5 text-neutral-400" />}
                           <span className="text-[10px] sm:text-[11px] text-neutral-400 whitespace-nowrap font-medium">
-                            {new Date(msg.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            {new Date(msg.date).toLocaleTimeString('pt-MZ', { hour: '2-digit', minute: '2-digit', hour12: false })}
                           </span>
                         </div>
                       </div>
@@ -4219,7 +4220,7 @@ function WebmailContent() {
                       </select>
                     </div>
                     <div className="text-right text-neutral-400 font-medium text-[11px] sm:text-xs">
-                      {new Date(selectedMessage.date).toLocaleDateString('pt-MZ', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      {new Date(selectedMessage.date).toLocaleDateString('pt-MZ', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })}
                     </div>
                   </div>
                 </div>
