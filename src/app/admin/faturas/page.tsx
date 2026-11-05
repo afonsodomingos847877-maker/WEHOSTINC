@@ -600,6 +600,32 @@ export default function FaturasPage() {
     setShowModal(true);
   };
 
+  const handleMarkAsPaid = async (invoice: Invoice) => {
+    try {
+      const res = await fetch('/api/invoices', {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          id: invoice.id,
+          status: 'paid',
+          paymentMethod: invoice.paymentMethod || 'mpesa'
+        })
+      });
+
+      if (res.ok) {
+        soundEffects.playSuccessSound();
+        setToastMsg({ type: 'success', message: `Fatura ${invoice.invoiceNumber} marcada como paga!` });
+        setInvoices(prev => prev.map(inv => inv.id === invoice.id ? { ...inv, status: 'paid', paidAt: new Date().toISOString() } : inv));
+      } else {
+        const data = await res.json();
+        setToastMsg({ type: 'error', message: data.error || 'Erro ao marcar fatura como paga' });
+      }
+    } catch (e) {
+      console.error('Erro ao marcar fatura como paga:', e);
+      setToastMsg({ type: 'error', message: 'Erro ao marcar fatura como paga' });
+    }
+  };
+
   const handleDelete = async (id: string) => {
     if (!confirm('Tem certeza que deseja excluir esta fatura?')) return;
 
@@ -838,6 +864,19 @@ export default function FaturasPage() {
                             >
                               <Download className="h-4 w-4" />
                             </button>
+                            {invoice.status !== 'paid' ? (
+                              <button
+                                onClick={() => handleMarkAsPaid(invoice)}
+                                className="p-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition"
+                                title="Aprovar e Marcar Fatura como Paga"
+                              >
+                                <CheckCircle className="h-4 w-4" />
+                              </button>
+                            ) : (
+                              <span className="p-2 text-emerald-600 cursor-default" title="Fatura Liquidada (Paga)">
+                                <Check className="h-4 w-4" />
+                              </span>
+                            )}
                             <button
                               onClick={() => handleEdit(invoice)}
                               className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"

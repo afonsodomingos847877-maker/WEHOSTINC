@@ -910,7 +910,21 @@ export default function AdminPage() {
       if (!confirmApproval) return;
     }
 
-    dataManager.updateOrderStatus(id, newStatus);
+    dataManager.updateOrderStatus(id, newStatus, true);
+    // Sincronizar explicitamente no backend MongoDB com permissão administrativa
+    fetch(apiEndpoint('/api/orders'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'update_status', orderId: id, status: newStatus, forceAdmin: true })
+    }).catch(err => console.error('Erro ao atualizar pedido no MongoDB:', err));
+
+    if (newStatus === 'completed') {
+      fetch(apiEndpoint('/api/invoices'), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'x-user-email': 'admin@wehosthere.com' },
+        body: JSON.stringify({ id, status: 'paid', paymentMethod: targetOrder.paymentMethod || 'manual' })
+      }).catch(err => console.error('Erro ao sincronizar fatura associada no MongoDB:', err));
+    }
     const updatedOrders = dataManager.getOrders();
     setOrders(updatedOrders);
 

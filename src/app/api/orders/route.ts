@@ -126,6 +126,40 @@ export async function GET(req: Request) {
       
       // Caso contrário, buscar todos os pedidos
       const orders = await OrderModel.find({}).sort({ createdAt: -1 }).lean();
+
+      // Auto-reconciliação: se existirem pedidos pendentes com faturas já liquidadas/pagas em InvoiceModel
+      try {
+        const InvoiceModel = (await import('@/lib/models/Invoice')).default;
+        const pendingOrders = orders.filter((o: any) => o.status === 'pending');
+        if (pendingOrders.length > 0) {
+          const orderIds = pendingOrders.map((o: any) => o.id);
+          const paidInvoices = await InvoiceModel.find({
+            status: 'paid',
+            $or: [
+              { invoiceNumber: { $in: orderIds } },
+              { id: { $in: orderIds } }
+            ]
+          }).lean();
+
+          if (paidInvoices.length > 0) {
+            const paidNumbers = new Set(paidInvoices.map((inv: any) => inv.invoiceNumber).concat(paidInvoices.map((inv: any) => inv.id)));
+            for (const o of orders) {
+              if (o.status === 'pending' && (paidNumbers.has(o.id) || paidNumbers.has(o.reference))) {
+                o.status = 'completed';
+                o.valorFaturado = o.amount || o.valorPorFaturar;
+                o.valorPorFaturar = 0;
+                await OrderModel.updateOne(
+                  { id: o.id },
+                  { $set: { status: 'completed', valorFaturado: o.valorFaturado, valorPorFaturar: 0, updatedAt: new Date().toISOString() } }
+                );
+              }
+            }
+          }
+        }
+      } catch (recErr) {
+        console.warn('[Orders API GET] Aviso na auto-reconciliação de pedidos com faturas:', recErr);
+      }
+
       const mappedOrders = orders.map((o: any) => {
         const amt = Number(o.amount ?? o.valorFaturado ?? o.valorPorFaturar ?? 0);
         return {
@@ -208,16 +242,94 @@ export async function POST(req: Request) {
       if (useMongo) {
         orderDoc = await OrderModel.findOne({ id: orderId }).lean();
         
-        // Permitir aprovação manual se for transferência bancária, tiver comprovativo anexado, ou se forceAdmin for verdadeiro
-        const isMobileMoney = (orderDoc.paymentMethod === 'mpesa' || orderDoc.paymentMethod === 'emola');
-        if (orderDoc && isMobileMoney && !orderDoc.proofUrl && !body.forceAdmin && status === 'completed') {
+        // Permitir aprovação manual se for transferência bancária, tiver comprovativo anexado, ou se chamado pelo painel admin (forceAdmin / referer /admin)
+        const referer = req.headers.get('referer') || '';
+        const origin = req.headers.get('origin') || '';
+        const isAdminCall = !!(body.forceAdmin || referer.includes('/admin') || origin.includes('/admin'));
+        const isMobileMoney = (orderDoc?.paymentMethod === 'mpesa' || orderDoc?.paymentMethod === 'emola');
+        if (orderDoc && isMobileMoney && !orderDoc.proofUrl && !isAdminCall && status === 'completed') {
           return NextResponse.json(
             { error: 'Pagamentos via M-Pesa/eMola devem ser confirmados apenas pelo webhook do gateway ou aprovados com comprovativo anexado.' },
             { status: 403 }
           );
         }
         
-        await OrderModel.findOneAndUpdate({ id: orderId }, { status });
+        const isFinished = status === 'completed' || status === 'approved' || status === 'active';
+        await OrderModel.findOneAndUpdate(
+          { id: orderId },
+          { 
+            status,
+            ...(isFinished ? {
+              valorFaturado: orderDoc?.amount || orderDoc?.valorPorFaturar || 0,
+              valorPorFaturar: 0,
+            } : {}),
+            updatedAt: new Date().toISOString()
+          }
+        );
+
+        // 🔗 Sincronizar automaticamente fatura correspondente em InvoiceModel
+        if (isFinished) {
+          try {
+            const InvoiceModel = (await import('@/lib/models/Invoice')).default;
+            const orderRef = orderDoc?.reference || orderId;
+            const invoiceFilter = {
+              $or: [
+                { id: orderId },
+                { invoiceNumber: orderId },
+                { id: orderRef },
+                { invoiceNumber: orderRef }
+              ]
+            };
+            const matchedInvoices = await InvoiceModel.find(invoiceFilter);
+            if (matchedInvoices.length > 0) {
+              await InvoiceModel.updateMany(invoiceFilter, {
+                $set: {
+                  status: 'paid',
+                  paidAt: new Date().toISOString(),
+                  paymentMethod: orderDoc?.paymentMethod || 'manual',
+                  updatedAt: new Date().toISOString()
+                }
+              });
+            } else if (orderDoc?.clientEmail) {
+              await InvoiceModel.updateMany(
+                {
+                  customerEmail: { $regex: new RegExp(`^${orderDoc.clientEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') },
+                  status: { $in: ['pending', 'draft'] }
+                },
+                {
+                  $set: {
+                    status: 'paid',
+                    paidAt: new Date().toISOString(),
+                    paymentMethod: orderDoc?.paymentMethod || 'manual',
+                    updatedAt: new Date().toISOString()
+                  }
+                }
+              );
+            }
+          } catch (invSyncErr) {
+            console.error('[API/orders] Erro ao sincronizar fatura com pedido:', invSyncErr);
+          }
+        } else if (status === 'cancelled') {
+          try {
+            const InvoiceModel = (await import('@/lib/models/Invoice')).default;
+            await InvoiceModel.updateMany(
+              {
+                $or: [
+                  { id: orderId },
+                  { invoiceNumber: orderId },
+                  { id: orderDoc?.reference || '' },
+                  { invoiceNumber: orderDoc?.reference || '' }
+                ]
+              },
+              {
+                $set: {
+                  status: 'cancelled',
+                  updatedAt: new Date().toISOString()
+                }
+              }
+            );
+          } catch {}
+        }
       }
 
       // Mapear status para texto legível

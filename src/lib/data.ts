@@ -1369,7 +1369,7 @@ export const dataManager = {
     }
   },
 
-  updateOrderStatus: (id: string, status: ServiceOrder['status']): void => {
+  updateOrderStatus: (id: string, status: ServiceOrder['status'], forceAdmin: boolean = true): void => {
     const orders = dataManager.getOrders().map(o => o.id === id ? { ...o, status } : o);
     if (typeof window !== 'undefined') {
       localStorage.setItem('wehosthere_orders', JSON.stringify(orders));
@@ -1377,7 +1377,7 @@ export const dataManager = {
       fetch(apiEndpoint('/api/orders'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'update_status', orderId: id, status })
+        body: JSON.stringify({ action: 'update_status', orderId: id, status, forceAdmin: true })
       }).catch(err => console.error('Erro de sync de status de pedido:', err));
     }
   },

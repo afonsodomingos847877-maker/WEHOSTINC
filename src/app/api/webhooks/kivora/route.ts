@@ -538,9 +538,34 @@ async function updateOrderStatus(
         { 
           status,
           ...(kivoraPaymentId && !order.kivoraPaymentId ? { kivoraPaymentId } : {}),
-          ...(failureReason ? { failureReason } : {})
+          ...(failureReason ? { failureReason } : {}),
+          ...(status === 'completed' ? { valorFaturado: order.amount || 0, valorPorFaturar: 0 } : {})
         }
       );
+      if (status === 'completed') {
+        try {
+          const InvoiceModel = (await import('@/lib/models/Invoice')).default;
+          await InvoiceModel.updateMany(
+            {
+              $or: [
+                { id: order.id },
+                { invoiceNumber: order.id },
+                { id: reference },
+                { invoiceNumber: reference }
+              ]
+            },
+            {
+              $set: {
+                status: 'paid',
+                paidAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+              }
+            }
+          );
+        } catch (invErr) {
+          console.warn('[KIVORA WEBHOOK] Aviso ao atualizar fatura:', invErr);
+        }
+      }
     } else if (status === 'completed' && (kivoraPaymentId || reference)) {
       // Se o pedido não existia (ex: fluxo rápido ou falha de rede prévia), criar agora
       const fallbackId = reference || `ORD-${Date.now().toString().slice(-6)}`;

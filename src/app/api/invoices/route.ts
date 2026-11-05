@@ -93,6 +93,48 @@ function generateInvoiceNumber(): string {
   return `INV-${year}-${timestamp}-${random}`;
 }
 
+// Helper para reconciliar faturas pendentes que já possuem pedidos aprovados no sistema
+async function autoReconcileInvoices(invoices: any[]) {
+  if (!invoices || invoices.length === 0) return invoices;
+  try {
+    const OrderModel = (await import('@/lib/models/Order')).default;
+    const pendingInvoices = invoices.filter((inv: any) => inv.status === 'pending' || inv.status === 'draft');
+    if (pendingInvoices.length > 0) {
+      const invoiceNumbers = pendingInvoices.map((inv: any) => inv.invoiceNumber || inv.id);
+      const invoiceIds = pendingInvoices.map((inv: any) => inv.id);
+      const allSearchKeys = Array.from(new Set([...invoiceNumbers, ...invoiceIds])).filter(Boolean);
+
+      const completedOrders = await OrderModel.find({
+        status: { $in: ['completed', 'approved', 'active'] },
+        $or: [
+          { id: { $in: allSearchKeys } },
+          { reference: { $in: allSearchKeys } }
+        ]
+      }).lean();
+
+      if (completedOrders.length > 0) {
+        const completedKeys = new Set(
+          completedOrders.map((o: any) => o.id).concat(completedOrders.map((o: any) => o.reference).filter(Boolean))
+        );
+
+        for (const inv of invoices) {
+          if ((inv.status === 'pending' || inv.status === 'draft') && (completedKeys.has(inv.invoiceNumber) || completedKeys.has(inv.id))) {
+            inv.status = 'paid';
+            inv.paidAt = inv.paidAt || new Date().toISOString();
+            await InvoiceModel.updateOne(
+              { id: inv.id },
+              { $set: { status: 'paid', paidAt: inv.paidAt, updatedAt: new Date().toISOString() } }
+            );
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[API/invoices] Aviso na auto-reconciliação de faturas:', err);
+  }
+  return invoices;
+}
+
 // GET - Listar faturas (admin: todas ou filtradas, cliente: apenas as suas)
 export async function GET(req: Request) {
   try {
@@ -135,7 +177,8 @@ export async function GET(req: Request) {
         .sort({ issuedAt: -1 })
         .lean();
 
-      return NextResponse.json({ success: true, invoices: invoices || [] });
+      const reconciledInvoices = await autoReconcileInvoices(invoices || []);
+      return NextResponse.json({ success: true, invoices: reconciledInvoices });
     }
 
     // Admin: pode filtrar por customerId ou customerEmail
@@ -143,7 +186,8 @@ export async function GET(req: Request) {
       const invoices = await InvoiceModel.find({ customerId })
         .sort({ issuedAt: -1 })
         .lean();
-      return NextResponse.json({ success: true, invoices: invoices || [] });
+      const reconciledInvoices = await autoReconcileInvoices(invoices || []);
+      return NextResponse.json({ success: true, invoices: reconciledInvoices });
     }
 
     if (customerEmailParam) {
@@ -153,14 +197,16 @@ export async function GET(req: Request) {
       })
         .sort({ issuedAt: -1 })
         .lean();
-      return NextResponse.json({ success: true, invoices: invoices || [] });
+      const reconciledInvoices = await autoReconcileInvoices(invoices || []);
+      return NextResponse.json({ success: true, invoices: reconciledInvoices });
     }
 
     // Admin: todas as faturas
     const invoices = await InvoiceModel.find({})
       .sort({ issuedAt: -1 })
       .lean();
-    return NextResponse.json({ success: true, invoices: invoices || [] });
+    const reconciledInvoices = await autoReconcileInvoices(invoices || []);
+    return NextResponse.json({ success: true, invoices: reconciledInvoices });
   } catch (e) {
     console.error('[API/invoices] Erro ao buscar faturas:', e);
     return NextResponse.json({ success: false, error: 'Erro ao buscar faturas' }, { status: 500 });
@@ -385,26 +431,54 @@ export async function PUT(req: Request) {
       { new: true }
     ).lean();
 
-    if (updatedInvoice && !Array.isArray(updatedInvoice) && statusChangedToPaid) {
+    if (updatedInvoice && !Array.isArray(updatedInvoice) && (updateData.status === 'paid' || statusChangedToPaid)) {
+      // 🔗 Sincronizar automaticamente com o OrderModel para que o pedido também fique 'completed'
       try {
-        sendInvoiceIssuedEmail({
-          toEmail: updatedInvoice.customerEmail,
-          customerName: updatedInvoice.customerName,
-          invoiceNumber: updatedInvoice.invoiceNumber,
-          issuedAt: updatedInvoice.issuedAt,
-          dueDate: updatedInvoice.dueDate,
-          servicePeriodStart: updatedInvoice.servicePeriodStart,
-          servicePeriodEnd: updatedInvoice.servicePeriodEnd,
-          status: 'paid',
-          paymentMethod: updatedInvoice.paymentMethod,
-          items: updatedInvoice.items,
-          subtotal: updatedInvoice.subtotal,
-          discount: updatedInvoice.discount,
-          total: updatedInvoice.total,
-          notes: updatedInvoice.notes
-        }).catch(err => console.error('[API/invoices] Erro assíncrono ao enviar recibo pago:', err));
-      } catch (err) {
-        console.error('[API/invoices] Falha ao disparar recibo de pagamento:', err);
+        const OrderModel = (await import('@/lib/models/Order')).default;
+        await OrderModel.updateMany(
+          {
+            $or: [
+              { id: updatedInvoice.id },
+              { id: updatedInvoice.invoiceNumber },
+              { reference: updatedInvoice.invoiceNumber },
+              { reference: updatedInvoice.id }
+            ]
+          },
+          {
+            $set: {
+              status: 'completed',
+              valorFaturado: updatedInvoice.total,
+              valorPorFaturar: 0,
+              paymentMethod: updatedInvoice.paymentMethod || 'manual',
+              updatedAt: new Date().toISOString()
+            }
+          }
+        );
+      } catch (ordSyncErr) {
+        console.error('[API/invoices] Erro ao sincronizar pedido com fatura paga:', ordSyncErr);
+      }
+
+      if (statusChangedToPaid) {
+        try {
+          sendInvoiceIssuedEmail({
+            toEmail: updatedInvoice.customerEmail,
+            customerName: updatedInvoice.customerName,
+            invoiceNumber: updatedInvoice.invoiceNumber,
+            issuedAt: updatedInvoice.issuedAt,
+            dueDate: updatedInvoice.dueDate,
+            servicePeriodStart: updatedInvoice.servicePeriodStart,
+            servicePeriodEnd: updatedInvoice.servicePeriodEnd,
+            status: 'paid',
+            paymentMethod: updatedInvoice.paymentMethod,
+            items: updatedInvoice.items,
+            subtotal: updatedInvoice.subtotal,
+            discount: updatedInvoice.discount,
+            total: updatedInvoice.total,
+            notes: updatedInvoice.notes
+          }).catch(err => console.error('[API/invoices] Erro assíncrono ao enviar recibo pago:', err));
+        } catch (err) {
+          console.error('[API/invoices] Falha ao disparar recibo de pagamento:', err);
+        }
       }
     }
 

@@ -192,7 +192,42 @@ export default function BillingPage() {
     }, 400);
   };
 
-  const filteredInvoices = invoices.filter(inv => {
+  // Helper para verificar se a fatura foi liquidada (quer por InvoiceModel, quer por OrderModel aprovado no admin)
+  const isInvoiceActuallyPaid = (inv: Invoice): boolean => {
+    if (inv.status === 'paid') return true;
+    return userOrders.some(o => 
+      ((o.status as string) === 'completed' || (o.status as string) === 'approved') &&
+      (
+        o.id?.toLowerCase() === inv.invoiceNumber?.toLowerCase() ||
+        o.id?.toLowerCase() === inv.id?.toLowerCase() ||
+        (o as any).reference?.toLowerCase() === inv.invoiceNumber?.toLowerCase() ||
+        (o as any).reference?.toLowerCase() === inv.id?.toLowerCase()
+      )
+    );
+  };
+
+  // Helper para verificar se o pedido foi liquidado (quer por OrderModel, quer por fatura marcada como paga)
+  const isOrderActuallyPaid = (order: ServiceOrder): boolean => {
+    if ((order.status as string) === 'completed' || (order.status as string) === 'approved') return true;
+    return invoices.some(inv => 
+      inv.status === 'paid' &&
+      (
+        inv.invoiceNumber?.toLowerCase() === order.id?.toLowerCase() ||
+        inv.id?.toLowerCase() === order.id?.toLowerCase() ||
+        inv.invoiceNumber?.toLowerCase() === (order as any).reference?.toLowerCase() ||
+        inv.id?.toLowerCase() === (order as any).reference?.toLowerCase()
+      )
+    );
+  };
+
+  const effectiveInvoices = invoices.map(inv => {
+    if (inv.status !== 'paid' && isInvoiceActuallyPaid(inv)) {
+      return { ...inv, status: 'paid' as const };
+    }
+    return inv;
+  });
+
+  const filteredInvoices = effectiveInvoices.filter(inv => {
     if (invoiceStatusFilter === 'all') return true;
     if (invoiceStatusFilter === 'paid') return inv.status === 'paid';
     if (invoiceStatusFilter === 'pending') return inv.status === 'pending' || inv.status === 'draft';
@@ -200,8 +235,8 @@ export default function BillingPage() {
     return true;
   });
 
-  const totalPaidCount = userOrders.filter(o => o.status === 'completed').length + invoices.filter(i => i.status === 'paid').length;
-  const totalAmountContracted = userOrders.filter(o => o.status === 'completed' || o.status === 'in_progress').reduce((acc, o) => acc + (o.amount || 0), 0) + invoices.filter(i => i.status === 'paid').reduce((acc, i) => acc + (i.total || 0), 0);
+  const totalPaidCount = userOrders.filter(o => isOrderActuallyPaid(o)).length + effectiveInvoices.filter(i => i.status === 'paid').length;
+  const totalAmountContracted = userOrders.filter(o => isOrderActuallyPaid(o) || o.status === 'in_progress').reduce((acc, o) => acc + (o.amount || 0), 0) + effectiveInvoices.filter(i => i.status === 'paid').reduce((acc, i) => acc + (i.total || 0), 0);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -304,28 +339,28 @@ export default function BillingPage() {
                       onClick={() => setInvoiceStatusFilter('all')}
                       className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${invoiceStatusFilter === 'all' ? 'bg-white text-gray-900 shadow-xs font-bold' : 'text-gray-600 hover:text-gray-900'}`}
                     >
-                      Todas ({invoices.length})
+                      Todas ({effectiveInvoices.length})
                     </button>
                     <button
                       type="button"
                       onClick={() => setInvoiceStatusFilter('pending')}
                       className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${invoiceStatusFilter === 'pending' ? 'bg-amber-500 text-white shadow-xs font-bold' : 'text-gray-600 hover:text-gray-900'}`}
                     >
-                      Pendentes ({invoices.filter(i => i.status === 'pending' || i.status === 'draft').length})
+                      Pendentes ({effectiveInvoices.filter(i => i.status === 'pending' || i.status === 'draft').length})
                     </button>
                     <button
                       type="button"
                       onClick={() => setInvoiceStatusFilter('paid')}
                       className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${invoiceStatusFilter === 'paid' ? 'bg-emerald-600 text-white shadow-xs font-bold' : 'text-gray-600 hover:text-gray-900'}`}
                     >
-                      Pagas ({invoices.filter(i => i.status === 'paid').length})
+                      Pagas ({effectiveInvoices.filter(i => i.status === 'paid').length})
                     </button>
                     <button
                       type="button"
                       onClick={() => setInvoiceStatusFilter('overdue')}
                       className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${invoiceStatusFilter === 'overdue' ? 'bg-red-600 text-white shadow-xs font-bold' : 'text-gray-600 hover:text-gray-900'}`}
                     >
-                      Vencidas ({invoices.filter(i => i.status === 'overdue').length})
+                      Vencidas ({effectiveInvoices.filter(i => i.status === 'overdue').length})
                     </button>
                   </div>
                 </div>
@@ -520,13 +555,15 @@ export default function BillingPage() {
               ) : (
                 <div className="space-y-3">
                   {userOrders.map((order) => {
+                    const isPaid = isOrderActuallyPaid(order);
+                    const effectiveOrderStatus = isPaid ? 'completed' : order.status;
                     const statusConfig = {
                       completed: { label: 'Pago / Ativo', bg: 'bg-emerald-50 text-emerald-800 border-emerald-200', icon: CheckCircle, iconColor: 'text-emerald-600', iconBg: 'bg-emerald-100' },
                       in_progress: { label: 'Em Processamento', bg: 'bg-blue-50 text-blue-800 border-blue-200', icon: Clock, iconColor: 'text-blue-600', iconBg: 'bg-blue-100' },
                       pending: { label: 'Pagamento Pendente', bg: 'bg-amber-50 text-amber-800 border-amber-200', icon: Clock, iconColor: 'text-amber-600', iconBg: 'bg-amber-100' },
                       suspended: { label: 'Suspenso', bg: 'bg-rose-50 text-rose-800 border-rose-200', icon: XCircle, iconColor: 'text-rose-600', iconBg: 'bg-rose-100' },
                       cancelled: { label: 'Cancelado', bg: 'bg-gray-100 text-gray-700 border-gray-200', icon: XCircle, iconColor: 'text-gray-500', iconBg: 'bg-gray-200' },
-                    }[order.status] || { label: order.status, bg: 'bg-gray-50 text-gray-800 border-gray-200', icon: Clock, iconColor: 'text-gray-600', iconBg: 'bg-gray-100' };
+                    }[effectiveOrderStatus] || { label: effectiveOrderStatus, bg: 'bg-gray-50 text-gray-800 border-gray-200', icon: Clock, iconColor: 'text-gray-600', iconBg: 'bg-gray-100' };
 
                     const StatusIcon = statusConfig.icon;
 
@@ -558,7 +595,7 @@ export default function BillingPage() {
                               {order.createdAt ? new Date(order.createdAt).toLocaleDateString('pt-MZ', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Data não disponível'}
                             </p>
                           </div>
-                          {(order.status === 'pending' || order.status === 'suspended') && (
+                          {!isPaid && (effectiveOrderStatus === 'pending' || effectiveOrderStatus === 'suspended') && (
                             <button
                               type="button"
                               onClick={() => {
