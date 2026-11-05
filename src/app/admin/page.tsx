@@ -3885,11 +3885,7 @@ export default function AdminPage() {
                             </span>
                           )}
                           <button
-                            onClick={() => {
-                              dataManager.deleteSite(site.id, site.domain);
-                              setSites(prev => prev.filter(s => s.id !== site.id));
-                              setToastMsg({ title: 'Domínio Removido', message: `O domínio ${site.domain} foi removido.`, type: 'info' });
-                            }}
+                            onClick={() => handleAdminDeleteSite(site.id, site.domain)}
                             title="Eliminar Domínio"
                             className="p-1 sm:p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition cursor-pointer"
                           >

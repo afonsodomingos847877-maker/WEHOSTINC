@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import SiteModel from '@/lib/models/Site';
 import { EmailDomain } from '@/models/EmailDomain';
+import { EmailMailbox } from '@/models/EmailMailbox';
 import EmailAccountModel from '@/lib/models/EmailAccount';
+import { getEmailProvider } from '@/lib/emailProviders/base';
 
 let FALLBACK_SITES: any[] = [];
 
@@ -137,6 +139,45 @@ export async function POST(req: Request) {
         if (deleteConditions.length > 0) {
           await SiteModel.deleteMany({ $or: deleteConditions });
         }
+
+        // CASCATAS DE ELIMINAÇÃO: Remove também de EmailDomain, EmailMailbox e EmailAccountModel
+        // para impedir que GET /api/sites ressuscite o domínio automaticamente
+        const domainToDelete = (tDomain && tDomain.includes('.')) ? tDomain : (tId && tId.includes('.')) ? tId : '';
+        if (domainToDelete) {
+          const domainRegex = new RegExp(`^${domainToDelete}$`, 'i');
+          const emailRegex = { $regex: `@${domainToDelete}$`, $options: 'i' };
+
+          try {
+            const domainDoc = await EmailDomain.findOne({ domainName: domainRegex });
+            await Promise.all([
+              EmailDomain.deleteMany({ domainName: domainRegex }),
+              EmailMailbox.deleteMany({
+                $or: [
+                  { email: emailRegex },
+                  ...(domainDoc ? [{ domainId: domainDoc._id.toString() }] : [])
+                ]
+              }),
+              EmailAccountModel.deleteMany({
+                $or: [
+                  { domain: domainRegex },
+                  { email: emailRegex }
+                ]
+              })
+            ]);
+
+            try {
+              const provider = getEmailProvider();
+              if (provider.isConfigured()) {
+                await provider.deleteDomain(domainToDelete);
+              }
+            } catch (provErr) {
+              console.warn('[Sites DELETE] Provider delete warning:', provErr);
+            }
+          } catch (cascadeErr) {
+            console.error('[Sites Delete Cascade Error]:', cascadeErr);
+          }
+        }
+
         return NextResponse.json({ success: true, sites: await SiteModel.find({}).lean() });
       }
       FALLBACK_SITES = FALLBACK_SITES.filter(s => {
