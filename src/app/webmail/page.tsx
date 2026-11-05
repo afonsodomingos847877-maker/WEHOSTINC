@@ -1284,22 +1284,81 @@ function WebmailContent() {
   });
   const [lastSyncedTime, setLastSyncedTime] = useState<Date | null>(null);
 
-  // Load messages whenever account, password, or folder changes
+  // Cache em Memória e Sessão para troca instantânea de pastas sem recarregamento
+  const folderCacheRef = useRef<Record<string, WebmailMessage[]>>({});
+
+  const getFolderCacheKey = (email: string, folder: string) => `${email.toLowerCase()}:${folder}`;
+
+  const getCachedMessages = (email: string, folder: string): WebmailMessage[] | null => {
+    const key = getFolderCacheKey(email, folder);
+    if (folderCacheRef.current[key] && folderCacheRef.current[key].length > 0) {
+      return folderCacheRef.current[key];
+    }
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = sessionStorage.getItem(`wehost_cache_${key}`);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            folderCacheRef.current[key] = parsed;
+            return parsed;
+          }
+        }
+      } catch {}
+    }
+    return null;
+  };
+
+  const setCachedMessages = (email: string, folder: string, msgs: WebmailMessage[]) => {
+    const key = getFolderCacheKey(email, folder);
+    folderCacheRef.current[key] = msgs;
+    if (typeof window !== 'undefined') {
+      try {
+        sessionStorage.setItem(`wehost_cache_${key}`, JSON.stringify(msgs.slice(0, 80)));
+      } catch {}
+    }
+  };
+
+  // Carregamento com Cache Instantâneo (Stale-While-Revalidate)
   useEffect(() => {
     if (selectedAccountEmail && mailboxPassword) {
       const folder = currentFolder === 'starred' ? 'inbox' : currentFolder as 'inbox' | 'sent' | 'drafts' | 'trash' | 'scheduled';
-      setIsLoadingMessages(true);
-      setSelectedMessage(null);
+      
+      // 1. EXIBIÇÃO INSTANTÂNEA: Se temos mensagens em cache, exibe imediatamente (0ms)
+      const cached = getCachedMessages(selectedAccountEmail, currentFolder);
+      if (cached && cached.length > 0) {
+        setMessages(cached);
+        setSelectedMessage(prev => {
+          if (prev && cached.some(m => m.id === prev.id)) return prev;
+          return cached[0] || null;
+        });
+        // Não ativa o skeleton pesado porque já temos mensagens na tela
+        setIsLoadingMessages(false);
+      } else {
+        // Primeira abertura sem cache: ativa skeleton
+        setIsLoadingMessages(true);
+        setSelectedMessage(null);
+      }
+
+      // 2. REVALIDAÇÃO SILENCIOSA: Sincroniza em segundo plano sem travar a navegação
       (async () => {
         try {
           const msgs = await webmailManager.getMessages(selectedAccountEmail, mailboxPassword, folder);
-          // If viewing starred, filter from inbox result
           const filtered = currentFolder === 'starred' ? msgs.filter(m => m.starred) : msgs;
+          
+          // Gravar no cache rápido
+          setCachedMessages(selectedAccountEmail, currentFolder, filtered);
+
           setMessages(filtered);
-          setSelectedMessage(filtered.length > 0 ? filtered[0] : null);
+          setSelectedMessage(prev => {
+            if (prev && filtered.some(m => m.id === prev.id)) {
+              return filtered.find(m => m.id === prev.id) || prev;
+            }
+            return filtered.length > 0 ? filtered[0] : null;
+          });
           setLastSyncedTime(new Date());
 
-          // Update folder stats dynamically
+          // Atualizar contadores
           if (folder === 'inbox') {
             const unread = msgs.filter(m => !m.isRead).length;
             const starred = msgs.filter(m => m.starred).length;
@@ -1315,10 +1374,13 @@ function WebmailContent() {
           }
         } catch (error) {
           console.error('[Webmail] Error loading messages:', error);
-          setMessages([]);
-          setSelectedMessage(null);
+          if (!cached || cached.length === 0) {
+            setMessages([]);
+            setSelectedMessage(null);
+          }
+        } finally {
+          setIsLoadingMessages(false);
         }
-        setIsLoadingMessages(false);
       })();
     }
   }, [selectedAccountEmail, mailboxPassword, currentFolder]);
@@ -1370,6 +1432,7 @@ function WebmailContent() {
         const folder = currentFolder === 'starred' ? 'inbox' : currentFolder as 'inbox' | 'sent' | 'drafts' | 'trash' | 'scheduled';
         const msgs = await webmailManager.getMessages(selectedAccountEmail, mailboxPassword, folder);
         const filtered = currentFolder === 'starred' ? msgs.filter(m => m.starred) : msgs;
+        setCachedMessages(selectedAccountEmail, currentFolder, filtered);
         setMessages(filtered);
         setLastSyncedTime(new Date());
         if (folder === 'inbox') {
