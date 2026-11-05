@@ -12,6 +12,34 @@ const nextConfig = {
     };
     return config;
   },
+  async rewrites() {
+    return [
+      {
+        source: '/autodiscover/autodiscover.xml',
+        destination: '/api/autodiscover',
+      },
+      {
+        source: '/Autodiscover/Autodiscover.xml',
+        destination: '/api/autodiscover',
+      },
+      {
+        source: '/autodiscover/autodiscover.json',
+        destination: '/api/autodiscover',
+      },
+      {
+        source: '/Autodiscover/Autodiscover.json',
+        destination: '/api/autodiscover',
+      },
+      {
+        source: '/mail/config-v1.1.xml',
+        destination: '/api/autoconfig',
+      },
+      {
+        source: '/.well-known/autoconfig/mail/config-v1.1.xml',
+        destination: '/api/autoconfig',
+      },
+    ];
+  },
   async headers() {
     return [
       {

@@ -23,6 +23,7 @@ import {
   Info,
   Sparkles,
   Settings,
+  Download,
   X
 } from 'lucide-react';
 import Link from 'next/link';
@@ -913,6 +914,13 @@ export default function DomainMailboxesPage() {
                     <p className="text-xs text-gray-500">Siga estes passos exatos no seu programa Outlook para conectar:</p>
                   </div>
 
+                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 p-3 rounded-2xl flex items-center space-x-2.5">
+                    <Sparkles className="h-4 w-4 text-blue-600 shrink-0" />
+                    <div className="text-[11px] text-blue-900 leading-tight">
+                      <strong>Configuração Automática (Autodiscover):</strong> No Outlook moderno, basta digitar o e-mail completo e a senha. As portas e servidores são detetados automaticamente!
+                    </div>
+                  </div>
+
                   <div className="space-y-3 text-xs">
                     <div className="bg-gray-50 rounded-2xl p-4 border border-gray-200 space-y-1.5">
                       <div className="font-bold text-gray-900 flex items-center space-x-2">
@@ -974,6 +982,20 @@ export default function DomainMailboxesPage() {
                   <div className="border-l-4 border-gray-900 pl-4 py-1">
                     <h3 className="font-bold text-gray-900 text-base">Passo a Passo: iPhone &amp; iPad (Apple Mail)</h3>
                     <p className="text-xs text-gray-500">Configuração direta no aplicativo Mail nativo do iOS:</p>
+                  </div>
+
+                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 p-3 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                      <strong className="block text-xs font-bold text-blue-900">Instalação em 1-Clique (Apple Mail iOS &amp; Mac)</strong>
+                      <span className="text-[11px] text-blue-700">Descarregue o perfil para configurar o iPhone sem digitar servidores.</span>
+                    </div>
+                    <a
+                      href={`/api/emails/mobileconfig?email=${encodeURIComponent(currentEmailDisplay)}`}
+                      className="inline-flex items-center space-x-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold rounded-xl transition shadow-xs whitespace-nowrap self-start sm:self-auto"
+                    >
+                      <Download className="h-3 w-3" />
+                      <span>Perfil Apple (.mobileconfig)</span>
+                    </a>
                   </div>
 
                   <div className="space-y-3 text-xs">

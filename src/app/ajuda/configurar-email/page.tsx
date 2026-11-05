@@ -20,7 +20,8 @@ import {
   Inbox,
   Send,
   Sparkles,
-  ArrowLeft
+  ArrowLeft,
+  Download
 } from 'lucide-react';
 
 export default function ConfigurarEmailAjudaPage() {
@@ -235,6 +236,16 @@ export default function ConfigurarEmailAjudaPage() {
                   </p>
                 </div>
 
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 p-4 rounded-2xl flex items-center space-x-3">
+                  <div className="p-2 bg-blue-600 text-white rounded-xl shrink-0">
+                    <Sparkles className="h-5 w-5" />
+                  </div>
+                  <div className="text-xs text-blue-900">
+                    <strong className="block text-sm font-bold text-blue-950">Novo: Configuração Automática Inteligente (Autodiscover)</strong>
+                    No Outlook moderno (Microsoft 365, 2019 ou 2021), basta digitar o seu e-mail e senha. O Outlook descobre os servidores e portas automaticamente! Se preferir configurar manualmente ou se o Outlook solicitar, siga o passo a passo abaixo.
+                  </div>
+                </div>
+
                 <div className="space-y-4">
                   {/* Step 1 */}
                   <div className="p-4 sm:p-5 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-2">
@@ -365,6 +376,25 @@ export default function ConfigurarEmailAjudaPage() {
                   <p className="text-xs sm:text-sm text-slate-500 mt-1">
                     Passo a passo no aplicativo oficial Mail do iOS (iPhone 11, 12, 13, 14, 15, 16 ou iPadOS).
                   </p>
+                </div>
+
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <h4 className="font-bold text-blue-900 text-sm flex items-center space-x-1.5">
+                      <Sparkles className="h-4 w-4 text-blue-600" />
+                      <span>Instalação Automática em 1-Clique (iPhone, iPad & Mac)</span>
+                    </h4>
+                    <p className="text-xs text-blue-700 mt-0.5">
+                      Descarregue o perfil oficial de correio e configure o seu Apple Mail instantaneamente sem preencher servidores manuais.
+                    </p>
+                  </div>
+                  <a
+                    href={`/api/emails/mobileconfig?email=${encodeURIComponent(displayEmail)}`}
+                    className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition shadow-xs whitespace-nowrap self-start sm:self-auto"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    <span>Descarregar Perfil Apple</span>
+                  </a>
                 </div>
 
                 <div className="space-y-4">
