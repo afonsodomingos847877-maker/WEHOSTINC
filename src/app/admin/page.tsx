@@ -3961,11 +3961,8 @@ export default function AdminPage() {
                             {item.status === 'active' ? 'Suspender' : 'Ativar'}
                           </button>
                           <button
-                            onClick={() => {
-                              dataManager.deleteEmail(item.id, item.userEmail, item.email);
-                              setEmails(prev => prev.filter(e => e.id !== item.id));
-                              setToastMsg({ title: 'E-mail Removido', message: `A conta ${item.email} foi removida.`, type: 'info' });
-                            }}
+                            onClick={() => handleAdminDeleteEmail(item.id, item.userEmail, item.email)}
+                            title="Eliminar Conta de E-mail"
                             className="p-1 sm:p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition cursor-pointer"
                           >
                             <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />

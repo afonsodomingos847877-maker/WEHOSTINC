@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import EmailAccountModel from '@/lib/models/EmailAccount';
+import { EmailMailbox } from '@/models/EmailMailbox';
+import { EmailDomain } from '@/models/EmailDomain';
+import { getEmailProvider } from '@/lib/emailProviders/base';
 
 let FALLBACK_EMAILS: any[] = [];
 
@@ -13,10 +16,6 @@ async function tryMongo() {
     return false;
   }
 }
-
-import { EmailMailbox } from '@/models/EmailMailbox';
-import { EmailDomain } from '@/models/EmailDomain';
-import { getEmailProvider } from '@/lib/emailProviders/base';
 
 export async function GET(request: Request) {
   try {
@@ -108,7 +107,7 @@ export async function GET(request: Request) {
                   EmailAccountModel.findOneAndUpdate({ email: em }, newEmailObj, { upsert: true }).catch(() => {});
                 }
               }
-            } catch (dErr) {
+            } catch {
               // Ignore single domain errors
             }
           }
@@ -133,25 +132,6 @@ export async function GET(request: Request) {
             userEmail: domainOwner,
             createdAt: mb.createdAt || new Date().toISOString()
           });
-        }
-      });
-
-      // Garantir que a caixa mestre admin do domínio do cliente esteja sempre presente
-      domainOwnerMap.forEach((owner, d) => {
-        const defaultAdmin = `admin@${d}`;
-        if (!existingEmails.has(defaultAdmin)) {
-          existingEmails.add(defaultAdmin);
-          const defaultObj = {
-            id: `email_admin_${d.replace(/[^a-zA-Z0-9]/g, '_')}`,
-            email: defaultAdmin,
-            domain: d,
-            status: 'active',
-            storageUsed: 0,
-            userEmail: owner,
-            createdAt: new Date().toISOString()
-          };
-          allEmails.push(defaultObj);
-          EmailAccountModel.findOneAndUpdate({ email: defaultAdmin }, defaultObj, { upsert: true }).catch(() => {});
         }
       });
 
@@ -184,7 +164,7 @@ export async function GET(request: Request) {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { action, email, emailId, status, emailStr, emails, domain } = body;
+    const { action, email, emailId, status, domain, emails, emailStr } = body;
     const useMongo = await tryMongo();
 
     if (action === 'sync_all' && Array.isArray(emails)) {
@@ -207,30 +187,71 @@ export async function POST(req: Request) {
       const tId = (emailId || '').toLowerCase().trim();
       const tEmail = (emailStr || '').toLowerCase().trim();
       const tDomain = (domain || '').toLowerCase().trim();
+
       if (useMongo) {
-        if (tDomain) {
-          await EmailAccountModel.deleteMany({
-            $or: [
-              { domain: new RegExp(`^${tDomain}$`, 'i') },
-              { email: { $regex: `@${tDomain}$`, $options: 'i' } }
-            ]
-          });
-        } else {
-          const conditions: any[] = [];
-          if (tId) {
-            conditions.push({ id: tId });
-            conditions.push({ email: new RegExp(`^${tId}$`, 'i') });
-          }
-          if (tEmail) {
-            conditions.push({ id: tEmail });
-            conditions.push({ email: new RegExp(`^${tEmail}$`, 'i') });
-          }
-          if (conditions.length > 0) {
-            await EmailAccountModel.deleteMany({ $or: conditions });
+        let emailAddress = tEmail;
+        if (!emailAddress && tId) {
+          if (tId.includes('@')) {
+            emailAddress = tId;
+          } else {
+            const foundAcc: any = (await EmailAccountModel.findOne({ id: tId })) || (await EmailMailbox.findById(tId).catch(() => null));
+            if (foundAcc && foundAcc.email) {
+              emailAddress = foundAcc.email.toLowerCase().trim();
+            }
           }
         }
+
+        if (tDomain) {
+          const domainRegex = new RegExp(`^${tDomain}$`, 'i');
+          const emailRegex = { $regex: `@${tDomain}$`, $options: 'i' };
+
+          await Promise.all([
+            EmailAccountModel.deleteMany({
+              $or: [{ domain: domainRegex }, { email: emailRegex }]
+            }),
+            EmailMailbox.deleteMany({ email: emailRegex })
+          ]);
+
+          try {
+            const provider = getEmailProvider();
+            if (provider.isConfigured()) {
+              const liveMbs = await provider.listMailboxes(tDomain).catch(() => []);
+              if (Array.isArray(liveMbs)) {
+                for (const mb of liveMbs) {
+                  const lp = mb.localPart || mb.email?.split('@')[0];
+                  if (lp) await provider.deleteMailbox(tDomain, lp).catch(() => {});
+                }
+              }
+            }
+          } catch (provErr) {
+            console.warn('[Emails DELETE Domain] Provider warning:', provErr);
+          }
+        } else if (emailAddress) {
+          const emailRegex = new RegExp(`^${emailAddress}$`, 'i');
+          const conditions: any[] = [{ email: emailRegex }];
+          if (tId) conditions.push({ id: tId });
+
+          await Promise.all([
+            EmailAccountModel.deleteMany({ $or: conditions }),
+            EmailMailbox.deleteMany({ email: emailRegex })
+          ]);
+
+          if (emailAddress.includes('@')) {
+            const [localPart, domainPart] = emailAddress.split('@');
+            try {
+              const provider = getEmailProvider();
+              if (provider.isConfigured() && domainPart && localPart) {
+                await provider.deleteMailbox(domainPart, localPart).catch(() => {});
+              }
+            } catch (provErr) {
+              console.warn('[Emails DELETE Mailbox] Provider delete warning:', provErr);
+            }
+          }
+        }
+
         return NextResponse.json({ success: true, emails: await EmailAccountModel.find({}).lean() });
       }
+
       FALLBACK_EMAILS = FALLBACK_EMAILS.filter(e => {
         if (tDomain && (e.domain?.toLowerCase() === tDomain || e.email?.toLowerCase().endsWith(`@${tDomain}`))) return false;
         if (tId && (e.id?.toLowerCase() === tId || e.email?.toLowerCase() === tId)) return false;
