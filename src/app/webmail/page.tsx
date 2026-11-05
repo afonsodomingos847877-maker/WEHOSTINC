@@ -10,7 +10,7 @@ import {
   Wand2, Bot, FileSignature, Lightbulb, Check, Wifi, WifiOff, Pin, PinOff, Flag, Flame, Lock, Key, Eye, EyeOff,
   Bell, Calendar, TrendingUp, LayoutGrid, HelpCircle, Smartphone, Laptop, Monitor,
   Globe, Languages, Sun, Sunset, Moon, MessageSquare, Image as ImageIcon, ExternalLink, BarChart3,
-  Mic, MicOff, Volume2, VolumeX, Play, Pause, Square, Headphones, Server, Plus
+  Mic, MicOff, Volume2, VolumeX, Play, Pause, Square, Headphones, Server, Plus, Users
 } from 'lucide-react';
 import { auth, User as AuthUser } from '@/lib/auth';
 import { dataManager, EmailAccount } from '@/lib/data';
@@ -24,6 +24,7 @@ import WebmailAnalyticsDashboard from '@/components/webmail/WebmailAnalyticsDash
 import ExternalAccountsModal from '@/components/webmail/ExternalAccountsModal';
 import { apiEndpoint } from '@/lib/siteConfig';
 import dynamic from 'next/dynamic';
+import ContactPicker from '@/components/webmail/ContactPicker';
 
 const templateCategoryIcons: Record<string, React.ElementType> = {
   'Boas-vindas': Sparkles,
@@ -423,6 +424,8 @@ function WebmailContent() {
 
   // Show CC/BCC fields state
   const [showCcBcc, setShowCcBcc] = useState(false);
+  // Contact picker state
+  const [showToPicker, setShowToPicker] = useState(false);
 
   // Autocomplete de contactos no campo "Para"
   const [toSuggestions, setToSuggestions] = useState<{ email: string; name: string }[]>([]);
@@ -5106,7 +5109,6 @@ function WebmailContent() {
               </p>
             </div>
           ) : (
-            {/* Empty state com background ao estilo Outlook */}
             <div className="flex-1 relative overflow-hidden flex flex-col items-center justify-center text-center">
               {/* Imagem de fundo */}
               <img
@@ -5435,7 +5437,7 @@ function WebmailContent() {
                     <ContactPicker
                       contacts={knownContacts}
                       value={composeTo}
-                      onSelect={(email) => setComposeTo(email)}
+                      onSelect={(email: string) => setComposeTo(email)}
                       open={showToPicker}
                       setOpen={setShowToPicker}
                     />
