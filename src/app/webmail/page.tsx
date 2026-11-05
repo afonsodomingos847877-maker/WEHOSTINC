@@ -343,6 +343,41 @@ function WebmailContent() {
   const [isRefreshingWebmail, setIsRefreshingWebmail] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
 
+  // Percentagem Dinâmica de Processamento e Sincronização (0% a 100%)
+  const [syncPercentage, setSyncPercentage] = useState<number>(0);
+  const [isSyncVisible, setIsSyncVisible] = useState<boolean>(false);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    let fadeTimeout: NodeJS.Timeout;
+
+    if (isLoadingMessages || isRefreshingWebmail) {
+      setIsSyncVisible(true);
+      setSyncPercentage((prev) => (prev > 0 && prev < 90 ? prev : 15));
+
+      interval = setInterval(() => {
+        setSyncPercentage((prev) => {
+          if (prev < 40) return prev + Math.floor(Math.random() * 8 + 5);
+          if (prev < 75) return prev + Math.floor(Math.random() * 6 + 4);
+          if (prev < 92) return prev + Math.floor(Math.random() * 3 + 2);
+          return Math.min(97, prev + 1);
+        });
+      }, 160);
+    } else if (isSyncVisible) {
+      // Quando termina de processar, atinge 100% e fecha suavemente
+      setSyncPercentage(100);
+      fadeTimeout = setTimeout(() => {
+        setIsSyncVisible(false);
+        setSyncPercentage(0);
+      }, 550);
+    }
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(fadeTimeout);
+    };
+  }, [isLoadingMessages, isRefreshingWebmail]);
+
   // Floating Inbox Briefing Card State (Auto-dismisses after showing new/overdue emails)
   const [floatingBriefing, setFloatingBriefing] = useState<{
     isOpen: boolean;
@@ -3696,15 +3731,37 @@ function WebmailContent() {
 
           {/* List */}
           <div className="flex-1 overflow-y-auto divide-y divide-neutral-100 relative">
-            {/* Barra de Processamento / Sincronização Ativa */}
-            {(isLoadingMessages || isRefreshingWebmail) && (
-              <div className="sticky top-0 z-10 bg-gradient-to-r from-blue-50 via-teal-50 to-blue-50 border-b border-blue-200 px-4 py-2 flex items-center justify-between text-xs text-blue-900 shadow-2xs backdrop-blur-md">
-                <div className="flex items-center space-x-2">
-                  <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-600 shrink-0" />
-                  <span className="font-bold text-[11px] tracking-tight">A processar e a sincronizar e-mails...</span>
+            {/* Barra de Processamento / Sincronização Ativa com Contagem de Percentagem até 100% */}
+            {isSyncVisible && (
+              <div className="sticky top-0 z-10 bg-gradient-to-r from-blue-50/95 via-sky-50/95 to-indigo-50/95 border-b border-blue-200/80 px-4 py-2.5 flex items-center justify-between text-xs text-blue-900 shadow-xs backdrop-blur-md transition-all duration-200">
+                <div className="flex items-center space-x-2 min-w-0">
+                  {syncPercentage >= 100 ? (
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0 animate-in zoom-in-50" />
+                  ) : (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-600 shrink-0" />
+                  )}
+                  <span className="font-bold text-[11px] tracking-tight truncate">
+                    {syncPercentage >= 100 ? 'Sincronização 100% concluída!' : 'A processar e a sincronizar e-mails...'}
+                  </span>
+                  <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-md tabular-nums tracking-wider ${
+                    syncPercentage >= 100 
+                      ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' 
+                      : 'bg-blue-100 text-blue-800 border border-blue-200'
+                  }`}>
+                    {syncPercentage}%
+                  </span>
                 </div>
-                <div className="w-24 h-1.5 bg-blue-200 rounded-full overflow-hidden relative">
-                  <div className="h-full bg-gradient-to-r from-blue-600 to-teal-500 rounded-full animate-pulse w-full"></div>
+                <div className="flex items-center space-x-2 ml-3 shrink-0">
+                  <div className="w-24 sm:w-36 h-2 bg-blue-100 border border-blue-200/60 rounded-full overflow-hidden relative">
+                    <div 
+                      className={`h-full rounded-full transition-all duration-200 ease-out ${
+                        syncPercentage >= 100 
+                          ? 'bg-gradient-to-r from-emerald-500 to-teal-500' 
+                          : 'bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500'
+                      }`}
+                      style={{ width: `${Math.min(100, Math.max(8, syncPercentage))}%` }}
+                    />
+                  </div>
                 </div>
               </div>
             )}
