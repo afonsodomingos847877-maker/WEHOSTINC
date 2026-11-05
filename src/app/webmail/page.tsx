@@ -2850,9 +2850,8 @@ function WebmailContent() {
       const fe = (msg.fromEmail || '').trim().toLowerCase();
       const fn = (msg.fromName || '').trim();
       const te = (msg.toEmail || '').trim().toLowerCase();
-      const tn = (msg.toName || '').trim();
       if (fe && fe !== selectedAccountEmail?.toLowerCase()) map.set(fe, fn || fe);
-      if (te && te !== selectedAccountEmail?.toLowerCase()) map.set(te, tn || te);
+      if (te && te !== selectedAccountEmail?.toLowerCase()) map.set(te, te);
     });
     return Array.from(map.entries()).map(([email, name]) => ({ email, name }));
   }, [messages, contactsCacheKey, selectedAccountEmail]);
