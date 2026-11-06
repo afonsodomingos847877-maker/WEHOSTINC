@@ -151,8 +151,13 @@ export async function POST(request: NextRequest) {
 
     const parseRecipients = (val: any): string[] => {
       if (!val) return [];
-      if (Array.isArray(val)) return val.filter(Boolean);
-      if (typeof val === 'string') return val.split(',').map((s: string) => s.trim()).filter(Boolean);
+      if (Array.isArray(val)) return val.flatMap((v) => parseRecipients(v));
+      if (typeof val === 'string') {
+        return val
+          .split(/[,;\s]+/)
+          .map((s: string) => s.replace(/^<|>$/g, '').trim())
+          .filter((s) => s.includes('@'));
+      }
       return [];
     };
 

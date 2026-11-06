@@ -25,6 +25,7 @@ import ExternalAccountsModal from '@/components/webmail/ExternalAccountsModal';
 import { apiEndpoint } from '@/lib/siteConfig';
 import dynamic from 'next/dynamic';
 import ContactPicker from '@/components/webmail/ContactPicker';
+import RecipientInput, { normalizeRecipients, findInvalidRecipients, splitRecipients } from '@/components/webmail/RecipientInput';
 
 const templateCategoryIcons: Record<string, React.ElementType> = {
   'Boas-vindas': Sparkles,
@@ -2076,11 +2077,27 @@ function WebmailContent() {
     if (sendingMsg) return;
     setComposeError('');
 
-    const cleanTo = composeTo.trim();
+    const recipientsTo = splitRecipients(composeTo);
     const plainBody = composeBody.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
 
-    if (!cleanTo) {
-      setComposeError('Por favor, informe o e-mail do destinatário (Para) antes de agendar.');
+    if (recipientsTo.length === 0) {
+      setComposeError('Por favor, informe pelo menos um e-mail de destinatário (Para) antes de agendar.');
+      return;
+    }
+
+    const invalidTo = findInvalidRecipients(composeTo);
+    if (invalidTo.length > 0) {
+      setComposeError(`E-mail inválido em "Para": ${invalidTo.join(', ')}`);
+      return;
+    }
+    const invalidCc = findInvalidRecipients(composeCc);
+    if (invalidCc.length > 0) {
+      setComposeError(`E-mail inválido em "CC (Cópia)": ${invalidCc.join(', ')}`);
+      return;
+    }
+    const invalidBcc = findInvalidRecipients(composeBcc);
+    if (invalidBcc.length > 0) {
+      setComposeError(`E-mail inválido em "BCC (Cópia Oculta)": ${invalidBcc.join(', ')}`);
       return;
     }
 
@@ -2116,14 +2133,14 @@ function WebmailContent() {
 
       await webmailManager.scheduleMessage(
         selectedAccountEmail,
-        cleanTo,
+        normalizeRecipients(composeTo),
         composeSubject.trim() || '(Sem assunto)',
         scheduledBody,
         scheduledDate.toISOString(),
         composeAttachments,
         composePriority,
-        composeCc.trim(),
-        composeBcc.trim(),
+        normalizeRecipients(composeCc),
+        normalizeRecipients(composeBcc),
         editingScheduledId || undefined
       );
 
@@ -2311,11 +2328,27 @@ function WebmailContent() {
     if (sendingMsg) return;
     setComposeError('');
 
-    const cleanTo = composeTo.trim();
+    const recipientsTo = splitRecipients(composeTo);
     const plainBody = composeBody.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
 
-    if (!cleanTo) {
-      setComposeError('Por favor, informe o e-mail do destinatário (Para).');
+    if (recipientsTo.length === 0) {
+      setComposeError('Por favor, informe pelo menos um e-mail de destinatário (Para).');
+      return;
+    }
+
+    const invalidTo = findInvalidRecipients(composeTo);
+    if (invalidTo.length > 0) {
+      setComposeError(`E-mail inválido em "Para": ${invalidTo.join(', ')}`);
+      return;
+    }
+    const invalidCc = findInvalidRecipients(composeCc);
+    if (invalidCc.length > 0) {
+      setComposeError(`E-mail inválido em "CC (Cópia)": ${invalidCc.join(', ')}`);
+      return;
+    }
+    const invalidBcc = findInvalidRecipients(composeBcc);
+    if (invalidBcc.length > 0) {
+      setComposeError(`E-mail inválido em "BCC (Cópia Oculta)": ${invalidBcc.join(', ')}`);
       return;
     }
 
@@ -2371,17 +2404,17 @@ function WebmailContent() {
         }
       }
 
-      // 1. Enviar via Migadu SMTP usando webmailManager
+      // 1. Enviar via Migadu SMTP usando webmailManager com múltiplos destinatários normalizados
       await webmailManager.sendMessage(
         selectedAccountEmail,
         activePassword,
-        composeTo.trim(),
+        normalizeRecipients(composeTo),
         composeSubject.trim() || '(Sem assunto)',
         finalBody,
         composeAttachments,
         composePriority,
-        composeCc.trim(),
-        composeBcc.trim()
+        normalizeRecipients(composeCc),
+        normalizeRecipients(composeBcc)
       );
 
       // 2. Remover rascunho se existir
@@ -5769,30 +5802,32 @@ function WebmailContent() {
                       </div>
                     </div>
 
-                    {/* Campo de Entrada Manual com seletor de contactos acoplado */}
+                    {/* Campo de destinatários (vários e-mails) com seletor de contactos acoplado */}
                     <div className="relative">
-                      <input
-                        type="text"
-                        value={composeTo}
-                        onChange={(e) => handleToChange(e.target.value)}
-                        placeholder="email@exemplo.com"
-                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-900 outline-none focus:ring-2 focus:ring-primary-500 font-sans pr-10"
-                      />
+                      <div className="pr-9">
+                        <RecipientInput
+                          value={composeTo}
+                          onChange={setComposeTo}
+                          contacts={knownContacts}
+                          excludeEmails={[selectedAccountEmail]}
+                          placeholder="email@exemplo.com"
+                        />
+                      </div>
                       <button
                         type="button"
                         onClick={() => setShowToPicker(!showToPicker)}
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-primary-600 transition"
+                        className="absolute right-1.5 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-primary-600 transition"
                         title="Ver contactos guardados"
                       >
                         <Users className="w-4 h-4" />
                       </button>
 
-                      {/* Dropdown de selecção rápida de contactos */}
+                      {/* Dropdown de selecção rápida de contactos (adiciona ao invés de substituir) */}
                       <ContactPicker
                         contacts={knownContacts}
                         value={composeTo}
                         onSelect={(email: string) => {
-                          setComposeTo(email);
+                          setComposeTo(normalizeRecipients(`${composeTo},${email}`));
                           setShowToPicker(false);
                         }}
                         open={showToPicker}
@@ -5806,27 +5841,27 @@ function WebmailContent() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     <div>
                       <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-700 mb-0.5">
-                        CC (Cópia)
+                        CC (Cópia) <span className="normal-case font-medium text-gray-400">— vários e-mails</span>
                       </label>
-                      <input
-                        type="text"
+                      <RecipientInput
                         value={composeCc}
-                        onChange={(e) => setComposeCc(e.target.value)}
-                        placeholder="email@exemplo.com"
-                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-900 outline-none focus:ring-2 focus:ring-primary-500 font-sans"
+                        onChange={setComposeCc}
+                        contacts={knownContacts}
+                        excludeEmails={[selectedAccountEmail]}
+                        placeholder="email1@exemplo.com, email2@exemplo.com"
                       />
                     </div>
 
                     <div>
                       <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-700 mb-0.5">
-                        BCC (Cópia Oculta)
+                        BCC (Cópia Oculta) <span className="normal-case font-medium text-gray-400">— vários e-mails</span>
                       </label>
-                      <input
-                        type="text"
+                      <RecipientInput
                         value={composeBcc}
-                        onChange={(e) => setComposeBcc(e.target.value)}
-                        placeholder="email@exemplo.com"
-                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-900 outline-none focus:ring-2 focus:ring-primary-500 font-sans"
+                        onChange={setComposeBcc}
+                        contacts={knownContacts}
+                        excludeEmails={[selectedAccountEmail]}
+                        placeholder="email1@exemplo.com, email2@exemplo.com"
                       />
                     </div>
                   </div>
