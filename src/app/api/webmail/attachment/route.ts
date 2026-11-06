@@ -59,13 +59,31 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Falha ao extrair o conteúdo do anexo' }, { status: 500 });
     }
 
-    const safeFilename = encodeURIComponent(targetAtt.filename || filename);
+    const isDownload = searchParams.get('download') === '1';
+    const rawFilename = targetAtt.filename || filename;
+    const safeFilename = encodeURIComponent(rawFilename);
+    const ext = rawFilename.split('.').pop()?.toLowerCase() || '';
+
+    let contentType = targetAtt.contentType || '';
+    if (!contentType || contentType === 'application/octet-stream') {
+      if (ext === 'pdf') contentType = 'application/pdf';
+      else if (['jpg', 'jpeg'].includes(ext)) contentType = 'image/jpeg';
+      else if (ext === 'png') contentType = 'image/png';
+      else if (ext === 'webp') contentType = 'image/webp';
+      else if (ext === 'gif') contentType = 'image/gif';
+      else if (ext === 'svg') contentType = 'image/svg+xml';
+      else if (['txt', 'log'].includes(ext)) contentType = 'text/plain; charset=utf-8';
+      else if (ext === 'html') contentType = 'text/html; charset=utf-8';
+      else contentType = 'application/octet-stream';
+    }
+
+    const dispositionType = isDownload ? 'attachment' : 'inline';
 
     return new NextResponse(new Uint8Array(fileBuffer), {
       status: 200,
       headers: {
-        'Content-Type': targetAtt.contentType || 'application/octet-stream',
-        'Content-Disposition': `attachment; filename="${targetAtt.filename || filename}"; filename*=UTF-8''${safeFilename}`,
+        'Content-Type': contentType,
+        'Content-Disposition': `${dispositionType}; filename="${rawFilename}"; filename*=UTF-8''${safeFilename}`,
         'Content-Length': fileBuffer.length.toString(),
         'Cache-Control': 'private, max-age=86400',
       },

@@ -450,6 +450,88 @@ function WebmailContent() {
 
   // Attachment preview state
   const [previewAttachment, setPreviewAttachment] = useState<WebmailAttachment | null>(null);
+  const [previewBlobUrl, setPreviewBlobUrl] = useState<string>('');
+  const [previewLoading, setPreviewLoading] = useState<boolean>(false);
+
+  // Converter anexos (especialmente PDFs e imagens data: ou IMAP) em Blob URLs seguras para preview instantâneo
+  useEffect(() => {
+    if (!previewAttachment || !previewAttachment.url) {
+      setPreviewBlobUrl('');
+      setPreviewLoading(false);
+      return;
+    }
+
+    let active = true;
+    setPreviewLoading(true);
+
+    const prepareUrl = async () => {
+      try {
+        const url = previewAttachment.url;
+        const filename = previewAttachment.name || '';
+        const isPdf = previewAttachment.type === 'application/pdf' || filename.toLowerCase().endsWith('.pdf');
+        const isImage = previewAttachment.type?.startsWith('image/') || /\.(png|jpe?g|webp|gif|svg)$/i.test(filename);
+
+        // 1. Anexo em formato Data URL (base64)
+        if (url.startsWith('data:')) {
+          const parts = url.split(',');
+          const mimeMatch = parts[0].match(/:(.*?);/);
+          let mime = mimeMatch ? mimeMatch[1] : (isPdf ? 'application/pdf' : isImage ? 'image/png' : 'application/octet-stream');
+          if (isPdf && mime !== 'application/pdf') mime = 'application/pdf';
+
+          const byteCharacters = atob(parts[1]);
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          const blob = new Blob([byteArray], { type: mime });
+          const blobUrl = URL.createObjectURL(blob);
+          if (active) {
+            setPreviewBlobUrl(blobUrl);
+            setPreviewLoading(false);
+          }
+          return;
+        }
+
+        // 2. Anexo do servidor via API ou link remoto - descarregar como Blob para renderizar no visualizador nativo sem bloqueios
+        const fetchUrl = url.includes('/api/webmail/attachment')
+          ? (url.includes('inline=') ? url : `${url}&inline=1`)
+          : url;
+
+        const res = await fetch(fetchUrl);
+        if (!res.ok) throw new Error('Falha ao descarregar anexo');
+        const resBlob = await res.blob();
+
+        let mime = resBlob.type;
+        if (isPdf && (!mime || mime === 'application/octet-stream')) {
+          mime = 'application/pdf';
+        } else if (isImage && (!mime || mime === 'application/octet-stream')) {
+          const ext = filename.split('.').pop()?.toLowerCase();
+          mime = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : ext === 'gif' ? 'image/gif' : 'image/jpeg';
+        }
+
+        const finalBlob = new Blob([resBlob], { type: mime });
+        const finalBlobUrl = URL.createObjectURL(finalBlob);
+
+        if (active) {
+          setPreviewBlobUrl(finalBlobUrl);
+          setPreviewLoading(false);
+        }
+      } catch (err) {
+        if (active) {
+          console.warn('[Preview] Usando URL direta de fallback:', err);
+          setPreviewBlobUrl(previewAttachment.url);
+          setPreviewLoading(false);
+        }
+      }
+    };
+
+    prepareUrl();
+
+    return () => {
+      active = false;
+    };
+  }, [previewAttachment]);
 
   // Placeholder warning state
   const [showPlaceholderWarning, setShowPlaceholderWarning] = useState(false);
@@ -6142,62 +6224,176 @@ function WebmailContent() {
 
       {/* MODAL: Attachment Preview */}
       {previewAttachment && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[10020] p-2 sm:p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-5xl w-full max-h-[92vh] overflow-hidden flex flex-col border border-neutral-200">
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200">
-              <div className="flex items-center space-x-2 truncate">
-                <FileText className="h-5 w-5 text-primary-600 shrink-0" />
-                <span className="text-sm font-bold text-gray-900 truncate">{previewAttachment.name}</span>
+            <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-gray-200 bg-white shrink-0">
+              <div className="flex items-center space-x-2.5 min-w-0 pr-2">
+                <div className="w-8 h-8 rounded-xl bg-primary-50 border border-primary-200 flex items-center justify-center text-primary-600 shrink-0">
+                  <FileText className="h-4 w-4" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-sm font-bold text-gray-900 truncate">{previewAttachment.name}</h3>
+                  {previewAttachment.size && (
+                    <span className="text-[10px] text-gray-500 font-mono">
+                      {(previewAttachment.size / 1024).toFixed(1)} KB
+                    </span>
+                  )}
+                </div>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-1.5 shrink-0">
+                {/* Abrir em novo separador */}
                 <a
-                  href={previewAttachment.url}
+                  href={previewBlobUrl || previewAttachment.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-2 hover:bg-neutral-100 text-neutral-600 hover:text-neutral-900 rounded-xl transition cursor-pointer flex items-center space-x-1"
+                  title="Abrir em ecrã completo / novo separador"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  <span className="hidden sm:inline text-xs font-bold">Abrir Separador</span>
+                </a>
+                {/* Download */}
+                <a
+                  href={previewAttachment.url.includes('/api/webmail/attachment') ? `${previewAttachment.url}&download=1` : (previewBlobUrl || previewAttachment.url)}
                   download={previewAttachment.name}
-                  className="p-2 hover:bg-gray-100 text-gray-600 rounded-xl transition cursor-pointer"
-                  title="Download"
+                  className="p-2 bg-primary-50 hover:bg-primary-100 text-primary-700 rounded-xl transition cursor-pointer flex items-center space-x-1 border border-primary-200"
+                  title="Descarregar ficheiro"
                 >
                   <Download className="h-4 w-4" />
+                  <span className="hidden sm:inline text-xs font-bold">Download</span>
                 </a>
+                {/* Fechar */}
                 <button
                   type="button"
-                  onClick={() => setPreviewAttachment(null)}
-                  className="p-2 hover:bg-gray-100 text-gray-600 rounded-xl transition cursor-pointer"
-                  title="Fechar"
+                  onClick={() => {
+                    setPreviewAttachment(null);
+                    setPreviewBlobUrl('');
+                  }}
+                  className="p-2 hover:bg-neutral-100 text-neutral-500 hover:text-neutral-900 rounded-xl transition cursor-pointer"
+                  title="Fechar visualizador"
                 >
                   <X className="h-5 w-5" />
                 </button>
               </div>
             </div>
 
-            {/* Content */}
-            <div className="flex-1 overflow-auto p-4 bg-gray-50">
-              {previewAttachment.type?.startsWith('image/') ? (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img
-                  src={previewAttachment.url}
-                  alt={previewAttachment.name}
-                  className="max-w-full max-h-[70vh] mx-auto rounded-lg shadow-md"
-                />
-              ) : previewAttachment.type === 'application/pdf' ? (
-                <iframe
-                  src={previewAttachment.url}
-                  className="w-full h-[70vh] rounded-lg border border-gray-200"
-                  title={previewAttachment.name}
-                />
-              ) : (
-                <div className="flex flex-col items-center justify-center h-full space-y-4 text-gray-500">
-                  <FileText className="h-16 w-16 text-gray-300" />
-                  <p className="text-sm">Pré-visualização não disponível para este tipo de ficheiro.</p>
-                  <a
-                    href={previewAttachment.url}
-                    download={previewAttachment.name}
-                    className="px-4 py-2 bg-primary-600 text-white text-sm font-bold rounded-xl hover:bg-primary-700 transition cursor-pointer"
-                  >
-                    Download Ficheiro
-                  </a>
+            {/* Content Body */}
+            <div className="flex-1 overflow-auto p-2 sm:p-4 bg-neutral-100/90 flex items-center justify-center min-h-[350px]">
+              {previewLoading ? (
+                <div className="flex flex-col items-center justify-center py-16 space-y-3">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
+                  <p className="text-xs font-bold text-neutral-800">A carregar documento...</p>
+                  <p className="text-[11px] text-neutral-500">A preparar visualização de alta qualidade</p>
                 </div>
-              )}
+              ) : (() => {
+                const filename = previewAttachment.name || '';
+                const isPdf = previewAttachment.type === 'application/pdf' || filename.toLowerCase().endsWith('.pdf');
+                const isImage = previewAttachment.type?.startsWith('image/') || /\.(png|jpe?g|webp|gif|svg)$/i.test(filename);
+                const isText = previewAttachment.type?.startsWith('text/') || /\.(txt|csv|log|json|xml|md)$/i.test(filename);
+                const isAudio = previewAttachment.type?.startsWith('audio/') || /\.(mp3|wav|ogg|m4a)$/i.test(filename);
+
+                const activeUrl = previewBlobUrl || previewAttachment.url;
+
+                if (isPdf) {
+                  return (
+                    <div className="w-full h-[78vh] flex flex-col rounded-2xl overflow-hidden shadow-sm border border-neutral-300 bg-white">
+                      <object
+                        data={activeUrl}
+                        type="application/pdf"
+                        className="w-full h-full"
+                      >
+                        <iframe
+                          src={activeUrl}
+                          className="w-full h-full border-0"
+                          title={previewAttachment.name}
+                        >
+                          <div className="flex flex-col items-center justify-center h-full p-6 text-center space-y-3">
+                            <FileText className="w-12 h-12 text-neutral-400" />
+                            <p className="text-sm font-bold text-neutral-800">{previewAttachment.name}</p>
+                            <a
+                              href={activeUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-4 py-2 bg-primary-600 text-white text-xs font-bold rounded-xl shadow-sm"
+                            >
+                              Abrir PDF em Ecrã Completo
+                            </a>
+                          </div>
+                        </iframe>
+                      </object>
+                    </div>
+                  );
+                }
+
+                if (isImage) {
+                  return (
+                    <div className="flex items-center justify-center w-full h-[78vh] p-2">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={activeUrl}
+                        alt={previewAttachment.name}
+                        className="max-w-full max-h-[76vh] object-contain mx-auto rounded-xl shadow-md border border-neutral-200 bg-white"
+                      />
+                    </div>
+                  );
+                }
+
+                if (isText) {
+                  return (
+                    <div className="w-full h-[78vh] rounded-2xl overflow-hidden shadow-sm border border-neutral-300 bg-white">
+                      <iframe
+                        src={activeUrl}
+                        className="w-full h-full border-0 p-4 font-mono text-xs bg-white text-neutral-900"
+                        title={previewAttachment.name}
+                      />
+                    </div>
+                  );
+                }
+
+                if (isAudio) {
+                  return (
+                    <div className="flex flex-col items-center justify-center py-16 space-y-4 bg-white rounded-2xl border border-neutral-200 p-8 shadow-sm">
+                      <Volume2 className="w-12 h-12 text-primary-600" />
+                      <p className="text-sm font-bold text-neutral-800">{previewAttachment.name}</p>
+                      <audio controls src={activeUrl} className="w-full max-w-md" />
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="flex flex-col items-center justify-center py-16 space-y-4 text-center max-w-md mx-auto p-6 bg-white rounded-2xl border border-neutral-200 shadow-sm">
+                    <div className="w-16 h-16 rounded-2xl bg-neutral-100 flex items-center justify-center text-neutral-400">
+                      <FileText className="h-8 w-8" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-neutral-900">{previewAttachment.name}</h4>
+                      <p className="text-xs text-neutral-500 mt-1">
+                        Este formato requer download ou aplicação nativa para visualização completa.
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 pt-2">
+                      <a
+                        href={previewAttachment.url.includes('/api/webmail/attachment') ? `${previewAttachment.url}&download=1` : previewAttachment.url}
+                        download={previewAttachment.name}
+                        className="px-4 py-2 bg-primary-600 text-white text-xs font-bold rounded-xl hover:bg-primary-700 transition shadow-xs flex items-center space-x-1.5"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        <span>Descarregar Ficheiro</span>
+                      </a>
+                      <a
+                        href={activeUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-4 py-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 text-xs font-bold rounded-xl transition flex items-center space-x-1.5"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        <span>Abrir Separador</span>
+                      </a>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           </div>
         </div>
