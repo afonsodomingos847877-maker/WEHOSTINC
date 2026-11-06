@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import { EmailSignature } from '@/models/EmailSignature';
+import { uploadDataUrlToCloudinary } from '@/lib/cloudinaryUpload';
 
 // GET - Get signature for an email address
 export async function GET(request: NextRequest) {
@@ -47,6 +48,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'E-mail é obrigatório' }, { status: 400 });
     }
 
+    // Se a imagem for base64 (data:image/...), enviar para o Cloudinary para que clientes de e-mail (Gmail, Outlook) renderizem perfeitamente
+    let finalSignatureImage = signatureImage || '';
+    if (finalSignatureImage && finalSignatureImage.startsWith('data:image/')) {
+      const cdnUrl = await uploadDataUrlToCloudinary(finalSignatureImage);
+      if (cdnUrl) {
+        finalSignatureImage = cdnUrl;
+      }
+    }
+
     const updatedSignature = await EmailSignature.findOneAndUpdate(
       { email: email.toLowerCase().trim() },
       {
@@ -59,7 +69,7 @@ export async function POST(request: NextRequest) {
         phone,
         website,
         logoUrl,
-        signatureImage: signatureImage || '',
+        signatureImage: finalSignatureImage,
         signatureType: signatureType || 'image',
         updatedAt: new Date()
       },

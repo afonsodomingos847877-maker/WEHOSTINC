@@ -2876,12 +2876,14 @@ function WebmailContent() {
     }
   };
 
-  const handleSignatureImageUpload = (file: File) => {
+  const handleSignatureImageUpload = async (file: File) => {
     if (!file) return;
     if (file.size > 2 * 1024 * 1024) {
       alert('A imagem da assinatura deve ter no máximo 2MB.');
       return;
     }
+
+    // 1. Mostrar preview imediato local
     const reader = new FileReader();
     reader.onload = (e) => {
       const result = e.target?.result as string;
@@ -2894,6 +2896,26 @@ function WebmailContent() {
       }
     };
     reader.readAsDataURL(file);
+
+    // 2. Fazer upload para a CDN pública Cloudinary para que clientes externos (Gmail, Outlook) renderizem diretamente
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.success && data.url) {
+        setSignatureForm(prev => ({
+          ...prev,
+          signatureImage: data.url,
+          signatureType: 'image'
+        }));
+      }
+    } catch (uploadErr) {
+      console.warn('[Signature Upload] Erro ao enviar para CDN Cloudinary:', uploadErr);
+    }
   };
 
   const handleSaveSignature = async (e: React.FormEvent) => {

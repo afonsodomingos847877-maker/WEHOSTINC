@@ -4,6 +4,7 @@ import { connectDB } from '@/lib/mongodb';
 import { ExternalEmailAccount } from '@/models/ExternalEmailAccount';
 import { EmailSignature } from '@/models/EmailSignature';
 import { decryptPassword } from '@/lib/encryption';
+import { replaceDataImagesWithCloudinary } from '@/lib/cloudinaryUpload';
 
 export const maxDuration = 60;
 
@@ -181,6 +182,10 @@ export async function POST(request: NextRequest) {
     } catch (sigErr) {
       console.warn('[Webmail Send] Assinatura automática não pôde ser verificada:', sigErr);
     }
+
+    // Converter quaisquer imagens base64 inline para URLs públicas HTTPS Cloudinary
+    // para evitar que o Gmail corte a mensagem com "[Message clipped]" e garantir que a assinatura apareça visível para o recipiente!
+    emailBody = await replaceDataImagesWithCloudinary(emailBody);
 
     const plainText = typeof emailBody === 'string'
       ? emailBody.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
