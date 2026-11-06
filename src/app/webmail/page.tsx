@@ -926,10 +926,10 @@ function WebmailContent() {
   const getSignatureHtml = useCallback(() => {
     if (!signatureForm.isEnabled) return '';
     if (signatureForm.signatureType === 'image' && signatureForm.signatureImage) {
-      return `<p><br></p><p><br></p><p><img src="${signatureForm.signatureImage}" alt="Assinatura" style="max-width: 420px; max-height: 120px; width: auto; height: auto; display: block; border-radius: 4px; margin-top: 14px;" /></p>`;
+      return `<p><br></p><p><br></p><p><img src="${signatureForm.signatureImage}" alt="Assinatura" style="max-width: 520px; width: auto; height: auto; display: block; border: 0; border-radius: 4px; margin-top: 16px;" /></p>`;
     }
     if (signatureForm.signatureImage && !signatureForm.fullName) {
-      return `<p><br></p><p><br></p><p><img src="${signatureForm.signatureImage}" alt="Assinatura" style="max-width: 420px; max-height: 120px; width: auto; height: auto; display: block; border-radius: 4px; margin-top: 14px;" /></p>`;
+      return `<p><br></p><p><br></p><p><img src="${signatureForm.signatureImage}" alt="Assinatura" style="max-width: 520px; width: auto; height: auto; display: block; border: 0; border-radius: 4px; margin-top: 16px;" /></p>`;
     }
     if (signatureForm.fullName || signatureForm.companyName) {
       return `<p><br></p><div style="font-family: Arial, sans-serif; font-size: 13px; color: #222; border-left: 3px solid #7c3aed; padding-left: 10px; margin-top: 15px;">
@@ -957,8 +957,8 @@ function WebmailContent() {
     setComposeTo(selectedMessage.fromEmail);
     setComposeSubject(`Re: ${selectedMessage.subject}`);
     const sig = getSignatureHtml();
-    const sigBlock = (sig && signatureForm.autoInsert) ? `${sig}<p><br></p>` : '';
-    setComposeBody(`<p><br></p>${sigBlock}<hr style="border:0;border-top:1px solid #e5e7eb;margin:15px 0;"/><p><strong>De:</strong> ${selectedMessage.fromName} &lt;${selectedMessage.fromEmail}&gt;<br/><strong>Data:</strong> ${new Date(selectedMessage.date).toLocaleString()}<br/><strong>Assunto:</strong> ${selectedMessage.subject}</p><blockquote>${selectedMessage.body}</blockquote>`);
+    const sigBlock = sig ? `${sig}<p><br></p>` : '';
+    setComposeBody(`<p><br></p><p><br></p>${sigBlock}<hr style="border:0;border-top:1px solid #e5e7eb;margin:15px 0;"/><p><strong>De:</strong> ${selectedMessage.fromName} &lt;${selectedMessage.fromEmail}&gt;<br/><strong>Data:</strong> ${new Date(selectedMessage.date).toLocaleString()}<br/><strong>Assunto:</strong> ${selectedMessage.subject}</p><blockquote>${selectedMessage.body}</blockquote>`);
     setComposeCc('');
     setComposeBcc('');
     setComposeAttachments([]);
@@ -971,8 +971,8 @@ function WebmailContent() {
     setComposeCc(selectedAccountEmail); // Adicionar remetente original em CC
     setComposeSubject(`Re: ${selectedMessage.subject}`);
     const sig = getSignatureHtml();
-    const sigBlock = (sig && signatureForm.autoInsert) ? `${sig}<p><br></p>` : '';
-    setComposeBody(`<p><br></p>${sigBlock}<hr style="border:0;border-top:1px solid #e5e7eb;margin:15px 0;"/><p><strong>De:</strong> ${selectedMessage.fromName} &lt;${selectedMessage.fromEmail}&gt;<br/><strong>Para:</strong> ${selectedMessage.toEmail}<br/><strong>Data:</strong> ${new Date(selectedMessage.date).toLocaleString()}<br/><strong>Assunto:</strong> ${selectedMessage.subject}</p><blockquote>${selectedMessage.body}</blockquote>`);
+    const sigBlock = sig ? `${sig}<p><br></p>` : '';
+    setComposeBody(`<p><br></p><p><br></p>${sigBlock}<hr style="border:0;border-top:1px solid #e5e7eb;margin:15px 0;"/><p><strong>De:</strong> ${selectedMessage.fromName} &lt;${selectedMessage.fromEmail}&gt;<br/><strong>Para:</strong> ${selectedMessage.toEmail}<br/><strong>Data:</strong> ${new Date(selectedMessage.date).toLocaleString()}<br/><strong>Assunto:</strong> ${selectedMessage.subject}</p><blockquote>${selectedMessage.body}</blockquote>`);
     setComposeBcc('');
     setComposeAttachments([]);
     setShowCompose(true);
@@ -982,7 +982,9 @@ function WebmailContent() {
     if (!selectedMessage) return;
     setComposeTo('');
     setComposeSubject(`Fwd: ${selectedMessage.subject}`);
-    setComposeBody(`\n\n--- Mensagem Encaminhada ---\nDe: ${selectedMessage.fromName} <${selectedMessage.fromEmail}>\nPara: ${selectedMessage.toEmail}\nData: ${new Date(selectedMessage.date).toLocaleString()}\nAssunto: ${selectedMessage.subject}\n\n${selectedMessage.body}`);
+    const sig = getSignatureHtml();
+    const sigBlock = sig ? `${sig}<p><br></p>` : '';
+    setComposeBody(`<p><br></p><p><br></p>${sigBlock}<hr style="border:0;border-top:1px solid #e5e7eb;margin:15px 0;"/><p><strong>--- Mensagem Encaminhada ---</strong><br/><strong>De:</strong> ${selectedMessage.fromName} &lt;${selectedMessage.fromEmail}&gt;<br/><strong>Para:</strong> ${selectedMessage.toEmail}<br/><strong>Data:</strong> ${new Date(selectedMessage.date).toLocaleString()}<br/><strong>Assunto:</strong> ${selectedMessage.subject}</p><blockquote>${selectedMessage.body}</blockquote>`);
     setComposeCc('');
     setComposeBcc('');
     setComposeAttachments(selectedMessage.attachments || []);
@@ -1853,11 +1855,21 @@ function WebmailContent() {
 
     try {
       setSendingMsg(true);
+      let scheduledBody = composeBody;
+      const sig = getSignatureHtml();
+      if (sig) {
+        const hasSigImage = signatureForm.signatureImage && scheduledBody.includes(signatureForm.signatureImage);
+        const hasSigName = signatureForm.fullName && scheduledBody.includes(signatureForm.fullName);
+        if (!hasSigImage && !hasSigName) {
+          scheduledBody = scheduledBody ? `${scheduledBody}<p><br></p>${sig}` : sig;
+        }
+      }
+
       await webmailManager.scheduleMessage(
         selectedAccountEmail,
         cleanTo,
         composeSubject.trim() || '(Sem assunto)',
-        composeBody,
+        scheduledBody,
         scheduledDate.toISOString(),
         composeAttachments,
         composePriority,
@@ -2099,13 +2111,24 @@ function WebmailContent() {
     }
 
     try {
+      // Garantir assinatura fixa do e-mail configurado
+      let finalBody = composeBody;
+      const sig = getSignatureHtml();
+      if (sig) {
+        const hasSigImage = signatureForm.signatureImage && finalBody.includes(signatureForm.signatureImage);
+        const hasSigName = signatureForm.fullName && finalBody.includes(signatureForm.fullName);
+        if (!hasSigImage && !hasSigName) {
+          finalBody = finalBody ? `${finalBody}<p><br></p>${sig}` : sig;
+        }
+      }
+
       // 1. Enviar via Migadu SMTP usando webmailManager
       await webmailManager.sendMessage(
         selectedAccountEmail,
         activePassword,
         composeTo.trim(),
         composeSubject.trim() || '(Sem assunto)',
-        composeBody,
+        finalBody,
         composeAttachments,
         composePriority,
         composeCc.trim(),
@@ -2209,13 +2232,18 @@ function WebmailContent() {
     setQuickReplySending(true);
 
     try {
-      // Enviar via Migadu SMTP
+      // Enviar via Migadu SMTP com assinatura corporativa fixa
+      const sig = getSignatureHtml();
+      const replyBodyWithSig = sig 
+        ? `<p>${replyText.replace(/\n/g, '<br/>')}</p><p><br></p>${sig}` 
+        : `<p>${replyText.replace(/\n/g, '<br/>')}</p>`;
+
       await webmailManager.sendMessage(
         selectedAccountEmail,
         mailboxPassword,
         selectedMessage.fromEmail,
         `Re: ${selectedMessage.subject}`,
-        replyText
+        replyBodyWithSig
       );
 
       soundEffects.playSendEmailSound();
@@ -2800,9 +2828,9 @@ function WebmailContent() {
     // Gerar HTML da assinatura para inserção imediata no campo de mensagem
     let sigHtml = '';
     if (signatureForm.signatureType === 'image' && signatureForm.signatureImage) {
-      sigHtml = `<p><br></p><p><br></p><p><img src="${signatureForm.signatureImage}" alt="Assinatura" style="max-width: 420px; max-height: 120px; width: auto; height: auto; display: block; border-radius: 4px; margin-top: 14px;" /></p>`;
+      sigHtml = `<p><br></p><p><br></p><p><img src="${signatureForm.signatureImage}" alt="Assinatura" style="max-width: 520px; width: auto; height: auto; display: block; border: 0; border-radius: 4px; margin-top: 16px;" /></p>`;
     } else if (signatureForm.signatureImage && !signatureForm.fullName) {
-      sigHtml = `<p><br></p><p><br></p><p><img src="${signatureForm.signatureImage}" alt="Assinatura" style="max-width: 420px; max-height: 120px; width: auto; height: auto; display: block; border-radius: 4px; margin-top: 14px;" /></p>`;
+      sigHtml = `<p><br></p><p><br></p><p><img src="${signatureForm.signatureImage}" alt="Assinatura" style="max-width: 520px; width: auto; height: auto; display: block; border: 0; border-radius: 4px; margin-top: 16px;" /></p>`;
     } else if (signatureForm.fullName || signatureForm.companyName) {
       sigHtml = `<p><br></p><div style="font-family: Arial, sans-serif; font-size: 13px; color: #222; border-left: 3px solid #7c3aed; padding-left: 10px; margin-top: 15px;">
         <strong style="color: #111; font-size: 14px;">${signatureForm.fullName || ''}</strong><br/>
@@ -5810,11 +5838,20 @@ function WebmailContent() {
                         font-size: 13px !important;
                         font-family: inherit !important;
                         line-height: 1.5 !important;
-                        min-height: ${isMessageEditorExpanded ? 'calc(100vh - 220px)' : '160px'} !important;
-                        max-height: ${isMessageEditorExpanded ? 'calc(100vh - 220px)' : '280px'} !important;
+                        min-height: ${isMessageEditorExpanded ? 'calc(100vh - 220px)' : '200px'} !important;
+                        max-height: ${isMessageEditorExpanded ? 'calc(100vh - 220px)' : '340px'} !important;
                         overflow-y: auto !important;
                         cursor: text !important;
                         padding: 12px 14px !important;
+                      }
+                      .webmail-quill-editor .ql-editor img {
+                        max-width: 520px !important;
+                        width: auto !important;
+                        height: auto !important;
+                        display: block !important;
+                        border: 0 !important;
+                        border-radius: 4px !important;
+                        margin-top: 16px !important;
                       }
                       .webmail-quill-editor .ql-editor * {
                         color: #000000 !important;

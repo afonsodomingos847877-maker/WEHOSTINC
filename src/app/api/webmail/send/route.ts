@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { migaduImapSmtp } from '@/lib/migaduImapSmtp';
 import { connectDB } from '@/lib/mongodb';
 import { ExternalEmailAccount } from '@/models/ExternalEmailAccount';
+import { EmailSignature } from '@/models/EmailSignature';
 import { decryptPassword } from '@/lib/encryption';
 
 export const maxDuration = 60;
@@ -153,6 +154,33 @@ export async function POST(request: NextRequest) {
       if (typeof val === 'string') return val.split(',').map((s: string) => s.trim()).filter(Boolean);
       return [];
     };
+
+    // Garantir que a assinatura corporativa configurada é fixa e sempre anexada se não estiver presente
+    try {
+      await connectDB();
+      const userSig: any = await EmailSignature.findOne({ email: cleanEmail }).lean();
+      if (userSig && userSig.isEnabled !== false) {
+        const hasSigImage = userSig.signatureImage && emailBody.includes(userSig.signatureImage);
+        const hasSigName = userSig.fullName && emailBody.includes(userSig.fullName);
+        if (!hasSigImage && !hasSigName) {
+          if (userSig.signatureType === 'image' && userSig.signatureImage) {
+            emailBody = `${emailBody || ''}<p><br></p><p><img src="${userSig.signatureImage}" alt="Assinatura" style="max-width: 520px; width: 100%; height: auto; display: block; border: 0; border-radius: 4px; margin-top: 16px;" /></p>`;
+          } else if (userSig.signatureImage && !userSig.fullName) {
+            emailBody = `${emailBody || ''}<p><br></p><p><img src="${userSig.signatureImage}" alt="Assinatura" style="max-width: 520px; width: 100%; height: auto; display: block; border: 0; border-radius: 4px; margin-top: 16px;" /></p>`;
+          } else if (userSig.fullName || userSig.companyName) {
+            emailBody = `${emailBody || ''}<p><br></p><div style="font-family: Arial, sans-serif; font-size: 13px; color: #222; border-left: 3px solid #7c3aed; padding-left: 10px; margin-top: 15px;">
+              <strong style="color: #111; font-size: 14px;">${userSig.fullName || ''}</strong><br/>
+              <span style="color: #555;">${userSig.jobTitle ? userSig.jobTitle + ' • ' : ''}${userSig.companyName || ''}</span><br/>
+              ${userSig.phone ? `<span style="color: #666; font-size: 12px;">📞 ${userSig.phone}</span><br/>` : ''}
+              ${userSig.website ? `<a href="${userSig.website.startsWith('http') ? userSig.website : 'https://' + userSig.website}" target="_blank" style="color: #7c3aed; font-size: 12px; text-decoration: none;">🌐 ${userSig.website}</a><br/>` : ''}
+              ${userSig.signatureImage ? `<br/><img src="${userSig.signatureImage}" alt="Assinatura" style="max-width: 520px; width: 100%; height: auto; margin-top: 8px; display: block; border: 0;" />` : ''}
+            </div>`;
+          }
+        }
+      }
+    } catch (sigErr) {
+      console.warn('[Webmail Send] Assinatura automática não pôde ser verificada:', sigErr);
+    }
 
     const plainText = typeof emailBody === 'string'
       ? emailBody.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
