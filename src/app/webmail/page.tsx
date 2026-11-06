@@ -378,21 +378,21 @@ function getSnippetText(text?: string, body?: string): string {
 // - CDNs públicas (Cloudinary, Google, Unsplash) e data: carregam directamente
 // - referências cid: são resolvidas a partir dos anexos inline da mensagem
 // - http inseguro passa pelo proxy do servidor para evitar bloqueio por Mixed Content
-// - https externo carrega directamente com fallback para proxy caso haja CORS/anti-hotlink
+// - https externo carrega directamente com fallback limpo para proxy se CORS/hotlink bloquear
 function rewriteEmailImages(html: string, attachments?: WebmailAttachment[]): string {
   if (!html || !/<img/i.test(html)) return html;
   return html.replace(/(<img\b[^>]*?\bsrc\s*=\s*)(["'])(.*?)\2/gi, (full, prefix, quote, rawSrc) => {
     const src = decodeHtmlEntities(String(rawSrc).trim());
     if (!src || src.startsWith('data:') || src.startsWith('blob:') || src.startsWith('/api/')) return full;
 
-    // CDNs seguras públicas que devem carregar directamente com máxima velocidade no browser:
+    // CDNs públicas conhecidas: carregar directamente sem proxy
     if (
       src.includes('res.cloudinary.com') ||
       src.includes('cloudinary.com') ||
       src.includes('googleusercontent.com') ||
       src.includes('images.unsplash.com')
     ) {
-      return `${prefix}${quote}${src}${quote} loading="lazy" decoding="async" crossOrigin="anonymous" onerror="this.style.display='none';"`;
+      return `${prefix}${quote}${src}${quote}`;
     }
 
     if (/^cid:/i.test(src)) {
@@ -409,18 +409,14 @@ function rewriteEmailImages(html: string, attachments?: WebmailAttachment[]): st
       if (match?.url) {
         return `${prefix}${quote}${match.url}${quote}`;
       }
-      // Se não houver anexo inline correspondente, oculta de forma limpa para não exibir o ícone de imagem quebrada do browser
-      return `${prefix}${quote}data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"/>${quote} style="display:none;"`;
+      // CID sem correspondência: ocultar o elemento para não exibir ícone quebrado
+      return `${prefix}${quote}data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7${quote} style="display:none;"`;
     }
 
     const absolute = src.startsWith('//') ? `https:${src}` : src;
-    if (/^https:\/\//i.test(absolute)) {
-      // Carregar directamente com fallback seguro para proxy caso haja restrição de CORS ou hotlink
-      return `${prefix}${quote}${absolute}${quote} loading="lazy" decoding="async" crossOrigin="anonymous" onerror="if(!this.dataset.p){this.dataset.p='1';this.src='/api/webmail/image-proxy?url='+encodeURIComponent('${encodeURIComponent(absolute)}');}else{this.style.display='none';}"`;
-    }
-
-    if (/^http:\/\//i.test(absolute)) {
-      return `${prefix}${quote}/api/webmail/image-proxy?url=${encodeURIComponent(absolute)}${quote} loading="lazy" decoding="async" onerror="this.style.display='none';"`;
+    if (/^https?:\/\//i.test(absolute)) {
+      // Passar sempre pelo proxy: garante que http e https carregam sem Mixed Content, CORS ou anti-hotlink
+      return `${prefix}${quote}/api/webmail/image-proxy?url=${encodeURIComponent(absolute)}${quote}`;
     }
 
     return full;
@@ -628,7 +624,6 @@ function WebmailContent() {
 
   // Collapse states
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [isStorageCollapsed, setIsStorageCollapsed] = useState(false);
   const [isFiltersCollapsed, setIsFiltersCollapsed] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showInternalChat, setShowInternalChat] = useState(false);
@@ -823,11 +818,6 @@ function WebmailContent() {
       return next;
     });
   };
-
-  // Debug webmail login modal
-  useEffect(() => {
-    console.log('showWebmailLogin mudou para:', showWebmailLogin);
-  }, [showWebmailLogin]);
 
   // Signature states
   const [showSignatureModal, setShowSignatureModal] = useState(false);
@@ -3267,50 +3257,6 @@ function WebmailContent() {
   const scheduledCount = currentFolder === 'scheduled'
     ? messages.length
     : folderStats.scheduled;
-
-  // Armazenamento real via Migadu + cálculo dinâmico por mensagens carregadas
-  const [migaduStorageUsedMB, setMigaduStorageUsedMB] = useState<number>(0);
-
-  useEffect(() => {
-    if (selectedAccountEmail && mailboxPassword) {
-      // Fetch real storage usage from Migadu
-      const domain = selectedAccountEmail.split('@')[1];
-      fetch(`/api/email-providers/migadu/domains/${domain}/mailboxes`)
-        .then(r => r.json())
-        .then(data => {
-          const mailboxes: Array<{usage_bytes?: number; local_part?: string}> = data.mailboxes || data || [];
-          const localPart = selectedAccountEmail.split('@')[0];
-          const box = mailboxes.find((m: {local_part?: string}) => m.local_part === localPart);
-          if (box && box.usage_bytes) {
-            setMigaduStorageUsedMB(box.usage_bytes / (1024 * 1024));
-          }
-        })
-        .catch(() => {/* silently ignore */});
-    }
-  }, [selectedAccountEmail, mailboxPassword]);
-
-  // Dynamic storage calculation from messages and attachments
-  const calculatedStorageBytes = messages.reduce((acc, m) => {
-    let msgBytes = (m.body?.length || 0) + (m.subject?.length || 0) + 1024;
-    if (m.attachments) {
-      msgBytes += m.attachments.reduce((sum, att) => sum + (att.size || 0), 0);
-    }
-    return acc + msgBytes;
-  }, 0);
-
-  const effectiveStorageMB = migaduStorageUsedMB > 0 
-    ? migaduStorageUsedMB 
-    : (mailboxPassword ? Math.max(calculatedStorageBytes / (1024 * 1024), 0.15) : 0);
-
-  const storagePercentage = Math.min((effectiveStorageMB / 1024) * 100, 100);
-
-  const storageInfo = {
-    usedMB: effectiveStorageMB,
-    percentage: storagePercentage,
-    usedDisplay: effectiveStorageMB < 1024
-      ? `${effectiveStorageMB.toFixed(1)} MB`
-      : `${(effectiveStorageMB / 1024).toFixed(2)} GB`,
-  };
 
   // Gerador de Respostas Rápidas Inteligentes Contextuais
   const getSmartReplies = (subject?: string, body?: string): string[] => {
