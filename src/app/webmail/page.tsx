@@ -44,9 +44,66 @@ const templateCategoryIcons: Record<string, React.ElementType> = {
   'Tabelas': FileText,
 };
 
-// Dynamic import for React Quill to avoid SSR issues
-const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
+// Dynamic import for React Quill to avoid SSR issues and register Outlook-style font families and sizes
+const ReactQuill = dynamic(
+  async () => {
+    const rq = await import('react-quill');
+    const Quill = (rq as any).Quill;
+    if (Quill) {
+      try {
+        const Font = Quill.import('attributors/style/font');
+        if (Font) {
+          Font.whitelist = [
+            'arial',
+            'calibri',
+            'georgia',
+            'times-new-roman',
+            'courier-new',
+            'verdana',
+            'tahoma'
+          ];
+          Quill.register({ 'formats/font': Font }, true);
+        }
+
+        const Size = Quill.import('attributors/style/size');
+        if (Size) {
+          Size.whitelist = ['10px', '12px', '14px', '16px', '18px', '24px', '32px'];
+          Quill.register({ 'formats/size': Size }, true);
+        }
+
+        const Align = Quill.import('attributors/style/align');
+        if (Align) {
+          Quill.register({ 'formats/align': Align }, true);
+        }
+      } catch (err) {
+        console.warn('Quill setup formats:', err);
+      }
+    }
+    return rq.default;
+  },
+  { ssr: false }
+);
 import 'react-quill/dist/quill.snow.css';
+
+function prepareEmailBodyForSending(html: string): string {
+  if (!html) return html;
+  return html
+    .replace(/font-family:\s*times-new-roman/gi, 'font-family: "Times New Roman", Times, Georgia, serif')
+    .replace(/font-family:\s*courier-new/gi, 'font-family: "Courier New", Courier, monospace')
+    .replace(/font-family:\s*arial/gi, 'font-family: Arial, Helvetica, sans-serif')
+    .replace(/font-family:\s*calibri/gi, 'font-family: Calibri, Candara, Segoe, Arial, sans-serif')
+    .replace(/font-family:\s*georgia/gi, 'font-family: Georgia, serif')
+    .replace(/font-family:\s*verdana/gi, 'font-family: Verdana, Geneva, sans-serif')
+    .replace(/font-family:\s*tahoma/gi, 'font-family: Tahoma, Verdana, sans-serif')
+    .replace(/class="ql-font-serif"/gi, 'style="font-family: \'Times New Roman\', Times, Georgia, serif;"')
+    .replace(/class="ql-font-monospace"/gi, 'style="font-family: \'Courier New\', Courier, monospace;"')
+    .replace(/class="ql-size-small"/gi, 'style="font-size: 11px;"')
+    .replace(/class="ql-size-large"/gi, 'style="font-size: 18px;"')
+    .replace(/class="ql-size-huge"/gi, 'style="font-size: 24px;"')
+    .replace(/class="ql-align-center"/gi, 'style="text-align: center;"')
+    .replace(/class="ql-align-right"/gi, 'style="text-align: right;"')
+    .replace(/class="ql-align-justify"/gi, 'style="text-align: justify;"');
+}
 
 function decodeHtmlEntities(str: string): string {
   if (!str) return '';
@@ -421,6 +478,23 @@ function WebmailContent() {
   const [showSchedulePicker, setShowSchedulePicker] = useState(false);
   const [composeScheduledFor, setComposeScheduledFor] = useState<string>('');
   const scheduledDispatchingRef = useRef<Set<string>>(new Set());
+
+  // Módulos do editor de e-mail estilo Outlook (família da fonte, tamanhos, cores, realce, alinhamentos)
+  const quillModules = useMemo(
+    () => ({
+      toolbar: [
+        [{ font: ['', 'arial', 'calibri', 'times-new-roman', 'georgia', 'verdana', 'tahoma', 'courier-new'] }],
+        [{ size: ['10px', '12px', false, '16px', '18px', '24px', '32px'] }],
+        ['bold', 'italic', 'underline', 'strike'],
+        [{ color: [] }, { background: [] }],
+        [{ align: [] }],
+        [{ list: 'ordered' }, { list: 'bullet' }],
+        [{ script: 'sub' }, { script: 'super' }],
+        ['clean']
+      ]
+    }),
+    []
+  );
 
   // Show CC/BCC fields state
   const [showCcBcc, setShowCcBcc] = useState(false);
@@ -1943,7 +2017,7 @@ function WebmailContent() {
 
     try {
       setSendingMsg(true);
-      let scheduledBody = composeBody;
+      let scheduledBody = prepareEmailBodyForSending(composeBody);
       const sig = getSignatureHtml();
       if (sig) {
         const hasSigImage = signatureForm.signatureImage && scheduledBody.includes(signatureForm.signatureImage);
@@ -2199,8 +2273,8 @@ function WebmailContent() {
     }
 
     try {
-      // Garantir assinatura fixa do e-mail configurado
-      let finalBody = composeBody;
+      // Garantir fontes e assinatura fixa do e-mail configurado
+      let finalBody = prepareEmailBodyForSending(composeBody);
       const sig = getSignatureHtml();
       if (sig) {
         const hasSigImage = signatureForm.signatureImage && finalBody.includes(signatureForm.signatureImage);
@@ -5954,15 +6028,191 @@ function WebmailContent() {
                         }
                       }
                     }}
-                    className={`bg-white border border-gray-200 rounded-2xl overflow-hidden transition-all duration-300 text-gray-900 cursor-text ${isMessageEditorExpanded ? 'fixed inset-4 z-50 rounded-3xl shadow-2xl' : ''}`}>
+                    className={`bg-white border border-gray-200 rounded-2xl transition-all duration-300 text-gray-900 cursor-text ${isMessageEditorExpanded ? 'fixed inset-4 z-50 rounded-3xl shadow-2xl overflow-hidden' : ''}`}>
                     <style>{`
                       .webmail-quill-editor .ql-toolbar.ql-snow {
-                        background-color: #ffffff !important;
+                        background-color: #f9fafb !important;
                         border-top-left-radius: 0.75rem !important;
                         border-top-right-radius: 0.75rem !important;
                         border-color: #e5e7eb !important;
-                        padding: 4px 8px !important;
+                        padding: 6px 10px !important;
+                        display: flex !important;
+                        flex-wrap: wrap !important;
+                        align-items: center !important;
+                        gap: 2px !important;
+                        position: relative !important;
+                        z-index: 20 !important;
                       }
+                      .webmail-quill-editor .ql-toolbar.ql-snow .ql-formats {
+                        margin-right: 8px !important;
+                        margin-bottom: 2px !important;
+                        display: inline-flex !important;
+                        align-items: center !important;
+                      }
+                      .webmail-quill-editor .ql-toolbar.ql-snow button,
+                      .webmail-quill-editor .ql-toolbar.ql-snow .ql-picker {
+                        border-radius: 6px !important;
+                        transition: all 0.15s ease !important;
+                      }
+                      .webmail-quill-editor .ql-toolbar.ql-snow button:hover,
+                      .webmail-quill-editor .ql-toolbar.ql-snow .ql-picker:hover {
+                        background-color: #e5e7eb !important;
+                      }
+                      .webmail-quill-editor .ql-toolbar.ql-snow button.ql-active,
+                      .webmail-quill-editor .ql-toolbar.ql-snow .ql-picker-label.ql-active {
+                        background-color: #e0e7ff !important;
+                        color: #4338ca !important;
+                      }
+
+                      /* Seletor de Família de Fonte estilo Outlook */
+                      .webmail-quill-editor .ql-snow .ql-picker.ql-font {
+                        width: 145px !important;
+                        background-color: #ffffff !important;
+                        border: 1px solid #d1d5db !important;
+                        border-radius: 6px !important;
+                        height: 28px !important;
+                      }
+                      .webmail-quill-editor .ql-snow .ql-picker.ql-font .ql-picker-label {
+                        padding: 3px 8px !important;
+                        font-size: 12px !important;
+                        font-weight: 500 !important;
+                        color: #374151 !important;
+                        display: flex !important;
+                        align-items: center !important;
+                      }
+                      .webmail-quill-editor .ql-snow .ql-picker.ql-font .ql-picker-label::before,
+                      .webmail-quill-editor .ql-snow .ql-picker.ql-font .ql-picker-item::before {
+                        content: 'Aptos (Padrão)' !important;
+                        font-family: inherit !important;
+                      }
+                      .webmail-quill-editor .ql-snow .ql-picker.ql-font .ql-picker-label[data-value="times-new-roman"]::before,
+                      .webmail-quill-editor .ql-snow .ql-picker.ql-font .ql-picker-item[data-value="times-new-roman"]::before {
+                        content: 'Times New Roman' !important;
+                        font-family: "Times New Roman", Times, Georgia, serif !important;
+                      }
+                      .webmail-quill-editor .ql-snow .ql-picker.ql-font .ql-picker-label[data-value="arial"]::before,
+                      .webmail-quill-editor .ql-snow .ql-picker.ql-font .ql-picker-item[data-value="arial"]::before {
+                        content: 'Arial' !important;
+                        font-family: Arial, Helvetica, sans-serif !important;
+                      }
+                      .webmail-quill-editor .ql-snow .ql-picker.ql-font .ql-picker-label[data-value="calibri"]::before,
+                      .webmail-quill-editor .ql-snow .ql-picker.ql-font .ql-picker-item[data-value="calibri"]::before {
+                        content: 'Calibri' !important;
+                        font-family: Calibri, Candara, Segoe, Arial, sans-serif !important;
+                      }
+                      .webmail-quill-editor .ql-snow .ql-picker.ql-font .ql-picker-label[data-value="georgia"]::before,
+                      .webmail-quill-editor .ql-snow .ql-picker.ql-font .ql-picker-item[data-value="georgia"]::before {
+                        content: 'Georgia' !important;
+                        font-family: Georgia, serif !important;
+                      }
+                      .webmail-quill-editor .ql-snow .ql-picker.ql-font .ql-picker-label[data-value="verdana"]::before,
+                      .webmail-quill-editor .ql-snow .ql-picker.ql-font .ql-picker-item[data-value="verdana"]::before {
+                        content: 'Verdana' !important;
+                        font-family: Verdana, Geneva, sans-serif !important;
+                      }
+                      .webmail-quill-editor .ql-snow .ql-picker.ql-font .ql-picker-label[data-value="tahoma"]::before,
+                      .webmail-quill-editor .ql-snow .ql-picker.ql-font .ql-picker-item[data-value="tahoma"]::before {
+                        content: 'Tahoma' !important;
+                        font-family: Tahoma, Verdana, sans-serif !important;
+                      }
+                      .webmail-quill-editor .ql-snow .ql-picker.ql-font .ql-picker-label[data-value="courier-new"]::before,
+                      .webmail-quill-editor .ql-snow .ql-picker.ql-font .ql-picker-item[data-value="courier-new"]::before {
+                        content: 'Courier New' !important;
+                        font-family: "Courier New", Courier, monospace !important;
+                      }
+
+                      /* Seletor de Tamanho de Fonte estilo Outlook */
+                      .webmail-quill-editor .ql-snow .ql-picker.ql-size {
+                        width: 68px !important;
+                        background-color: #ffffff !important;
+                        border: 1px solid #d1d5db !important;
+                        border-radius: 6px !important;
+                        height: 28px !important;
+                      }
+                      .webmail-quill-editor .ql-snow .ql-picker.ql-size .ql-picker-label {
+                        padding: 3px 6px !important;
+                        font-size: 12px !important;
+                        font-weight: 500 !important;
+                        color: #374151 !important;
+                        display: flex !important;
+                        align-items: center !important;
+                      }
+                      .webmail-quill-editor .ql-snow .ql-picker.ql-size .ql-picker-label::before,
+                      .webmail-quill-editor .ql-snow .ql-picker.ql-size .ql-picker-item::before {
+                        content: '14' !important;
+                      }
+                      .webmail-quill-editor .ql-snow .ql-picker.ql-size .ql-picker-label[data-value="10px"]::before,
+                      .webmail-quill-editor .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="10px"]::before {
+                        content: '10' !important;
+                      }
+                      .webmail-quill-editor .ql-snow .ql-picker.ql-size .ql-picker-label[data-value="12px"]::before,
+                      .webmail-quill-editor .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="12px"]::before {
+                        content: '12' !important;
+                      }
+                      .webmail-quill-editor .ql-snow .ql-picker.ql-size .ql-picker-label[data-value="14px"]::before,
+                      .webmail-quill-editor .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="14px"]::before {
+                        content: '14' !important;
+                      }
+                      .webmail-quill-editor .ql-snow .ql-picker.ql-size .ql-picker-label[data-value="16px"]::before,
+                      .webmail-quill-editor .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="16px"]::before {
+                        content: '16' !important;
+                      }
+                      .webmail-quill-editor .ql-snow .ql-picker.ql-size .ql-picker-label[data-value="18px"]::before,
+                      .webmail-quill-editor .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="18px"]::before {
+                        content: '18' !important;
+                      }
+                      .webmail-quill-editor .ql-snow .ql-picker.ql-size .ql-picker-label[data-value="24px"]::before,
+                      .webmail-quill-editor .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="24px"]::before {
+                        content: '24' !important;
+                      }
+                      .webmail-quill-editor .ql-snow .ql-picker.ql-size .ql-picker-label[data-value="32px"]::before,
+                      .webmail-quill-editor .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="32px"]::before {
+                        content: '32' !important;
+                      }
+
+                      /* Menus Suspensos / Dropdowns */
+                      .webmail-quill-editor .ql-snow .ql-picker-options {
+                        background-color: #ffffff !important;
+                        border: 1px solid #d1d5db !important;
+                        border-radius: 8px !important;
+                        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+                        padding: 6px !important;
+                        max-height: 220px !important;
+                        overflow-y: auto !important;
+                        z-index: 100 !important;
+                      }
+                      .webmail-quill-editor .ql-snow .ql-picker-item {
+                        padding: 5px 8px !important;
+                        font-size: 12px !important;
+                        border-radius: 4px !important;
+                        cursor: pointer !important;
+                        color: #374151 !important;
+                      }
+                      .webmail-quill-editor .ql-snow .ql-picker-item:hover {
+                        background-color: #f3f4f6 !important;
+                        color: #111827 !important;
+                      }
+
+                      /* Paleta de Cores de Texto e Realce */
+                      .webmail-quill-editor .ql-snow .ql-color-picker .ql-picker-options {
+                        width: 172px !important;
+                        padding: 8px !important;
+                      }
+                      .webmail-quill-editor .ql-snow .ql-color-picker .ql-picker-item {
+                        width: 18px !important;
+                        height: 18px !important;
+                        padding: 0 !important;
+                        margin: 2px !important;
+                        border-radius: 3px !important;
+                        border: 1px solid rgba(0, 0, 0, 0.12) !important;
+                        transition: transform 0.1s ease !important;
+                      }
+                      .webmail-quill-editor .ql-snow .ql-color-picker .ql-picker-item:hover {
+                        transform: scale(1.2) !important;
+                        border-color: #111827 !important;
+                      }
+
+                      /* Container e Área de Edição */
                       .webmail-quill-editor .ql-container.ql-snow {
                         background-color: #ffffff !important;
                         border-bottom-left-radius: 0.75rem !important;
@@ -5970,19 +6220,46 @@ function WebmailContent() {
                         border-color: #e5e7eb !important;
                       }
                       .webmail-quill-editor .ql-editor {
-                        color: #000000 !important;
-                        -webkit-text-fill-color: #000000 !important;
-                        caret-color: #000000 !important;
+                        color: #111827 !important;
+                        caret-color: #111827 !important;
                         background-color: #ffffff !important;
-                        font-size: 13px !important;
-                        font-family: inherit !important;
-                        line-height: 1.5 !important;
+                        font-size: 14px !important;
+                        line-height: 1.6 !important;
                         min-height: ${isMessageEditorExpanded ? 'calc(100vh - 220px)' : '200px'} !important;
                         max-height: ${isMessageEditorExpanded ? 'calc(100vh - 220px)' : '340px'} !important;
                         overflow-y: auto !important;
                         cursor: text !important;
-                        padding: 12px 14px !important;
+                        padding: 14px 16px !important;
                       }
+
+                      /* Aplicação visual imediata de fontes no editor */
+                      .webmail-quill-editor .ql-editor [style*="times-new-roman"] {
+                        font-family: "Times New Roman", Times, Georgia, serif !important;
+                      }
+                      .webmail-quill-editor .ql-editor [style*="arial"] {
+                        font-family: Arial, Helvetica, sans-serif !important;
+                      }
+                      .webmail-quill-editor .ql-editor [style*="calibri"] {
+                        font-family: Calibri, Candara, Segoe, Arial, sans-serif !important;
+                      }
+                      .webmail-quill-editor .ql-editor [style*="georgia"] {
+                        font-family: Georgia, serif !important;
+                      }
+                      .webmail-quill-editor .ql-editor [style*="verdana"] {
+                        font-family: Verdana, Geneva, sans-serif !important;
+                      }
+                      .webmail-quill-editor .ql-editor [style*="tahoma"] {
+                        font-family: Tahoma, Verdana, sans-serif !important;
+                      }
+                      .webmail-quill-editor .ql-editor [style*="courier-new"] {
+                        font-family: "Courier New", Courier, monospace !important;
+                      }
+
+                      /* Preservar cores e realce selecionados pelo usuário */
+                      .webmail-quill-editor .ql-editor span[style*="color"] {
+                        -webkit-text-fill-color: initial !important;
+                      }
+
                       .webmail-quill-editor .ql-editor img {
                         max-width: 520px !important;
                         width: auto !important;
@@ -5991,10 +6268,6 @@ function WebmailContent() {
                         border: 0 !important;
                         border-radius: 4px !important;
                         margin-top: 16px !important;
-                      }
-                      .webmail-quill-editor .ql-editor * {
-                        color: #000000 !important;
-                        -webkit-text-fill-color: #000000 !important;
                       }
                       .webmail-quill-editor .ql-editor.ql-blank::before {
                         color: #6b7280 !important;
@@ -6008,14 +6281,7 @@ function WebmailContent() {
                         value={composeBody}
                         onChange={setComposeBody}
                         placeholder="Escreva a sua mensagem aqui..."
-                        modules={{
-                          toolbar: [
-                            [{ 'header': [1, 2, 3, false] }],
-                            ['bold', 'italic', 'underline'],
-                            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                            ['clean']
-                          ]
-                        }}
+                        modules={quillModules}
                         className="text-xs text-gray-900 bg-white webmail-quill-editor"
                       />
                     )}
