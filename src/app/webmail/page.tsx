@@ -2975,7 +2975,7 @@ function WebmailContent() {
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div className="flex items-center space-x-2 shrink-0">
-            <BrandLogo />
+            <BrandLogo showIcon={false} />
             <span className="hidden sm:inline-block text-neutral-900 font-bold text-xs tracking-wider bg-neutral-100 px-2.5 py-0.5 rounded-full border border-neutral-200">inLook</span>
           </div>
         </div>

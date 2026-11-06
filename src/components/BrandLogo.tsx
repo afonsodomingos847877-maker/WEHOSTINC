@@ -12,6 +12,7 @@ interface BrandLogoProps {
   logoHeightClass?: string;
   className?: string;
   dark?: boolean;
+  showIcon?: boolean;
 }
 
 export default function BrandLogo({
@@ -21,23 +22,26 @@ export default function BrandLogo({
   iconColorClass = 'text-primary-600 dark:text-primary-400',
   logoHeightClass = 'h-5 sm:h-6 md:h-7 lg:h-8',
   className = '',
-  dark = false
+  dark = false,
+  showIcon = true
 }: BrandLogoProps) {
   try {
     const isDarkStyle = dark;
     const logoContent = (
       <div className={`inline-flex items-center space-x-1 sm:space-x-2 md:space-x-2.5 group cursor-pointer ${className}`}>
-        <div
-          className={`p-1 sm:p-1.5 md:p-2 rounded-lg sm:rounded-xl transition shrink-0 ${
-            isDarkStyle ? 'bg-primary-600/20 border border-primary-500/40' : iconBgClass
-          }`}
-        >
-          <Server
-            className={`h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 lg:h-6 lg:w-6 ${
-              isDarkStyle ? 'text-primary-400' : iconColorClass
+        {showIcon && (
+          <div
+            className={`p-1 sm:p-1.5 md:p-2 rounded-lg sm:rounded-xl transition shrink-0 ${
+              isDarkStyle ? 'bg-primary-600/20 border border-primary-500/40' : iconBgClass
             }`}
-          />
-        </div>
+          >
+            <Server
+              className={`h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 lg:h-6 lg:w-6 ${
+                isDarkStyle ? 'text-primary-400' : iconColorClass
+              }`}
+            />
+          </div>
+        )}
         <img
           src="/logo.png"
           alt="WEHOSTHERE"
