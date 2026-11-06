@@ -373,6 +373,33 @@ function getSnippetText(text?: string, body?: string): string {
     .slice(0, 110);
 }
 
+// Reescreve as imagens do corpo do e-mail para que sejam sempre visíveis:
+// - http/https externas passam pelo proxy do servidor (evita conteúdo misto, CSP e anti-hotlink)
+// - referências cid: são resolvidas a partir dos anexos inline
+function rewriteEmailImages(html: string, attachments?: { name?: string; url?: string; type?: string }[]): string {
+  if (!html || !/<img/i.test(html)) return html;
+  return html.replace(/(<img\b[^>]*?\bsrc\s*=\s*)(["'])(.*?)\2/gi, (full, prefix, quote, rawSrc) => {
+    const src = decodeHtmlEntities(String(rawSrc).trim());
+    if (!src || src.startsWith('data:') || src.startsWith('blob:') || src.startsWith('/api/')) return full;
+
+    if (/^cid:/i.test(src)) {
+      const cid = src.slice(4).replace(/^<|>$/g, '');
+      const cidBase = cid.split('@')[0].toLowerCase();
+      const match = attachments?.find(att => {
+        const n = (att.name || '').toLowerCase();
+        return !!n && (n === cidBase || cid.toLowerCase().includes(n) || n.includes(cidBase));
+      });
+      return match?.url ? `${prefix}${quote}${match.url}${quote}` : full;
+    }
+
+    const absolute = src.startsWith('//') ? `https:${src}` : src;
+    if (/^https?:\/\//i.test(absolute)) {
+      return `${prefix}${quote}/api/webmail/image-proxy?url=${encodeURIComponent(absolute)}${quote}`;
+    }
+    return full;
+  });
+}
+
 function WebmailContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -5150,9 +5177,22 @@ function WebmailContent() {
                     cleanBody = decodeHtmlEntities(cleanBody);
                   }
                   const isHtml = /<[a-z][\s\S]*>/i.test(cleanBody);
+                  if (isHtml) {
+                    cleanBody = rewriteEmailImages(cleanBody, selectedMessage.attachments);
+                  }
                   return isHtml ? (
                     <div 
-                      className="prose prose-sm max-w-none text-neutral-900 font-sans break-words overflow-x-auto leading-relaxed [&_p]:my-1.5 [&_div]:my-1 [&_*]:text-neutral-900"
+                      className="prose prose-sm max-w-none text-neutral-900 font-sans break-words overflow-x-auto leading-relaxed [&_p]:my-1.5 [&_div]:my-1 [&_*]:text-neutral-900 [&_img]:max-w-full [&_img]:h-auto [&_img]:inline-block"
+                      ref={(el) => {
+                        // Ocultar imagens que mesmo assim não carregam (evita o ícone de imagem quebrada)
+                        if (!el) return;
+                        el.querySelectorAll('img').forEach((img) => {
+                          img.onerror = () => { img.style.display = 'none'; };
+                          if (img.complete && img.naturalWidth === 0 && img.getAttribute('src')) {
+                            img.style.display = 'none';
+                          }
+                        });
+                      }}
                       dangerouslySetInnerHTML={{ __html: cleanBody }}
                     />
                   ) : (
