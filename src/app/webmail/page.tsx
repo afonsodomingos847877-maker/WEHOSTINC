@@ -626,6 +626,30 @@ function WebmailContent() {
     };
   }, [showCompose]);
 
+  // Auto-focus editor at top when compose modal opens
+  useEffect(() => {
+    if (!showCompose) return;
+    const timer = setTimeout(() => {
+      if (typeof document !== 'undefined') {
+        const ql = document.querySelector('.webmail-quill-editor .ql-editor') as HTMLElement;
+        if (ql) {
+          ql.focus();
+          try {
+            const sel = window.getSelection();
+            if (sel && ql.firstChild) {
+              const range = document.createRange();
+              range.setStart(ql.firstChild, 0);
+              range.collapse(true);
+              sel.removeAllRanges();
+              sel.addRange(range);
+            }
+          } catch {}
+        }
+      }
+    }, 180);
+    return () => clearTimeout(timer);
+  }, [showCompose]);
+
   useEffect(() => {
     if (!showCompose) return;
     
@@ -902,10 +926,10 @@ function WebmailContent() {
   const getSignatureHtml = useCallback(() => {
     if (!signatureForm.isEnabled) return '';
     if (signatureForm.signatureType === 'image' && signatureForm.signatureImage) {
-      return `<p><br></p><p><img src="${signatureForm.signatureImage}" alt="Assinatura" style="max-width: 500px; width: 100%; height: auto; display: block; border-radius: 4px;" /></p>`;
+      return `<p><br></p><p><br></p><p><img src="${signatureForm.signatureImage}" alt="Assinatura" style="max-width: 420px; max-height: 120px; width: auto; height: auto; display: block; border-radius: 4px; margin-top: 14px;" /></p>`;
     }
     if (signatureForm.signatureImage && !signatureForm.fullName) {
-      return `<p><br></p><p><img src="${signatureForm.signatureImage}" alt="Assinatura" style="max-width: 500px; width: 100%; height: auto; display: block; border-radius: 4px;" /></p>`;
+      return `<p><br></p><p><br></p><p><img src="${signatureForm.signatureImage}" alt="Assinatura" style="max-width: 420px; max-height: 120px; width: auto; height: auto; display: block; border-radius: 4px; margin-top: 14px;" /></p>`;
     }
     if (signatureForm.fullName || signatureForm.companyName) {
       return `<p><br></p><div style="font-family: Arial, sans-serif; font-size: 13px; color: #222; border-left: 3px solid #7c3aed; padding-left: 10px; margin-top: 15px;">
@@ -1301,7 +1325,7 @@ function WebmailContent() {
     }
     const sig = getSignatureHtml();
     if (sig && signatureForm.autoInsert && (!composeBody || composeBody === '<p><br></p>' || composeBody === '')) {
-      setComposeBody('<p><br></p>' + sig);
+      setComposeBody('<p><br></p><p><br></p><p><br></p>' + sig);
     }
     setShowCompose(true);
   };
@@ -2265,7 +2289,7 @@ function WebmailContent() {
     if (!isBlankBody) return;
     const sig = getSignatureHtml();
     if (sig && signatureForm.autoInsert && signatureForm.isEnabled) {
-      setComposeBody('<p><br></p>' + sig);
+      setComposeBody('<p><br></p><p><br></p><p><br></p>' + sig);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showCompose, signatureForm.signatureImage, signatureForm.fullName]);
@@ -2776,9 +2800,9 @@ function WebmailContent() {
     // Gerar HTML da assinatura para inserção imediata no campo de mensagem
     let sigHtml = '';
     if (signatureForm.signatureType === 'image' && signatureForm.signatureImage) {
-      sigHtml = `<p><br></p><p><img src="${signatureForm.signatureImage}" alt="Assinatura" style="max-width: 500px; width: 100%; height: auto; display: block; border-radius: 4px;" /></p>`;
+      sigHtml = `<p><br></p><p><br></p><p><img src="${signatureForm.signatureImage}" alt="Assinatura" style="max-width: 420px; max-height: 120px; width: auto; height: auto; display: block; border-radius: 4px; margin-top: 14px;" /></p>`;
     } else if (signatureForm.signatureImage && !signatureForm.fullName) {
-      sigHtml = `<p><br></p><p><img src="${signatureForm.signatureImage}" alt="Assinatura" style="max-width: 500px; width: 100%; height: auto; display: block; border-radius: 4px;" /></p>`;
+      sigHtml = `<p><br></p><p><br></p><p><img src="${signatureForm.signatureImage}" alt="Assinatura" style="max-width: 420px; max-height: 120px; width: auto; height: auto; display: block; border-radius: 4px; margin-top: 14px;" /></p>`;
     } else if (signatureForm.fullName || signatureForm.companyName) {
       sigHtml = `<p><br></p><div style="font-family: Arial, sans-serif; font-size: 13px; color: #222; border-left: 3px solid #7c3aed; padding-left: 10px; margin-top: 15px;">
         <strong style="color: #111; font-size: 14px;">${signatureForm.fullName || ''}</strong><br/>
@@ -3457,11 +3481,11 @@ function WebmailContent() {
       {/* Main Layout Grid */}
       <div className="flex-1 min-h-0 flex overflow-hidden">
         {/* Desktop Sidebar Nav */}
-        <aside className={`hidden md:flex bg-white text-gray-600 flex-col p-3 border-r border-gray-200 space-y-4 shrink-0 transition-all duration-300 ${isSidebarCollapsed ? 'w-16' : 'w-56'}`}>
+        <aside className={`hidden md:flex bg-white text-gray-600 flex-col p-3 border-r border-gray-200 space-y-2 shrink-0 transition-all duration-300 ${isSidebarCollapsed ? 'w-16' : 'w-56'}`}>
           <button
             type="button"
             onClick={handleOpenCompose}
-            className={`w-full py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md transition-all duration-200 flex items-center justify-center space-x-2 cursor-pointer border border-primary-600 ${isSidebarCollapsed ? 'px-2' : ''}`}
+            className={`w-full py-2 bg-primary-600 hover:bg-primary-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md transition-all duration-200 flex items-center justify-center space-x-2 cursor-pointer border border-primary-600 ${isSidebarCollapsed ? 'px-2' : ''}`}
           >
             <Edit3 className="h-4 w-4 shrink-0" />
             {!isSidebarCollapsed && <span>Escrever E-mail</span>}
@@ -3471,7 +3495,7 @@ function WebmailContent() {
           <button
             type="button"
             onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-            className="w-full flex items-center justify-center px-2 py-2 bg-gray-100 hover:bg-gray-200 rounded-xl transition cursor-pointer"
+            className="w-full flex items-center justify-center px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-xl transition cursor-pointer"
             title={isSidebarCollapsed ? "Expandir Sidebar" : "Recolher Sidebar"}
           >
             {isSidebarCollapsed ? <ChevronRight className="h-4 w-4 text-gray-600" /> : <ChevronRight className="h-4 w-4 text-gray-600 rotate-180" />}
@@ -3480,7 +3504,7 @@ function WebmailContent() {
           <nav className={`space-y-1 text-xs font-semibold ${isSidebarCollapsed ? 'hidden' : ''}`}>
             <button
               onClick={() => { soundEffects.playFolderSwitchSound(); setShowAnalyticsDashboard(false); setCurrentFolder('inbox'); }}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 cursor-pointer border ${
+              className={`w-full flex items-center justify-between px-3 py-1.5 rounded-xl transition-all duration-200 cursor-pointer border ${
                 !showAnalyticsDashboard && currentFolder === 'inbox' 
                   ? 'bg-neutral-900 text-white border-neutral-900 font-bold shadow-xs' 
                   : 'hover:bg-neutral-100 text-neutral-600 hover:text-neutral-900 border-transparent'
@@ -3501,7 +3525,7 @@ function WebmailContent() {
 
             <button
               onClick={() => { soundEffects.playFolderSwitchSound(); setShowAnalyticsDashboard(false); setCurrentFolder('starred'); }}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 cursor-pointer border ${
+              className={`w-full flex items-center justify-between px-3 py-1.5 rounded-xl transition-all duration-200 cursor-pointer border ${
                 !showAnalyticsDashboard && currentFolder === 'starred' 
                   ? 'bg-neutral-900 text-white border-neutral-900 font-bold shadow-xs' 
                   : 'hover:bg-neutral-100 text-neutral-600 hover:text-neutral-900 border-transparent'
@@ -3522,7 +3546,7 @@ function WebmailContent() {
 
             <button
               onClick={() => { soundEffects.playFolderSwitchSound(); setShowAnalyticsDashboard(false); setCurrentFolder('sent'); }}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 cursor-pointer border ${
+              className={`w-full flex items-center justify-between px-3 py-1.5 rounded-xl transition-all duration-200 cursor-pointer border ${
                 !showAnalyticsDashboard && currentFolder === 'sent' 
                   ? 'bg-neutral-900 text-white border-neutral-900 font-bold shadow-xs' 
                   : 'hover:bg-neutral-100 text-neutral-600 hover:text-neutral-900 border-transparent'
@@ -3543,7 +3567,7 @@ function WebmailContent() {
 
             <button
               onClick={() => { soundEffects.playFolderSwitchSound(); setShowAnalyticsDashboard(false); setCurrentFolder('scheduled'); }}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 cursor-pointer border ${
+              className={`w-full flex items-center justify-between px-3 py-1.5 rounded-xl transition-all duration-200 cursor-pointer border ${
                 !showAnalyticsDashboard && currentFolder === 'scheduled' 
                   ? 'bg-neutral-900 text-white border-neutral-900 font-bold shadow-xs' 
                   : 'hover:bg-neutral-100 text-neutral-600 hover:text-neutral-900 border-transparent'
@@ -3564,7 +3588,7 @@ function WebmailContent() {
 
             <button
               onClick={() => { soundEffects.playFolderSwitchSound(); setShowAnalyticsDashboard(false); setCurrentFolder('trash'); }}
-              className={`w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl transition-all duration-200 cursor-pointer border ${
+              className={`w-full flex items-center space-x-2.5 px-3 py-1.5 rounded-xl transition-all duration-200 cursor-pointer border ${
                 !showAnalyticsDashboard && currentFolder === 'trash' 
                   ? 'bg-neutral-900 text-white border-neutral-900 font-bold shadow-xs' 
                   : 'hover:bg-neutral-100 text-neutral-600 hover:text-neutral-900 border-transparent'
@@ -3576,7 +3600,7 @@ function WebmailContent() {
 
             <button
               onClick={() => { soundEffects.playFolderSwitchSound(); setShowAnalyticsDashboard(false); setCurrentFolder('drafts'); }}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 cursor-pointer border ${
+              className={`w-full flex items-center justify-between px-3 py-1.5 rounded-xl transition-all duration-200 cursor-pointer border ${
                 !showAnalyticsDashboard && currentFolder === 'drafts' 
                   ? 'bg-neutral-900 text-white border-neutral-900 font-bold shadow-xs' 
                   : 'hover:bg-neutral-100 text-neutral-600 hover:text-neutral-900 border-transparent'
@@ -3599,7 +3623,7 @@ function WebmailContent() {
             <button
               type="button"
               onClick={() => { soundEffects.playFolderSwitchSound(); setShowAnalyticsDashboard(!showAnalyticsDashboard); }}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 cursor-pointer border mt-2 ${
+              className={`w-full flex items-center justify-between px-3 py-1.5 rounded-xl transition-all duration-200 cursor-pointer border mt-1 ${
                 showAnalyticsDashboard
                   ? 'bg-neutral-900 text-white border-neutral-900 font-bold shadow-xs'
                   : 'bg-indigo-50/80 hover:bg-indigo-100 text-indigo-950 border-indigo-200 font-bold'
@@ -3621,7 +3645,7 @@ function WebmailContent() {
             <button
               type="button"
               onClick={() => { soundEffects.playFolderSwitchSound(); setShowInternalChat(!showInternalChat); }}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 cursor-pointer border mt-2 ${
+              className={`w-full flex items-center justify-between px-3 py-1.5 rounded-xl transition-all duration-200 cursor-pointer border mt-1 ${
                 showInternalChat
                   ? 'bg-emerald-600 text-white border-emerald-600 font-bold shadow-xs'
                   : 'bg-emerald-50/80 hover:bg-emerald-100 text-emerald-950 border-emerald-200 font-bold'
@@ -3653,7 +3677,7 @@ function WebmailContent() {
                 soundEffects.playFolderSwitchSound();
                 setShowExternalAccountsModal(true);
               }}
-              className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 cursor-pointer border mt-2 bg-neutral-50/80 hover:bg-neutral-100 text-neutral-800 border-neutral-200 font-bold"
+              className="w-full flex items-center justify-between px-3 py-1.5 rounded-xl transition-all duration-200 cursor-pointer border mt-1 bg-neutral-50/80 hover:bg-neutral-100 text-neutral-800 border-neutral-200 font-bold"
               title="Conectar e gerir contas de e-mail de outros provedores (IMAP/SMTP)"
             >
               <div className="flex items-center space-x-2.5 truncate">
@@ -3693,7 +3717,7 @@ function WebmailContent() {
             )}
           </nav>
 
-          <div className={`mt-auto pt-4 border-t border-neutral-200 text-[11px] text-neutral-500 space-y-2 ${isSidebarCollapsed ? 'hidden' : ''}`}>
+          <div className={`mt-auto pt-2 border-t border-neutral-200 text-[11px] text-neutral-500 space-y-2 ${isSidebarCollapsed ? 'hidden' : ''}`}>
             <button
               type="button"
               onClick={() => setIsStorageCollapsed(!isStorageCollapsed)}
@@ -5198,7 +5222,7 @@ function WebmailContent() {
       {/* MODAL: Escrever E-mail (Compose) */}
       {showCompose && (
         <div className="fixed inset-0 z-[9999] bg-black/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-hidden">
-          <div className={`bg-white rounded-3xl shadow-2xl p-4 sm:p-5 ${isComposeExpanded ? 'sm:max-w-4xl' : 'sm:max-w-2xl'} w-full border border-gray-100 animate-in zoom-in-95 duration-200 ${showTemplateSelector ? 'max-h-[90vh] overflow-y-auto' : 'overflow-hidden'}`}>
+          <div className={`bg-white rounded-3xl shadow-2xl p-4 sm:p-5 ${isComposeExpanded ? 'sm:max-w-4xl' : 'sm:max-w-2xl'} w-full border border-gray-100 animate-in zoom-in-95 duration-200 max-h-[92vh] overflow-y-auto`}>
             {isAccountPending ? (
               <div className="text-center py-6 space-y-4">
                 <div className="w-14 h-14 bg-amber-100 rounded-full flex items-center justify-center mx-auto text-amber-600 border border-amber-200 shadow-2xs">
@@ -5754,7 +5778,16 @@ function WebmailContent() {
                     </div>
                   )}
 
-                  <div className={`bg-white border border-gray-200 rounded-2xl overflow-hidden transition-all duration-300 text-gray-900 ${isMessageEditorExpanded ? 'fixed inset-4 z-50 rounded-3xl shadow-2xl' : ''}`}>
+                  <div 
+                    onClick={() => {
+                      if (typeof document !== 'undefined') {
+                        const ql = document.querySelector('.webmail-quill-editor .ql-editor') as HTMLElement;
+                        if (ql && document.activeElement !== ql) {
+                          ql.focus();
+                        }
+                      }
+                    }}
+                    className={`bg-white border border-gray-200 rounded-2xl overflow-hidden transition-all duration-300 text-gray-900 cursor-text ${isMessageEditorExpanded ? 'fixed inset-4 z-50 rounded-3xl shadow-2xl' : ''}`}>
                     <style>{`
                       .webmail-quill-editor .ql-toolbar.ql-snow {
                         background-color: #ffffff !important;
@@ -5777,9 +5810,11 @@ function WebmailContent() {
                         font-size: 13px !important;
                         font-family: inherit !important;
                         line-height: 1.5 !important;
-                        min-height: ${isMessageEditorExpanded ? 'calc(100vh - 220px)' : '95px'} !important;
-                        max-height: ${isMessageEditorExpanded ? 'calc(100vh - 220px)' : '115px'} !important;
-                        padding: 8px 12px !important;
+                        min-height: ${isMessageEditorExpanded ? 'calc(100vh - 220px)' : '160px'} !important;
+                        max-height: ${isMessageEditorExpanded ? 'calc(100vh - 220px)' : '280px'} !important;
+                        overflow-y: auto !important;
+                        cursor: text !important;
+                        padding: 12px 14px !important;
                       }
                       .webmail-quill-editor .ql-editor * {
                         color: #000000 !important;

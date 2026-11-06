@@ -17,7 +17,7 @@ export default function PageLoader({ text, message }: PageLoaderProps) {
           {/* Logo no Centro em Fundo Branco com Aura de Processamento */}
           <div className="relative flex items-center justify-center p-3 sm:p-4 bg-white rounded-2xl sm:rounded-3xl shadow-md border border-gray-100">
             <div className="absolute inset-0 bg-primary-500/10 rounded-2xl sm:rounded-3xl animate-ping opacity-30 pointer-events-none" />
-            <BrandLogo href="" logoHeightClass="h-8 sm:h-10 md:h-12" />
+            <BrandLogo href="" logoHeightClass="h-8 sm:h-10 md:h-12" showIcon={false} />
           </div>
 
           {/* Indicador de Processamento Animado */}
