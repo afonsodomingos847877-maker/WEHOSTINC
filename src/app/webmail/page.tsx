@@ -44,40 +44,70 @@ const templateCategoryIcons: Record<string, React.ElementType> = {
   'Tabelas': FileText,
 };
 
+// Configuração dos formatos customizados do Quill (fontes e tamanhos estilo Outlook)
+function setupQuillFormats(Quill: any) {
+  if (!Quill) return;
+  try {
+    const fonts = [
+      'arial',
+      'calibri',
+      'times-new-roman',
+      'georgia',
+      'verdana',
+      'tahoma',
+      'courier-new'
+    ];
+    const sizes = ['10px', '12px', '14px', '16px', '18px', '24px', '32px'];
+
+    // 1. Whitelist em formats/font (ClassAttributor utilizado pelo Snow theme)
+    const FontClass = Quill.import('formats/font');
+    if (FontClass) {
+      FontClass.whitelist = fonts;
+      Quill.register(FontClass, true);
+    }
+
+    // 2. Whitelist em attributors/style/font (StyleAttributor)
+    const FontStyle = Quill.import('attributors/style/font');
+    if (FontStyle) {
+      FontStyle.whitelist = fonts;
+      Quill.register(FontStyle, true);
+    }
+
+    // 3. Whitelist em formats/size (ClassAttributor utilizado pelo Snow theme)
+    const SizeClass = Quill.import('formats/size');
+    if (SizeClass) {
+      SizeClass.whitelist = sizes;
+      Quill.register(SizeClass, true);
+    }
+
+    // 4. Whitelist em attributors/style/size (StyleAttributor)
+    const SizeStyle = Quill.import('attributors/style/size');
+    if (SizeStyle) {
+      SizeStyle.whitelist = sizes;
+      Quill.register(SizeStyle, true);
+    }
+
+    // 5. Alinhamentos
+    const AlignClass = Quill.import('formats/align');
+    if (AlignClass) {
+      Quill.register(AlignClass, true);
+    }
+    const AlignStyle = Quill.import('attributors/style/align');
+    if (AlignStyle) {
+      Quill.register(AlignStyle, true);
+    }
+  } catch (err) {
+    console.warn('Quill setup formats:', err);
+  }
+}
+
 // Dynamic import for React Quill to avoid SSR issues and register Outlook-style font families and sizes
 const ReactQuill = dynamic(
   async () => {
     const rq = await import('react-quill');
     const Quill = (rq as any).Quill;
     if (Quill) {
-      try {
-        const Font = Quill.import('attributors/style/font');
-        if (Font) {
-          Font.whitelist = [
-            'arial',
-            'calibri',
-            'georgia',
-            'times-new-roman',
-            'courier-new',
-            'verdana',
-            'tahoma'
-          ];
-          Quill.register({ 'formats/font': Font }, true);
-        }
-
-        const Size = Quill.import('attributors/style/size');
-        if (Size) {
-          Size.whitelist = ['10px', '12px', '14px', '16px', '18px', '24px', '32px'];
-          Quill.register({ 'formats/size': Size }, true);
-        }
-
-        const Align = Quill.import('attributors/style/align');
-        if (Align) {
-          Quill.register({ 'formats/align': Align }, true);
-        }
-      } catch (err) {
-        console.warn('Quill setup formats:', err);
-      }
+      setupQuillFormats(Quill);
     }
     return rq.default;
   },
@@ -88,6 +118,17 @@ import 'react-quill/dist/quill.snow.css';
 function prepareEmailBodyForSending(html: string): string {
   if (!html) return html;
   return html
+    // Converter classes de fonte em estilos inline para clientes de e-mail (Gmail, Outlook, Apple Mail, etc.)
+    .replace(/class="([^"]*)ql-font-times-new-roman([^"]*)"/gi, 'class="$1$2" style="font-family: \'Times New Roman\', Times, Georgia, serif;"')
+    .replace(/class="([^"]*)ql-font-arial([^"]*)"/gi, 'class="$1$2" style="font-family: Arial, Helvetica, sans-serif;"')
+    .replace(/class="([^"]*)ql-font-calibri([^"]*)"/gi, 'class="$1$2" style="font-family: Calibri, Candara, Segoe, Arial, sans-serif;"')
+    .replace(/class="([^"]*)ql-font-georgia([^"]*)"/gi, 'class="$1$2" style="font-family: Georgia, serif;"')
+    .replace(/class="([^"]*)ql-font-verdana([^"]*)"/gi, 'class="$1$2" style="font-family: Verdana, Geneva, sans-serif;"')
+    .replace(/class="([^"]*)ql-font-tahoma([^"]*)"/gi, 'class="$1$2" style="font-family: Tahoma, Verdana, sans-serif;"')
+    .replace(/class="([^"]*)ql-font-courier-new([^"]*)"/gi, 'class="$1$2" style="font-family: \'Courier New\', Courier, monospace;"')
+    .replace(/class="([^"]*)ql-font-serif([^"]*)"/gi, 'class="$1$2" style="font-family: \'Times New Roman\', Times, Georgia, serif;"')
+    .replace(/class="([^"]*)ql-font-monospace([^"]*)"/gi, 'class="$1$2" style="font-family: \'Courier New\', Courier, monospace;"')
+    // Substituições de estilo inline
     .replace(/font-family:\s*times-new-roman/gi, 'font-family: "Times New Roman", Times, Georgia, serif')
     .replace(/font-family:\s*courier-new/gi, 'font-family: "Courier New", Courier, monospace')
     .replace(/font-family:\s*arial/gi, 'font-family: Arial, Helvetica, sans-serif')
@@ -95,14 +136,21 @@ function prepareEmailBodyForSending(html: string): string {
     .replace(/font-family:\s*georgia/gi, 'font-family: Georgia, serif')
     .replace(/font-family:\s*verdana/gi, 'font-family: Verdana, Geneva, sans-serif')
     .replace(/font-family:\s*tahoma/gi, 'font-family: Tahoma, Verdana, sans-serif')
-    .replace(/class="ql-font-serif"/gi, 'style="font-family: \'Times New Roman\', Times, Georgia, serif;"')
-    .replace(/class="ql-font-monospace"/gi, 'style="font-family: \'Courier New\', Courier, monospace;"')
-    .replace(/class="ql-size-small"/gi, 'style="font-size: 11px;"')
-    .replace(/class="ql-size-large"/gi, 'style="font-size: 18px;"')
-    .replace(/class="ql-size-huge"/gi, 'style="font-size: 24px;"')
-    .replace(/class="ql-align-center"/gi, 'style="text-align: center;"')
-    .replace(/class="ql-align-right"/gi, 'style="text-align: right;"')
-    .replace(/class="ql-align-justify"/gi, 'style="text-align: justify;"');
+    // Tamanhos
+    .replace(/class="([^"]*)ql-size-10px([^"]*)"/gi, 'class="$1$2" style="font-size: 10px;"')
+    .replace(/class="([^"]*)ql-size-12px([^"]*)"/gi, 'class="$1$2" style="font-size: 12px;"')
+    .replace(/class="([^"]*)ql-size-14px([^"]*)"/gi, 'class="$1$2" style="font-size: 14px;"')
+    .replace(/class="([^"]*)ql-size-16px([^"]*)"/gi, 'class="$1$2" style="font-size: 16px;"')
+    .replace(/class="([^"]*)ql-size-18px([^"]*)"/gi, 'class="$1$2" style="font-size: 18px;"')
+    .replace(/class="([^"]*)ql-size-24px([^"]*)"/gi, 'class="$1$2" style="font-size: 24px;"')
+    .replace(/class="([^"]*)ql-size-32px([^"]*)"/gi, 'class="$1$2" style="font-size: 32px;"')
+    .replace(/class="([^"]*)ql-size-small([^"]*)"/gi, 'class="$1$2" style="font-size: 11px;"')
+    .replace(/class="([^"]*)ql-size-large([^"]*)"/gi, 'class="$1$2" style="font-size: 18px;"')
+    .replace(/class="([^"]*)ql-size-huge([^"]*)"/gi, 'class="$1$2" style="font-size: 24px;"')
+    // Alinhamentos
+    .replace(/class="([^"]*)ql-align-center([^"]*)"/gi, 'class="$1$2" style="text-align: center;"')
+    .replace(/class="([^"]*)ql-align-right([^"]*)"/gi, 'class="$1$2" style="text-align: right;"')
+    .replace(/class="([^"]*)ql-align-justify([^"]*)"/gi, 'class="$1$2" style="text-align: justify;"');
 }
 
 function decodeHtmlEntities(str: string): string {
@@ -483,7 +531,7 @@ function WebmailContent() {
   const quillModules = useMemo(
     () => ({
       toolbar: [
-        [{ font: ['', 'arial', 'calibri', 'times-new-roman', 'georgia', 'verdana', 'tahoma', 'courier-new'] }],
+        [{ font: [false, 'arial', 'calibri', 'times-new-roman', 'georgia', 'verdana', 'tahoma', 'courier-new'] }],
         [{ size: ['10px', '12px', false, '16px', '18px', '24px', '32px'] }],
         ['bold', 'italic', 'underline', 'strike'],
         [{ color: [] }, { background: [] }],
@@ -495,6 +543,18 @@ function WebmailContent() {
     }),
     []
   );
+
+  // Garantir que os formatos customizados do Quill (fontes e tamanhos estilo Outlook) estão registrados no browser
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      import('react-quill').then((rq) => {
+        const Quill = (rq as any).Quill;
+        if (Quill) {
+          setupQuillFormats(Quill);
+        }
+      });
+    }
+  }, []);
 
   // Show CC/BCC fields state
   const [showCcBcc, setShowCcBcc] = useState(false);
@@ -6232,32 +6292,69 @@ function WebmailContent() {
                         padding: 14px 16px !important;
                       }
 
-                      /* Aplicação visual imediata de fontes no editor */
-                      .webmail-quill-editor .ql-editor [style*="times-new-roman"] {
+                      /* Aplicação visual imediata de fontes no editor (classes e estilos inline) */
+                      .webmail-quill-editor .ql-editor .ql-font-times-new-roman,
+                      .webmail-quill-editor .ql-editor [style*="times-new-roman"],
+                      .webmail-quill-editor .ql-editor .ql-font-serif,
+                      .webmail-quill-editor .ql-editor [style*="Times New Roman"],
+                      .webmail-quill-editor .ql-editor [style*="Times"] {
                         font-family: "Times New Roman", Times, Georgia, serif !important;
                       }
-                      .webmail-quill-editor .ql-editor [style*="arial"] {
+                      .webmail-quill-editor .ql-editor .ql-font-arial,
+                      .webmail-quill-editor .ql-editor [style*="arial"],
+                      .webmail-quill-editor .ql-editor [style*="Arial"] {
                         font-family: Arial, Helvetica, sans-serif !important;
                       }
-                      .webmail-quill-editor .ql-editor [style*="calibri"] {
+                      .webmail-quill-editor .ql-editor .ql-font-calibri,
+                      .webmail-quill-editor .ql-editor [style*="calibri"],
+                      .webmail-quill-editor .ql-editor [style*="Calibri"] {
                         font-family: Calibri, Candara, Segoe, Arial, sans-serif !important;
                       }
-                      .webmail-quill-editor .ql-editor [style*="georgia"] {
+                      .webmail-quill-editor .ql-editor .ql-font-georgia,
+                      .webmail-quill-editor .ql-editor [style*="georgia"],
+                      .webmail-quill-editor .ql-editor [style*="Georgia"] {
                         font-family: Georgia, serif !important;
                       }
-                      .webmail-quill-editor .ql-editor [style*="verdana"] {
+                      .webmail-quill-editor .ql-editor .ql-font-verdana,
+                      .webmail-quill-editor .ql-editor [style*="verdana"],
+                      .webmail-quill-editor .ql-editor [style*="Verdana"] {
                         font-family: Verdana, Geneva, sans-serif !important;
                       }
-                      .webmail-quill-editor .ql-editor [style*="tahoma"] {
+                      .webmail-quill-editor .ql-editor .ql-font-tahoma,
+                      .webmail-quill-editor .ql-editor [style*="tahoma"],
+                      .webmail-quill-editor .ql-editor [style*="Tahoma"] {
                         font-family: Tahoma, Verdana, sans-serif !important;
                       }
-                      .webmail-quill-editor .ql-editor [style*="courier-new"] {
+                      .webmail-quill-editor .ql-editor .ql-font-courier-new,
+                      .webmail-quill-editor .ql-editor [style*="courier-new"],
+                      .webmail-quill-editor .ql-editor .ql-font-monospace,
+                      .webmail-quill-editor .ql-editor [style*="Courier New"],
+                      .webmail-quill-editor .ql-editor [style*="Courier"] {
                         font-family: "Courier New", Courier, monospace !important;
                       }
 
+                      /* Aplicação de tamanhos de fonte no editor */
+                      .webmail-quill-editor .ql-editor .ql-size-10px,
+                      .webmail-quill-editor .ql-editor [style*="font-size: 10px"] { font-size: 10px !important; }
+                      .webmail-quill-editor .ql-editor .ql-size-12px,
+                      .webmail-quill-editor .ql-editor [style*="font-size: 12px"] { font-size: 12px !important; }
+                      .webmail-quill-editor .ql-editor .ql-size-14px,
+                      .webmail-quill-editor .ql-editor [style*="font-size: 14px"] { font-size: 14px !important; }
+                      .webmail-quill-editor .ql-editor .ql-size-16px,
+                      .webmail-quill-editor .ql-editor [style*="font-size: 16px"] { font-size: 16px !important; }
+                      .webmail-quill-editor .ql-editor .ql-size-18px,
+                      .webmail-quill-editor .ql-editor [style*="font-size: 18px"] { font-size: 18px !important; }
+                      .webmail-quill-editor .ql-editor .ql-size-24px,
+                      .webmail-quill-editor .ql-editor [style*="font-size: 24px"] { font-size: 24px !important; }
+                      .webmail-quill-editor .ql-editor .ql-size-32px,
+                      .webmail-quill-editor .ql-editor [style*="font-size: 32px"] { font-size: 32px !important; }
+
                       /* Preservar cores e realce selecionados pelo usuário */
-                      .webmail-quill-editor .ql-editor span[style*="color"] {
-                        -webkit-text-fill-color: initial !important;
+                      .webmail-quill-editor .ql-editor [style*="color"] {
+                        -webkit-text-fill-color: currentColor !important;
+                      }
+                      .webmail-quill-editor .ql-editor [style*="background-color"] {
+                        /* Realce ativo */
                       }
 
                       .webmail-quill-editor .ql-editor img {

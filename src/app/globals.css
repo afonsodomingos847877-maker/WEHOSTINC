@@ -266,17 +266,16 @@ select optgroup {
 }
 
 .ql-editor {
-  color: #000000 !important;
-  -webkit-text-fill-color: #000000 !important;
-  caret-color: #000000 !important;
+  color: #111827 !important;
+  caret-color: #111827 !important;
   background-color: #ffffff !important;
   font-size: 0.875rem !important;
   line-height: 1.6 !important;
 }
 
-.ql-editor * {
-  color: #000000 !important;
-  -webkit-text-fill-color: #000000 !important;
+/* Permitir que cores e realces selecionados pelo utilizador no Quill funcionem */
+.ql-editor [style*="color"] {
+  -webkit-text-fill-color: currentColor !important;
 }
 
 .ql-editor.ql-blank::before {
