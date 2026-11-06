@@ -520,6 +520,11 @@ export default function AdminAiTopBar({ isGlobalRoot = false }: AdminAiTopBarPro
     );
   };
 
+  // 🔹 No Webmail o AI Copilot não deve aparecer
+  if (pathname.startsWith('/webmail')) {
+    return null;
+  }
+
   // 🔹 MODO GLOBAL ROOT (Para páginas públicas e dashboard)
   if (isGlobalRoot) {
     if (isOnAdminRoute) {
