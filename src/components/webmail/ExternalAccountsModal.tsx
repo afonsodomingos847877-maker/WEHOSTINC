@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react';
 import {
   Server, Mail, Plus, RefreshCw, Trash2, CheckCircle2, AlertCircle,
   ShieldCheck, Eye, EyeOff, Loader2, ArrowRight, ExternalLink, X, Globe,
-  Check, Lock, ChevronDown
+  Check, Lock, ChevronDown, BarChart3, HelpCircle, LogOut, Wifi, Settings
 } from 'lucide-react';
+import Link from 'next/link';
 import { EMAIL_PROVIDER_PRESETS } from '@/lib/externalEmailPresets';
 
 export interface ExternalAccountItem {
@@ -30,6 +31,13 @@ interface ExternalAccountsModalProps {
   onClose: () => void;
   ownerEmail: string;
   onSwitchAccount?: (externalEmail: string) => void;
+  domain?: string;
+  onOpenAnalytics?: () => void;
+  lastSyncedTime?: Date | null;
+  isOnline?: boolean;
+  isRefreshing?: boolean;
+  onRefresh?: () => void;
+  onLogout?: () => void;
 }
 
 export default function ExternalAccountsModal({
@@ -37,8 +45,15 @@ export default function ExternalAccountsModal({
   onClose,
   ownerEmail,
   onSwitchAccount,
+  domain,
+  onOpenAnalytics,
+  lastSyncedTime,
+  isOnline = true,
+  isRefreshing = false,
+  onRefresh,
+  onLogout,
 }: ExternalAccountsModalProps) {
-  const [activeTab, setActiveTab] = useState<'list' | 'add'>('list');
+  const [activeTab, setActiveTab] = useState<'list' | 'add' | 'tools'>('list');
   const [accounts, setAccounts] = useState<ExternalAccountItem[]>([]);
   const [loadingAccounts, setLoadingAccounts] = useState<boolean>(false);
   const [syncingId, setSyncingId] = useState<string | null>(null);
@@ -331,7 +346,7 @@ export default function ExternalAccountsModal({
                 </span>
               </h3>
               <p className="text-xs text-neutral-500 font-medium">
-                Conecte caixas corporativas de outros provedores e envie/receba e-mails no SmartMail
+                Conecte caixas corporativas de outros provedores e aceda a ferramentas corporativas no inLook
               </p>
             </div>
           </div>
@@ -389,6 +404,23 @@ export default function ExternalAccountsModal({
             <Plus className="h-4 w-4" />
             <span>Adicionar Conta Externa</span>
           </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('tools');
+              setFormError('');
+              setFormSuccess('');
+            }}
+            className={`pb-3 text-xs font-bold transition-all relative flex items-center space-x-2 cursor-pointer ${
+              activeTab === 'tools'
+                ? 'text-primary-600 border-b-2 border-primary-600'
+                : 'text-neutral-500 hover:text-neutral-900'
+            }`}
+          >
+            <Settings className="h-4 w-4" />
+            <span>Ferramentas & Domínio</span>
+          </button>
         </div>
 
         {/* Modal Body */}
@@ -396,6 +428,51 @@ export default function ExternalAccountsModal({
           {/* TAB 1: LIST CONNECTED ACCOUNTS */}
           {activeTab === 'list' && (
             <div className="space-y-4">
+              {/* Atalhos Rápidos */}
+              <div className="flex flex-wrap items-center gap-2 p-3 bg-neutral-50 rounded-2xl border border-neutral-200/80">
+                <span className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider mr-1">Atalhos:</span>
+                {domain && (
+                  <a
+                    href={`https://${domain}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center space-x-1.5 px-2.5 py-1 bg-white hover:bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-lg text-xs font-bold transition shadow-2xs"
+                  >
+                    <Globe className="h-3 w-3 text-emerald-600" />
+                    <span>Visitar {domain}</span>
+                    <ExternalLink className="h-2.5 w-2.5 text-emerald-500" />
+                  </a>
+                )}
+                {onOpenAnalytics && (
+                  <button
+                    type="button"
+                    onClick={onOpenAnalytics}
+                    className="inline-flex items-center space-x-1.5 px-2.5 py-1 bg-white hover:bg-indigo-50 text-indigo-800 border border-indigo-200 rounded-lg text-xs font-bold transition shadow-2xs cursor-pointer"
+                  >
+                    <BarChart3 className="h-3 w-3 text-indigo-600" />
+                    <span>Analytics</span>
+                  </button>
+                )}
+                <Link
+                  href="/ajuda/configurar-email"
+                  target="_blank"
+                  className="inline-flex items-center space-x-1.5 px-2.5 py-1 bg-white hover:bg-neutral-100 text-neutral-700 border border-neutral-200 rounded-lg text-xs font-bold transition shadow-2xs"
+                >
+                  <HelpCircle className="h-3 w-3 text-neutral-500" />
+                  <span>Guia Configuração</span>
+                </Link>
+                {onRefresh && (
+                  <button
+                    type="button"
+                    onClick={onRefresh}
+                    disabled={isRefreshing}
+                    className="inline-flex items-center space-x-1.5 px-2.5 py-1 bg-white hover:bg-neutral-100 text-neutral-700 border border-neutral-200 rounded-lg text-xs font-bold transition shadow-2xs cursor-pointer disabled:opacity-50"
+                  >
+                    <RefreshCw className={`h-3 w-3 text-neutral-500 ${isRefreshing ? 'animate-spin' : ''}`} />
+                    <span>Sincronizar</span>
+                  </button>
+                )}
+              </div>
               {loadingAccounts ? (
                 <div className="py-12 flex flex-col items-center justify-center space-y-3 text-neutral-400">
                   <Loader2 className="h-6 w-6 animate-spin text-primary-600" />
@@ -808,6 +885,147 @@ export default function ExternalAccountsModal({
                 </div>
               </div>
             </form>
+          )}
+
+          {/* TAB 3: FERRAMENTAS & DOMÍNIO */}
+          {activeTab === 'tools' && (
+            <div className="space-y-4 animate-in fade-in duration-150">
+              {/* Card 1: Visitar Site Oficial do Domínio */}
+              {domain && (
+                <div className="p-4 bg-emerald-50/70 border border-emerald-200/90 rounded-2xl flex items-center justify-between gap-3 hover:bg-emerald-50 transition">
+                  <div className="flex items-center space-x-3.5 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 border border-emerald-200">
+                      <Globe className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <h4 className="text-sm font-bold text-emerald-950 flex items-center space-x-2">
+                        <span>Site Corporativo</span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-200/70 text-emerald-900 font-mono">
+                          {domain}
+                        </span>
+                      </h4>
+                      <p className="text-xs text-emerald-800/80 truncate">
+                        Aceda diretamente ao website oficial da sua empresa
+                      </p>
+                    </div>
+                  </div>
+                  <a
+                    href={`https://${domain}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-xs shrink-0 cursor-pointer active:scale-95"
+                  >
+                    <span>Visitar Site</span>
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
+                </div>
+              )}
+
+              {/* Card 2: Analytics & Relatórios */}
+              {onOpenAnalytics && (
+                <div className="p-4 bg-neutral-50 border border-neutral-200 rounded-2xl flex items-center justify-between gap-3 hover:bg-neutral-100/70 transition">
+                  <div className="flex items-center space-x-3.5 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 border border-indigo-100">
+                      <BarChart3 className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <h4 className="text-sm font-bold text-neutral-900">
+                        Relatórios & Analytics do Webmail
+                      </h4>
+                      <p className="text-xs text-neutral-500">
+                        Estatísticas de envio, receção, armazenamento e taxa de interação
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={onOpenAnalytics}
+                    className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-neutral-900 hover:bg-black text-white rounded-xl text-xs font-bold transition shadow-xs shrink-0 cursor-pointer active:scale-95"
+                  >
+                    <BarChart3 className="h-3.5 w-3.5 text-emerald-400" />
+                    <span>Ver Analytics</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Card 3: Guia de Configuração de E-mail */}
+              <div className="p-4 bg-neutral-50 border border-neutral-200 rounded-2xl flex items-center justify-between gap-3 hover:bg-neutral-100/70 transition">
+                <div className="flex items-center space-x-3.5 min-w-0">
+                  <div className="w-10 h-10 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center shrink-0 border border-sky-100">
+                    <HelpCircle className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <h4 className="text-sm font-bold text-neutral-900">
+                      Guia de Configuração (Outlook & Celular)
+                    </h4>
+                    <p className="text-xs text-neutral-500">
+                      Instruções passo a passo para configurar no Outlook, iOS, Android e Thunderbird
+                    </p>
+                  </div>
+                </div>
+                <Link
+                  href="/ajuda/configurar-email"
+                  target="_blank"
+                  className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-white hover:bg-neutral-100 text-neutral-900 border border-neutral-300 rounded-xl text-xs font-bold transition shadow-2xs shrink-0 cursor-pointer active:scale-95"
+                >
+                  <span>Abrir Guia</span>
+                  <ExternalLink className="h-3.5 w-3.5 text-neutral-500" />
+                </Link>
+              </div>
+
+              {/* Card 4: Estado da Ligação IMAP / SMTP */}
+              <div className="p-4 bg-neutral-50 border border-neutral-200 rounded-2xl flex items-center justify-between gap-3">
+                <div className="flex items-center space-x-3.5 min-w-0">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100">
+                    <ShieldCheck className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center space-x-2">
+                      <span className="relative flex h-2 w-2 shrink-0">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                      </span>
+                      <h4 className="text-sm font-bold text-neutral-900">
+                        {isOnline ? 'IMAP / SMTP Ativo' : 'Modo Offline'}
+                      </h4>
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">
+                        SSL Seguro
+                      </span>
+                    </div>
+                    <p className="text-xs text-neutral-500 mt-0.5">
+                      {lastSyncedTime
+                        ? `Última sincronização às ${lastSyncedTime.toLocaleTimeString('pt-MZ', { hour: '2-digit', minute: '2-digit', hour12: false })}`
+                        : 'Sincronização em tempo real ativa'}
+                    </p>
+                  </div>
+                </div>
+                {onRefresh && (
+                  <button
+                    type="button"
+                    onClick={onRefresh}
+                    disabled={isRefreshing}
+                    className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-white hover:bg-neutral-100 text-neutral-900 border border-neutral-300 rounded-xl text-xs font-bold transition shadow-2xs shrink-0 cursor-pointer active:scale-95 disabled:opacity-50"
+                  >
+                    <RefreshCw className={`h-3.5 w-3.5 text-neutral-700 ${isRefreshing ? 'animate-spin' : ''}`} />
+                    <span>Sincronizar</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Card 5: Terminar Sessão (Sair) */}
+              {onLogout && (
+                <div className="pt-2 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={onLogout}
+                    className="inline-flex items-center space-x-2 px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold transition cursor-pointer active:scale-95"
+                  >
+                    <LogOut className="h-3.5 w-3.5 text-rose-600" />
+                    <span>Terminar Sessão deste E-mail</span>
+                  </button>
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>

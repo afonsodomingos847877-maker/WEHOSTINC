@@ -3068,98 +3068,7 @@ function WebmailContent() {
             )}
           </button>
 
-          {/* Link Direto para o Site do Domínio da Empresa */}
-          {selectedAccountEmail && selectedAccountEmail.includes('@') && (
-            <a
-              href={`https://${selectedAccountEmail.split('@')[1].toLowerCase()}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 rounded-xl transition cursor-pointer text-xs font-bold shadow-2xs shrink-0 active:scale-95"
-              title={`Visitar o site oficial da empresa (${selectedAccountEmail.split('@')[1].toLowerCase()})`}
-            >
-              <Globe className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-              <span className="hidden sm:inline font-mono">
-                {selectedAccountEmail.split('@')[1].toLowerCase()}
-              </span>
-              <ExternalLink className="h-3 w-3 text-emerald-600 shrink-0" />
-            </a>
-          )}
 
-          {/* Botão Rápido: Dashboard de Relatórios & Analytics */}
-          {mailboxPassword && (
-            <button
-              type="button"
-              onClick={() => {
-                soundEffects.playFolderSwitchSound();
-                setShowAnalyticsDashboard(!showAnalyticsDashboard);
-              }}
-              className={`flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border transition cursor-pointer text-xs font-bold shadow-2xs shrink-0 active:scale-95 ${
-                showAnalyticsDashboard
-                  ? 'bg-neutral-900 text-white border-neutral-900'
-                  : 'bg-white hover:bg-neutral-100 text-neutral-900 border-neutral-300'
-              }`}
-              title="Abrir Dashboard de Relatórios e Gráficos do Webmail"
-            >
-              <BarChart3 className={`h-3.5 w-3.5 shrink-0 ${showAnalyticsDashboard ? 'text-emerald-400' : 'text-indigo-600'}`} />
-              <span className="hidden sm:inline">Analytics</span>
-            </button>
-          )}
-
-          {/* Refresh (Apenas quando autenticado) */}
-          {mailboxPassword && (
-            <button
-              onClick={() => {
-                setIsRefreshingWebmail(true);
-                refreshMessages();
-                setTimeout(() => setIsRefreshingWebmail(false), 800);
-              }}
-              className="p-2 hover:bg-neutral-100 rounded-xl text-neutral-500 hover:text-neutral-900 transition cursor-pointer shrink-0"
-              title="Sincronizar caixa de entrada"
-            >
-              {isRefreshingWebmail ? <Loader2 className="h-4 w-4 animate-spin text-neutral-900" /> : <RefreshCw className="h-4 w-4" />}
-            </button>
-          )}
-
-          {/* Link Guia de Configuração (Outlook & Celular) */}
-          <Link
-            href="/ajuda/configurar-email"
-            target="_blank"
-            className="hidden md:flex items-center space-x-1.5 px-3 py-1.5 bg-white hover:bg-neutral-100 text-neutral-900 border border-neutral-300 rounded-xl transition cursor-pointer text-xs font-bold shadow-2xs shrink-0 active:scale-95"
-            title="Abrir guia de configuração para Outlook e Celular"
-          >
-            <HelpCircle className="h-3.5 w-3.5 text-neutral-700 shrink-0" />
-            <span>Guia Configuração</span>
-          </Link>
-
-          {/* Live Connection & Sync Status Pill (Sleek Minimalist) */}
-          {mailboxPassword && (
-            <div className="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border border-neutral-200 bg-neutral-100 text-xs font-semibold text-neutral-700 shrink-0 transition-all duration-300">
-              {!isOnline ? (
-                <>
-                  <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping shrink-0" />
-                  <span className="text-[11px] font-bold text-rose-700">Offline</span>
-                </>
-              ) : (isLoadingMessages || isRefreshingWebmail) ? (
-                <>
-                  <Loader2 className="h-3.5 w-3.5 animate-spin text-neutral-700 shrink-0" />
-                  <span className="text-[11px] font-bold text-neutral-700">A sincronizar...</span>
-                </>
-              ) : (
-                <>
-                  <span className="relative flex h-2 w-2 shrink-0">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                  </span>
-                  <span className="text-[11px] font-bold text-neutral-800">IMAP Ativo</span>
-                  {lastSyncedTime && (
-                    <span className="text-[10px] text-neutral-400 font-normal">
-                      ({lastSyncedTime.toLocaleTimeString('pt-MZ', { hour: '2-digit', minute: '2-digit', hour12: false })})
-                    </span>
-                  )}
-                </>
-              )}
-            </div>
-          )}
 
           {/* Mailbox Logout */}
           {mailboxPassword && (
@@ -7012,6 +6921,20 @@ function WebmailContent() {
           }
         }}
         ownerEmail={selectedAccountEmail || webmailLoginEmail || accounts[0]?.email || 'geral@wehosthere.com'}
+        domain={selectedAccountEmail && selectedAccountEmail.includes('@') ? selectedAccountEmail.split('@')[1].toLowerCase() : ''}
+        onOpenAnalytics={() => {
+          setShowExternalAccountsModal(false);
+          setShowAnalyticsDashboard(true);
+        }}
+        lastSyncedTime={lastSyncedTime}
+        isOnline={isOnline}
+        isRefreshing={isRefreshingWebmail}
+        onRefresh={() => {
+          setIsRefreshingWebmail(true);
+          refreshMessages();
+          setTimeout(() => setIsRefreshingWebmail(false), 800);
+        }}
+        onLogout={handleWebmailLogout}
         onSwitchAccount={async (externalEmail) => {
           try {
             const currentOwner = selectedAccountEmail || webmailLoginEmail || accounts[0]?.email || 'geral@wehosthere.com';
