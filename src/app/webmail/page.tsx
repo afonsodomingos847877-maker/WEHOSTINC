@@ -2257,6 +2257,18 @@ function WebmailContent() {
         .catch(() => {});
     }
   }, [selectedAccountEmail]);
+  // Auto-inject signature into compose body when compose opens and signature is ready
+  useEffect(() => {
+    if (!showCompose) return;
+    // Only inject if compose body is blank (new email) — not reply/forward
+    const isBlankBody = !composeBody || composeBody === '<p><br></p>' || composeBody === '';
+    if (!isBlankBody) return;
+    const sig = getSignatureHtml();
+    if (sig && signatureForm.autoInsert && signatureForm.isEnabled) {
+      setComposeBody('<p><br></p>' + sig);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showCompose, signatureForm.signatureImage, signatureForm.fullName]);
 
   // AI Assistant Handlers
   const cleanAiText = (raw: string) =>
