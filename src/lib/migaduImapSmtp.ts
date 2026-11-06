@@ -32,6 +32,8 @@ export interface IMAPMessage {
     size: number;
     contentType: string;
     url?: string;
+    cid?: string;
+    related?: boolean;
   }>;
 }
 
@@ -366,6 +368,8 @@ export class MigaduImapSmtpService {
           size: number;
           contentType: string;
           url?: string;
+          cid?: string;
+          related?: boolean;
         }> = [];
 
         let cleanSubject = '';
@@ -384,17 +388,38 @@ export class MigaduImapSmtpService {
             if (parsed.attachments && parsed.attachments.length > 0) {
               for (let attIdx = 0; attIdx < parsed.attachments.length; attIdx++) {
                 const att = parsed.attachments[attIdx];
-                // Performance: Apenas gerar base64 para thumbnails leves (<= 64KB) para inline view;
-                // Anexos reais usam rota de download sob demanda para não sobrecarregar a memória
-                const isSmallInline = (att.size || 0) <= 65536 && (att.contentType?.startsWith('image/') || att.related);
-                const b64 = isSmallInline && att.content ? att.content.toString('base64') : '';
+                const rawCid = (att.cid || (att.contentId ? att.contentId.replace(/^<|>$/g, '') : '')).trim();
+                const isImage = (att.contentType || '').startsWith('image/');
+                const isInline = !!att.related || (cleanBody && rawCid ? cleanBody.includes(rawCid) : false);
+                const b64 = att.content ? att.content.toString('base64') : '';
+                const dataUrl = (isImage && b64) ? `data:${att.contentType || 'image/png'};base64,${b64}` : '';
                 const downloadUrl = `/api/webmail/attachment?email=${encodeURIComponent(email)}&folder=${encodeURIComponent(folder)}&uid=${msg.uid}&part=${attIdx}&filename=${encodeURIComponent(att.filename || 'anexo')}`;
+
+                // Resolver e embutir imediatamente assinaturas e imagens inline (cid:) no corpo HTML
+                if (dataUrl && cleanBody) {
+                  if (rawCid) {
+                    const escCid = rawCid.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    cleanBody = cleanBody.replace(new RegExp(`(["'\\s])cid:${escCid}(["'\\s>])`, 'gi'), `$1${dataUrl}$2`);
+                    cleanBody = cleanBody.replace(new RegExp(`(["'\\s])cid:<${escCid}>(["'\\s>])`, 'gi'), `$1${dataUrl}$2`);
+                    const cidBase = rawCid.split('@')[0];
+                    if (cidBase && cidBase !== rawCid) {
+                      const escBase = cidBase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                      cleanBody = cleanBody.replace(new RegExp(`(["'\\s])cid:${escBase}(["'\\s>])`, 'gi'), `$1${dataUrl}$2`);
+                    }
+                  }
+                  if (att.filename) {
+                    const escFn = att.filename.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    cleanBody = cleanBody.replace(new RegExp(`(["'\\s])cid:${escFn}(["'\\s>])`, 'gi'), `$1${dataUrl}$2`);
+                  }
+                }
 
                 parsedAttachments.push({
                   filename: att.filename || 'anexo',
                   size: att.size || (att.content ? att.content.length : 0),
                   contentType: att.contentType || 'application/octet-stream',
-                  url: b64 ? `data:${att.contentType || 'application/octet-stream'};base64,${b64}` : downloadUrl,
+                  cid: rawCid || undefined,
+                  related: isInline,
+                  url: dataUrl && (isInline || (att.size || 0) <= 2 * 1024 * 1024) ? dataUrl : downloadUrl,
                 });
               }
             }
@@ -493,6 +518,8 @@ export class MigaduImapSmtpService {
           size: number;
           contentType: string;
           url?: string;
+          cid?: string;
+          related?: boolean;
         }> = [];
 
         let cleanSubject = '';
@@ -509,13 +536,40 @@ export class MigaduImapSmtpService {
             cleanFromEmail = parsed.from?.value?.[0]?.address || '';
 
             if (parsed.attachments && parsed.attachments.length > 0) {
-              for (const att of parsed.attachments) {
+              for (let attIdx = 0; attIdx < parsed.attachments.length; attIdx++) {
+                const att = parsed.attachments[attIdx];
+                const rawCid = (att.cid || (att.contentId ? att.contentId.replace(/^<|>$/g, '') : '')).trim();
+                const isImage = (att.contentType || '').startsWith('image/');
+                const isInline = !!att.related || (cleanBody && rawCid ? cleanBody.includes(rawCid) : false);
                 const b64 = att.content ? att.content.toString('base64') : '';
+                const dataUrl = (isImage && b64) ? `data:${att.contentType || 'image/png'};base64,${b64}` : '';
+                const downloadUrl = `/api/webmail/attachment?email=${encodeURIComponent(email)}&folder=${encodeURIComponent(folder)}&uid=${msg.uid}&part=${attIdx}&filename=${encodeURIComponent(att.filename || 'anexo')}`;
+
+                // Resolver e embutir imediatamente assinaturas e imagens inline (cid:) no corpo HTML
+                if (dataUrl && cleanBody) {
+                  if (rawCid) {
+                    const escCid = rawCid.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    cleanBody = cleanBody.replace(new RegExp(`(["'\\s])cid:${escCid}(["'\\s>])`, 'gi'), `$1${dataUrl}$2`);
+                    cleanBody = cleanBody.replace(new RegExp(`(["'\\s])cid:<${escCid}>(["'\\s>])`, 'gi'), `$1${dataUrl}$2`);
+                    const cidBase = rawCid.split('@')[0];
+                    if (cidBase && cidBase !== rawCid) {
+                      const escBase = cidBase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                      cleanBody = cleanBody.replace(new RegExp(`(["'\\s])cid:${escBase}(["'\\s>])`, 'gi'), `$1${dataUrl}$2`);
+                    }
+                  }
+                  if (att.filename) {
+                    const escFn = att.filename.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    cleanBody = cleanBody.replace(new RegExp(`(["'\\s])cid:${escFn}(["'\\s>])`, 'gi'), `$1${dataUrl}$2`);
+                  }
+                }
+
                 parsedAttachments.push({
                   filename: att.filename || 'anexo',
                   size: att.size || (att.content ? att.content.length : 0),
                   contentType: att.contentType || 'application/octet-stream',
-                  url: b64 ? `data:${att.contentType || 'application/octet-stream'};base64,${b64}` : '',
+                  cid: rawCid || undefined,
+                  related: isInline,
+                  url: dataUrl && (isInline || (att.size || 0) <= 2 * 1024 * 1024) ? dataUrl : downloadUrl,
                 });
               }
             }

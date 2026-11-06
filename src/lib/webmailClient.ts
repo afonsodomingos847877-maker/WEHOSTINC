@@ -5,6 +5,8 @@ export interface WebmailAttachment {
   name: string;
   size?: number;
   type?: string;
+  cid?: string;
+  related?: boolean;
 }
 
 export interface WebmailMessage {

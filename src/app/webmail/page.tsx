@@ -375,28 +375,54 @@ function getSnippetText(text?: string, body?: string): string {
 }
 
 // Reescreve as imagens do corpo do e-mail para que sejam sempre visíveis:
-// - http/https externas passam pelo proxy do servidor (evita conteúdo misto, CSP e anti-hotlink)
-// - referências cid: são resolvidas a partir dos anexos inline
-function rewriteEmailImages(html: string, attachments?: { name?: string; url?: string; type?: string }[]): string {
+// - CDNs públicas (Cloudinary, Google, Unsplash) e data: carregam directamente
+// - referências cid: são resolvidas a partir dos anexos inline da mensagem
+// - http inseguro passa pelo proxy do servidor para evitar bloqueio por Mixed Content
+// - https externo carrega directamente com fallback para proxy caso haja CORS/anti-hotlink
+function rewriteEmailImages(html: string, attachments?: WebmailAttachment[]): string {
   if (!html || !/<img/i.test(html)) return html;
   return html.replace(/(<img\b[^>]*?\bsrc\s*=\s*)(["'])(.*?)\2/gi, (full, prefix, quote, rawSrc) => {
     const src = decodeHtmlEntities(String(rawSrc).trim());
     if (!src || src.startsWith('data:') || src.startsWith('blob:') || src.startsWith('/api/')) return full;
 
+    // CDNs seguras públicas que devem carregar directamente com máxima velocidade no browser:
+    if (
+      src.includes('res.cloudinary.com') ||
+      src.includes('cloudinary.com') ||
+      src.includes('googleusercontent.com') ||
+      src.includes('images.unsplash.com')
+    ) {
+      return `${prefix}${quote}${src}${quote} loading="lazy" decoding="async" crossOrigin="anonymous" onerror="this.style.display='none';"`;
+    }
+
     if (/^cid:/i.test(src)) {
-      const cid = src.slice(4).replace(/^<|>$/g, '');
+      const cid = src.slice(4).replace(/^<|>$/g, '').trim();
       const cidBase = cid.split('@')[0].toLowerCase();
       const match = attachments?.find(att => {
+        const attCid = (att.cid || '').replace(/^<|>$/g, '').trim().toLowerCase();
         const n = (att.name || '').toLowerCase();
-        return !!n && (n === cidBase || cid.toLowerCase().includes(n) || n.includes(cidBase));
+        return (
+          (attCid && (attCid === cid.toLowerCase() || attCid === cidBase || attCid.includes(cidBase))) ||
+          (n && (n === cidBase || cid.toLowerCase().includes(n) || n.includes(cidBase)))
+        );
       });
-      return match?.url ? `${prefix}${quote}${match.url}${quote}` : full;
+      if (match?.url) {
+        return `${prefix}${quote}${match.url}${quote}`;
+      }
+      // Se não houver anexo inline correspondente, oculta de forma limpa para não exibir o ícone de imagem quebrada do browser
+      return `${prefix}${quote}data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"/>${quote} style="display:none;"`;
     }
 
     const absolute = src.startsWith('//') ? `https:${src}` : src;
-    if (/^https?:\/\//i.test(absolute)) {
-      return `${prefix}${quote}/api/webmail/image-proxy?url=${encodeURIComponent(absolute)}${quote}`;
+    if (/^https:\/\//i.test(absolute)) {
+      // Carregar directamente com fallback seguro para proxy caso haja restrição de CORS ou hotlink
+      return `${prefix}${quote}${absolute}${quote} loading="lazy" decoding="async" crossOrigin="anonymous" onerror="if(!this.dataset.p){this.dataset.p='1';this.src='/api/webmail/image-proxy?url='+encodeURIComponent('${encodeURIComponent(absolute)}');}else{this.style.display='none';}"`;
     }
+
+    if (/^http:\/\//i.test(absolute)) {
+      return `${prefix}${quote}/api/webmail/image-proxy?url=${encodeURIComponent(absolute)}${quote} loading="lazy" decoding="async" onerror="this.style.display='none';"`;
+    }
+
     return full;
   });
 }
@@ -1989,12 +2015,16 @@ function WebmailContent() {
   };
 
   // Executar eliminação após confirmação explícita do utilizador no modal
+  // Fluxo em 2 etapas:
+  //   1. Se a mensagem NÃO está na Lixeira → move para a Lixeira (recuperável)
+  //   2. Se a mensagem JÁ está na Lixeira → eliminação permanente (irrecuperável)
   const executeDeleteMessage = async (msgId: string) => {
     const msg = messages.find(m => m.id === msgId) || (selectedMessage?.id === msgId ? selectedMessage : null);
     if (!msg) {
       setDeleteConfirmModal(null);
       return;
     }
+    const isAlreadyInTrash = msg.folder === 'trash';
     const imapFolder = msg.folder === 'sent' ? 'Sent' : msg.folder === 'trash' ? 'Trash' : msg.folder === 'drafts' ? 'Drafts' : 'INBOX';
     
     // Atualização otimista na interface
@@ -2005,7 +2035,7 @@ function WebmailContent() {
     setFolderStats(prev => ({
       ...prev,
       inboxUnread: msg.folder === 'inbox' && !msg.isRead ? Math.max(prev.inboxUnread - 1, 0) : prev.inboxUnread,
-      trash: msg.folder === 'trash' ? Math.max(prev.trash - 1, 0) : prev.trash,
+      trash: isAlreadyInTrash ? Math.max(prev.trash - 1, 0) : prev.trash + 1,
       sent: msg.folder === 'sent' ? Math.max(prev.sent - 1, 0) : prev.sent,
       drafts: msg.folder === 'drafts' ? Math.max(prev.drafts - 1, 0) : prev.drafts,
       starred: msg.starred ? Math.max(prev.starred - 1, 0) : prev.starred
@@ -2013,9 +2043,15 @@ function WebmailContent() {
     soundEffects.playDeleteEmailSound();
 
     try {
-      await webmailManager.deletePermanently(msgId, selectedAccountEmail, mailboxPassword, msg.uid, imapFolder);
+      if (isAlreadyInTrash) {
+        // Etapa 2: Eliminação permanente — a mensagem já está na Lixeira
+        await webmailManager.deletePermanently(msgId, selectedAccountEmail, mailboxPassword, msg.uid, imapFolder);
+      } else {
+        // Etapa 1: Mover para a Lixeira — a mensagem pode ser recuperada
+        await webmailManager.moveFolder(msgId, 'trash', selectedAccountEmail, mailboxPassword, msg.uid, imapFolder);
+      }
     } catch (err) {
-      console.error('[Webmail] Error deleting message permanently:', err);
+      console.error('[Webmail] Error deleting/moving message:', err);
     } finally {
       setDeleteConfirmModal(null);
     }

@@ -64,7 +64,9 @@ export async function GET(request: NextRequest) {
         url: att.url || '',
         name: att.filename,
         size: att.size,
-        type: att.contentType
+        type: att.contentType,
+        cid: att.cid,
+        related: att.related
       }))
     }));
 
