@@ -100,8 +100,7 @@ export default function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-white/95 dark:bg-black/85 backdrop-blur-md border-b border-gray-100/90 dark:border-white/10 shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-[0_1px_5px_rgba(0,0,0,0.6)] transition-colors duration-300">
-      {isLoggingOut && <PageLoader text="A encerrar a sua sessão com segurança..." />}
+    <>
       {showLogoutToast && (
         <Toast
           type="success"
@@ -109,8 +108,11 @@ export default function Navbar() {
           message="A sua conta foi desvinculada com segurança. Até breve!"
           onClose={() => setShowLogoutToast(false)}
           duration={3800}
+          position="bottom-right"
         />
       )}
+      <header className="sticky top-0 z-50 bg-white/95 dark:bg-black/85 backdrop-blur-md border-b border-gray-100/90 dark:border-white/10 shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-[0_1px_5px_rgba(0,0,0,0.6)] transition-colors duration-300">
+      {isLoggingOut && <PageLoader text="A encerrar a sua sessão com segurança..." />}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-13 sm:h-14">
           
@@ -384,5 +386,6 @@ export default function Navbar() {
         </div>
       )}
     </header>
+    </>
   );
 }

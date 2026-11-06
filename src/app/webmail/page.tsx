@@ -4125,132 +4125,71 @@ function WebmailContent() {
                     <div className="cinematic-light-sweep pointer-events-none absolute inset-0 z-10" />
                     <div className="pointer-events-none absolute -top-12 -right-12 w-40 h-40 rounded-full bg-emerald-500/15 blur-2xl" />
 
-                    <div className="relative z-20 p-4 sm:p-6 space-y-3.5">
-                      <div className="cinematic-stagger-1 flex flex-wrap items-start justify-between gap-3">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500/30 to-teal-600/20 border border-emerald-400/40 flex items-center justify-center text-emerald-300 shrink-0 shadow-[0_0_20px_rgba(16,185,129,0.25)]">
-                            <Bell className="w-4 h-4 animate-bounce" />
-                          </div>
-                          <div>
-                            <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
-                              {floatingBriefing.type === 'new_incoming' ? (
-                                <>
-                                  <Mail className="w-3 h-3 text-emerald-400" />
-                                  <span>Novo E-mail Recebido</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Sparkles className="w-3 h-3 text-emerald-400" />
-                                  <span>Assistente Webmail WEHOSTHERE</span>
-                                </>
-                              )}
-                            </span>
-                            <h3 className="text-sm sm:text-lg font-extrabold text-white flex items-center gap-2 mt-0.5">
-                              <GreetingIcon className={`w-4 h-4 sm:w-5 sm:h-5 shrink-0 ${greetingIconColor}`} />
-                              <span>
-                                {floatingBriefing.type === 'new_incoming'
-                                  ? `${greeting}, ${userName}! Chegou ${
-                                      floatingBriefing.unreadCount === 1
-                                        ? '1 novo e-mail'
-                                        : `${floatingBriefing.unreadCount} novos e-mails`
-                                    }`
-                                  : `${greeting}, ${userName}!`}
-                              </span>
-                            </h3>
-                          </div>
+                    <div className="relative z-20 px-4 py-3 sm:px-5 sm:py-3.5 flex flex-wrap items-center justify-between gap-3">
+                      <div className="flex items-center space-x-3 min-w-0">
+                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500/30 to-teal-600/20 border border-emerald-400/40 flex items-center justify-center text-emerald-300 shrink-0 shadow-[0_0_20px_rgba(16,185,129,0.25)]">
+                          <Bell className="w-4 h-4 animate-bounce" />
                         </div>
-
-                        <div className="flex items-center gap-2">
-                          {hasPendingItems && floatingBriefing.unreadCount > 0 && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setCurrentFolder('inbox');
-                                setFilterType('unread');
-                                const firstUnread = messages.find((m) => !m.isRead);
-                                if (firstUnread) handleSelectMessage(firstUnread);
-                                dismissFloatingBriefing();
-                              }}
-                              className="py-1.5 px-3 bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-extrabold text-xs rounded-xl transition cursor-pointer flex items-center gap-1.5 shadow-xs"
-                            >
-                              <Mail className="w-3.5 h-3.5" />
-                              <span>Ver Novos ({floatingBriefing.unreadCount})</span>
-                            </button>
-                          )}
-                          {hasPendingItems && floatingBriefing.overdueCount > 0 && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setCurrentFolder('inbox');
-                                setFilterType('overdue');
-                                const firstOverdue = messages.find((m) => isMessageOverdue(m));
-                                if (firstOverdue) handleSelectMessage(firstOverdue);
-                                dismissFloatingBriefing();
-                              }}
-                              className="py-1.5 px-3 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-bold text-xs rounded-xl transition cursor-pointer flex items-center gap-1.5"
-                            >
-                              <Clock className="w-3.5 h-3.5" />
-                              <span>Ver em Atraso ({floatingBriefing.overdueCount})</span>
-                            </button>
-                          )}
-                          <button
-                            type="button"
-                            onClick={dismissFloatingBriefing}
-                            className="text-neutral-400 hover:text-white p-1.5 rounded-xl hover:bg-white/10 transition cursor-pointer"
-                            title="Mostrar cabeçalho do e-mail agora"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
+                        <div className="min-w-0">
+                          <h3 className="text-sm sm:text-base font-extrabold text-white flex items-center gap-1.5 truncate">
+                            <GreetingIcon className={`w-4 h-4 shrink-0 ${greetingIconColor}`} />
+                            <span>
+                              {`${greeting}, ${userName}!`}
+                            </span>
+                          </h3>
+                          {floatingBriefing.latestSender ? (
+                            <p className="text-xs text-neutral-300 truncate max-w-xs sm:max-w-md mt-0.5">
+                              <span className="text-neutral-400">Mais recente: </span>
+                              <strong className="text-white font-medium">{floatingBriefing.latestSender}</strong>
+                              {floatingBriefing.latestSubject ? ` — ${floatingBriefing.latestSubject}` : ''}
+                            </p>
+                          ) : !hasPendingItems ? (
+                            <p className="text-xs text-emerald-400/90 mt-0.5">Caixa de entrada 100% em dia!</p>
+                          ) : null}
                         </div>
                       </div>
 
-                      <div className="cinematic-stagger-2 flex flex-wrap items-center justify-between gap-2 bg-white/[0.06] rounded-2xl px-3.5 py-2.5 border border-white/10 text-xs">
-                        {!hasPendingItems ? (
-                          <div className="flex items-center space-x-2 text-emerald-300 font-semibold">
-                            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                            <span>
-                              A sua caixa de entrada está 100% em dia! Sem novos e-mails ou respostas em atraso.
-                            </span>
-                          </div>
-                        ) : (
-                          <div className="flex flex-wrap items-center gap-3">
-                            {floatingBriefing.unreadCount > 0 && (
-                              <span className="inline-flex items-center space-x-1.5 text-neutral-200">
-                                <Mail className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                                <span>Não lidos:</span>
-                                <strong className="text-emerald-400 bg-emerald-500/15 px-2 py-0.5 rounded-full">
-                                  {floatingBriefing.unreadCount} {floatingBriefing.unreadCount === 1 ? 'novo' : 'novos'}
-                                </strong>
-                              </span>
-                            )}
-                            {floatingBriefing.overdueCount > 0 && (
-                              <span className="inline-flex items-center space-x-1.5 text-neutral-200">
-                                <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                                <span>Em atraso:</span>
-                                <strong className="text-amber-300 bg-amber-500/20 px-2 py-0.5 rounded-full">
-                                  {floatingBriefing.overdueCount} {floatingBriefing.overdueCount === 1 ? 'pendente' : 'pendentes'}
-                                </strong>
-                              </span>
-                            )}
-                            {floatingBriefing.urgentCount > 0 && (
-                              <span className="inline-flex items-center space-x-1.5 text-neutral-200">
-                                <Flame className="w-3.5 h-3.5 text-rose-400 shrink-0" />
-                                <span>Urgentes:</span>
-                                <strong className="text-rose-300 bg-rose-500/20 px-2 py-0.5 rounded-full">
-                                  {floatingBriefing.urgentCount}
-                                </strong>
-                              </span>
-                            )}
-                          </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {hasPendingItems && floatingBriefing.unreadCount > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCurrentFolder('inbox');
+                              setFilterType('unread');
+                              const firstUnread = messages.find((m) => !m.isRead);
+                              if (firstUnread) handleSelectMessage(firstUnread);
+                              dismissFloatingBriefing();
+                            }}
+                            className="py-1.5 px-3 bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-extrabold text-xs rounded-xl transition cursor-pointer flex items-center gap-1.5 shadow-xs active:scale-95"
+                          >
+                            <Mail className="w-3.5 h-3.5" />
+                            <span>Ver Novos ({floatingBriefing.unreadCount})</span>
+                          </button>
                         )}
-
-                        {floatingBriefing.latestSender && (
-                          <div className="text-[11px] text-neutral-300 truncate max-w-full sm:max-w-xs">
-                            <span className="text-neutral-400">Mais recente: </span>
-                            <strong className="text-white">{floatingBriefing.latestSender}</strong>
-                            {floatingBriefing.latestSubject ? ` — ${floatingBriefing.latestSubject}` : ''}
-                          </div>
+                        {hasPendingItems && floatingBriefing.overdueCount > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCurrentFolder('inbox');
+                              setFilterType('overdue');
+                              const firstOverdue = messages.find((m) => isMessageOverdue(m));
+                              if (firstOverdue) handleSelectMessage(firstOverdue);
+                              dismissFloatingBriefing();
+                            }}
+                            className="py-1.5 px-3 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-bold text-xs rounded-xl transition cursor-pointer flex items-center gap-1.5 active:scale-95"
+                          >
+                            <Clock className="w-3.5 h-3.5" />
+                            <span>Em Atraso ({floatingBriefing.overdueCount})</span>
+                          </button>
                         )}
+                        <button
+                          type="button"
+                          onClick={dismissFloatingBriefing}
+                          className="text-neutral-400 hover:text-white p-1.5 rounded-xl hover:bg-white/10 transition cursor-pointer"
+                          title="Fechar notificação"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
                       </div>
                     </div>
 
