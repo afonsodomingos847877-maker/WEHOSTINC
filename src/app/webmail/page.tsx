@@ -3190,14 +3190,6 @@ function WebmailContent() {
         </div>
       </header>
 
-{/* Indicador de processamento (canto superior‑direito) */}
-{(isLoadingMessages || isRefreshingWebmail) && (
-  <div className="fixed top-4 right-4 flex items-center space-x-2 bg-white bg-opacity-90 border border-gray-200 rounded-lg px-3 py-1 shadow-md animate-[fadeIn_0.3s_ease-out] z-[1000]">
-    <Loader2 className="w-4 h-4 animate-spin text-primary-600" />
-    <span className="text-sm text-gray-700">A processar mensagens…</span>
-  </div>
-)}
-
       {/* Alerta de Perda de Conexão à Internet (Offline) */}
       {!isOnline && (
         <div className="bg-rose-600 text-white px-4 py-2.5 flex items-center justify-between text-xs font-bold shadow-md animate-in slide-in-from-top-2 duration-200">
@@ -5208,6 +5200,15 @@ function WebmailContent() {
               />
               {/* Overlay escuro semitransparente para legibilidade */}
               <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/60" />
+
+              {/* Indicador de processamento discreto integrado na área de fundo (glassmorphism) */}
+              {(isLoadingMessages || isRefreshingWebmail) && (
+                <div className="absolute top-4 right-4 sm:top-5 sm:right-5 z-20 flex items-center gap-2 px-3.5 py-1.5 bg-black/40 backdrop-blur-md border border-white/20 text-white text-xs font-medium rounded-full shadow-lg animate-in fade-in duration-200 pointer-events-none">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-sky-400 shrink-0" />
+                  <span className="drop-shadow-xs">A processar mensagens…</span>
+                </div>
+              )}
+
               {/* Conteúdo por cima */}
               <div className="relative z-10 flex flex-col items-center gap-4 px-8">
                 <div className="w-20 h-20 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-2xl">
