@@ -4087,40 +4087,6 @@ function WebmailContent() {
           </nav>
 
           <div className={`mt-auto pt-2 border-t border-neutral-200 text-[11px] text-neutral-500 space-y-2 ${isSidebarCollapsed ? 'hidden' : ''}`}>
-            <button
-              type="button"
-              onClick={() => setIsStorageCollapsed(!isStorageCollapsed)}
-              className="w-full flex items-center justify-between font-bold text-neutral-700 cursor-pointer hover:text-neutral-900 transition"
-            >
-              <span>Cota de Armazenamento</span>
-              <ChevronRight className={`h-3 w-3 transition-transform ${isStorageCollapsed ? '' : 'rotate-180'}`} />
-            </button>
-            
-            {!isStorageCollapsed && (
-              <div className="space-y-2 p-2.5 bg-neutral-100/90 rounded-2xl border border-neutral-200 shadow-2xs">
-                <div className="flex items-center justify-between text-[11px]">
-                  <span className="font-bold text-neutral-900">
-                    {storageInfo.usedDisplay} <span className="text-neutral-500 font-normal">/ 1 GB</span>
-                  </span>
-                  <span className="text-neutral-900 font-bold text-[10px] bg-white px-2 py-0.5 rounded-md border border-neutral-200">
-                    {storageInfo.percentage.toFixed(1)}%
-                  </span>
-                </div>
-                <div className="w-full bg-neutral-200 rounded-full h-2 overflow-hidden p-0.5">
-                  <div 
-                    className="h-full rounded-full transition-all duration-500 bg-neutral-900"
-                    style={{ width: `${Math.max(storageInfo.percentage, 2)}%` }}
-                  />
-                </div>
-                <div className="flex items-center justify-between text-[10px] text-neutral-500 pt-0.5">
-                  <span className="font-medium text-neutral-600">Plano Corporativo</span>
-                  <span className="text-neutral-700 font-bold flex items-center space-x-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
-                    <span>Espaço Seguro</span>
-                  </span>
-                </div>
-              </div>
-            )}
 
             {/* Botão Rápido de Mudar Senha na Barra Lateral (Tesla Dark) */}
             <button
