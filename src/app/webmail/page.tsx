@@ -2761,6 +2761,34 @@ function WebmailContent() {
       } catch {}
     }
 
+    // Gerar HTML da assinatura para inserção imediata no campo de mensagem
+    let sigHtml = '';
+    if (signatureForm.signatureType === 'image' && signatureForm.signatureImage) {
+      sigHtml = `<p><br></p><p><img src="${signatureForm.signatureImage}" alt="Assinatura" style="max-width: 500px; width: 100%; height: auto; display: block; border-radius: 4px;" /></p>`;
+    } else if (signatureForm.signatureImage && !signatureForm.fullName) {
+      sigHtml = `<p><br></p><p><img src="${signatureForm.signatureImage}" alt="Assinatura" style="max-width: 500px; width: 100%; height: auto; display: block; border-radius: 4px;" /></p>`;
+    } else if (signatureForm.fullName || signatureForm.companyName) {
+      sigHtml = `<p><br></p><div style="font-family: Arial, sans-serif; font-size: 13px; color: #222; border-left: 3px solid #7c3aed; padding-left: 10px; margin-top: 15px;">
+        <strong style="color: #111; font-size: 14px;">${signatureForm.fullName || ''}</strong><br/>
+        <span style="color: #555;">${signatureForm.jobTitle ? signatureForm.jobTitle + ' • ' : ''}${signatureForm.companyName || ''}</span><br/>
+        ${signatureForm.phone ? `<span style="color: #666; font-size: 12px;">📞 ${signatureForm.phone}</span><br/>` : ''}
+        ${signatureForm.website ? `<a href="${signatureForm.website.startsWith('http') ? signatureForm.website : 'https://' + signatureForm.website}" target="_blank" style="color: #7c3aed; font-size: 12px; text-decoration: none;">🌐 ${signatureForm.website}</a><br/>` : ''}
+        ${signatureForm.signatureImage ? `<br/><img src="${signatureForm.signatureImage}" alt="Assinatura" style="max-width: 450px; width: 100%; height: auto; margin-top: 8px; display: block;" />` : ''}
+      </div>`;
+    }
+
+    if (sigHtml) {
+      setComposeBody(prev => {
+        if (!prev || prev === '<p><br></p>' || prev.trim() === '') {
+          return '<p><br></p>' + sigHtml;
+        }
+        if (signatureForm.signatureImage && prev.includes(signatureForm.signatureImage)) {
+          return prev;
+        }
+        return prev + sigHtml;
+      });
+    }
+
     try {
       const res = await fetch('/api/webmail/signature', {
         method: 'POST',
