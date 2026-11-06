@@ -153,3 +153,4 @@ export default function ContactPicker({ contacts, value, onSelect, open, setOpen
     </div>
   );
 }
+
