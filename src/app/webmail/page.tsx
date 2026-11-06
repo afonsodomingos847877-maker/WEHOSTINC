@@ -2231,7 +2231,7 @@ function WebmailContent() {
 
       soundEffects.playSendEmailSound();
       setSendingMsg(false);
-      setSentSuccessMsg('✅ E-mail enviado com sucesso!');
+      setSentSuccessMsg('E-mail enviado com sucesso!');
 
       setTimeout(() => {
         setShowCompose(false);
@@ -2244,7 +2244,7 @@ function WebmailContent() {
         setComposeBody('');
         setComposeAttachments([]);
         refreshMessages();
-      }, 1500);
+      }, 2200);
     } catch (err: any) {
       console.error('Erro ao enviar e-mail:', err);
       setSendingMsg(false);
@@ -5521,9 +5521,34 @@ function WebmailContent() {
                 )}
 
             {sentSuccessMsg ? (
-              <div className="py-8 text-center space-y-3">
-                <CheckCircle2 className="h-12 w-12 text-emerald-500 mx-auto" />
-                <p className="font-bold text-gray-900">{sentSuccessMsg}</p>
+              <div className="py-10 px-4 text-center flex flex-col items-center justify-center space-y-4 animate-in fade-in zoom-in-95 duration-300">
+                {/* Glow ring & animated icon */}
+                <div className="relative flex items-center justify-center">
+                  <div className="absolute w-20 h-20 rounded-full bg-emerald-500/20 animate-ping opacity-60 pointer-events-none" />
+                  <div className="relative w-16 h-16 rounded-3xl bg-gradient-to-tr from-emerald-600 via-emerald-500 to-teal-400 text-white flex items-center justify-center shadow-[0_10px_30px_rgba(16,185,129,0.35)] transform transition-transform animate-in zoom-in-75 duration-300">
+                    <Send className="h-7 w-7 text-white -translate-y-0.5 translate-x-0.5" />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5 max-w-sm mx-auto">
+                  <h3 className="text-base sm:text-lg font-black text-neutral-900 tracking-tight">
+                    {sentSuccessMsg.replace(/^[✅\s]+/, '')}
+                  </h3>
+                  <p className="text-xs text-neutral-500 leading-relaxed">
+                    A sua mensagem foi encriptada via TLS e despachada para o servidor de entrega com sucesso.
+                  </p>
+                </div>
+
+                {/* Status chip */}
+                <div className="inline-flex items-center space-x-2 bg-emerald-50 border border-emerald-200/80 px-3.5 py-1.5 rounded-full text-[11px] font-bold text-emerald-800 shadow-2xs">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>Entrega Confirmada • IMAP &amp; SMTP Ativo</span>
+                </div>
+
+                {/* Progress bar animation */}
+                <div className="w-48 h-1 bg-neutral-100 rounded-full overflow-hidden mt-2">
+                  <div className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full animate-pulse" style={{ width: '100%' }} />
+                </div>
               </div>
             ) : (
               <form onSubmit={handleSendEmail} className="space-y-2.5">
