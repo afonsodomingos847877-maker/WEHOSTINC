@@ -1973,15 +1973,31 @@ function WebmailContent() {
     }
   };
 
-  // Eliminar mensagem permanentemente com atualização instantânea
-  const handleDeleteMessage = async (msgId: string, e?: React.MouseEvent) => {
+  // Solicitar confirmação ao utilizador antes de eliminar qualquer mensagem
+  const handleDeleteMessage = (msgId: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     const msg = messages.find(m => m.id === msgId) || (selectedMessage?.id === msgId ? selectedMessage : null);
     if (!msg) return;
 
-    const fromImapFolder = msg.folder === 'sent' ? 'Sent' : msg.folder === 'trash' ? 'Trash' : msg.folder === 'drafts' ? 'Drafts' : 'INBOX';
+    // Sempre abrir modal de confirmação para prevenir eliminações acidentais ("do nada")
+    setDeleteConfirmModal({
+      isOpen: true,
+      msgId,
+      subject: msg.subject || '(Sem assunto)',
+      isPermanent: msg.folder === 'trash'
+    });
+  };
+
+  // Executar eliminação após confirmação explícita do utilizador no modal
+  const executeDeleteMessage = async (msgId: string) => {
+    const msg = messages.find(m => m.id === msgId) || (selectedMessage?.id === msgId ? selectedMessage : null);
+    if (!msg) {
+      setDeleteConfirmModal(null);
+      return;
+    }
+    const imapFolder = msg.folder === 'sent' ? 'Sent' : msg.folder === 'trash' ? 'Trash' : msg.folder === 'drafts' ? 'Drafts' : 'INBOX';
     
-    // Atualização otimista imediata na UI
+    // Atualização otimista na interface
     setMessages(prev => prev.filter(m => m.id !== msgId));
     if (selectedMessage?.id === msgId) {
       setSelectedMessage(null);
@@ -1996,27 +2012,8 @@ function WebmailContent() {
     }));
     soundEffects.playDeleteEmailSound();
 
-    // Eliminação definitiva no servidor IMAP
     try {
-      await webmailManager.deletePermanently(msgId, selectedAccountEmail, mailboxPassword, msg.uid, fromImapFolder);
-    } catch (err) {
-      console.error('[Webmail] Error deleting message permanently:', err);
-    }
-  };
-
-  // Executar eliminação definitiva quando o utilizador confirma dentro da Lixeira
-  const executeDeleteMessage = async (msgId: string) => {
-    const msg = messages.find(m => m.id === msgId) || (selectedMessage?.id === msgId ? selectedMessage : null);
-    const imapFolder = msg?.folder === 'sent' ? 'Sent' : msg?.folder === 'trash' ? 'Trash' : msg?.folder === 'drafts' ? 'Drafts' : 'INBOX';
-    try {
-      await webmailManager.deletePermanently(msgId, selectedAccountEmail, mailboxPassword, msg?.uid, imapFolder);
-      setMessages(prev => prev.filter(m => m.id !== msgId));
-      if (selectedMessage?.id === msgId) setSelectedMessage(null);
-      setFolderStats(prev => ({
-        ...prev,
-        trash: Math.max(prev.trash - 1, 0)
-      }));
-      soundEffects.playDeleteEmailSound();
+      await webmailManager.deletePermanently(msgId, selectedAccountEmail, mailboxPassword, msg.uid, imapFolder);
     } catch (err) {
       console.error('[Webmail] Error deleting message permanently:', err);
     } finally {
