@@ -4249,7 +4249,6 @@ function WebmailContent() {
               displayMessages.map((msg) => {
                 const isSelected = selectedMessage?.id === msg.id;
                 const hasAtt = msg.attachments && msg.attachments.length > 0;
-                const imageAttachment = msg.attachments?.find(att => att.type?.startsWith('image/'));
                 const securityCheck = analyzeEmailSecurity(msg, selectedAccountEmail, trustedSenders);
                 const isOverdue = isMessageOverdue(msg);
                 return (
@@ -4356,15 +4355,6 @@ function WebmailContent() {
                       <p className="text-[11px] sm:text-xs text-neutral-500 truncate leading-relaxed">
                         {getSnippetText(msg.textPreview, msg.body)}
                       </p>
-                      {imageAttachment && (
-                        <div className="mt-1.5 flex items-center space-x-2">
-                          <img 
-                            src={imageAttachment.url} 
-                            alt="Preview" 
-                            className="h-7 w-7 rounded-lg object-cover border border-neutral-200"
-                          />
-                        </div>
-                      )}
                     </div>
                   </div>
                 );
