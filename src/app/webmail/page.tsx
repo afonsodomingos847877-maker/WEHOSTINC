@@ -1107,7 +1107,13 @@ function WebmailContent() {
   const handleSelectTemplate = (template: EmailTemplate) => {
     setComposeSubject(templateLanguage === 'pt' ? template.subject : template.subjectEN);
     const rawBody = templateLanguage === 'pt' ? template.body : template.bodyEN;
-    setComposeBody(formatTemplateBodyToHtml(rawBody));
+    const formattedHtml = formatTemplateBodyToHtml(rawBody);
+    const sig = getSignatureHtml();
+    if (sig) {
+      setComposeBody(`${formattedHtml}<p><br></p>${sig}`);
+    } else {
+      setComposeBody(formattedHtml);
+    }
     setShowTemplateSelector(false);
   };
 
@@ -2479,7 +2485,9 @@ function WebmailContent() {
       });
       const data = await res.json();
       if (data.success && data.result) {
-        setComposeBody(cleanAiText(data.result));
+        const cleaned = cleanAiText(data.result);
+        const sig = getSignatureHtml();
+        setComposeBody(sig ? `${cleaned}<p><br></p>${sig}` : cleaned);
         soundEffects.playAICompleteSound();
       }
     } catch (err) {
@@ -2627,7 +2635,8 @@ function WebmailContent() {
             .split(/\n\n+/)
             .map((p: string) => `<p>${p.trim().replace(/\n/g, '<br/>')}</p>`)
             .join('');
-          setComposeBody(htmlParagraphs);
+          const sig = getSignatureHtml();
+          setComposeBody(sig ? `${htmlParagraphs}<p><br></p>${sig}` : htmlParagraphs);
 
           if (!composeSubject.trim() && data.generatedSubject) {
             setComposeSubject(cleanAiText(data.generatedSubject));
@@ -2862,7 +2871,8 @@ function WebmailContent() {
             .split(/\n\n+/)
             .map((p: string) => `<p>${p.trim().replace(/\n/g, '<br/>')}</p>`)
             .join('');
-          setComposeBody(htmlParagraphs);
+          const sig = getSignatureHtml();
+          setComposeBody(sig ? `${htmlParagraphs}<p><br></p>${sig}` : htmlParagraphs);
         }
         if (data.translatedSubject && composeSubject) {
           setComposeSubject(cleanAiText(data.translatedSubject));
