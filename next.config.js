@@ -12,6 +12,22 @@ const nextConfig = {
     };
     return config;
   },
+  async redirects() {
+    return [
+      // 0. Redirecionamento Canónico 301: Apex para WWW (wehosthere.com -> www.wehosthere.com)
+      {
+        source: '/:path*',
+        has: [
+          {
+            type: 'host',
+            value: 'wehosthere.com',
+          },
+        ],
+        destination: 'https://www.wehosthere.com/:path*',
+        permanent: true,
+      },
+    ];
+  },
   async rewrites() {
     return [
       {
@@ -38,10 +54,43 @@ const nextConfig = {
         source: '/.well-known/autoconfig/mail/config-v1.1.xml',
         destination: '/api/autoconfig',
       },
+      // Roteamento de Subdomínio para Sites Gerados por IA (*.wehosthere.com)
+      {
+        source: '/((?!api|dashboard|admin|login|register|checkout|site|_next|favicon.ico).*)',
+        has: [
+          {
+            type: 'host',
+            value: '(?<subdomain>(?!(www|api|admin|mail|app|cpanel|webmail|staging|dev)$)[^.]+)\\.wehosthere\\.com',
+          },
+        ],
+        destination: '/site/:subdomain/$1',
+      },
+      // Roteamento de Subdomínio para Desenvolvimento Local (*.localhost)
+      {
+        source: '/((?!api|dashboard|admin|login|register|checkout|site|_next|favicon.ico).*)',
+        has: [
+          {
+            type: 'host',
+            value: '(?<subdomain>(?!(www|api|admin|mail|app|cpanel|webmail|staging|dev)$)[^.]+)\\.localhost',
+          },
+        ],
+        destination: '/site/:subdomain/$1',
+      },
     ];
   },
   async headers() {
     return [
+      // CORS para APIs
+      {
+        source: '/api/:path*',
+        headers: [
+          { key: 'Access-Control-Allow-Credentials', value: 'true' },
+          { key: 'Access-Control-Allow-Origin', value: 'https://wehosthere.com' },
+          { key: 'Access-Control-Allow-Methods', value: 'GET,DELETE,PATCH,POST,PUT,OPTIONS' },
+          { key: 'Access-Control-Allow-Headers', value: 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization, x-internal-auth' },
+        ],
+      },
+      // Cabeçalhos de Segurança Globais
       {
         source: '/:path*',
         headers: [
@@ -70,11 +119,6 @@ const nextConfig = {
             value: 'strict-origin-when-cross-origin'
           },
           {
-            // 🔒 CSP reforçado:
-            // - Removido unsafe-eval (não necessário em Next.js produção)
-            // - Removido wehostinc.onrender.com (não utilizado)
-            // - Adicionado frame-ancestors para prevenir clickjacking
-            // - connect-src restrito ao próprio domínio e APIs necessárias
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
@@ -99,4 +143,3 @@ const nextConfig = {
 }
 
 module.exports = nextConfig
-
