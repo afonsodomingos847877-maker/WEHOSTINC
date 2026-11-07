@@ -5,6 +5,7 @@
  */
 
 const tls = require('tls');
+const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
@@ -148,3 +149,24 @@ smtpServer.listen(CONFIG.smtp.port, '0.0.0.0', () => {
   console.log(`🚀 Proxy SMTP WeHostHere ativo na porta ${CONFIG.smtp.port} -> ${CONFIG.smtp.targetHost}:${CONFIG.smtp.targetPort}`);
 });
 
+// Servidor HTTP interno de Health Check e status para Vercel Services
+const httpPort = parseInt(process.env.PORT || '3000', 10);
+const httpServer = http.createServer((req, res) => {
+  if (req.url === '/health' || req.url === '/') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      status: 'ok',
+      service: 'mail-proxy',
+      imap: { port: CONFIG.imap.port, target: CONFIG.imap.targetHost },
+      smtp: { port: CONFIG.smtp.port, target: CONFIG.smtp.targetHost },
+      uptime: process.uptime(),
+    }));
+  } else {
+    res.writeHead(404, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Not Found' }));
+  }
+});
+
+httpServer.listen(httpPort, '0.0.0.0', () => {
+  console.log(`🚀 Servidor HTTP de Health/Status ativo na porta ${httpPort}`);
+});

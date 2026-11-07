@@ -60,9 +60,23 @@ export class MigaduImapSmtpService {
   private smtpPort: number;
 
   constructor() {
-    this.imapHost = process.env.MIGADU_IMAP_HOST || 'imap.migadu.com';
+    let defaultImapHost = process.env.MIGADU_IMAP_HOST || 'imap.migadu.com';
+    let defaultSmtpHost = process.env.MIGADU_SMTP_HOST || 'smtp.migadu.com';
+
+    // Se o serviço mail-proxy estiver vinculado via Vercel Services binding e não houver host manual
+    if (!process.env.MIGADU_IMAP_HOST && process.env.MAIL_PROXY_URL) {
+      try {
+        const u = new URL(process.env.MAIL_PROXY_URL);
+        if (u.hostname) {
+          defaultImapHost = u.hostname;
+          defaultSmtpHost = u.hostname;
+        }
+      } catch {}
+    }
+
+    this.imapHost = defaultImapHost;
     this.imapPort = parseInt(process.env.MIGADU_IMAP_PORT || '993');
-    this.smtpHost = process.env.MIGADU_SMTP_HOST || 'smtp.migadu.com';
+    this.smtpHost = defaultSmtpHost;
     this.smtpPort = parseInt(process.env.MIGADU_SMTP_PORT || '465');
   }
 

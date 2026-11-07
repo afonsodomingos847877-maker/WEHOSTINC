@@ -4,6 +4,5 @@ COPY package.json ./
 RUN npm install --omit=dev
 COPY proxy.js ./
 RUN mkdir -p certs
-EXPOSE 993 465
+EXPOSE 3000 993 465
 CMD ["node", "proxy.js"]
-

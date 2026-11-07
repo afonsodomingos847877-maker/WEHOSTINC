@@ -1,4 +1,32 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "wehosthere-backend": {
+      "root": ".",
+      "framework": "nextjs",
+      "buildCommand": "npm install && npm run build",
+      "bindings": [
+        {
+          "type": "service",
+          "service": "mail-proxy",
+          "format": "url",
+          "env": "MAIL_PROXY_URL"
+        }
+      ]
+    },
+    "mail-proxy": {
+      "root": "mail-proxy",
+      "runtime": "container"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": {
+        "service": "wehosthere-backend"
+      }
+    }
+  ],
   "crons": [
     {
       "path": "/api/cron/due-date-reminders",
