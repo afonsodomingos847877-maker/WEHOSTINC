@@ -141,8 +141,16 @@ const smtpServer = tls.createServer(
   }
 );
 
+imapServer.on('error', (err) => {
+  console.warn(`[IMAP Server Warning]: ${err.message}`);
+});
+
 imapServer.listen(CONFIG.imap.port, '0.0.0.0', () => {
   console.log(`🚀 Proxy IMAP WeHostHere ativo na porta ${CONFIG.imap.port} -> ${CONFIG.imap.targetHost}:${CONFIG.imap.targetPort}`);
+});
+
+smtpServer.on('error', (err) => {
+  console.warn(`[SMTP Server Warning]: ${err.message}`);
 });
 
 smtpServer.listen(CONFIG.smtp.port, '0.0.0.0', () => {
@@ -165,6 +173,10 @@ const httpServer = http.createServer((req, res) => {
     res.writeHead(404, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ error: 'Not Found' }));
   }
+});
+
+httpServer.on('error', (err) => {
+  console.error(`[HTTP Server Error]: ${err.message}`);
 });
 
 httpServer.listen(httpPort, '0.0.0.0', () => {
