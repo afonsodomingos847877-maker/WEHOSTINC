@@ -2054,6 +2054,33 @@ function WebmailContent() {
     )}:${pad(dateObj.getMinutes())}`;
   };
 
+  const formatFullMessageDate = (dateVal: string | Date | undefined): string => {
+    if (!dateVal) return '';
+    try {
+      let d = new Date(dateVal);
+      if (isNaN(d.getTime())) {
+        if (typeof dateVal === 'string' && /^\d{1,2}:\d{2}/.test(dateVal.trim())) {
+          const today = new Date();
+          const [hh, mm] = dateVal.trim().split(':');
+          today.setHours(parseInt(hh, 10), parseInt(mm, 10), 0, 0);
+          d = today;
+        } else {
+          return String(dateVal);
+        }
+      }
+      return d.toLocaleDateString('pt-MZ', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      });
+    } catch {
+      return String(dateVal);
+    }
+  };
+
   const getQuickSchedulePresets = (): Array<{ label: string; sublabel: string; value: string }> => {
     const now = new Date();
 
@@ -4349,8 +4376,8 @@ function WebmailContent() {
                         </div>
                         <div className="flex items-center space-x-1.5 ml-2 shrink-0">
                           {hasAtt && <Paperclip className="h-3.5 w-3.5 text-neutral-400" />}
-                          <span className="text-[10px] sm:text-[11px] text-neutral-400 whitespace-nowrap font-medium">
-                            {new Date(msg.date).toLocaleTimeString('pt-MZ', { hour: '2-digit', minute: '2-digit', hour12: false })}
+                          <span className="text-[10px] sm:text-[11px] text-neutral-400 whitespace-nowrap font-medium" title={formatFullMessageDate(msg.date)}>
+                            {formatFullMessageDate(msg.date)}
                           </span>
                         </div>
                       </div>
@@ -4709,7 +4736,7 @@ function WebmailContent() {
                       </select>
                     </div>
                     <div className="text-right text-neutral-400 font-medium text-[11px] sm:text-xs">
-                      {new Date(selectedMessage.date).toLocaleDateString('pt-MZ', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })}
+                      {formatFullMessageDate(selectedMessage.date)}
                     </div>
                   </div>
                 </div>
