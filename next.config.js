@@ -1,6 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  images: {
+    unoptimized: true,
+  },
   eslint: {
     // Permite que builds na Vercel/Render concluam com sucesso mesmo com avisos
     ignoreDuringBuilds: true,
