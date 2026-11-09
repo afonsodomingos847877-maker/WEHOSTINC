@@ -7,24 +7,30 @@ interface ScrollRevealHeadingProps {
   text: string;
   badge?: string;
   badgeIcon?: React.ReactNode;
+  badgeClassName?: string;
   subtitle?: string;
+  subtitleClassName?: string;
   className?: string;
   titleClassName?: string;
   highlightWords?: string[];
   align?: 'center' | 'left';
   showAccentLine?: boolean;
+  accentLineColor?: string;
 }
 
 export default function ScrollRevealHeading({
   text,
   badge,
   badgeIcon,
+  badgeClassName,
   subtitle,
+  subtitleClassName,
   className = '',
   titleClassName = '',
   highlightWords = ['WEHOSTHERE?', 'WEHOSTHERE', 'prática.', 'prática'],
   align = 'center',
-  showAccentLine = true
+  showAccentLine = true,
+  accentLineColor,
 }: ScrollRevealHeadingProps) {
   const [isInView, setIsInView] = useState(false);
   const [scrollDirection, setScrollDirection] = useState<'down' | 'up'>('down');
@@ -82,7 +88,9 @@ export default function ScrollRevealHeading({
       {/* Badge decorativo animado — transição mais lenta e suave */}
       {badge && (
         <div
-          className={`inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-widest text-primary-700 bg-primary-50/90 border border-primary-200/80 mb-3 shadow-xs ${
+          className={`inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-widest mb-3 shadow-xs ${
+            badgeClassName || 'text-primary-700 bg-primary-50/90 border border-primary-200/80'
+          } ${
             isInView
               ? 'opacity-100 scale-100 translate-y-0'
               : scrollDirection === 'down'
@@ -147,7 +155,7 @@ export default function ScrollRevealHeading({
       {showAccentLine && (
         <div className={`flex ${isLeft ? 'justify-start' : 'justify-center'} mt-3 mb-2 w-full`}>
           <div
-            className={`h-1 bg-gradient-to-r from-primary-600 via-blue-500 to-primary-600 rounded-full shadow-xs ${
+            className={`h-1 bg-gradient-to-r ${accentLineColor || 'from-primary-600 via-blue-500 to-primary-600'} rounded-full shadow-xs ${
               isInView ? 'w-16 opacity-100' : 'w-0 opacity-0'
             }`}
             style={{
@@ -163,7 +171,9 @@ export default function ScrollRevealHeading({
       {/* Subtítulo opcional com fade suave e velocidade reduzida */}
       {subtitle && (
         <p
-          className={`text-sm sm:text-base text-slate-600 leading-relaxed font-normal mt-3 ${
+          className={`leading-relaxed font-normal mt-3 ${
+            subtitleClassName || 'text-sm sm:text-base text-slate-600'
+          } ${
             isLeft ? 'max-w-xl' : 'max-w-lg mx-auto'
           } ${
             isInView

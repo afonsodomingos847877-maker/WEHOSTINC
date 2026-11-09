@@ -324,15 +324,16 @@ export default function Home() {
             {/* Right Column — Clean Bold Typography & Call to Action (Meta Style) */}
             <div className="lg:col-span-5 flex flex-col items-start text-left">
               
-              {/* Headline */}
-              <h2 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 tracking-tight leading-[1.1] mb-5">
-                {t('builder_promo.title')}
-              </h2>
-
-              {/* Description */}
-              <p className="text-base sm:text-lg text-gray-600 leading-relaxed mb-8 font-normal">
-                {t('builder_promo.desc')}
-              </p>
+              {/* Headline & Description com efeito animado no scroll */}
+              <ScrollRevealHeading
+                text={t('builder_promo.title')}
+                subtitle={t('builder_promo.desc')}
+                align="left"
+                showAccentLine={false}
+                titleClassName="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 tracking-tight leading-[1.1] mb-2"
+                subtitleClassName="text-base sm:text-lg text-gray-600 leading-relaxed font-normal mb-8"
+                highlightWords={['Cresça.', 'Grow.', 'Cresça', 'Grow']}
+              />
 
               {/* CTA Button */}
               <Link
@@ -830,17 +831,20 @@ export default function Home() {
       {/* Systems for Rent Section */}
       <section id="sistemas-aluguer" ref={systemsRentRef} className="anim-fade-up py-10 sm:py-16 px-3 sm:px-6 bg-gradient-to-b from-white to-purple-50">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-6 sm:mb-10">
-            <div className="inline-flex items-center space-x-1.5 sm:space-x-2 bg-purple-100 text-purple-800 border border-purple-200 px-3 sm:px-4 py-1.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider mb-3 sm:mb-4">
-              <Star className="h-3 w-3 sm:h-4 sm:w-4 text-purple-600" />
-              <span>{t('systems.badge')}</span>
-            </div>
-            <h2 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-gray-900 mb-2 sm:mb-3">
-              {t('systems.title')}
-            </h2>
-            <p className="text-sm sm:text-base text-gray-600 max-w-2xl mx-auto mb-4 sm:mb-6 px-2">
-              {t('systems.desc')}
-            </p>
+          <div className="mb-6 sm:mb-10">
+            <ScrollRevealHeading
+              badge={t('systems.badge')}
+              badgeIcon={<Star className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-purple-600" />}
+              badgeClassName="text-purple-800 bg-purple-100 border border-purple-200"
+              text={t('systems.title')}
+              subtitle={t('systems.desc')}
+              align="center"
+              showAccentLine={true}
+              accentLineColor="from-purple-600 via-indigo-500 to-purple-600"
+              titleClassName="text-xl sm:text-2xl lg:text-3xl font-extrabold text-gray-900"
+              subtitleClassName="text-sm sm:text-base text-gray-600 max-w-2xl mx-auto px-2"
+              highlightWords={['Sistemas', 'Profissionais', 'Systems', 'Professional']}
+            />
           </div>
 
           {/* Como Funciona */}
@@ -961,7 +965,7 @@ export default function Home() {
       {/* Blog/News Section */}
       <section className="py-10 sm:py-16 px-3 sm:px-6 bg-white">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-6 sm:mb-10">
+          <div className="mb-6 sm:mb-10">
             <div className="flex items-center justify-center gap-2 mb-3 sm:mb-4">
               <Link
                 href="/"
@@ -970,12 +974,15 @@ export default function Home() {
                 {t('blog.back_home')}
               </Link>
             </div>
-            <h2 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-gray-900 mb-2 sm:mb-3">
-              {t('blog.title')}
-            </h2>
-            <p className="text-sm sm:text-base text-gray-600 max-w-2xl mx-auto">
-              {t('blog.desc')}
-            </p>
+            <ScrollRevealHeading
+              text={t('blog.title')}
+              subtitle={t('blog.desc')}
+              align="center"
+              showAccentLine={true}
+              titleClassName="text-xl sm:text-2xl lg:text-3xl font-extrabold text-gray-900"
+              subtitleClassName="text-sm sm:text-base text-gray-600 max-w-2xl mx-auto"
+              highlightWords={['Notícias', 'Atualizações', 'News', 'Updates']}
+            />
           </div>
 
           {/* Menu de Categorias */}
