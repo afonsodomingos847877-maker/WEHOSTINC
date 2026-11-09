@@ -449,12 +449,15 @@ export default function Home() {
       >
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-6 sm:mb-10">
-            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-3 sm:mb-4">
-              {t('pricing.title')}
-            </h2>
-            <p className="text-sm sm:text-base text-gray-600 max-w-xl mx-auto mb-4 sm:mb-6 px-2">
-              {t('pricing.subtitle')}
-            </p>
+            <ScrollRevealHeading
+              text={t('pricing.title')}
+              subtitle={t('pricing.subtitle')}
+              align="center"
+              showAccentLine={true}
+              titleClassName="text-xl sm:text-2xl lg:text-3xl font-extrabold text-gray-900"
+              subtitleClassName="text-sm sm:text-base text-gray-600 max-w-xl mx-auto px-2 mb-4 sm:mb-6"
+              highlightWords={['Hospedagem', 'Hosting', 'Planos', 'Plans']}
+            />
 
             {/* Seleção de Duração / Período da Hospedagem */}
             <div className="inline-flex flex-wrap items-center justify-center bg-gray-200 p-1.5 rounded-2xl border border-gray-300 shadow-inner gap-1 max-w-full">
@@ -1142,22 +1145,21 @@ export default function Home() {
 
         <div className="relative z-10 max-w-5xl mx-auto text-center">
 
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 bg-indigo-500/15 border border-indigo-400/30 rounded-full px-4 py-1.5 mb-6">
-            <span className="text-indigo-400 text-xs font-mono font-bold tracking-tight">&lt;/&gt;</span>
-            <span className="text-indigo-300 text-xs sm:text-sm font-semibold tracking-widest uppercase">Revista Digital · Codando Histórias</span>
+          <div className="mb-10">
+            <ScrollRevealHeading
+              badge="Revista Digital · Codando Histórias"
+              badgeIcon={<span className="text-indigo-400 text-xs font-mono font-bold tracking-tight">&lt;/&gt;</span>}
+              badgeClassName="bg-indigo-500/15 border border-indigo-400/30 text-indigo-300"
+              text="Histórias que inspiram o futuro digital de Moçambique"
+              subtitle="Artigos e histórias sobre tecnologia e inovação em Moçambique."
+              align="center"
+              showAccentLine={true}
+              accentLineColor="from-indigo-400 via-violet-400 to-blue-400"
+              titleClassName="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white leading-tight"
+              subtitleClassName="text-slate-400 text-sm leading-relaxed max-w-xl mx-auto"
+              highlightWords={['futuro', 'digital', 'Moçambique']}
+            />
           </div>
-
-          {/* Heading */}
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white leading-tight mb-5">
-            Histórias que inspiram<br className="hidden sm:block" />
-            <span className="bg-gradient-to-r from-indigo-400 via-violet-400 to-blue-400 bg-clip-text text-transparent"> o futuro digital </span>
-            de Moçambique
-          </h2>
-
-          <p className="text-slate-400 text-sm leading-relaxed max-w-xl mx-auto mb-10">
-            Artigos e histórias sobre tecnologia e inovação em Moçambique.
-          </p>
 
           {/* Feature pills */}
           <div className="flex flex-wrap items-center justify-center gap-2 mb-10">

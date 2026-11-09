@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Image as ImageIcon } from 'lucide-react';
 import { dataManager, Partner } from '@/lib/data';
 import { useLanguage } from '@/context/LanguageContext';
+import ScrollRevealHeading from '@/components/ScrollRevealHeading';
 
 export default function PartnersSection() {
   const { t } = useLanguage();
@@ -58,13 +59,16 @@ export default function PartnersSection() {
     return (
       <section className="py-12 sm:py-16 bg-white">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-          <div className="text-center mb-8 sm:mb-12">
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-3 sm:mb-4">
-              {t('partners.title')}
-            </h2>
-            <p className="text-gray-600 text-sm sm:text-base max-w-2xl mx-auto">
-              {t('partners.subtitle')}
-            </p>
+          <div className="mb-8 sm:mb-12">
+            <ScrollRevealHeading
+              text={t('partners.title')}
+              subtitle={t('partners.subtitle')}
+              align="center"
+              showAccentLine={true}
+              titleClassName="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900"
+              subtitleClassName="text-gray-600 text-sm sm:text-base max-w-2xl mx-auto"
+              highlightWords={['Confiança', 'Infraestruturas', 'Tecnologias', 'Trusted', 'Infrastructure']}
+            />
           </div>
         </div>
       </section>
@@ -74,13 +78,16 @@ export default function PartnersSection() {
   return (
     <section className="py-12 sm:py-16 bg-white">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-        <div className="text-center mb-8 sm:mb-12">
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-3 sm:mb-4">
-            {t('partners.title')}
-          </h2>
-          <p className="text-gray-600 text-sm sm:text-base max-w-2xl mx-auto">
-            {t('partners.subtitle')}
-          </p>
+        <div className="mb-8 sm:mb-12">
+          <ScrollRevealHeading
+            text={t('partners.title')}
+            subtitle={t('partners.subtitle')}
+            align="center"
+            showAccentLine={true}
+            titleClassName="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900"
+            subtitleClassName="text-gray-600 text-sm sm:text-base max-w-2xl mx-auto"
+            highlightWords={['Confiança', 'Infraestruturas', 'Tecnologias', 'Trusted', 'Infrastructure']}
+          />
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6 sm:gap-8">

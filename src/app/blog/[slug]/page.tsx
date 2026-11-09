@@ -1,109 +1,162 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { connectDB } from '@/lib/mongodb';
-import BlogPostModel from '@/lib/models/BlogPost';
 import BlogPostClient, { BlogPostData } from './BlogPostClient';
 
 export const dynamic = 'force-dynamic';
 
 interface Props {
-  params: Promise<{ slug: string }>;
+  params: { slug: string } | Promise<{ slug: string }>;
+}
+
+async function fetchPostData(slug: string): Promise<{ post: any; relatedPosts: BlogPostData[] } | null> {
+  const cleanSlug = decodeURIComponent(slug).trim();
+  const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://wehostinc.onrender.com';
+
+  // 1. Tentar buscar pelo backend (Render / API)
+  try {
+    const res = await fetch(`${backendUrl}/api/blog/${encodeURIComponent(cleanSlug)}`, {
+      next: { revalidate: 60 },
+      headers: { Accept: 'application/json' }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success && data.post) {
+        return {
+          post: data.post,
+          relatedPosts: data.relatedPosts || []
+        };
+      }
+    }
+  } catch (err) {
+    console.warn('[Blog] Falha ao consultar Render API, tentando conexão direta MongoDB:', err);
+  }
+
+  // 2. Fallback direto ao MongoDB
+  try {
+    const { connectDB } = await import('@/lib/mongodb');
+    await connectDB();
+    const BlogPostModel = (await import('@/lib/models/BlogPost')).default;
+    const post: any = await BlogPostModel.findOne({ slug: cleanSlug, status: 'published' }).lean();
+
+    if (post) {
+      let relatedPosts: BlogPostData[] = [];
+      try {
+        const rawRelated = await BlogPostModel.find({
+          status: 'published',
+          slug: { $ne: cleanSlug },
+          $or: [
+            { category: post.category },
+            { tags: { $in: post.tags || [] } }
+          ]
+        })
+          .limit(3)
+          .lean();
+
+        relatedPosts = rawRelated.map((p: any) => ({
+          id: p._id?.toString() || p.id,
+          title: p.title,
+          slug: p.slug,
+          excerpt: p.excerpt,
+          content: p.content,
+          coverImage: p.coverImage || '',
+          author: { name: p.author?.name || 'WEHOSTHERE' },
+          category: p.category,
+          tags: p.tags || [],
+          publishedAt: p.publishedAt ? new Date(p.publishedAt).toISOString() : '',
+          views: p.views || 0,
+          featured: Boolean(p.featured),
+        }));
+      } catch (_) {}
+
+      return {
+        post: {
+          id: post._id?.toString() || post.id,
+          title: post.title,
+          slug: post.slug,
+          excerpt: post.excerpt,
+          content: post.content,
+          coverImage: post.coverImage,
+          author: post.author,
+          category: post.category,
+          tags: post.tags,
+          status: post.status,
+          publishedAt: post.publishedAt,
+          views: post.views,
+          featured: post.featured,
+          createdAt: post.createdAt,
+          updatedAt: post.updatedAt,
+          seo: post.seo
+        },
+        relatedPosts
+      };
+    }
+  } catch (err) {
+    console.error('[Blog] Falha na conexão MongoDB fallback:', err);
+  }
+
+  return null;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = await params;
-  try {
-    await connectDB();
-    const post: any = await BlogPostModel.findOne({ slug, status: 'published' }).lean();
-    if (!post) {
-      return {
-        title: 'Post Não Encontrado',
-      };
-    }
+  const resolvedParams = await Promise.resolve(params);
+  const data = await fetchPostData(resolvedParams.slug);
 
-    const title = post.seo?.metaTitle || post.title;
-    const description = post.seo?.metaDescription || post.excerpt;
-    const url = `https://www.wehosthere.com/blog/${post.slug}`;
-    const ogImage = post.coverImage || 'https://www.wehosthere.com/servidores-banner.png';
-
+  if (!data || !data.post) {
     return {
-      title,
-      description,
-      keywords: post.seo?.keywords?.length ? post.seo.keywords : post.tags,
-      alternates: {
-        canonical: url,
-      },
-      openGraph: {
-        type: 'article',
-        locale: 'pt_MZ',
-        url,
-        title,
-        description,
-        publishedTime: post.publishedAt ? new Date(post.publishedAt).toISOString() : undefined,
-        modifiedTime: post.updatedAt ? new Date(post.updatedAt).toISOString() : undefined,
-        authors: [post.author?.name || 'WEHOSTHERE'],
-        tags: post.tags,
-        images: [
-          {
-            url: ogImage,
-            width: 1200,
-            height: 630,
-            alt: title,
-          },
-        ],
-      },
-      twitter: {
-        card: 'summary_large_image',
-        title,
-        description,
-        images: [ogImage],
-      },
-    };
-  } catch (e) {
-    return {
-      title: 'Blog',
+      title: 'Post Não Encontrado | WEHOSTHERE Blog',
     };
   }
+
+  const { post } = data;
+  const title = post.seo?.metaTitle || `${post.title} | WEHOSTHERE Blog`;
+  const description = post.seo?.metaDescription || post.excerpt;
+  const url = `https://www.wehosthere.com/blog/${post.slug}`;
+  const ogImage = post.coverImage || 'https://www.wehosthere.com/servidores-banner.png';
+
+  return {
+    title,
+    description,
+    keywords: post.seo?.keywords?.length ? post.seo.keywords : post.tags,
+    alternates: {
+      canonical: url,
+    },
+    openGraph: {
+      type: 'article',
+      locale: 'pt_MZ',
+      url,
+      title,
+      description,
+      publishedTime: post.publishedAt ? new Date(post.publishedAt).toISOString() : undefined,
+      modifiedTime: post.updatedAt ? new Date(post.updatedAt).toISOString() : undefined,
+      authors: [post.author?.name || 'WEHOSTHERE'],
+      tags: post.tags,
+      images: [
+        {
+          url: ogImage,
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [ogImage],
+    },
+  };
 }
 
 export default async function BlogPostPage({ params }: Props) {
-  const { slug } = await params;
-  await connectDB();
-  const post: any = await BlogPostModel.findOne({ slug, status: 'published' }).lean();
+  const resolvedParams = await Promise.resolve(params);
+  const data = await fetchPostData(resolvedParams.slug);
 
-  if (!post) {
+  if (!data || !data.post) {
     notFound();
   }
 
-  // Buscar posts relacionados no servidor
-  let relatedPosts: BlogPostData[] = [];
-  try {
-    const rawRelated = await BlogPostModel.find({
-      status: 'published',
-      slug: { $ne: slug },
-      $or: [
-        { category: post.category },
-        { tags: { $in: post.tags || [] } }
-      ]
-    })
-      .limit(3)
-      .lean();
-
-    relatedPosts = rawRelated.map((p: any) => ({
-      id: p._id?.toString() || '',
-      title: p.title,
-      slug: p.slug,
-      excerpt: p.excerpt,
-      content: p.content,
-      coverImage: p.coverImage || '',
-      author: { name: p.author?.name || 'WEHOSTHERE' },
-      category: p.category,
-      tags: p.tags || [],
-      publishedAt: p.publishedAt ? new Date(p.publishedAt).toISOString() : '',
-      views: p.views || 0,
-      featured: Boolean(p.featured),
-    }));
-  } catch (_) {}
+  const { post, relatedPosts } = data;
 
   // Schema.org BlogPosting estruturado
   const jsonLd = {
@@ -168,7 +221,7 @@ export default async function BlogPostPage({ params }: Props) {
   };
 
   const initialPost: BlogPostData = {
-    id: (post as any)._id?.toString() || '',
+    id: post.id || post._id?.toString() || '',
     title: post.title,
     slug: post.slug,
     excerpt: post.excerpt,
