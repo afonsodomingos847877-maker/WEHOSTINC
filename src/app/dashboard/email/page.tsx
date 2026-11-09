@@ -283,12 +283,14 @@ export default function EmailPage() {
     dataManager.fetchSitesAsync().then(() => refreshData(undefined, userEmailFilter));
 
     const syncAllData = () => {
+      if (typeof document !== 'undefined' && document.hidden) return;
       dataManager.fetchEmailsAsync(userEmailFilter).then(emails => refreshData(emails, userEmailFilter));
       dataManager.fetchSitesAsync().then(() => refreshData(undefined, userEmailFilter));
       fetchMigaduDomains(userEmailFilter);
     };
 
-    const interval = setInterval(syncAllData, 10000);
+    // Sincronizar a cada 60s em vez de 10s para poupar CPU/requisições
+    const interval = setInterval(syncAllData, 60000);
     window.addEventListener('focus', syncAllData);
 
     return () => {

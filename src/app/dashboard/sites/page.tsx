@@ -74,8 +74,9 @@ export default function SitesPage() {
       setSites(fetched);
     });
 
-    // Polling a cada 10s e em foco para sincronizar alterações de status do Admin em tempo real
+    // Polling a cada 60s em foco para sincronizar alterações de status do Admin em tempo real
     const refreshSites = () => {
+      if (typeof document !== 'undefined' && document.hidden) return;
       if (currentUser?.email) {
         dataManager.fetchSitesAsync(currentUser.email).then((fetched) => {
           setSites(fetched);
@@ -83,7 +84,7 @@ export default function SitesPage() {
       }
     };
 
-    const interval = setInterval(refreshSites, 10000);
+    const interval = setInterval(refreshSites, 60000);
     window.addEventListener('focus', refreshSites);
 
     return () => {

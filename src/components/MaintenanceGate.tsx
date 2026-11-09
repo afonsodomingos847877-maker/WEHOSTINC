@@ -11,6 +11,7 @@ export default function MaintenanceGate({ children }: { children: React.ReactNod
   const [checking, setChecking] = useState(true);
 
   const checkMaintenance = async () => {
+    if (typeof document !== 'undefined' && document.hidden) return;
     try {
       const user = auth.getCurrentUser();
       setIsAdmin(auth.isAdminUser(user));
@@ -31,7 +32,8 @@ export default function MaintenanceGate({ children }: { children: React.ReactNod
 
   useEffect(() => {
     checkMaintenance();
-    const interval = setInterval(checkMaintenance, 15000); // Verificar a cada 15 segundos
+    // Verificar a cada 2 minutos em vez de 15 segundos (poupança massiva de requisições)
+    const interval = setInterval(checkMaintenance, 120000);
     return () => clearInterval(interval);
   }, []);
 

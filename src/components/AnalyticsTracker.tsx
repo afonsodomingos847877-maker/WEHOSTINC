@@ -57,6 +57,9 @@ export default function AnalyticsTracker() {
     if (typeof window === 'undefined') return;
 
     const updatePresence = () => {
+      // Pausar heartbeat quando a aba estiver em segundo plano
+      if (typeof document !== 'undefined' && document.hidden) return;
+
       // Não rastrear presença dentro de rotas de API ou no painel de administração
       if (pathname.startsWith('/api') || pathname.startsWith('/admin')) return;
 
@@ -89,8 +92,8 @@ export default function AnalyticsTracker() {
     // Actualizar presença imediatamente ao navegar para a página
     updatePresence();
 
-    // Heartbeat de presença a cada 35 segundos enquanto a página estiver aberta
-    presenceInterval.current = setInterval(updatePresence, 35 * 1000);
+    // Heartbeat de presença a cada 90 segundos enquanto a página estiver visível
+    presenceInterval.current = setInterval(updatePresence, 90 * 1000);
 
     return () => {
       if (presenceInterval.current) clearInterval(presenceInterval.current);
