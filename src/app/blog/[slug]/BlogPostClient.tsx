@@ -2,15 +2,16 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { Calendar, User, Tag, ArrowLeft, Share2, Eye, Facebook, Twitter, Linkedin, MessageCircle, EyeOff } from 'lucide-react';
+import { Calendar, User, Tag, ArrowLeft, Share2, Eye, Facebook, Twitter, Linkedin, MessageCircle, EyeOff, Home } from 'lucide-react';
 import AdSenseBanner from '@/components/AdSenseBanner';
 
-// Hook de efeito de digitação
-function useTypingEffect(text: string, speed: number = 50) {
+// Hook de efeito de digitação suave no título
+function useTypingEffect(text: string, speed: number = 25) {
   const [displayText, setDisplayText] = useState(text);
   const [isComplete, setIsComplete] = useState(true);
 
   useEffect(() => {
+    if (!text) return;
     setDisplayText('');
     setIsComplete(false);
 
@@ -32,7 +33,7 @@ function useTypingEffect(text: string, speed: number = 50) {
 }
 
 // Hook de efeito de scroll reveal
-function useScrollReveal(enabled: boolean = true) {
+function useScrollReveal(enabled: boolean = false) {
   const [visibleSections, setVisibleSections] = useState<number[]>([]);
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -52,7 +53,7 @@ function useScrollReveal(enabled: boolean = true) {
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            const index = parseInt(entry.target.getAttribute('data-index') || '0');
+            const index = parseInt(entry.target.getAttribute('data-index') || '0', 10);
             setVisibleSections((prev) => {
               if (!prev.includes(index)) {
                 return [...prev, index];
@@ -84,7 +85,7 @@ export interface BlogPostData {
   excerpt: string;
   content: string;
   coverImage?: string;
-  author: { name: string };
+  author: { name: string; email?: string };
   category: string;
   tags: string[];
   publishedAt: string;
@@ -98,12 +99,12 @@ interface BlogPostClientProps {
 }
 
 export default function BlogPostClient({ initialPost, initialRelatedPosts = [] }: BlogPostClientProps) {
-  const [post, setPost] = useState<BlogPostData>(initialPost);
+  const [post] = useState<BlogPostData>(initialPost);
   const [scrollRevealEnabled, setScrollRevealEnabled] = useState(false);
-  const [relatedPosts, setRelatedPosts] = useState<BlogPostData[]>(initialRelatedPosts);
+  const [relatedPosts] = useState<BlogPostData[]>(initialRelatedPosts);
 
   // Efeito de digitação no título
-  const { displayText: typedTitle } = useTypingEffect(post.title, 25);
+  const { displayText: typedTitle } = useTypingEffect(post.title || '', 20);
 
   // Efeito de scroll reveal
   const { contentRef, visibleSections } = useScrollReveal(scrollRevealEnabled);
@@ -132,13 +133,13 @@ export default function BlogPostClient({ initialPost, initialRelatedPosts = [] }
 
   const getCategoryColor = (category: string) => {
     const colors: Record<string, string> = {
-      news: 'bg-blue-100 text-blue-800',
-      tutorial: 'bg-green-100 text-green-800',
-      announcement: 'bg-purple-100 text-purple-800',
-      update: 'bg-orange-100 text-orange-800',
-      feature: 'bg-pink-100 text-pink-800'
+      news: 'bg-blue-100 text-blue-900 border border-blue-200',
+      tutorial: 'bg-emerald-100 text-emerald-900 border border-emerald-200',
+      announcement: 'bg-purple-100 text-purple-900 border border-purple-200',
+      update: 'bg-amber-100 text-amber-900 border border-amber-200',
+      feature: 'bg-pink-100 text-pink-900 border border-pink-200'
     };
-    return colors[category] || 'bg-gray-100 text-gray-800';
+    return colors[category] || 'bg-neutral-100 text-neutral-900 border border-neutral-200';
   };
 
   const sharePost = () => {
@@ -179,100 +180,266 @@ export default function BlogPostClient({ initialPost, initialRelatedPosts = [] }
     }
   };
 
-  const splitContentIntoSections = (content: string): string[] => {
-    const paragraphs = content.split(/<\/p>|<br\s*\/?>|<\/h[1-6]>|<\/div>/i);
+  // Divide o conteúdo em seções legíveis para efeito de scroll
+  const splitContentIntoSections = (rawContent: string): string[] => {
+    if (!rawContent) return [];
+    
+    // Se contém tags de parágrafo HTML
+    if (/<p>|<h[1-6]>|<div>/i.test(rawContent)) {
+      const parts = rawContent.split(/<\/p>|<\/h[1-6]>|<\/div>/i);
+      const result: string[] = [];
+      let currentSection = '';
+
+      for (let i = 0; i < parts.length; i++) {
+        const p = parts[i].trim();
+        if (!p) continue;
+        currentSection += p + (p.startsWith('<') ? '' : '</p>');
+        if (currentSection.length > 500) {
+          result.push(currentSection);
+          currentSection = '';
+        }
+      }
+      if (currentSection.trim()) result.push(currentSection);
+      return result.length > 0 ? result : [rawContent];
+    }
+
+    // Se é texto puro separado por quebras de linha
+    const paragraphs = rawContent.split(/\n\s*\n/);
     const result: string[] = [];
-    let currentSection = '';
+    let currentBlock = '';
 
     for (let i = 0; i < paragraphs.length; i++) {
       const para = paragraphs[i].trim();
       if (!para) continue;
-      currentSection += para;
-      if (currentSection.length > 500) {
-        result.push(currentSection);
-        currentSection = '';
+      currentBlock += (currentBlock ? '\n\n' : '') + para;
+      if (currentBlock.length > 450) {
+        result.push(currentBlock);
+        currentBlock = '';
       }
     }
+    if (currentBlock.trim()) result.push(currentBlock);
+    return result.length > 0 ? result : [rawContent];
+  };
 
-    if (currentSection.trim()) {
-      result.push(currentSection);
+  // Renderizador estruturado para garantir 100% de legibilidade e texto preto
+  const renderFormattedSection = (blockText: string) => {
+    if (!blockText) return null;
+
+    // Se é HTML formatado
+    if (/<[a-z][\s\S]*>/i.test(blockText)) {
+      return (
+        <div 
+          className="blog-inner-html"
+          dangerouslySetInnerHTML={{ __html: blockText }} 
+        />
+      );
     }
 
-    if (result.length === 0 || (result.length === 1 && result[0].length < 100)) {
-      return [content];
-    }
+    // Se é texto simples com parágrafos
+    const paras = blockText.split(/\n\s*\n/);
+    return (
+      <div className="space-y-5">
+        {paras.map((p, pIdx) => {
+          const trimmed = p.trim();
+          if (!trimmed) return null;
 
-    return result;
+          // Se é título / subtítulo
+          if (/^(?:#{1,3}\s+|[0-9]+\.\s+[A-ZÀ-Ú])/.test(trimmed) || (trimmed.length < 80 && trimmed.endsWith(':'))) {
+            const cleanTitle = trimmed.replace(/^#{1,3}\s+/, '');
+            return (
+              <h2 key={pIdx} className="text-xl sm:text-2xl font-bold text-neutral-950 mt-8 mb-3 tracking-tight">
+                {cleanTitle}
+              </h2>
+            );
+          }
+
+          // Se é lista de itens
+          if (/^[-*•]\s+/.test(trimmed)) {
+            const items = trimmed.split(/\n/).map(line => line.replace(/^[-*•]\s+/, '').trim()).filter(Boolean);
+            return (
+              <ul key={pIdx} className="list-disc pl-6 space-y-2 text-neutral-900 my-4">
+                {items.map((item, itemIdx) => (
+                  <li key={itemIdx} className="text-base sm:text-lg leading-relaxed text-neutral-900">
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            );
+          }
+
+          // Parágrafo regular
+          const lines = trimmed.split('\n');
+          return (
+            <p key={pIdx} className="text-base sm:text-lg text-neutral-900 leading-relaxed font-normal">
+              {lines.map((line, lIdx) => (
+                <span key={lIdx}>
+                  {line}
+                  {lIdx < lines.length - 1 && <br />}
+                </span>
+              ))}
+            </p>
+          );
+        })}
+      </div>
+    );
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b">
-        <div className="container mx-auto px-4 py-4">
-          <Link href="/blog" className="text-blue-600 hover:text-blue-700 flex items-center gap-2">
-            <ArrowLeft size={20} />
+    <div className="min-h-screen bg-slate-50 text-neutral-900 antialiased selection:bg-blue-100 selection:text-neutral-950">
+      {/* Estilos isolados com garantia estrita de texto preto apenas dentro do Blog */}
+      <style jsx global>{`
+        .blog-article-content,
+        .blog-article-content * {
+          color: #0f172a;
+        }
+        .blog-article-content h1,
+        .blog-article-content h2,
+        .blog-article-content h3,
+        .blog-article-content h4,
+        .blog-article-content h5,
+        .blog-article-content h6 {
+          color: #020617 !important;
+          font-weight: 800 !important;
+          line-height: 1.3 !important;
+          margin-top: 1.75rem !important;
+          margin-bottom: 0.75rem !important;
+        }
+        .blog-article-content p {
+          color: #0f172a !important;
+          font-size: 1.0625rem !important;
+          line-height: 1.85 !important;
+          margin-bottom: 1.35rem !important;
+          font-weight: 400 !important;
+        }
+        .blog-article-content strong,
+        .blog-article-content b {
+          color: #000000 !important;
+          font-weight: 700 !important;
+        }
+        .blog-article-content ul {
+          color: #0f172a !important;
+          list-style-type: disc !important;
+          padding-left: 1.5rem !important;
+          margin-bottom: 1.5rem !important;
+        }
+        .blog-article-content ol {
+          color: #0f172a !important;
+          list-style-type: decimal !important;
+          padding-left: 1.5rem !important;
+          margin-bottom: 1.5rem !important;
+        }
+        .blog-article-content li {
+          color: #0f172a !important;
+          margin-bottom: 0.5rem !important;
+          line-height: 1.7 !important;
+        }
+        .blog-article-content a {
+          color: #2563eb !important;
+          text-decoration: underline !important;
+          font-weight: 600 !important;
+        }
+        .blog-article-content a:hover {
+          color: #1d4ed8 !important;
+        }
+        .blog-article-content blockquote {
+          color: #0f172a !important;
+          border-left: 4px solid #2563eb !important;
+          background-color: #f8fafc !important;
+          padding: 1rem 1.25rem !important;
+          margin: 1.5rem 0 !important;
+          border-radius: 0 0.5rem 0.5rem 0 !important;
+          font-style: italic !important;
+        }
+        .blog-article-content code {
+          color: #0f172a !important;
+          background-color: #f1f5f9 !important;
+          padding: 0.2rem 0.4rem !important;
+          border-radius: 0.25rem !important;
+          font-size: 0.9em !important;
+        }
+      `}</style>
+
+      {/* Header Sticky com contraste nítido */}
+      <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-neutral-200 shadow-xs">
+        <div className="container mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between">
+          <Link 
+            href="/blog" 
+            className="text-blue-600 hover:text-blue-800 font-bold flex items-center gap-2 text-sm sm:text-base transition-colors"
+          >
+            <ArrowLeft size={18} />
             Voltar para o blog
           </Link>
+          <Link 
+            href="/" 
+            className="text-neutral-600 hover:text-neutral-950 font-medium text-xs sm:text-sm flex items-center gap-1.5 transition-colors"
+          >
+            <Home size={15} />
+            <span className="hidden sm:inline">Página Inicial</span>
+          </Link>
         </div>
-      </div>
+      </header>
 
-      {/* Post Content */}
-      <article className="container mx-auto px-4 py-12 max-w-4xl">
+      {/* Post Content Container */}
+      <article className="container mx-auto px-4 sm:px-6 pt-6 sm:pt-10 pb-16 max-w-4xl">
         {/* Cover Image */}
         {post.coverImage && (
-          <div className="mb-8 rounded-lg overflow-hidden">
+          <div className="mb-8 rounded-2xl overflow-hidden shadow-sm border border-neutral-200 bg-white">
             <img
               src={post.coverImage}
               alt={post.title}
-              className="w-full h-auto object-contain max-h-96 mx-auto"
+              className="w-full h-auto object-contain max-h-[460px] mx-auto"
             />
           </div>
         )}
 
         {/* Post Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-2 mb-4">
-            <span className={`px-3 py-1 rounded-full text-sm font-medium ${getCategoryColor(post.category)}`}>
+          <div className="flex items-center gap-2 mb-4 flex-wrap">
+            <span className={`px-3 py-1 rounded-full text-xs sm:text-sm font-semibold ${getCategoryColor(post.category)}`}>
               {getCategoryLabel(post.category)}
             </span>
             {post.featured && (
-              <span className="px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
-                Em Destaque
+              <span className="px-3 py-1 rounded-full text-xs sm:text-sm font-bold bg-amber-100 text-amber-900 border border-amber-300">
+                ★ Em Destaque
               </span>
             )}
           </div>
 
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-neutral-950 mb-5 tracking-tight leading-tight">
             {typedTitle}
-            <span className="inline-block w-0.5 h-8 bg-blue-600 ml-1 animate-pulse" />
+            <span className="inline-block w-1 h-7 sm:h-9 bg-blue-600 ml-1.5 animate-pulse align-middle" />
           </h1>
 
-          <div className="flex items-center gap-6 text-gray-600">
-            <span className="flex items-center gap-2">
-              <User size={18} />
+          {/* Metadata com texto escuro garantido */}
+          <div className="flex items-center gap-4 sm:gap-6 text-neutral-700 text-xs sm:text-sm flex-wrap font-medium">
+            <span className="flex items-center gap-1.5 text-neutral-900 font-semibold">
+              <User size={16} className="text-neutral-700" />
               {post.author.name}
             </span>
-            <span className="flex items-center gap-2">
-              <Calendar size={18} />
+            <span className="flex items-center gap-1.5 text-neutral-700">
+              <Calendar size={16} className="text-neutral-600" />
               {new Date(post.publishedAt).toLocaleDateString('pt-MZ', {
                 day: '2-digit',
-                month: '2-digit',
-                year: '2-digit'
+                month: 'long',
+                year: 'numeric'
               })}
             </span>
-            <span className="flex items-center gap-2">
-              <Eye size={18} />
-              <span className="font-semibold">{post.views}</span>
+            <span className="flex items-center gap-1.5 text-neutral-800">
+              <Eye size={16} className="text-neutral-600" />
+              <span className="font-bold text-neutral-950">{post.views || 0}</span> visualizações
             </span>
           </div>
 
+          {/* Tags */}
           {post.tags && post.tags.length > 0 && (
-            <div className="flex items-center gap-2 mt-4">
-              <Tag size={18} className="text-gray-600" />
-              <div className="flex gap-2 flex-wrap">
+            <div className="flex items-center gap-2 mt-4 flex-wrap">
+              <Tag size={16} className="text-neutral-600" />
+              <div className="flex gap-1.5 flex-wrap">
                 {post.tags.map((tag, index) => (
-                  <span key={index} className="text-sm text-gray-600">
+                  <span 
+                    key={index} 
+                    className="text-xs font-semibold text-neutral-800 bg-neutral-200/80 px-2.5 py-1 rounded-md border border-neutral-300"
+                  >
                     #{tag}
                   </span>
                 ))}
@@ -282,122 +449,133 @@ export default function BlogPostClient({ initialPost, initialRelatedPosts = [] }
         </div>
 
         {/* Share Buttons */}
-        <div className="mb-8 flex flex-wrap items-center justify-end gap-3">
+        <div className="mb-8 flex flex-wrap items-center justify-end gap-2.5">
           <button
             onClick={sharePost}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors cursor-pointer"
+            className="flex items-center gap-2 px-3.5 py-2 bg-white hover:bg-neutral-100 text-neutral-900 border border-neutral-300 rounded-lg text-xs sm:text-sm font-semibold transition-colors cursor-pointer shadow-2xs"
             title="Copiar link"
           >
-            <Share2 size={18} />
+            <Share2 size={16} className="text-neutral-700" />
             <span className="hidden sm:inline">Copiar Link</span>
           </button>
           <button
             onClick={shareToFacebook}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors cursor-pointer"
+            className="flex items-center gap-2 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs sm:text-sm font-semibold transition-colors cursor-pointer shadow-2xs"
             title="Compartilhar no Facebook"
           >
-            <Facebook size={18} />
+            <Facebook size={16} />
             <span className="hidden sm:inline">Facebook</span>
           </button>
           <button
             onClick={shareToTwitter}
-            className="flex items-center gap-2 px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-lg transition-colors cursor-pointer"
+            className="flex items-center gap-2 px-3.5 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-lg text-xs sm:text-sm font-semibold transition-colors cursor-pointer shadow-2xs"
             title="Compartilhar no Twitter"
           >
-            <Twitter size={18} />
+            <Twitter size={16} />
             <span className="hidden sm:inline">Twitter</span>
           </button>
           <button
             onClick={shareToLinkedIn}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-lg transition-colors cursor-pointer"
+            className="flex items-center gap-2 px-3.5 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-lg text-xs sm:text-sm font-semibold transition-colors cursor-pointer shadow-2xs"
             title="Compartilhar no LinkedIn"
           >
-            <Linkedin size={18} />
+            <Linkedin size={16} />
             <span className="hidden sm:inline">LinkedIn</span>
           </button>
           <button
             onClick={shareToWhatsApp}
-            className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors cursor-pointer"
+            className="flex items-center gap-2 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs sm:text-sm font-semibold transition-colors cursor-pointer shadow-2xs"
             title="Compartilhar no WhatsApp"
           >
-            <MessageCircle size={18} />
+            <MessageCircle size={16} />
             <span className="hidden sm:inline">WhatsApp</span>
           </button>
           <button
             onClick={() => setScrollRevealEnabled(!scrollRevealEnabled)}
-            className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors cursor-pointer"
+            className="flex items-center gap-2 px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs sm:text-sm font-semibold transition-colors cursor-pointer shadow-2xs"
             title={scrollRevealEnabled ? "Mostrar todo o conteúdo" : "Ativar efeito de scroll"}
           >
-            {scrollRevealEnabled ? <EyeOff size={18} /> : <Eye size={18} />}
+            {scrollRevealEnabled ? <EyeOff size={16} /> : <Eye size={16} />}
             <span className="hidden sm:inline">{scrollRevealEnabled ? "Ver Tudo" : "Scroll Reveal"}</span>
           </button>
         </div>
 
-        {/* Post Content */}
-        <div className="prose prose-lg max-w-none bg-white p-8 rounded-lg shadow-sm overflow-visible">
+        {/* Card do Artigo Principal com Fundo Branco e Texto Preto Garantido */}
+        <div className="bg-white p-6 sm:p-10 md:p-12 rounded-2xl shadow-sm border border-neutral-200 text-neutral-900 overflow-visible">
           {post.content ? (
-            <div ref={contentRef} className="whitespace-pre-wrap break-words">
+            <div ref={contentRef} className="blog-article-content">
               {scrollRevealEnabled ? (
                 splitContentIntoSections(post.content).map((section, index) => (
                   <div
                     key={index}
                     data-index={index}
-                    className={`scroll-section transition-all duration-700 ease-out ${
+                    className={`scroll-section transition-all duration-700 ease-out mb-6 ${
                       visibleSections.includes(index)
                         ? 'opacity-100 translate-y-0'
                         : 'opacity-0 translate-y-8'
                     }`}
-                    dangerouslySetInnerHTML={{ __html: section }}
-                  />
+                  >
+                    {renderFormattedSection(section)}
+                  </div>
                 ))
               ) : (
-                <div dangerouslySetInnerHTML={{ __html: post.content }} />
+                renderFormattedSection(post.content)
               )}
             </div>
           ) : (
-            <div className="text-gray-500">Conteúdo não disponível</div>
+            <div className="text-neutral-500 font-medium py-8 text-center">
+              Conteúdo não disponível para este artigo.
+            </div>
           )}
         </div>
 
         {/* AdSense Banner Responsivo */}
         <AdSenseBanner className="my-8" />
 
-        {/* Excerpt */}
-        <div className="mt-8 p-6 bg-blue-50 rounded-lg border border-blue-200">
-          <h3 className="font-bold text-blue-900 mb-2">Resumo</h3>
-          <p className="text-blue-800">{post.excerpt}</p>
-        </div>
+        {/* Resumo com Cores Fortes e Legíveis */}
+        {post.excerpt && (
+          <div className="mt-8 p-6 sm:p-7 bg-blue-50/80 rounded-2xl border border-blue-200 shadow-2xs">
+            <h3 className="font-bold text-blue-950 text-base sm:text-lg mb-2">Resumo Executivo</h3>
+            <p className="text-neutral-900 leading-relaxed text-sm sm:text-base font-normal">{post.excerpt}</p>
+          </div>
+        )}
 
-        {/* Related Posts */}
+        {/* Posts Relacionados com Fundo Branco e Texto Preto */}
         {relatedPosts.length > 0 && (
-          <div className="mt-12">
-            <h2 className="text-2xl font-bold mb-6 text-gray-800">Posts Relacionados</h2>
+          <div className="mt-14">
+            <h2 className="text-2xl sm:text-3xl font-black mb-6 text-neutral-950 tracking-tight">Posts Relacionados</h2>
             <div className="grid md:grid-cols-3 gap-6">
               {relatedPosts.map((relatedPost) => (
                 <Link 
                   key={relatedPost.id} 
                   href={`/blog/${relatedPost.slug}`}
                   onClick={() => incrementClick(relatedPost.slug)}
-                  className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow group"
+                  className="bg-white rounded-xl shadow-xs border border-neutral-200 overflow-hidden hover:shadow-md hover:border-neutral-300 transition-all group flex flex-col"
                 >
                   {relatedPost.coverImage && (
-                    <img 
-                      src={relatedPost.coverImage} 
-                      alt={relatedPost.title}
-                      className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
+                    <div className="h-44 overflow-hidden bg-neutral-100">
+                      <img 
+                        src={relatedPost.coverImage} 
+                        alt={relatedPost.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    </div>
                   )}
-                  <div className="p-6">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getCategoryColor(relatedPost.category)}`}>
-                      {getCategoryLabel(relatedPost.category)}
-                    </span>
-                    <h3 className="font-bold mt-3 mb-2 text-gray-900 line-clamp-2 group-hover:text-blue-600 transition-colors">
-                      {relatedPost.title}
-                    </h3>
-                    <p className="text-gray-600 text-sm line-clamp-3">{relatedPost.excerpt}</p>
-                    <div className="flex items-center gap-2 mt-4 text-xs text-gray-500">
-                      <Eye size={14} />
-                      <span>{relatedPost.views}</span>
+                  <div className="p-5 flex-1 flex flex-col justify-between">
+                    <div>
+                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${getCategoryColor(relatedPost.category)}`}>
+                        {getCategoryLabel(relatedPost.category)}
+                      </span>
+                      <h3 className="font-bold mt-3 mb-2 text-neutral-950 text-base line-clamp-2 group-hover:text-blue-600 transition-colors">
+                        {relatedPost.title}
+                      </h3>
+                      <p className="text-neutral-700 text-xs sm:text-sm line-clamp-3 leading-relaxed">
+                        {relatedPost.excerpt}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 mt-4 pt-3 border-t border-neutral-100 text-xs text-neutral-600 font-medium">
+                      <Eye size={14} className="text-neutral-500" />
+                      <span>{relatedPost.views || 0} visualizações</span>
                     </div>
                   </div>
                 </Link>
