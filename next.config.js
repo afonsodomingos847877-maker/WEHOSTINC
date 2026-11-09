@@ -32,6 +32,21 @@ const nextConfig = {
     ];
   },
   async rewrites() {
+    const isRender = process.env.RENDER === 'true';
+    const isVercel = process.env.VERCEL === '1';
+    const backendUrl = process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_API_URL || 'https://wehostinc.onrender.com';
+
+    // No Render, as rotas de API executam localmente (evita loop infinito de proxy).
+    // Na Vercel (produção), encaminhamos todas as APIs para o Render na camada de CDN Edge,
+    // garantindo consumo ZERO de Fluid Active CPU Serverless na Vercel.
+    const shouldProxyApi = !isRender && (isVercel || process.env.PROXY_TO_RENDER === 'true');
+    const apiRewrites = shouldProxyApi ? [
+      {
+        source: '/api/:path*',
+        destination: `${backendUrl}/api/:path*`,
+      },
+    ] : [];
+
     return [
       {
         source: '/autodiscover/autodiscover.xml',
@@ -57,6 +72,7 @@ const nextConfig = {
         source: '/.well-known/autoconfig/mail/config-v1.1.xml',
         destination: '/api/autoconfig',
       },
+      ...apiRewrites,
       // Roteamento de Subdomínio para Sites Gerados por IA (*.wehosthere.com)
       {
         source: '/((?!api|dashboard|admin|login|register|checkout|site|_next|favicon.ico).*)',
@@ -129,7 +145,7 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "img-src 'self' data: https: blob: https://res.cloudinary.com",
               "font-src 'self' data: https://fonts.gstatic.com",
-              "connect-src 'self' https://api.resend.com https://ipapi.co https://wehosthere.com https://res.cloudinary.com https://www.google-analytics.com https://analytics.google.com https://www.googletagmanager.com https://*.youtube.com https://*.googlevideo.com",
+              "connect-src 'self' https://api.resend.com https://ipapi.co https://wehosthere.com https://www.wehosthere.com https://wehostinc.onrender.com https://res.cloudinary.com https://www.google-analytics.com https://analytics.google.com https://www.googletagmanager.com https://*.youtube.com https://*.googlevideo.com",
               "media-src 'self' blob: data: https: https://res.cloudinary.com https://*.googlevideo.com",
               "child-src 'self' blob: https://www.youtube.com https://youtube.com https://www.youtube-nocookie.com https://*.youtube.com https://*.youtube-nocookie.com https://player.vimeo.com https://*.vimeo.com https://drive.google.com https://*.googlevideo.com https://*.google.com",
               "frame-src 'self' blob: data: https://accounts.google.com https://www.googletagmanager.com https://www.youtube.com https://youtube.com https://www.youtube-nocookie.com https://*.youtube.com https://*.youtube-nocookie.com https://player.vimeo.com https://*.vimeo.com https://drive.google.com https://*.googlevideo.com https://*.google.com",
