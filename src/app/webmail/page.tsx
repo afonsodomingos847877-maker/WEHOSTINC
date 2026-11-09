@@ -7,7 +7,7 @@ import {
   Mail, Inbox, Send, Star, Trash2, Edit3, Search, RefreshCw, 
   ArrowLeft, CheckCircle2, ShieldCheck, ShieldAlert, User, Paperclip, Reply, Forward,
   FileText, LogOut, ChevronRight, X, AlertCircle, Sparkles, Clock, Printer, Download, Loader2, Filter, Maximize2, Minimize2, Bold, Italic, Underline, Type,
-  Wand2, Bot, FileSignature, Lightbulb, Check, Wifi, WifiOff, Pin, PinOff, Flag, Flame, Lock, Key, Eye, EyeOff,
+  Wand2, Bot, FileSignature, Lightbulb, Check, CheckCheck, Wifi, WifiOff, Pin, PinOff, Flag, Flame, Lock, Key, Eye, EyeOff,
   Bell, Calendar, TrendingUp, LayoutGrid, HelpCircle, Smartphone, Laptop, Monitor,
   Globe, Languages, Sun, Sunset, Moon, MessageSquare, Image as ImageIcon, ExternalLink, BarChart3,
   Mic, MicOff, Volume2, VolumeX, Play, Pause, Square, Headphones, Server, Plus, Users
@@ -4381,6 +4381,14 @@ function WebmailContent() {
                           <span className="text-[10px] sm:text-[11px] text-neutral-400 whitespace-nowrap font-medium" title={formatFullMessageDate(msg.date)}>
                             {formatFullMessageDate(msg.date)}
                           </span>
+                          {/* Certo azul no canto para mensagens lidas */}
+                          {msg.isRead ? (
+                            <span className="inline-flex items-center text-blue-500 animate-in fade-in duration-200" title="Mensagem lida">
+                              <CheckCheck className="h-3.5 w-3.5 stroke-[2.3]" />
+                            </span>
+                          ) : (
+                            <span className="w-1.5 h-1.5 rounded-full bg-blue-600 shrink-0 inline-block" title="Não lida" />
+                          )}
                         </div>
                       </div>
                       <h4 className={`text-xs sm:text-sm truncate mb-0.5 ${msg.isRead ? 'text-neutral-800 font-medium' : 'text-neutral-900 font-bold'}`}>
@@ -4737,8 +4745,13 @@ function WebmailContent() {
                         <option value="low">Baixa Prioridade</option>
                       </select>
                     </div>
-                    <div className="text-right text-neutral-400 font-medium text-[11px] sm:text-xs">
-                      {formatFullMessageDate(selectedMessage.date)}
+                    <div className="text-right text-neutral-400 font-medium text-[11px] sm:text-xs flex items-center justify-end gap-1.5">
+                      <span>{formatFullMessageDate(selectedMessage.date)}</span>
+                      {selectedMessage.isRead && (
+                        <span className="inline-flex items-center text-blue-500" title="Mensagem lida">
+                          <CheckCheck className="h-3.5 w-3.5 stroke-[2.3]" />
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
