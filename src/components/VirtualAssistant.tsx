@@ -285,18 +285,18 @@ export default function VirtualAssistant() {
       {!isOpen && !isFeedbackOpen && (
         <button
           onClick={() => handleToggleOpen(true)}
-          className="fixed bottom-4 sm:bottom-5 left-4 sm:left-5 z-50 bg-white rounded-full shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 group flex items-center justify-center cursor-pointer overflow-hidden border-0 outline-none"
+          className="fixed bottom-4 sm:bottom-5 left-4 sm:left-5 z-50 w-7 h-7 sm:w-8 sm:h-8 bg-white rounded-full shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 group flex items-center justify-center cursor-pointer overflow-hidden border-0 outline-none p-0"
           title="Assistente Virtual WEHOSTHERE"
         >
-          <div className="w-6.5 h-6.5 sm:w-7 sm:h-7 rounded-full overflow-hidden flex items-center justify-center bg-white relative">
+          <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center bg-white relative">
             <Image
               src="/avatar.png"
               alt="Assistente Virtual"
-              width={28}
-              height={28}
+              width={32}
+              height={32}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform"
             />
-            <span className="absolute bottom-0.5 right-0.5 w-1.5 h-1.5 sm:w-1.5 sm:h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+            <span className="absolute bottom-0.5 right-0.5 w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
           </div>
         </button>
       )}

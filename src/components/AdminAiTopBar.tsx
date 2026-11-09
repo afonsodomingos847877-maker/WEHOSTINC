@@ -573,7 +573,7 @@ export default function AdminAiTopBar({ isGlobalRoot = false }: AdminAiTopBarPro
             }}
             className="relative flex items-center space-x-1.5 bg-gradient-to-r from-[#075985] via-[#0369a1] to-[#0284c7] hover:from-[#0369a1] hover:to-[#0284c7] text-white px-2 py-1 sm:px-2.5 sm:py-1 rounded-full shadow-sm cursor-pointer transition-all duration-300 transform active:scale-95 border-0 outline-none"
           >
-            <div className="w-4.5 h-4.5 sm:w-5 sm:h-5 rounded-full bg-white flex items-center justify-center overflow-hidden shrink-0 border-0 shadow-2xs">
+            <div className="w-5 h-5 sm:w-5.5 sm:h-5.5 rounded-full bg-white flex items-center justify-center overflow-hidden shrink-0 border-0 shadow-2xs">
               <img src="/avatar.png" alt="AI Copilot" className="w-full h-full object-cover rounded-full" />
             </div>
             <span className="text-[11px] sm:text-xs font-bold tracking-wide hidden sm:inline">AI Copilot</span>
