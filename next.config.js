@@ -37,13 +37,17 @@ const nextConfig = {
     const backendUrl = process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_API_URL || 'https://wehostinc.onrender.com';
 
     // No Render, as rotas de API executam localmente (evita loop infinito de proxy).
-    // Na Vercel (produção), encaminhamos todas as APIs para o Render na camada de CDN Edge,
-    // garantindo consumo ZERO de Fluid Active CPU Serverless na Vercel.
+    // Na Vercel (produção), encaminhamos as APIs e o blog dinâmico para o Render na camada de CDN Edge,
+    // garantindo consumo ZERO de Fluid Active CPU Serverless na Vercel e resolução perfeita de artigos.
     const shouldProxyApi = !isRender && (isVercel || process.env.PROXY_TO_RENDER === 'true');
     const apiRewrites = shouldProxyApi ? [
       {
         source: '/api/:path*',
         destination: `${backendUrl}/api/:path*`,
+      },
+      {
+        source: '/blog/:slug',
+        destination: `${backendUrl}/blog/:slug`,
       },
     ] : [];
 

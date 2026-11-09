@@ -748,16 +748,18 @@ export default function Home() {
           <div id="criacao-sites" ref={siteCreationRef} className="anim-fade-up mt-6 sm:mt-10 bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-xl border border-gray-200 relative overflow-hidden hover:shadow-2xl transition-shadow duration-300">
             <div className="flex flex-col lg:flex-row items-center justify-between gap-4 sm:gap-6 relative z-10">
               <div className="flex-1">
-                <div className="inline-flex items-center space-x-1 sm:space-x-1.5 bg-primary-50 text-primary-800 border border-primary-200 px-2 sm:px-3 py-1 rounded-full text-[10px] sm:text-[11px] font-bold uppercase tracking-wider mb-2 sm:mb-2.5 hover:bg-primary-100 transition-colors cursor-default">
-                  <Sparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary-600 group-hover:scale-110 transition-transform" />
-                  <span>{t('sites.badge')}</span>
-                </div>
-                <h3 className="text-lg sm:text-2xl sm:text-3xl font-extrabold text-gray-900 mb-1.5 sm:mb-2 group-hover:text-primary-600 transition-colors">
-                  {t('sites.title')}
-                </h3>
-                <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4 leading-relaxed max-w-2xl">
-                  {t('sites.desc')}
-                </p>
+                <ScrollRevealHeading
+                  badge={t('sites.badge')}
+                  badgeIcon={<Sparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary-600" />}
+                  badgeClassName="bg-primary-50 text-primary-800 border border-primary-200"
+                  text={t('sites.title')}
+                  subtitle={t('sites.desc')}
+                  align="left"
+                  showAccentLine={false}
+                  titleClassName="text-lg sm:text-2xl sm:text-3xl font-extrabold text-gray-900 mb-1.5 sm:mb-2"
+                  subtitleClassName="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4 leading-relaxed max-w-2xl"
+                  highlightWords={['Sites', 'Profissionais', 'Websites', 'Professional']}
+                />
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-gray-700">
                   <div className="flex items-center space-x-1.5 sm:space-x-2 group cursor-default">
