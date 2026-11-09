@@ -19,14 +19,14 @@ export default function WhatsAppSideTab() {
         rel="noopener noreferrer"
         aria-label="Falar connosco pelo WhatsApp (+258 84 833 5618)"
         title="Falar connosco pelo WhatsApp (+258 84 833 5618)"
-        className="fixed left-0 top-1/2 -translate-y-1/2 z-40 group flex flex-col items-center bg-white/95 hover:bg-white text-slate-800 py-3 sm:py-3.5 px-2 sm:px-2.5 rounded-r-2xl border-y border-r border-slate-200 shadow-[0_6px_25px_-5px_rgba(0,0,0,0.12)] hover:shadow-[0_10px_30px_-5px_rgba(16,185,129,0.25)] hover:border-emerald-300 transition-all duration-300 hover:translate-x-0.5 active:scale-95 cursor-pointer backdrop-blur-md"
+        className="fixed left-0 top-1/2 -translate-y-1/2 z-40 group flex flex-col items-center bg-white/95 hover:bg-white text-slate-800 py-3 sm:py-3.5 px-2 sm:px-2.5 rounded-r-2xl border-y border-r border-slate-200 shadow-[0_6px_25px_-5px_rgba(0,0,0,0.12)] hover:shadow-[0_10px_30px_-5px_rgba(2,132,199,0.3)] hover:border-primary-300 transition-all duration-300 hover:translate-x-0.5 active:scale-95 cursor-pointer backdrop-blur-md"
       >
-        {/* Indicador de Status Online Pulsante */}
-        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mb-2 shadow-[0_0_8px_rgba(16,185,129,0.8)] animate-pulse" />
+        {/* Indicador de Status Online Pulsante em Azul do Sistema */}
+        <span className="w-1.5 h-1.5 rounded-full bg-[#0284c7] mb-2 shadow-[0_0_8px_rgba(2,132,199,0.8)] animate-pulse" />
 
         {/* Texto Vertical "WhatsApp" */}
         <span 
-          className="text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-slate-800 group-hover:text-emerald-600 transition-colors select-none mb-2 font-sans"
+          className="text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-slate-800 group-hover:text-primary-600 transition-colors select-none mb-2 font-sans"
           style={{ 
             writingMode: 'vertical-rl', 
             letterSpacing: '0.14em' 
@@ -35,8 +35,8 @@ export default function WhatsAppSideTab() {
           WhatsApp
         </span>
 
-        {/* Ícone Redondo Oficial do WhatsApp com Fundo Verde Suave */}
-        <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-emerald-500 group-hover:bg-emerald-600 text-white flex items-center justify-center transition-all duration-300 group-hover:scale-110 shadow-xs">
+        {/* Ícone Redondo Oficial do WhatsApp com Fundo em Azul do Sistema */}
+        <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gradient-to-br from-[#0ea5e9] to-[#0284c7] group-hover:from-[#0284c7] group-hover:to-[#0369a1] text-white flex items-center justify-center transition-all duration-300 group-hover:scale-110 shadow-xs">
           <svg 
             className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-white" 
             viewBox="0 0 24 24" 
@@ -49,3 +49,4 @@ export default function WhatsAppSideTab() {
     </aside>
   );
 }
+
