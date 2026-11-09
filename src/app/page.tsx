@@ -16,6 +16,7 @@ import PartnersSection from '@/components/PartnersSection';
 import NewsletterForm from '@/components/NewsletterForm';
 import NewsletterPopup from '@/components/NewsletterPopup';
 import ScrollRevealHeading from '@/components/ScrollRevealHeading';
+import BackToTopBar from '@/components/BackToTopBar';
 import { soundEffects } from '@/lib/soundEffects';
 
 export default function Home() {
@@ -1354,6 +1355,9 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
+      {/* Barra Branca no Final da Página Inspirada em Voltar ao Topo */}
+      <BackToTopBar />
 
       {/* Virtual Assistant */}
       <VirtualAssistant />

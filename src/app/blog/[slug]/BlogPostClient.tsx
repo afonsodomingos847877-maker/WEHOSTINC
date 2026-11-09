@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Calendar, User, Tag, ArrowLeft, Share2, Eye, Facebook, Twitter, Linkedin, MessageCircle, EyeOff, Home } from 'lucide-react';
 import AdSenseBanner from '@/components/AdSenseBanner';
+import BackToTopBar from '@/components/BackToTopBar';
 
 // Hook de efeito de digitação suave no título
 function useTypingEffect(text: string, speed: number = 25) {
@@ -584,6 +585,9 @@ export default function BlogPostClient({ initialPost, initialRelatedPosts = [] }
           </div>
         )}
       </article>
+
+      {/* Barra Branca no Final da Página Inspirada em Voltar ao Topo */}
+      <BackToTopBar />
     </div>
   );
 }

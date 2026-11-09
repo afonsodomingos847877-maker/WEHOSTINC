@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Calendar, User, Tag, ArrowRight, Search, Home } from 'lucide-react';
+import BackToTopBar from '@/components/BackToTopBar';
 
 interface BlogPost {
   id: string;
@@ -260,6 +261,9 @@ export default function BlogPage() {
           )}
         </div>
       </div>
+
+      {/* Barra Branca no Final da Página Inspirada em Voltar ao Topo */}
+      <BackToTopBar />
     </div>
   );
 }
