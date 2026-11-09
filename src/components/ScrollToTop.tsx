@@ -48,34 +48,62 @@ export default function ScrollToTop() {
   }, []);
 
   const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth',
-    });
+    const totalScroll = document.documentElement.scrollHeight - window.innerHeight;
+    const currentScroll = window.scrollY;
+    const halfScroll = totalScroll * 0.5;
+
+    // Se estivermos abaixo de 52% (ex: 100%, 75%), o primeiro clique leva para os 50%
+    if (currentScroll > halfScroll + 40) {
+      window.scrollTo({
+        top: halfScroll,
+        behavior: 'smooth',
+      });
+    } else {
+      // Se já estiver na metade (50%) ou acima, o segundo clique leva direto ao topo (0%)
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth',
+      });
+    }
   };
 
   const scrollToBottom = () => {
-    window.scrollTo({
-      top: document.documentElement.scrollHeight,
-      behavior: 'smooth',
-    });
+    const totalScroll = document.documentElement.scrollHeight - window.innerHeight;
+    const currentScroll = window.scrollY;
+    const halfScroll = totalScroll * 0.5;
+
+    // Se estivermos acima da metade (ex: 0% a 48%), o primeiro clique desce para os 50%
+    if (currentScroll < halfScroll - 40) {
+      window.scrollTo({
+        top: halfScroll,
+        behavior: 'smooth',
+      });
+    } else {
+      // Se já estiver na metade ou além, o segundo clique desce até o final da página (100%)
+      window.scrollTo({
+        top: document.documentElement.scrollHeight,
+        behavior: 'smooth',
+      });
+    }
   };
 
   if (!isVisible || pathname?.startsWith('/webmail')) return null;
 
   const roundedPercentage = Math.round(scrollProgress);
+  const isPastHalf = roundedPercentage > 52;
+  const isBeforeHalf = roundedPercentage < 48;
 
   return (
     <div className="fixed bottom-6 right-5 z-40 animate-in fade-in zoom-in-90 duration-300">
       {/* Cápsula Vertical Flutuante de Scroll */}
       <div className="relative group bg-white/95 backdrop-blur-xl border border-gray-200/90 shadow-[0_10px_30px_-5px_rgba(0,0,0,0.12),0_0_0_1px_rgba(255,255,255,0.8)_inset] rounded-full p-1.5 flex flex-col items-center gap-1 w-11 sm:w-12 transition-all duration-300 hover:shadow-primary-500/15 hover:border-primary-300">
         
-        {/* Botão Superior — Subir ao Topo */}
+        {/* Botão Superior — Subir: 1º clique vai a 50%, 2º clique vai ao topo */}
         <button
           type="button"
           onClick={scrollToTop}
-          aria-label="Rolar para o topo"
-          title="Rolar para o topo"
+          aria-label={isPastHalf ? "Rolar para o meio (50%)" : "Rolar para o topo (0%)"}
+          title={isPastHalf ? "Rolar para a metade (50%)" : "Rolar para o topo (0%)"}
           className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-sky-50 hover:bg-sky-100 text-[#0284c7] hover:text-[#0369a1] flex items-center justify-center transition-all duration-200 active:scale-90 cursor-pointer shadow-2xs group/up"
         >
           <ChevronUp className="w-4 h-4 sm:w-4.5 sm:h-4.5 stroke-[2.5] group-hover/up:-translate-y-0.5 transition-transform" />
@@ -88,12 +116,12 @@ export default function ScrollToTop() {
           </span>
         </div>
 
-        {/* Botão Inferior — Descer ao Fundo com anel de progresso em Azul WEHOSTHERE */}
+        {/* Botão Inferior — Descer: 1º clique vai a 50%, 2º clique vai ao fundo */}
         <button
           type="button"
           onClick={scrollToBottom}
-          aria-label="Rolar para o fundo"
-          title="Rolar para o fundo"
+          aria-label={isBeforeHalf ? "Rolar para o meio (50%)" : "Rolar para o fundo (100%)"}
+          title={isBeforeHalf ? "Rolar para a metade (50%)" : "Rolar para o fundo (100%)"}
           className="relative w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-all duration-200 active:scale-90 cursor-pointer group/down overflow-hidden"
         >
           {/* Fundo SVG com anel de progresso circular dinâmico */}

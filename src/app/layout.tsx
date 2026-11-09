@@ -3,6 +3,7 @@ import { Poppins } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import ScrollToTop from "@/components/ScrollToTop";
+import WhatsAppSideTab from "@/components/WhatsAppSideTab";
 import AnalyticsTracker from "@/components/AnalyticsTracker";
 import SocialProofToast from "@/components/SocialProofToast";
 import FeedbackWidget from "@/components/FeedbackWidget";
@@ -472,6 +473,7 @@ export default function RootLayout({
             </MaintenanceGate>
             <OfflineDetector />
             <ScrollToTop />
+            <WhatsAppSideTab />
             <AnalyticsTracker />
             <SocialProofToast />
             <ScrollUpCards />
