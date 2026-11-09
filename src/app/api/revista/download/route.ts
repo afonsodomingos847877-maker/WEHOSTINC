@@ -819,7 +819,7 @@ export async function GET(req: Request) {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': 'attachment; filename="Codando-Historias-Edicao-01.pdf"',
-        'Cache-Control': 'no-store, max-age=0',
+        'Cache-Control': 'public, s-maxage=86400, stale-while-revalidate=43200',
       },
     });
   } catch (error: any) {

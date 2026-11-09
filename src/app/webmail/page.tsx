@@ -1517,12 +1517,13 @@ function WebmailContent() {
       refreshAccounts(emails);
     });
 
-    // Polling a cada 3s para sincronizar status (pending → active) quando Admin aprova
+    // Polling inteligente para sincronizar status (pending → active) pausado em aba inativa
     const interval = setInterval(() => {
+      if (typeof document !== 'undefined' && document.hidden) return;
       dataManager.fetchEmailsAsync(userEmailFilter).then(emails => {
         setAccounts(emails);
       });
-    }, 3000);
+    }, 45000);
 
     return () => clearInterval(interval);
   }, [router, initialEmailParam, mailboxPassword]);
@@ -1729,11 +1730,12 @@ function WebmailContent() {
     }
   }, [selectedAccountEmail]);
 
-  // Sincronização Automática em Segundo Plano (Auto-Sync a cada 15 segundos)
+  // Sincronização Automática em Segundo Plano (Auto-Sync a cada 60 segundos com pausa em aba inativa)
   useEffect(() => {
     if (!selectedAccountEmail || !mailboxPassword) return;
 
     const autoSyncTimer = setInterval(() => {
+      if (typeof document !== 'undefined' && document.hidden) return;
       const folder = currentFolder === 'starred' ? 'inbox' : currentFolder as 'inbox' | 'sent' | 'drafts' | 'trash' | 'scheduled';
       webmailManager.getMessages(selectedAccountEmail, mailboxPassword, folder).then(msgs => {
         const filtered = currentFolder === 'starred' ? msgs.filter(m => m.starred) : msgs;
@@ -1752,7 +1754,7 @@ function WebmailContent() {
       }).catch(err => {
         console.warn('[Webmail Auto-Sync] Sync check:', err);
       });
-    }, 15000);
+    }, 60000);
 
     return () => clearInterval(autoSyncTimer);
   }, [selectedAccountEmail, mailboxPassword, currentFolder]);

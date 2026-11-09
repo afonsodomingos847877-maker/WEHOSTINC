@@ -72,7 +72,7 @@ export async function GET(req: NextRequest) {
       sendHeartbeat();
 
       // Intervalo para verificar notificações (a cada 5 segundos)
-      const notificationInterval = setInterval(checkNotifications, 5000);
+      const notificationInterval = setInterval(checkNotifications, 30000);
       
       // Intervalo para heartbeat (a cada 30 segundos)
       const heartbeatInterval = setInterval(sendHeartbeat, 30000);

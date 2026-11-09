@@ -209,7 +209,10 @@ export default function InternalDomainChat({
 
   useEffect(() => {
     fetchChatState();
-    const interval = setInterval(fetchChatState, isOpen ? 3500 : 8000);
+    const interval = setInterval(() => {
+      if (typeof document !== 'undefined' && document.hidden) return;
+      fetchChatState();
+    }, isOpen ? 15000 : 45000);
     return () => clearInterval(interval);
   }, [currentEmail, selectedPeer, isOpen, currentUserName]);
 

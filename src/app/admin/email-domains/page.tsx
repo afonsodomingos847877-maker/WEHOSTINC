@@ -115,9 +115,10 @@ export default function EmailDomainsPage() {
     setTimeout(autoInitialize, 2000);
 
     const interval = setInterval(() => {
+      if (typeof document !== 'undefined' && document.hidden) return;
       fetchDomains();
       fetchEmailAccounts();
-    }, 10000);
+    }, 60000);
 
     return () => clearInterval(interval);
   // eslint-disable-next-line react-hooks/exhaustive-deps

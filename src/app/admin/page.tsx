@@ -814,8 +814,9 @@ export default function AdminPage() {
       setIsSyncingData(false);
     });
 
-    // Polling a cada 5s para sincronizar usuários, pedidos, sites, e-mails, tickets, sistemas em tempo real
+    // Polling inteligente a cada 45s (pausado quando a aba estiver inativa)
     const interval = setInterval(() => {
+      if (typeof document !== 'undefined' && document.hidden) return;
       auth.fetchUsersAsync().then((fetched) => {
         if (fetched) setUsers(fetched);
       });
@@ -856,7 +857,7 @@ export default function AdminPage() {
       dataManager.fetchSecurityLogsAsync().then((fetched) => {
         if (fetched) setSecurityLogs(fetched);
       });
-    }, 5000);
+    }, 45000);
 
     return () => clearInterval(interval);
   }, [router, fetchAnalytics, session, sessionStatus]);
