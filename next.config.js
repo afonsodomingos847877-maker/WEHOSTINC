@@ -37,9 +37,10 @@ const nextConfig = {
     const backendUrl = process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_API_URL || 'https://wehostinc.onrender.com';
 
     // No Render, as rotas de API executam localmente (evita loop infinito de proxy).
-    // Na Vercel (produção), encaminhamos as APIs e o blog dinâmico para o Render na camada de CDN Edge,
-    // garantindo consumo ZERO de Fluid Active CPU Serverless na Vercel e resolução perfeita de artigos.
-    const shouldProxyApi = !isRender && (isVercel || process.env.PROXY_TO_RENDER === 'true');
+    // Na Vercel (produção), encaminhamos TODAS as APIs para o Render na fase `beforeFiles` (Edge CDN),
+    // ANTES do Next.js inspecionar o sistema de arquivos local.
+    // Isso garante que nenhuma Vercel Serverless Function seja instanciada ou execute CPU Fluid!
+    const shouldProxyApi = !isRender && (isVercel || process.env.NODE_ENV === 'production' || process.env.PROXY_TO_RENDER === 'true');
     const apiRewrites = shouldProxyApi ? [
       {
         source: '/api/:path*',
@@ -51,55 +52,61 @@ const nextConfig = {
       },
     ] : [];
 
-    return [
-      {
-        source: '/autodiscover/autodiscover.xml',
-        destination: '/api/autodiscover',
-      },
-      {
-        source: '/Autodiscover/Autodiscover.xml',
-        destination: '/api/autodiscover',
-      },
-      {
-        source: '/autodiscover/autodiscover.json',
-        destination: '/api/autodiscover',
-      },
-      {
-        source: '/Autodiscover/Autodiscover.json',
-        destination: '/api/autodiscover',
-      },
-      {
-        source: '/mail/config-v1.1.xml',
-        destination: '/api/autoconfig',
-      },
-      {
-        source: '/.well-known/autoconfig/mail/config-v1.1.xml',
-        destination: '/api/autoconfig',
-      },
-      ...apiRewrites,
-      // Roteamento de Subdomínio para Sites Gerados por IA (*.wehosthere.com)
-      {
-        source: '/((?!api|dashboard|admin|login|register|checkout|site|_next|favicon.ico).*)',
-        has: [
-          {
-            type: 'host',
-            value: '(?<subdomain>(?!(www|api|admin|mail|app|cpanel|webmail|staging|dev)$)[^.]+)\\.wehosthere\\.com',
-          },
-        ],
-        destination: '/site/:subdomain/$1',
-      },
-      // Roteamento de Subdomínio para Desenvolvimento Local (*.localhost)
-      {
-        source: '/((?!api|dashboard|admin|login|register|checkout|site|_next|favicon.ico).*)',
-        has: [
-          {
-            type: 'host',
-            value: '(?<subdomain>(?!(www|api|admin|mail|app|cpanel|webmail|staging|dev)$)[^.]+)\\.localhost',
-          },
-        ],
-        destination: '/site/:subdomain/$1',
-      },
-    ];
+    return {
+      beforeFiles: [
+        ...apiRewrites,
+      ],
+      afterFiles: [
+        {
+          source: '/autodiscover/autodiscover.xml',
+          destination: '/api/autodiscover',
+        },
+        {
+          source: '/Autodiscover/Autodiscover.xml',
+          destination: '/api/autodiscover',
+        },
+        {
+          source: '/autodiscover/autodiscover.json',
+          destination: '/api/autodiscover',
+        },
+        {
+          source: '/Autodiscover/Autodiscover.json',
+          destination: '/api/autodiscover',
+        },
+        {
+          source: '/mail/config-v1.1.xml',
+          destination: '/api/autoconfig',
+        },
+        {
+          source: '/.well-known/autoconfig/mail/config-v1.1.xml',
+          destination: '/api/autoconfig',
+        },
+      ],
+      fallback: [
+        // Roteamento de Subdomínio para Sites Gerados por IA (*.wehosthere.com)
+        {
+          source: '/((?!api|dashboard|admin|login|register|checkout|site|_next|favicon.ico).*)',
+          has: [
+            {
+              type: 'host',
+              value: '(?<subdomain>(?!(www|api|admin|mail|app|cpanel|webmail|staging|dev)$)[^.]+)\\.wehosthere\\.com',
+            },
+          ],
+          destination: '/site/:subdomain/$1',
+        },
+        // Roteamento de Subdomínio para Desenvolvimento Local (*.localhost)
+        {
+          source: '/((?!api|dashboard|admin|login|register|checkout|site|_next|favicon.ico).*)',
+          has: [
+            {
+              type: 'host',
+              value: '(?<subdomain>(?!(www|api|admin|mail|app|cpanel|webmail|staging|dev)$)[^.]+)\\.localhost',
+            },
+          ],
+          destination: '/site/:subdomain/$1',
+        },
+      ],
+    };
   },
   async headers() {
     return [
