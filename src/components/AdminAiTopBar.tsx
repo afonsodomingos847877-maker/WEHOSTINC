@@ -555,14 +555,14 @@ export default function AdminAiTopBar({ isGlobalRoot = false }: AdminAiTopBarPro
     }
 
     return (
-      <div className={`fixed ${topPos} right-4 sm:right-6 z-[100] flex flex-col items-end`}>
-        {/* Botão Launcher Flutuante com Aurora Glow */}
+      <div className={`fixed ${topPos} right-3 sm:right-5 z-[100] flex flex-col items-end`}>
+        {/* Botão Launcher Flutuante com Aurora Glow Suave */}
         <div className="relative group">
           <div 
-            className={`absolute -inset-1 rounded-full blur-md transition-all duration-500 ${
+            className={`absolute -inset-0.5 rounded-full blur-[2px] transition-all duration-500 ${
               isListening
-                ? 'opacity-100 animate-pulse bg-gradient-to-r from-red-500 via-pink-500 to-amber-500'
-                : 'opacity-85 group-hover:opacity-100 bg-gradient-to-r from-sky-400 via-primary-500 to-amber-400'
+                ? 'opacity-80 animate-pulse bg-gradient-to-r from-red-500 via-pink-500 to-amber-500'
+                : 'opacity-25 group-hover:opacity-45 bg-gradient-to-r from-sky-400 via-primary-500 to-amber-400'
             }`}
           />
 
@@ -571,13 +571,13 @@ export default function AdminAiTopBar({ isGlobalRoot = false }: AdminAiTopBarPro
               setIsOpen(prev => !prev);
               setIsFocused(true);
             }}
-            className="relative flex items-center space-x-2 bg-gradient-to-r from-[#075985] via-[#0369a1] to-[#0284c7] hover:from-[#0369a1] hover:to-[#0284c7] text-white px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-full shadow-2xl border border-white/30 cursor-pointer transition-all duration-300 transform active:scale-95"
+            className="relative flex items-center space-x-1.5 bg-gradient-to-r from-[#075985] via-[#0369a1] to-[#0284c7] hover:from-[#0369a1] hover:to-[#0284c7] text-white px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full shadow-md border border-white/25 cursor-pointer transition-all duration-300 transform active:scale-95"
           >
-            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-white p-0.5 border border-white/40 shadow-xs flex items-center justify-center overflow-hidden">
+            <div className="w-5 h-5 sm:w-5.5 sm:h-5.5 rounded-full bg-white p-0.5 border border-white/40 shadow-2xs flex items-center justify-center overflow-hidden shrink-0">
               <img src="/avatar.png" alt="AI Copilot" className="w-full h-full object-cover rounded-full" />
             </div>
-            <span className="text-xs font-black tracking-wide hidden sm:inline">AI Copilot</span>
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-[11px] sm:text-xs font-bold tracking-wide hidden sm:inline">AI Copilot</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
 
             {/* Botão de Voz */}
             <button
@@ -589,7 +589,7 @@ export default function AdminAiTopBar({ isGlobalRoot = false }: AdminAiTopBarPro
               className="p-1 rounded-full hover:bg-white/20 transition text-sky-100 cursor-pointer"
               title="Falar por voz"
             >
-              {isListening ? <MicOff className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-400 animate-bounce" /> : <Mic className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
+              {isListening ? <MicOff className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-red-400 animate-bounce" /> : <Mic className="w-3 h-3 sm:w-3.5 sm:h-3.5" />}
             </button>
 
             {/* Botão para Fechar / Ocultar Flutuante */}
@@ -599,7 +599,7 @@ export default function AdminAiTopBar({ isGlobalRoot = false }: AdminAiTopBarPro
               className="p-1 rounded-full hover:bg-white/20 transition text-sky-200 hover:text-white cursor-pointer"
               title="Ocultar botão flutuante"
             >
-              <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <X className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
             </button>
           </div>
         </div>
