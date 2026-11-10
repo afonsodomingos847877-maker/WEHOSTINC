@@ -276,6 +276,117 @@ function transformVoiceTranscriptToCorporateEmail(
   };
 }
 
+// Helper: Chamar LLM Open-Source (OpenRouter openai/gpt-oss-20b + fallback automático Pollinations gpt-oss-20b gratuito)
+async function callOpenSourceLLM(params: {
+  systemPrompt: string;
+  userPrompt: string;
+  temperature?: number;
+  seed?: number;
+}): Promise<{ text: string; provider: string; model: string } | null> {
+  const { systemPrompt, userPrompt, temperature = 0.7, seed } = params;
+  const openRouterKey = process.env.OPENROUTER_API_KEY?.trim();
+  const openRouterModel = process.env.OPENROUTER_MODEL?.trim() || 'openai/gpt-oss-20b';
+
+  // 1. OpenRouter (quando chave válida configurada)
+  if (openRouterKey) {
+    try {
+      const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${openRouterKey}`,
+          'HTTP-Referer': 'https://www.wehosthere.com',
+          'X-Title': 'WEHOSTHERE Webmail AI',
+        },
+        body: JSON.stringify({
+          model: openRouterModel,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt },
+          ],
+          temperature,
+        }),
+        signal: AbortSignal.timeout(18000),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const text = data?.choices?.[0]?.message?.content;
+        if (text && String(text).trim()) {
+          return { text: String(text).trim(), provider: 'openrouter', model: data?.model || openRouterModel };
+        }
+      } else {
+        console.warn(`[AI OpenRouter] HTTP ${res.status} — a usar fallback open-source...`);
+      }
+    } catch (err) {
+      console.warn('[AI OpenRouter] Falha de ligação — a usar fallback open-source:', err);
+    }
+  }
+
+  // 2. Fallback Open-Source Gratuito (Pollinations -> gpt-oss-20b sem chave obrigatória)
+  try {
+    const res = await fetch('https://text.pollinations.ai/openai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'openai-fast',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        temperature,
+        seed: seed ?? Math.floor(Math.random() * 100000),
+      }),
+      signal: AbortSignal.timeout(18000),
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      const text = data?.choices?.[0]?.message?.content;
+      if (text && String(text).trim()) {
+        return { text: String(text).trim(), provider: 'pollinations', model: data?.model || 'gpt-oss-20b' };
+      }
+    }
+  } catch (err) {
+    console.warn('[AI Pollinations] Fallback local ativado:', err);
+  }
+
+  return null;
+}
+
+// Helper: Extrair nome amigável do destinatário/remetente e da assinatura sem gerar placeholders [Nome]
+function resolveReplyIdentities(from: string, fromName?: string, senderName?: string, isEn = false) {
+  let recipientName = (fromName || '').trim();
+  if (!recipientName && from) {
+    const rawFromName = from.split('<')[0].replace(/["']/g, '').trim();
+    if (rawFromName && !rawFromName.includes('@')) {
+      recipientName = rawFromName;
+    } else {
+      const local = (from.split('@')[0] || '').replace(/[._\-0-9]+/g, ' ').trim();
+      if (local && !/^(info|admin|suporte|support|noreply|no-reply|contato|contact|comercial|vendas|wehosthereinc)$/i.test(local)) {
+        recipientName = local
+          .split(/\s+/)
+          .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+          .join(' ');
+      }
+    }
+  }
+
+  let signatureLabel = isEn ? 'WEHOSTHERE Team' : 'Equipa WEHOSTHERE';
+  if (senderName) {
+    const cleanSender = senderName.split('@')[0].trim().toLowerCase();
+    if (cleanSender === 'info' || cleanSender === 'suporte') {
+      signatureLabel = isEn ? 'WEHOSTHERE Support Team' : 'Equipa de Suporte WEHOSTHERE';
+    } else if (cleanSender === 'admin') {
+      signatureLabel = isEn ? 'WEHOSTHERE Administration' : 'Administração WEHOSTHERE';
+    } else if (cleanSender) {
+      signatureLabel = cleanSender.charAt(0).toUpperCase() + cleanSender.slice(1);
+    }
+  }
+
+  return { recipientName, signatureLabel };
+}
+
 // Helper: Construir conhecimento oficial da WEHOSTHERE para respostas com IA
 function getWehosthereKnowledgeContext(): string {
   const domainLines = DOMAIN_PRICES.map(
@@ -334,7 +445,9 @@ function buildContextualEmailReply(params: {
   const { subject, cleanText, from, fromName, senderName, tone, variation = 0 } = params;
   const variant = Math.abs(Number(variation) || 0) % 3;
   const normalizedText = normalizeIncomingEmailText(cleanText);
-  const fullContext = `${subject} ${normalizedText}`.toLowerCase();
+  // Remover endereços de e-mail completos (ex.: user@empresa.co.mz) antes de detetar palavras-chave para não confundir domínios de e-mail com pedidos de registo de domínio
+  const textWithoutEmails = normalizedText.replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, '');
+  const fullContext = `${subject} ${textWithoutEmails}`.toLowerCase();
   const isEn = isLikelyEnglishEmail(subject, normalizedText);
 
   // Nome amigável do destinatário
@@ -737,6 +850,69 @@ CORPO:
 
     const structuredLines = cleanEmailHtmlToLines(content);
     const cleanText = structuredLines.join('\n');
+    const readableEmailText = normalizeIncomingEmailText(cleanEmailHtmlToReadableText(content) || cleanText);
+    const isEnIncoming = isLikelyEnglishEmail(subject, readableEmailText);
+    const { recipientName, signatureLabel } = resolveReplyIdentities(from, fromName, senderName, isEnIncoming);
+
+    // 1. Tentar IA Open-Source real (OpenRouter openai/gpt-oss-20b -> fallback Pollinations gpt-oss-20b)
+    {
+      let openSystemPrompt = '';
+      let openUserPrompt = '';
+      const temp = Number(variation) > 0 ? 0.85 : 0.65;
+
+      if (action === 'summarize') {
+        openSystemPrompt = 'Você é um assistente executivo de e-mails. Resuma o e-mail recebido em português em 3 tópicos curtos iniciados por "• " e termine com "💡 Ação recomendada: ...". Nunca use asteriscos (**).';
+        openUserPrompt = `Assunto: ${subject}\nDe: ${fromName || from}\n\n${readableEmailText}`;
+      } else if (action === 'reply') {
+        const altRule = Number(variation) > 0
+          ? `\n- IMPORTANTE: Gere uma versão alternativa #${Number(variation) + 1} com estrutura, saudação e formulação claramente diferentes da resposta anterior.${previousReply ? `\n- Evite repetir a resposta anterior:\n"""\n${String(previousReply).slice(0, 600)}\n"""` : ''}`
+          : '';
+        const toneDesc = tone === 'formal'
+          ? 'muito formal e protocolar'
+          : tone === 'friendly'
+          ? 'amigável, próximo e caloroso'
+          : tone === 'quick_accept'
+          ? 'confirmação rápida e positiva'
+          : tone === 'quick_decline'
+          ? 'recusa educada e diplomática'
+          : 'profissional, claro e objetivo';
+
+        openSystemPrompt = `Você é o assistente de e-mail da WEHOSTHERE. Escreva uma resposta completa e pronta para enviar, especificamente adaptada ao conteúdo real do e-mail recebido.
+Regras obrigatórias:
+- Leia com atenção o e-mail recebido e responda diretamente ao que essa mensagem diz ou pergunta.
+- NÃO copie nem inclua tabelas de preços, links ou planos de serviços se o e-mail recebido NÃO perguntou sobre preços ou serviços.
+- Tom solicitado: ${toneDesc}.
+- Idioma: responda no mesmo idioma do e-mail recebido (${isEnIncoming ? 'Inglês' : 'Português'}).
+- Saudação: dirija-se a ${recipientName ? `"${recipientName}"` : 'forma cordial adequada (ex.: "Prezado(a)," ou "Olá,")'}. NUNCA escreva placeholders entre colchetes como [Nome], [Seu Nome], [Empresa].
+- Assinatura final: assine como "${signatureLabel}".
+- NÃO use asteriscos (** ou *) nem formatação Markdown.${altRule}
+
+Caso (e SOMENTE caso) o e-mail pergunte sobre produtos, preços, domínios, hospedagem, e-mail ou pagamentos da WEHOSTHERE, use estes factos oficiais:
+${getWehosthereKnowledgeContext()}`;
+
+        openUserPrompt = `E-mail recebido:\nAssunto: ${subject || '(Sem assunto)'}\nDe: ${fromName ? `${fromName} <${from}>` : from}\n\nConteúdo:\n${readableEmailText.slice(0, 3500)}\n\nInstrução extra: ${prompt || 'Nenhuma'}`;
+      } else if (action === 'improve') {
+        openSystemPrompt = `Você é um revisor corporativo. Reescreva e melhore o rascunho de e-mail mantendo a intenção original, com tom ${tone}, gramática impecável e sem usar asteriscos (**) ou colchetes [Nome].`;
+        openUserPrompt = readableEmailText;
+      }
+
+      if (openSystemPrompt && openUserPrompt) {
+        const aiRes = await callOpenSourceLLM({
+          systemPrompt: openSystemPrompt,
+          userPrompt: openUserPrompt,
+          temperature: temp,
+          seed: Date.now() + Number(variation || 0) * 97,
+        });
+        if (aiRes?.text) {
+          return NextResponse.json({
+            success: true,
+            result: stripMarkdownAsterisks(aiRes.text),
+            provider: aiRes.provider,
+            model: aiRes.model,
+          });
+        }
+      }
+    }
 
     // Check if Gemini or OpenAI API Key exists
     const geminiKey = process.env.GEMINI_API_KEY;
