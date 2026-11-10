@@ -756,6 +756,7 @@ function WebmailContent() {
   } | null>(null);
   const [isTranslatingEmail, setIsTranslatingEmail] = useState<'pt' | 'en' | null>(null);
   const [isTranslatingDraft, setIsTranslatingDraft] = useState<'pt' | 'en' | null>(null);
+  const [isTranslatingQuickReply, setIsTranslatingQuickReply] = useState<'pt' | 'en' | null>(null);
   const [trustedSenders, setTrustedSenders] = useState<Set<string>>(new Set());
 
   // 23. Voice to Email States (Fala -> E-mail Profissional com IA)
@@ -3147,6 +3148,31 @@ function WebmailContent() {
     }
   };
 
+  const handleTranslateQuickReply = async (targetLang: 'pt' | 'en') => {
+    if (!replyText.trim()) return;
+    setIsTranslatingQuickReply(targetLang);
+    try {
+      const res = await fetch('/api/ai/email-assistant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'translate',
+          targetLang,
+          content: replyText,
+        }),
+      });
+      const data = await res.json();
+      if (data.success && data.result) {
+        setReplyText(cleanAiText(data.result));
+        soundEffects.playAICompleteSound();
+      }
+    } catch (err) {
+      console.error('Error translating quick reply:', err);
+    } finally {
+      setIsTranslatingQuickReply(null);
+    }
+  };
+
   const handleSignatureImageUpload = async (file: File) => {
     if (!file) return;
     if (file.size > 2 * 1024 * 1024) {
@@ -5361,6 +5387,36 @@ function WebmailContent() {
                         </>
                       )}
                     </button>
+                    <div className="inline-flex items-center rounded-xl border border-neutral-200 bg-neutral-100 p-0.5">
+                      <button
+                        type="button"
+                        onClick={() => handleTranslateQuickReply('pt')}
+                        disabled={isTranslatingQuickReply !== null || !replyText.trim()}
+                        className="px-2 py-0.5 rounded-lg text-[10px] font-bold text-neutral-700 hover:bg-white hover:text-emerald-700 transition flex items-center gap-1 disabled:opacity-40 cursor-pointer"
+                        title="Traduzir esta resposta para Português"
+                      >
+                        {isTranslatingQuickReply === 'pt' ? (
+                          <Loader2 className="h-3 w-3 animate-spin text-emerald-600" />
+                        ) : (
+                          <Languages className="h-3 w-3 text-emerald-600" />
+                        )}
+                        <span>PT</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleTranslateQuickReply('en')}
+                        disabled={isTranslatingQuickReply !== null || !replyText.trim()}
+                        className="px-2 py-0.5 rounded-lg text-[10px] font-bold text-neutral-700 hover:bg-white hover:text-indigo-700 transition flex items-center gap-1 disabled:opacity-40 cursor-pointer"
+                        title="Traduzir esta resposta para Inglês"
+                      >
+                        {isTranslatingQuickReply === 'en' ? (
+                          <Loader2 className="h-3 w-3 animate-spin text-indigo-600" />
+                        ) : (
+                          <Languages className="h-3 w-3 text-indigo-600" />
+                        )}
+                        <span>EN</span>
+                      </button>
+                    </div>
                     <span className="text-[10px] text-neutral-400 hidden sm:inline">Shift + Enter para nova linha</span>
                   </div>
                 </div>
