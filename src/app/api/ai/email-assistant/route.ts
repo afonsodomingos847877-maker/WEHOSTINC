@@ -329,8 +329,10 @@ function buildContextualEmailReply(params: {
   fromName?: string;
   senderName?: string;
   tone: string;
+  variation?: number;
 }): string {
-  const { subject, cleanText, from, fromName, senderName, tone } = params;
+  const { subject, cleanText, from, fromName, senderName, tone, variation = 0 } = params;
+  const variant = Math.abs(Number(variation) || 0) % 3;
   const normalizedText = normalizeIncomingEmailText(cleanText);
   const fullContext = `${subject} ${normalizedText}`.toLowerCase();
   const isEn = isLikelyEnglishEmail(subject, normalizedText);
@@ -507,9 +509,17 @@ function buildContextualEmailReply(params: {
     );
   }
 
-  // Saudação e fecho conforme tom e idioma
+  // Saudação, introdução e fecho conforme variação (0 = Estruturada, 1 = Direta/Executiva, 2 = Consultiva/Comercial), tom e idioma
   const greeting = isEn
-    ? `Dear${recipientName ? ` ${recipientName}` : ''},`
+    ? variant === 1
+      ? `Hi${recipientName ? ` ${recipientName}` : ''},`
+      : variant === 2
+      ? `Hello${recipientName ? ` ${recipientName}` : ''}, hope you are having a great day!`
+      : `Dear${recipientName ? ` ${recipientName}` : ''},`
+    : variant === 1
+    ? `Caro(a)${recipientName ? ` ${recipientName}` : ''},`
+    : variant === 2
+    ? `Olá${recipientName ? ` ${recipientName}` : ''}, tudo bem?`
     : tone === 'friendly'
     ? `Olá${recipientName ? ` ${recipientName}` : ''}!`
     : tone === 'formal'
@@ -517,6 +527,35 @@ function buildContextualEmailReply(params: {
     : `Olá${recipientName ? ` ${recipientName}` : ''},`;
 
   if (sections.length > 0) {
+    if (variant === 1) {
+      // Versão 2: Direta & Executiva (mais concisa, foco rápido nos pontos essenciais)
+      const conciseSections = sections
+        .map((s) =>
+          s
+            .replace(/^\d+\.\s+/gm, '▸ ')
+            .replace(/\n{2,}/g, '\n')
+        )
+        .join('\n\n');
+      const shortIntro = isEn
+        ? `Thanks for reaching out! Here is a quick summary of what you need:`
+        : `Obrigado pela mensagem! Segue o resumo objetivo com todas as informações:`;
+      const shortOutro = isEn
+        ? `Let us know when you're ready to proceed — we can activate everything quickly.\n\nBest,\n${signatureLabel}`
+        : `Assim que quiser avançar, responda por aqui ou pelo WhatsApp (+258 84 833 5618) que tratamos de imediato.\n\nCumprimentos,\n${signatureLabel}`;
+      return `${greeting}\n\n${shortIntro}\n\n${conciseSections}\n\n${shortOutro}`;
+    }
+
+    if (variant === 2) {
+      // Versão 3: Consultiva & Orientada a Conversão (acompanhamento próximo)
+      const consultIntro = isEn
+        ? `Thank you for considering WEHOSTHERE! We would be delighted to help you get started smoothly. Here are all the details:`
+        : `É um prazer poder ajudar! Na WEHOSTHERE acompanhamos todo o processo consigo do início ao fim. Aqui estão os detalhes para a sua decisão:`;
+      const consultOutro = isEn
+        ? `If you'd like, just reply with your preferred option or domain name and our team will reserve and configure everything for you today (WhatsApp: +258 84 833 5618).\n\nWarm regards,\n${signatureLabel}`
+        : `Se já tiver um nome em mente ou quiser ajuda para escolher o melhor plano, basta responder a este e-mail (ou chamar no WhatsApp +258 84 833 5618) e a nossa equipa trata da ativação consigo hoje mesmo.\n\nUm abraço e bons negócios,\n${signatureLabel}`;
+      return `${greeting}\n\n${consultIntro}\n\n${sections.join('\n\n')}\n\n${consultOutro}`;
+    }
+
     const intro = isEn
       ? `Thank you for contacting WEHOSTHERE. Please find below the details regarding your inquiry:`
       : tone === 'friendly'
@@ -530,9 +569,22 @@ function buildContextualEmailReply(params: {
     return `${greeting}\n\n${intro}\n\n${sections.join('\n\n')}\n\n${outro}`;
   }
 
-  // Fallback cordial quando o assunto é geral/administrativo
+  // Fallback cordial quando o assunto é geral/administrativo (com 3 variações reais)
   if (isEn) {
+    if (variant === 1) {
+      return `${greeting}\n\nMessage received regarding "${subject || 'your inquiry'}". Our team is already reviewing it and will reply with an update shortly.\n\nBest,\n${signatureLabel}`;
+    }
+    if (variant === 2) {
+      return `${greeting}\n\nThank you for getting in touch about "${subject || 'your request'}"! We have forwarded your message to the responsible team so we can assist you right away.\n\nWarm regards,\n${signatureLabel}`;
+    }
     return `${greeting}\n\nThank you for your email regarding "${subject || 'your request'}". We confirm receipt and are reviewing the details carefully.\n\nWe will get back to you shortly with a complete follow-up.\n\nBest regards,\n${signatureLabel}`;
+  }
+
+  if (variant === 1) {
+    return `${greeting}\n\nRecebemos o seu e-mail sobre "${subject || 'este assunto'}" e já estamos a verificar. Assim que tivermos retorno, enviamos por aqui.\n\nCumprimentos,\n${signatureLabel}`;
+  }
+  if (variant === 2) {
+    return `${greeting}\n\nAgradecemos o contacto! A sua mensagem sobre "${subject || 'este tema'}" já foi encaminhada internamente para lhe darmos a melhor resposta possível ainda hoje.\n\nAté breve,\n${signatureLabel}`;
   }
 
   if (tone === 'formal') {
@@ -559,7 +611,9 @@ export async function POST(request: NextRequest) {
       senderName = '',
       tone = 'professional',
       targetLang = 'pt',
-      prompt = ''
+      prompt = '',
+      variation = 0,
+      previousReply = ''
     } = body;
 
     if (!content && !prompt && !subject) {
@@ -694,7 +748,10 @@ CORPO:
         if (action === 'summarize') {
           systemPrompt = 'Resuma o e-mail abaixo em português de forma clara, executiva e bem estruturada em 3 pontos-chave curtos usando o marcador "• ". NÃO utilize asteriscos (**) nem formatação Markdown. No final, adicione uma linha iniciada por "💡 Ação recomendada: " com o próximo passo sugerido.';
         } else if (action === 'reply') {
-          systemPrompt = `Você é o assistente de atendimento oficial da WEHOSTHERE. Escreva uma resposta completa, educada e pronta para envio (tom "${tone}") respondendo objetivamente a TODAS as perguntas feitas no e-mail recebido sobre "${subject}" de "${fromName || from}". Responda no mesmo idioma do e-mail recebido e NÃO utilize asteriscos (**). Use exclusivamente os dados oficiais abaixo quando o assunto for domínios, hospedagem, e-mails, sites ou pagamentos:\n\n${getWehosthereKnowledgeContext()}`;
+          const altInstruction = Number(variation) > 0
+            ? `\n\nIMPORTANTE: Gere uma versão alternativa #${Number(variation) + 1} com estrutura, saudação e redação diferentes da resposta anterior, mantendo a mesma precisão.${previousReply ? `\nVersão anterior a evitar repetir:\n${String(previousReply).slice(0, 600)}` : ''}`
+            : '';
+          systemPrompt = `Você é o assistente de atendimento oficial da WEHOSTHERE. Escreva uma resposta completa, educada e pronta para envio (tom "${tone}") respondendo objetivamente a TODAS as perguntas feitas no e-mail recebido sobre "${subject}" de "${fromName || from}". Responda no mesmo idioma do e-mail recebido e NÃO utilize asteriscos (**). Use exclusivamente os dados oficiais abaixo quando o assunto for domínios, hospedagem, e-mails, sites ou pagamentos:\n\n${getWehosthereKnowledgeContext()}${altInstruction}`;
         } else if (action === 'improve') {
           systemPrompt = `Reescreva e aprimore o seguinte rascunho de e-mail em português, mantendo a mensagem central, mas com tom ${tone}, gramática perfeita, pontuação impecável e vocabulário corporativo de alto nível. Não utilize asteriscos (**).`;
         }
@@ -726,7 +783,10 @@ CORPO:
         if (action === 'summarize') {
           userPrompt = `Resuma o seguinte e-mail em 3 tópicos curtos e diretos iniciados por "• ", sem usar asteriscos (**), e termine com "💡 Ação recomendada: ...":\n\nAssunto: ${subject}\n${cleanText}`;
         } else if (action === 'reply') {
-          userPrompt = `Responda ao e-mail abaixo em nome da WEHOSTHERE com tom ${tone} (sem usar **), respondendo diretamente a todas as perguntas com base nos dados oficiais:\n\n${getWehosthereKnowledgeContext()}\n\nAssunto: ${subject}\nDe: ${fromName || from}\nMensagem:\n${cleanText}`;
+          const altNote = Number(variation) > 0
+            ? `\n\nIMPORTANTE: Esta é a versão alternativa #${Number(variation) + 1} — use outra abordagem, saudação e organização de frases diferente da anterior.`
+            : '';
+          userPrompt = `Responda ao e-mail abaixo em nome da WEHOSTHERE com tom ${tone} (sem usar **), respondendo diretamente a todas as perguntas com base nos dados oficiais:\n\n${getWehosthereKnowledgeContext()}${altNote}\n\nAssunto: ${subject}\nDe: ${fromName || from}\nMensagem:\n${cleanText}`;
         } else if (action === 'improve') {
           userPrompt = `Aprimore este rascunho de e-mail com tom ${tone} e gramática impecável (sem usar **):\n\n${cleanText}`;
         }
@@ -798,6 +858,7 @@ CORPO:
         fromName,
         senderName,
         tone,
+        variation: Number(variation) || 0,
       });
     } else if (action === 'improve') {
       // Clean up and polish format

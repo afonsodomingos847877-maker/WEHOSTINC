@@ -745,6 +745,8 @@ function WebmailContent() {
   const [aiSummary, setAiSummary] = useState<string | null>(null);
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const [isGeneratingReply, setIsGeneratingReply] = useState(false);
+  const [aiReplyVariation, setAiReplyVariation] = useState(0);
+  const [hasAiGeneratedReply, setHasAiGeneratedReply] = useState(false);
   const [isImprovingDraft, setIsImprovingDraft] = useState(false);
   const [translatedEmail, setTranslatedEmail] = useState<{
     msgId: string;
@@ -2690,8 +2692,14 @@ function WebmailContent() {
     }
   };
 
-  const handleGenerateAIReply = async (tone: string) => {
+  useEffect(() => {
+    setAiReplyVariation(0);
+    setHasAiGeneratedReply(false);
+  }, [selectedMessage?.id]);
+
+  const handleGenerateAIReply = async (tone: string, generateAlternative = false) => {
     if (!selectedMessage) return;
+    const nextVariation = generateAlternative ? aiReplyVariation + 1 : 0;
     setIsGeneratingReply(true);
     try {
       const res = await fetch('/api/ai/email-assistant', {
@@ -2704,12 +2712,16 @@ function WebmailContent() {
           from: selectedMessage.fromEmail,
           fromName: selectedMessage.fromName || '',
           senderName: selectedAccountEmail || '',
-          tone
+          tone,
+          variation: nextVariation,
+          previousReply: generateAlternative ? replyText : ''
         })
       });
       const data = await res.json();
       if (data.success && data.result) {
         setReplyText(cleanAiText(data.result));
+        setAiReplyVariation(nextVariation);
+        setHasAiGeneratedReply(true);
         soundEffects.playAICompleteSound();
       }
     } catch (err) {
@@ -5272,17 +5284,29 @@ function WebmailContent() {
                   <div className="flex flex-wrap items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => handleGenerateAIReply('smart')}
+                      onClick={() => handleGenerateAIReply('smart', hasAiGeneratedReply && !!replyText.trim())}
                       disabled={isGeneratingReply}
                       className="px-2.5 py-1 rounded-xl text-[11px] font-bold transition cursor-pointer flex items-center gap-1.5 border border-primary-600/30 bg-gradient-to-r from-primary-600 to-indigo-600 hover:from-primary-700 hover:to-indigo-700 text-white shadow-xs disabled:opacity-50 active:scale-95"
-                      title="A IA lê este e-mail e gera uma resposta completa com 1 clique"
+                      title={
+                        hasAiGeneratedReply && replyText.trim()
+                          ? 'Gerar uma versão alternativa diferente da resposta atual'
+                          : 'A IA lê este e-mail e gera uma resposta completa com 1 clique'
+                      }
                     >
                       {isGeneratingReply ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin text-white" />
+                      ) : hasAiGeneratedReply && replyText.trim() ? (
+                        <RefreshCw className="h-3.5 w-3.5 text-amber-300" />
                       ) : (
                         <Sparkles className="h-3.5 w-3.5 text-amber-300" />
                       )}
-                      <span>{isGeneratingReply ? 'A gerar resposta...' : 'Gerar Resposta IA'}</span>
+                      <span>
+                        {isGeneratingReply
+                          ? 'A gerar resposta...'
+                          : hasAiGeneratedReply && replyText.trim()
+                          ? `Gerar Outra (v${(aiReplyVariation % 3) + 1})`
+                          : 'Gerar Resposta IA'}
+                      </span>
                     </button>
                     <button
                       type="button"
