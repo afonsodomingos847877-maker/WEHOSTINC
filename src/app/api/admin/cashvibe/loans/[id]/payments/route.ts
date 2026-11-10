@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/serverAuth';
 import { connectDB } from '@/lib/mongodb';
 import CashvibeLoan from '@/models/CashvibeLoan';
 import CashvibePayment from '@/models/CashvibePayment';
 
 // GET /api/admin/cashvibe/loans/[id]/payments - Listar pagamentos de um empréstimo
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest,
+  { params }: { params: { id: string } }) {
+  const adminAuth = await requireAdmin(request);
+  if (adminAuth.error) return adminAuth.error;
+
   try {
     await connectDB();
     const { id } = params;
@@ -24,10 +26,11 @@ export async function GET(
 }
 
 // POST /api/admin/cashvibe/loans/[id]/payments - Registrar amortização / pagamento
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: NextRequest,
+  { params }: { params: { id: string } }) {
+  const adminAuth = await requireAdmin(request);
+  if (adminAuth.error) return adminAuth.error;
+
   try {
     await connectDB();
     const { id } = params;

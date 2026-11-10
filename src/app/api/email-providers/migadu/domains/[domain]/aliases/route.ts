@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getEmailProvider } from '@/lib/emailProviders/base';
 import { EmailAlias } from '@/models/EmailAlias';
 import { connectDB } from '@/lib/mongodb';
+import { canAccessDomain } from '@/lib/serverAuth';
 
 // GET - List aliases for a domain
 export async function GET(
@@ -9,8 +10,12 @@ export async function GET(
   { params }: { params: { domain: string } }
 ) {
   try {
-    await connectDB();
     const domainName = params.domain;
+    const access = await canAccessDomain(request, domainName);
+    if (!access) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    }
+    await connectDB();
 
     const provider = getEmailProvider();
     let providerAliases: any[] = [];
@@ -83,8 +88,12 @@ export async function POST(
   { params }: { params: { domain: string } }
 ) {
   try {
-    await connectDB();
     const domainName = params.domain;
+    const access = await canAccessDomain(request, domainName);
+    if (!access) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    }
+    await connectDB();
     const body = await request.json();
     const { alias, destination } = body;
 
@@ -139,8 +148,12 @@ export async function DELETE(
   { params }: { params: { domain: string } }
 ) {
   try {
-    await connectDB();
     const domainName = params.domain;
+    const access = await canAccessDomain(request, domainName);
+    if (!access) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    }
+    await connectDB();
     const { searchParams } = new URL(request.url);
     const alias = searchParams.get('alias');
     const destination = searchParams.get('destination');

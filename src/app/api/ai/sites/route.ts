@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import AiSiteModel from '@/lib/models/AiSite';
+import { getSessionUser, isAdminRole, requireAuth } from '@/lib/serverAuth';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,7 +16,7 @@ function generateSlug(text: string): string {
   return `${base || 'site'}-${randomSuffix}`;
 }
 
-// GET - Listar todos os sites gerados pelo utilizador
+// GET - Listar todos os sites gerados pelo utilizador (ou pré-visualizar site publicado por slug)
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -25,31 +26,39 @@ export async function GET(request: NextRequest) {
 
     await connectDB();
 
+    const sessionUser = await getSessionUser(request);
+    const isAdmin = isAdminRole(sessionUser?.role);
+
+    // Se estiver a procurar por slug (para visualização pública de sites publicados, ou dono/admin para rascunhos)
+    if (slug && !id) {
+      const site = await AiSiteModel.findOne({ slug: slug.toLowerCase() }).lean() as any;
+      if (!site) {
+        return NextResponse.json({ error: 'Site não encontrado' }, { status: 404 });
+      }
+      if (site.status !== 'published' && (!sessionUser || (!isAdmin && site.userEmail !== sessionUser.email))) {
+        return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
+      }
+      return NextResponse.json({ success: true, site });
+    }
+
+    if (!sessionUser) {
+      return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
+    }
+
     // Se estiver a procurar por id específico
     if (id) {
-      const query: any = { id };
-      if (userEmail) query.userEmail = userEmail.toLowerCase();
-      const site = await AiSiteModel.findOne(query).lean();
+      const site = await AiSiteModel.findOne({ id }).lean() as any;
       if (!site) {
         return NextResponse.json({ error: 'Site não encontrado' }, { status: 404 });
+      }
+      if (!isAdmin && site.userEmail !== sessionUser.email) {
+        return NextResponse.json({ error: 'Acesso negado' }, { status: 403 });
       }
       return NextResponse.json({ success: true, site });
     }
 
-    // Se estiver a procurar por slug (para visualização pública)
-    if (slug) {
-      const site = await AiSiteModel.findOne({ slug: slug.toLowerCase() }).lean();
-      if (!site) {
-        return NextResponse.json({ error: 'Site não encontrado' }, { status: 404 });
-      }
-      return NextResponse.json({ success: true, site });
-    }
-
-    if (!userEmail) {
-      return NextResponse.json({ error: 'userEmail é obrigatório' }, { status: 400 });
-    }
-
-    const sites = await AiSiteModel.find({ userEmail: userEmail.toLowerCase() })
+    const targetEmail = isAdmin && userEmail ? userEmail.toLowerCase() : sessionUser.email;
+    const sites = await AiSiteModel.find({ userEmail: targetEmail })
       .sort({ updatedAt: -1 })
       .lean();
 
@@ -62,6 +71,9 @@ export async function GET(request: NextRequest) {
 
 // POST - Criar, Atualizar ou Publicar um site
 export async function POST(request: NextRequest) {
+  const auth = await requireAuth(request);
+  if (auth.error) return auth.error;
+
   try {
     const body = await request.json();
     const {
@@ -79,14 +91,22 @@ export async function POST(request: NextRequest) {
       customDomain
     } = body;
 
-    if (!userEmail || !htmlContent) {
-      return NextResponse.json({ error: 'userEmail e htmlContent são obrigatórios' }, { status: 400 });
+    if (!htmlContent) {
+      return NextResponse.json({ error: 'htmlContent é obrigatório' }, { status: 400 });
     }
 
     await connectDB();
 
-    const cleanEmail = userEmail.toLowerCase().trim();
+    const isAdmin = isAdminRole(auth.user.role);
+    const cleanEmail = (isAdmin && userEmail ? String(userEmail) : auth.user.email).toLowerCase().trim();
     const siteId = id || `site_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+
+    if (id) {
+      const existing = await AiSiteModel.findOne({ id: siteId }).lean() as any;
+      if (existing && !isAdmin && existing.userEmail !== auth.user.email) {
+        return NextResponse.json({ error: 'Acesso negado para editar este site' }, { status: 403 });
+      }
+    }
     const finalSlug = customSlug || generateSlug(title);
     const finalSubdomain = subdomain || finalSlug;
 
@@ -139,18 +159,25 @@ export async function POST(request: NextRequest) {
 
 // DELETE - Apagar um site
 export async function DELETE(request: NextRequest) {
+  const auth = await requireAuth(request);
+  if (auth.error) return auth.error;
+
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
-    const userEmail = searchParams.get('userEmail');
 
-    if (!id || !userEmail) {
-      return NextResponse.json({ error: 'id e userEmail são obrigatórios' }, { status: 400 });
+    if (!id) {
+      return NextResponse.json({ error: 'id é obrigatório' }, { status: 400 });
     }
 
     await connectDB();
 
-    await AiSiteModel.deleteOne({ id, userEmail: userEmail.toLowerCase() });
+    const isAdmin = isAdminRole(auth.user.role);
+    const query = isAdmin ? { id } : { id, userEmail: auth.user.email };
+    const deleted = await AiSiteModel.deleteOne(query);
+    if (deleted.deletedCount === 0) {
+      return NextResponse.json({ error: 'Site não encontrado ou sem permissão' }, { status: 404 });
+    }
 
     return NextResponse.json({ success: true, message: 'Site eliminado com sucesso' });
   } catch (error: any) {

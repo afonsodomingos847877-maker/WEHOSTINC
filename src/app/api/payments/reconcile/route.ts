@@ -2,11 +2,18 @@ import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import OrderModel from '@/lib/models/Order';
 import { kivora } from '@/lib/kivora';
+import { requireAdmin, requireCronSecret } from '@/lib/serverAuth';
 
 // Sistema de reconciliação de pagamentos
 // Verifica pagamentos M-Pesa/eMola pendentes e reconcilia via Kivora
 
-export async function POST(_req: Request) {
+export async function POST(req: Request) {
+  const cronDenied = requireCronSecret(req);
+  if (cronDenied) {
+    const auth = await requireAdmin(req);
+    if (auth.error) return auth.error;
+  }
+
   try {
     console.log('[PAYMENT RECONCILIATION] Iniciando reconciliação de pagamentos');
 

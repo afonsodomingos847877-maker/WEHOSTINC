@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/serverAuth';
 import { connectDB } from '@/lib/mongodb';
 import Commission from '@/lib/models/Commission';
 import Affiliate from '@/lib/models/Affiliate';
@@ -6,6 +7,9 @@ import User from '@/lib/models/User';
 import { dispatchMessage } from '@/lib/notifications';
 
 export async function GET(request: NextRequest) {
+  const adminAuth = await requireAdmin(request);
+  if (adminAuth.error) return adminAuth.error;
+
   try {
     await connectDB();
     
@@ -36,6 +40,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
+  const adminAuth = await requireAdmin(request);
+  if (adminAuth.error) return adminAuth.error;
+
   try {
     await connectDB();
     

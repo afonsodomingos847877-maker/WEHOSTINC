@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getEmailProvider } from '@/lib/emailProviders/base';
+import { blockInProduction } from '@/lib/serverAuth';
 
 // Debug route to check email provider configuration
 export async function GET(request: NextRequest) {
+  const blocked = blockInProduction();
+  if (blocked) return blocked;
   try {
     const config = {
       EMAIL_PROVIDER: process.env.EMAIL_PROVIDER || 'NOT SET',

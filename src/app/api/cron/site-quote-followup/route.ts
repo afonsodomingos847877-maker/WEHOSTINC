@@ -4,17 +4,17 @@ import { SiteQuoteLead } from '@/models/SiteQuoteLead';
 import { addAdminNotification } from '@/lib/notifications';
 import { sendEmail } from '@/lib/sendgrid';
 import { SITE_URL } from '@/lib/siteConfig';
+import { requireCronSecret } from '@/lib/serverAuth';
 
 /**
  * Cron: Follow-up automático de leads de sites sem resposta após 48h
  * Schedule: 0 10 * * * (diário às 10h)
  */
 export async function GET(req: Request) {
+  const cronAuthError = requireCronSecret(req);
+  if (cronAuthError) return cronAuthError;
+
   try {
-    const authHeader = req.headers.get('authorization');
-    if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
-    }
 
     await connectDB();
 

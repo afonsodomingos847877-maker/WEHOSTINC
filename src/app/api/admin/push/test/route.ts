@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/serverAuth';
 import { sendPushToAdmins } from '@/lib/pushService';
 
-export async function POST() {
+export async function POST(req: Request) {
+  const adminAuth = await requireAdmin(req);
+  if (adminAuth.error) return adminAuth.error;
+
   try {
     const result = await sendPushToAdmins({
       title: '🔔 Teste de Notificação Móvel',

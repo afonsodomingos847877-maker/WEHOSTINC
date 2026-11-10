@@ -1,8 +1,12 @@
 import { NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/serverAuth';
 import { connectDB } from '@/lib/mongodb';
 import { sendEmail } from '@/lib/sendgrid';
 
 export async function POST(req: Request) {
+  const adminAuth = await requireAdmin(req);
+  if (adminAuth.error) return adminAuth.error;
+
   try {
     await connectDB();
     

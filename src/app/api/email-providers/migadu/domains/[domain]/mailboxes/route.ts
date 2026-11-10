@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getEmailProvider } from '@/lib/emailProviders/base';
 import { EmailMailbox } from '@/models/EmailMailbox';
 import { EmailDomain } from '@/models/EmailDomain';
-import { auth } from '@/lib/auth';
 import { connectDB } from '@/lib/mongodb';
 import EmailAccountModel from '@/lib/models/EmailAccount';
+import { canAccessDomain } from '@/lib/serverAuth';
 
 // GET - List mailboxes for a domain
 export async function GET(
@@ -12,8 +12,12 @@ export async function GET(
   { params }: { params: { domain: string } }
 ) {
   try {
-    await connectDB();
     const domainName = params.domain;
+    const access = await canAccessDomain(request, domainName);
+    if (!access) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    }
+    await connectDB();
 
     let domain = await EmailDomain.findOne({ domainName: new RegExp(`^${domainName}$`, 'i') });
     if (!domain) {
@@ -223,11 +227,10 @@ export async function POST(
   { params }: { params: { domain: string } }
 ) {
   try {
-    // Temporarily disabled auth check for testing
-    // const user = await auth.getCurrentUser();
-    // if (!user || user.role !== 'admin') {
-    //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    // }
+    const access = await canAccessDomain(request, params.domain);
+    if (!access) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    }
 
     await connectDB();
     const domainName = params.domain;

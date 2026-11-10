@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/serverAuth';
 import { connectDB } from '@/lib/mongodb';
 import CashvibeLoan, { IInstallment } from '@/models/CashvibeLoan';
 import CashvibeClient from '@/models/CashvibeClient';
@@ -19,6 +20,9 @@ function addMonths(dateStr: string, months: number): string {
 
 // GET /api/admin/cashvibe/loans - Listar empréstimos
 export async function GET(request: NextRequest) {
+  const adminAuth = await requireAdmin(request);
+  if (adminAuth.error) return adminAuth.error;
+
   try {
     await connectDB();
 
@@ -82,6 +86,9 @@ export async function GET(request: NextRequest) {
 
 // POST /api/admin/cashvibe/loans - Conceder novo empréstimo
 export async function POST(request: NextRequest) {
+  const adminAuth = await requireAdmin(request);
+  if (adminAuth.error) return adminAuth.error;
+
   try {
     await connectDB();
     const body = await request.json();

@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/serverAuth';
 import { connectDB } from '@/lib/mongodb';
 import CashvibeClient from '@/models/CashvibeClient';
 import CashvibeLoan from '@/models/CashvibeLoan';
 import CashvibePayment from '@/models/CashvibePayment';
 
 // GET /api/admin/cashvibe/clients/[id] - Obter detalhes do cliente
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest,
+  { params }: { params: { id: string } }) {
+  const adminAuth = await requireAdmin(request);
+  if (adminAuth.error) return adminAuth.error;
+
   try {
     await connectDB();
     const { id } = params;
@@ -37,10 +39,11 @@ export async function GET(
 }
 
 // PUT /api/admin/cashvibe/clients/[id] - Atualizar cliente
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(request: NextRequest,
+  { params }: { params: { id: string } }) {
+  const adminAuth = await requireAdmin(request);
+  if (adminAuth.error) return adminAuth.error;
+
   try {
     await connectDB();
     const { id } = params;
@@ -67,10 +70,11 @@ export async function PUT(
 }
 
 // DELETE /api/admin/cashvibe/clients/[id] - Remover cliente
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: NextRequest,
+  { params }: { params: { id: string } }) {
+  const adminAuth = await requireAdmin(request);
+  if (adminAuth.error) return adminAuth.error;
+
   try {
     await connectDB();
     const { id } = params;

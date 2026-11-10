@@ -6,46 +6,88 @@ import SiteModel from '@/lib/models/Site';
 import { generateInvoicePdf } from '@/lib/invoiceGenerator';
 import { generateHostingCredentials } from '@/lib/provisioning';
 import { CourseModel } from '@/lib/models/CourseModel';
+import { timingSafeCompare } from '@/lib/serverAuth';
+
+function verifyMpesaCallbackAuth(req: Request): boolean {
+  const secret = process.env.MPESA_CALLBACK_SECRET?.trim();
+  if (!secret) {
+    return false;
+  }
+  const url = new URL(req.url);
+  const querySecret = url.searchParams.get('secret') || '';
+  const headerSecret =
+    req.headers.get('x-callback-secret') ||
+    req.headers.get('x-webhook-secret') ||
+    '';
+  const authHeader = req.headers.get('authorization') || '';
+  const bearer = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+
+  return (
+    timingSafeCompare(querySecret, secret) ||
+    timingSafeCompare(headerSecret, secret) ||
+    timingSafeCompare(bearer, secret)
+  );
+}
 
 export async function POST(req: Request) {
+  if (!verifyMpesaCallbackAuth(req)) {
+    return NextResponse.json({ error: 'Unauthorized callback' }, { status: 401 });
+  }
+
   try {
     const body = await req.json();
-    console.log('[M-PESA CALLBACK RECEBIDO]:', body);
+    console.log('[M-PESA CALLBACK RECEBIDO]');
 
     // Extrair dados do callback M-Pesa (formato Vodacom)
     const transactionStatus = String(body.output_ResponseCode || body.TransactionStatus || 'unknown');
     const transactionId = body.output_TransactionID || body.TransactionID || 'N/A';
     const amount = body.output_Amount || body.Amount || 0;
     const msisdn = body.output_MSISDN || body.MSISDN || 'N/A';
-    const thirdPartyRef = body.input_ThirdPartyReference || body.ThirdPartyReference || body.reference || 'N/A';
-    const userEmail = body.userEmail || body.email || '';
-    const userName = body.userName || msisdn;
+    const thirdPartyRef = String(body.input_ThirdPartyReference || body.ThirdPartyReference || body.reference || 'N/A');
+    let userEmail = '';
+    let userName = msisdn;
 
     const isSuccess = transactionStatus === '0' || transactionStatus === 'INS-0' || transactionStatus.toUpperCase() === 'SUCCESS';
 
     // Atualização automática na Base de Dados (Se disponível)
     let orderIdClean = '';
+    let existingOrder: any = null;
     try {
       await connectDB();
       if (thirdPartyRef && thirdPartyRef !== 'N/A') {
-        orderIdClean = thirdPartyRef.replace('ORDER_', '');
-        await OrderModel.findOneAndUpdate(
-          { id: { $regex: new RegExp(orderIdClean, 'i') } },
+        orderIdClean = thirdPartyRef.replace(/^ORDER_/i, '').trim();
+        if (!/^[a-zA-Z0-9_-]{3,64}$/.test(orderIdClean)) {
+          return NextResponse.json({ error: 'Referência de pedido inválida' }, { status: 400 });
+        }
+        const escapedOrderId = orderIdClean.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        existingOrder = await OrderModel.findOneAndUpdate(
+          { id: { $regex: new RegExp(`^${escapedOrderId}$`, 'i') } },
           { 
             status: isSuccess ? 'completed' : 'pending',
             ...(isSuccess ? { valorFaturado: amount } : {})
-          }
-        );
+          },
+          { new: true }
+        ).lean();
+
+        if (!existingOrder) {
+          return NextResponse.json({ error: 'Pedido não encontrado' }, { status: 404 });
+        }
+
+        userEmail = String(existingOrder.clientEmail || existingOrder.userEmail || '').trim().toLowerCase();
+        userName = existingOrder.clientName || msisdn;
 
         if (isSuccess && userEmail) {
           await SiteModel.updateMany(
-            { userEmail: userEmail.toLowerCase() },
+            { userEmail },
             { status: 'active' }
           );
         }
+      } else {
+        return NextResponse.json({ error: 'Referência ausente' }, { status: 400 });
       }
     } catch (dbErr) {
       console.warn('Alerta no DB durante callback M-Pesa:', dbErr);
+      return NextResponse.json({ status: 'ERROR' }, { status: 500 });
     }
 
     if (isSuccess) {
@@ -125,9 +167,7 @@ export async function POST(req: Request) {
 
         // 🎓 Inscrição automática para cursos
         try {
-          const order = await OrderModel.findOne({ 
-            id: { $regex: new RegExp(orderIdClean, 'i') } 
-          });
+          const order = existingOrder;
           
           if (order && order.serviceName?.toLowerCase().includes('curso') && userEmail) {
             // Buscar cursos para encontrar o curso correspondente

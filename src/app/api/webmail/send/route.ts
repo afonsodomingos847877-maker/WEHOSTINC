@@ -5,6 +5,8 @@ import { ExternalEmailAccount } from '@/models/ExternalEmailAccount';
 import { EmailSignature } from '@/models/EmailSignature';
 import { decryptPassword } from '@/lib/encryption';
 import { replaceDataImagesWithCloudinary } from '@/lib/cloudinaryUpload';
+import { canAccessMailbox } from '@/lib/serverAuth';
+import { safeFetchPublicUrl } from '@/lib/ssrfGuard';
 
 export const maxDuration = 60;
 
@@ -26,15 +28,19 @@ async function resolveAttachmentToBuffer(att: any): Promise<{
     };
   }
 
-  // 2. Remote URL (Cloudinary CDN https://res.cloudinary.com/...)
+  // 2. Remote URL pública (validada contra SSRF)
   if (att.url.startsWith('http://') || att.url.startsWith('https://')) {
     try {
-      const res = await fetch(att.url);
+      const res = await safeFetchPublicUrl(att.url, { timeoutMs: 15000, maxRedirects: 2 });
       if (!res.ok) {
-        console.error(`[Webmail Send] Falha ao baixar anexo Cloudinary (${res.status}):`, att.url);
+        console.error(`[Webmail Send] Falha ao baixar anexo remoto (${res.status}):`, att.url);
         return null;
       }
       const arrayBuffer = await res.arrayBuffer();
+      if (arrayBuffer.byteLength > 15 * 1024 * 1024) {
+        console.warn('[Webmail Send] Anexo remoto excede limite de 15MB');
+        return null;
+      }
       const contentType = att.type && att.type.includes('/')
         ? att.type
         : res.headers.get('content-type') || 'application/octet-stream';
@@ -44,7 +50,7 @@ async function resolveAttachmentToBuffer(att: any): Promise<{
         contentType,
       };
     } catch (err) {
-      console.error('[Webmail Send] Erro ao buscar anexo remoto:', err);
+      console.error('[Webmail Send] Erro ou URL bloqueada ao buscar anexo remoto:', err);
       return null;
     }
   }
@@ -126,8 +132,16 @@ export async function POST(request: NextRequest) {
 
     const cleanEmail = (email || '').trim().toLowerCase();
 
-    // If password not passed in payload, look up external account credentials
+    // If password not passed in payload, require mailbox session/ownership before decrypting stored password
     if (!password && cleanEmail) {
+      const authorized = await canAccessMailbox(request, cleanEmail);
+      if (!authorized) {
+        return NextResponse.json(
+          { error: 'Não autorizado a enviar e-mails a partir desta conta sem autenticação.' },
+          { status: 401 }
+        );
+      }
+
       try {
         await connectDB();
         const ext = await ExternalEmailAccount.findOne({

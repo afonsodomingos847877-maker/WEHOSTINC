@@ -3,19 +3,13 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { runAutomaticConsistencyCheck } from '@/lib/affiliateConsistency';
+import { requireCronSecret } from '@/lib/serverAuth';
 
 export async function GET(request: NextRequest) {
+  const cronAuthError = requireCronSecret(request);
+  if (cronAuthError) return cronAuthError;
+
   try {
-    // Verificar autorização (opcional, usando headers ou query params)
-    const authHeader = request.headers.get('authorization');
-    const cronSecret = process.env.CRON_SECRET || 'your-secret-key';
-    
-    if (authHeader !== `Bearer ${cronSecret}`) {
-      return NextResponse.json({ 
-        success: false, 
-        error: 'Não autorizado' 
-      }, { status: 401 });
-    }
 
     console.log('[Cron] Iniciando validação automática de consistência de afiliados');
     
@@ -41,16 +35,10 @@ export async function GET(request: NextRequest) {
 
 // Método POST para disparar validação manualmente (para testes)
 export async function POST(request: NextRequest) {
+  const cronAuthError = requireCronSecret(request);
+  if (cronAuthError) return cronAuthError;
+
   try {
-    const authHeader = request.headers.get('authorization');
-    const cronSecret = process.env.CRON_SECRET || 'your-secret-key';
-    
-    if (authHeader !== `Bearer ${cronSecret}`) {
-      return NextResponse.json({ 
-        success: false, 
-        error: 'Não autorizado' 
-      }, { status: 401 });
-    }
 
     console.log('[Cron] Disparando validação manual de consistência');
     

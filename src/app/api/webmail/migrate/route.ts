@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ImapFlow } from 'imapflow';
 import { connectDB } from '@/lib/mongodb';
 import { EmailMigration } from '@/models/EmailMigration';
+import { canAccessMailbox, getSessionUser } from '@/lib/serverAuth';
+import { assertSafePublicHostname } from '@/lib/ssrfGuard';
 
 // POST - Test connection or start IMAP-to-IMAP email migration
 export async function POST(request: NextRequest) {
@@ -23,9 +25,29 @@ export async function POST(request: NextRequest) {
       targetSecure = true
     } = body;
 
+    const portalUser = await getSessionUser(request);
+    const hasMailboxSession = targetEmail
+      ? await canAccessMailbox(request, targetEmail)
+      : sourceEmail
+      ? await canAccessMailbox(request, sourceEmail)
+      : false;
+    if (!portalUser && !hasMailboxSession) {
+      return NextResponse.json({ error: 'Não autorizado. Inicie sessão primeiro.' }, { status: 401 });
+    }
+
     if (!sourceHost || !sourceEmail || !sourcePassword) {
       return NextResponse.json(
         { error: 'Servidor antigo, e-mail e senha de origem são obrigatórios' },
+        { status: 400 }
+      );
+    }
+
+    try {
+      await assertSafePublicHostname(String(sourceHost));
+      if (targetHost) await assertSafePublicHostname(String(targetHost));
+    } catch (ssrfErr: any) {
+      return NextResponse.json(
+        { error: ssrfErr?.message || 'Host de servidor IMAP não permitido.' },
         { status: 400 }
       );
     }

@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import UserModel from '@/lib/models/User';
+import { blockInProduction } from '@/lib/serverAuth';
 
 export async function GET(request: NextRequest) {
+  const blocked = blockInProduction();
+  if (blocked) return blocked;
   try {
     const { searchParams } = new URL(request.url);
     const email = searchParams.get('email');
@@ -40,6 +43,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const blocked = blockInProduction();
+  if (blocked) return blocked;
   try {
     const body = await request.json();
     const email = body.email;

@@ -3,6 +3,7 @@ import GoogleProvider from 'next-auth/providers/google';
 import { sendWelcomeEmail, sendLoginNotificationEmail } from '@/lib/sendgrid';
 import { connectDB } from '@/lib/mongodb';
 import UserModel from '@/lib/models/User';
+import { generateNumericCode } from '@/lib/serverAuth';
 
 // Validar configuração do NextAuth
 const requiredEnvVars = ['NEXTAUTH_SECRET', 'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET'];
@@ -49,8 +50,8 @@ export const GET = NextAuth({
           scope: 'openid email profile',
         },
       },
-      // Adicionar tratamento de erros no provider
-      checks: ['none'],
+      // Ativar PKCE e proteção CSRF State no fluxo OAuth
+      checks: ['pkce', 'state'],
     }),
   ],
   cookies: {
@@ -150,7 +151,7 @@ export const GET = NextAuth({
         // Utilizador novo — criar conta com status pending (requer confirmação)
         console.log('[Google OAuth] Criando novo utilizador Google:', user.email);
 
-        const confirmationCode = Math.floor(100000 + Math.random() * 900000).toString();
+        const confirmationCode = generateNumericCode(6);
         const confirmationCodeExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 
         const newUser = {

@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { blockInProduction } from '@/lib/serverAuth';
 
 // Debug route to check if environment variables are being read by Node.js
 export async function GET(request: NextRequest) {
+  const blocked = blockInProduction();
+  if (blocked) return blocked;
   try {
     const allEnvVars = {
       EMAIL_PROVIDER: process.env.EMAIL_PROVIDER,

@@ -1,23 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getEmailProvider } from '@/lib/emailProviders/base';
 import { EmailDomain } from '@/models/EmailDomain';
-import { auth } from '@/lib/auth';
 import { connectDB } from '@/lib/mongodb';
 import SiteModel from '@/lib/models/Site';
 import EmailAccountModel from '@/lib/models/EmailAccount';
+import { isAdminRole, requireAdmin, requireAuth } from '@/lib/serverAuth';
 
 // GET - List domains
 export async function GET(request: NextRequest) {
+  const authResult = await requireAuth(request);
+  if (authResult.error) return authResult.error;
+
   try {
-    const user = await auth.getCurrentUser();
-    
-    // Temporarily disabled auth check for testing
-    // if (!user) {
-    //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    // }
+    const user = authResult.user;
+    const isAdmin = isAdminRole(user.role);
 
     const { searchParams } = new URL(request.url);
-    const customerId = searchParams.get('customerId');
+    const requestedCustomerId = searchParams.get('customerId');
+    const customerId = isAdmin ? requestedCustomerId : user.email;
 
     console.log('[Migadu Domains GET] Fetching domains, customerId:', customerId);
 
@@ -168,6 +168,9 @@ export async function GET(request: NextRequest) {
 
 // POST - Create domain
 export async function POST(request: NextRequest) {
+  const adminAuth = await requireAdmin(request);
+  if (adminAuth.error) return adminAuth.error;
+
   try {
     const body = await request.json().catch(() => ({}));
     const { domainName, customerId = 'system', createDefaultAddresses = false } = body;

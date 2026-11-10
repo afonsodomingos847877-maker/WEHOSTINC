@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/serverAuth';
 import { connectDB } from '@/lib/mongodb';
 import CashvibeLoan from '@/models/CashvibeLoan';
 import CashvibePayment from '@/models/CashvibePayment';
 
 // GET /api/admin/cashvibe/stats/cashflow - Projeção de Fluxo de Caixa & DRE
 export async function GET(request: NextRequest) {
+  const adminAuth = await requireAdmin(request);
+  if (adminAuth.error) return adminAuth.error;
+
   try {
     await connectDB();
 

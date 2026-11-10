@@ -1,16 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/serverAuth';
 import { connectDB } from '@/lib/mongodb';
 import Affiliate from '@/lib/models/Affiliate';
 import User from '@/lib/models/User';
 
 export async function POST(request: NextRequest) {
-  try {
-    // Verificar se é admin (simplificado - em produção adicionar autenticação real)
-    const authHeader = request.headers.get('authorization');
-    if (authHeader !== `Bearer ${process.env.ADMIN_SECRET || 'admin-secret'}`) {
-      return NextResponse.json({ success: false, error: 'Não autorizado' }, { status: 401 });
-    }
+  const adminAuth = await requireAdmin(request);
+  if (adminAuth.error) return adminAuth.error;
 
+  try {
     console.log('Iniciando migração de códigos de afiliados...');
     await connectDB();
 

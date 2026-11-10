@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getEmailProvider } from '@/lib/emailProviders/base';
 import { EmailMailbox } from '@/models/EmailMailbox';
-import { auth } from '@/lib/auth';
 import { connectDB } from '@/lib/mongodb';
+import { canAccessDomain } from '@/lib/serverAuth';
 
 // POST - Reset mailbox password
 export async function POST(
@@ -10,11 +10,12 @@ export async function POST(
   { params }: { params: { domain: string; localPart: string } }
 ) {
   try {
-    await connectDB();
-    const user = await auth.getCurrentUser();
-    if (!user || user.role !== 'admin') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const access = await canAccessDomain(request, params.domain);
+    if (!access) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     }
+
+    await connectDB();
 
     const { domain, localPart } = params;
     const body = await request.json();
@@ -26,8 +27,8 @@ export async function POST(
       return NextResponse.json({ error: 'Mailbox not found' }, { status: 404 });
     }
 
-    // 🔒 Verify ownership: customer can only reset their own mailboxes
-    if (user.role !== 'admin' && mailbox.customerId !== user.id) {
+    // 🔒 Verify ownership: customer can only reset their own domain/mailbox
+    if (!access.isAdmin && mailbox.customerId !== access.user.id && mailbox.customerId !== access.user.email) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

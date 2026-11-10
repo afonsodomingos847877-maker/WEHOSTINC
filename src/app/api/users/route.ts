@@ -6,6 +6,7 @@ import { addAdminNotification, dispatchMessage } from '@/lib/notifications';
 import { rateLimit, getRateLimitIdentifier } from '@/lib/rateLimiter';
 import bcrypt from 'bcryptjs';
 import { sendAccountDeletionEmail, sendRoleChangeEmail } from '@/lib/sendgrid';
+import { getSessionUser, hasValidInternalAuth, isAdminRole, requireAdmin, requireAuth, setSessionCookie } from '@/lib/serverAuth';
 import { DomainInvitation } from '@/models/DomainInvitation';
 import { EmailDomain } from '@/models/EmailDomain';
 import { EmailMailbox } from '@/models/EmailMailbox';
@@ -79,8 +80,8 @@ async function ensureAdmin() {
     return;
   }
 
-  // Se a senha do admin no MongoDB estiver vazia, for texto puro ou diferente do hash atual, sincroniza
-  if (!exists.password || !exists.password.startsWith('$2') || exists.password !== adminHash) {
+  // Só sincroniza hash se ainda não houver um hash bcrypt válido (evita sobrescrever troca de senha)
+  if (!exists.password || !exists.password.startsWith('$2')) {
     await UserModel.findOneAndUpdate(
       { email: 'admin@wehosthere.com' },
       { $set: { password: adminHash, role: 'admin', status: 'active' } }
@@ -89,30 +90,42 @@ async function ensureAdmin() {
 }
 
 export async function GET(request: Request) {
-  // 🔒 PROTECÇÃO: Apenas permite:
-  // 1. Chamadas server-side (sem header Origin) — ex: NextAuth, outros routes
-  // 2. Chamadas com token interno correto (x-internal-auth)
-  // 3. Chamadas do próprio domínio do site (same-origin browser calls)
-  const origin = request.headers.get('origin');
-  const authHeader = request.headers.get('x-internal-auth');
-  const internalSecret = process.env.NEXTAUTH_SECRET || '';
+  let isAdminOrInternal = hasValidInternalAuth(request);
+  let sessionEmail = '';
 
-  const isInternalCall = !origin; // Chamadas server-side não enviam Origin
-  const hasValidInternalToken = authHeader === internalSecret && internalSecret.length > 0;
-  const isSameOrigin = origin === 'https://wehosthere.com' ||
-                       origin === 'https://www.wehosthere.com' ||
-                       origin === 'http://localhost:3000' ||
-                       origin === 'http://localhost:3001';
-
-  if (!isInternalCall && !hasValidInternalToken && !isSameOrigin) {
-    console.warn('[Users API] Acesso não autorizado ao GET /api/users — origin:', origin);
-    return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+  if (!isAdminOrInternal) {
+    const auth = await requireAuth(request);
+    if (auth.error) return auth.error;
+    isAdminOrInternal = isAdminRole(auth.user.role);
+    sessionEmail = auth.user.email.toLowerCase().trim();
   }
 
   try {
     const url = new URL(request.url);
     const emailParam = url.searchParams.get('email');
     const targetEmail = emailParam?.trim().toLowerCase();
+
+    if (!isAdminOrInternal) {
+      // Utilizadores comuns só podem consultar o seu próprio perfil
+      const lookupEmail = targetEmail || sessionEmail;
+      if (lookupEmail !== sessionEmail) {
+        return NextResponse.json({ error: 'Acesso negado' }, { status: 403 });
+      }
+      if (await tryMongo()) {
+        const singleUser = await UserModel.findOne({
+          $or: [
+            { email: sessionEmail },
+            { email: { $regex: new RegExp(`^${sessionEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') } }
+          ]
+        }).lean();
+        if (singleUser) {
+          const { password: _pw, confirmationCode: _cc, confirmationCodeExpiresAt: _cce, ...safeUser } = singleUser as any;
+          return NextResponse.json({ success: true, user: safeUser });
+        }
+        return NextResponse.json({ error: 'Utilizador não encontrado' }, { status: 404 });
+      }
+      return NextResponse.json({ error: 'Serviço indisponível' }, { status: 503 });
+    }
 
     if (await tryMongo()) {
       await ensureAdmin();
@@ -136,6 +149,9 @@ export async function GET(request: Request) {
     }
   } catch (e) {
     console.error('MongoDB indisponível, usando fallback:', e);
+  }
+  if (!isAdminOrInternal) {
+    return NextResponse.json({ error: 'Acesso negado' }, { status: 403 });
   }
   // Fallback: remover passwords
   const safeFallback = FALLBACK_USERS.map(({ password: _pw, ...u }: any) => u);
@@ -228,7 +244,7 @@ export async function POST(req: Request) {
           );
         }
 
-        // 🔒 Comparar com bcrypt — com migração automática para passwords antigas em plaintext
+        // 🔒 Comparar com bcrypt — com migração automática apenas para hashes antigos em plaintext
         let passwordMatch = false;
         if (userDoc.password.startsWith('$2')) {
           passwordMatch = await bcrypt.compare(targetPassword, userDoc.password);
@@ -237,25 +253,10 @@ export async function POST(req: Request) {
           passwordMatch = true;
         }
 
-        // 🔒 Fallback de emergência para admin (garante acesso imediato com nova ou antiga senha)
-        if (!passwordMatch && targetEmail === 'admin@wehosthere.com') {
-          if (targetPassword === 'AdminSecure2026!#Wh' || targetPassword === '@Admin123@') {
-            passwordMatch = true;
-          }
-        }
-
-        // Se autenticou e a senha no banco não era o hash oficial, atualiza no MongoDB
-        if (passwordMatch) {
+        if (passwordMatch && (!userDoc.password || !userDoc.password.startsWith('$2'))) {
           try {
-            const adminHash = process.env.ADMIN_DEFAULT_PASSWORD_HASH?.trim() || DEFAULT_ADMIN_HASH;
-            if (targetEmail === 'admin@wehosthere.com') {
-              if (userDoc.password !== adminHash) {
-                await UserModel.updateOne({ email: targetEmail }, { $set: { password: adminHash } });
-              }
-            } else if (!userDoc.password || !userDoc.password.startsWith('$2')) {
-              const newHashed = await bcrypt.hash(targetPassword, 12);
-              await UserModel.updateOne({ email: targetEmail }, { $set: { password: newHashed } });
-            }
+            const newHashed = await bcrypt.hash(targetPassword, 12);
+            await UserModel.updateOne({ email: targetEmail }, { $set: { password: newHashed } });
           } catch (e) {
             console.error('Erro ao atualizar hash:', e);
           }
@@ -300,7 +301,9 @@ export async function POST(req: Request) {
         }
 
         const { password: _pw, confirmationCode: _cc, confirmationCodeExpiresAt: _cce, ...safeUser } = userDoc as any;
-        return NextResponse.json({ success: true, user: safeUser });
+        const response = NextResponse.json({ success: true, user: safeUser });
+        setSessionCookie(response, safeUser);
+        return response;
       } else {
         const fallbackUser = FALLBACK_USERS.find(u => u.email.toLowerCase() === targetEmail);
 
@@ -317,11 +320,6 @@ export async function POST(req: Request) {
             fallbackMatch = true;
           }
         }
-        if (!fallbackMatch && targetEmail === 'admin@wehosthere.com') {
-          if (targetPassword === 'AdminSecure2026!#Wh' || targetPassword === '@Admin123@') {
-            fallbackMatch = true;
-          }
-        }
         if (!fallbackMatch) {
           return NextResponse.json({ error: 'Senha incorreta.' }, { status: 401 });
         }
@@ -331,13 +329,28 @@ export async function POST(req: Request) {
         }
 
         const { password: _pw, ...safeFallbackUser } = fallbackUser;
-        return NextResponse.json({ success: true, user: safeFallbackUser });
+        const response = NextResponse.json({ success: true, user: safeFallbackUser });
+        setSessionCookie(response, safeFallbackUser);
+        return response;
       }
     }
 
     if (action === 'update_password') {
-      const targetId = String(userId || body.id || '').trim();
-      const targetEmail = safeEmail || (body.email || '').trim().toLowerCase();
+      const auth = await requireAuth(req);
+      if (auth.error) return auth.error;
+
+      const isAdmin = isAdminRole(auth.user.role);
+      const targetId = isAdmin ? String(userId || body.id || '').trim() : auth.user.id;
+      const targetEmail = isAdmin
+        ? (safeEmail || (body.email || '').trim().toLowerCase())
+        : auth.user.email;
+
+      if (!isAdmin) {
+        const reqEmail = (safeEmail || (body.email || '').trim().toLowerCase());
+        if (reqEmail && reqEmail !== auth.user.email) {
+          return NextResponse.json({ error: 'Acesso negado.' }, { status: 403 });
+        }
+      }
 
       if (!safePassword) {
         return NextResponse.json({ error: 'Nova senha é obrigatória.' }, { status: 400 });
@@ -382,17 +395,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true, user: safeUser });
     }
 
-    if (action === 'update_plan') {
-      if (useMongo) {
-        await UserModel.findOneAndUpdate({ id: userId }, { plan });
-        const users = await UserModel.find({}).lean();
-        return NextResponse.json({ success: true, users });
-      }
-      FALLBACK_USERS = FALLBACK_USERS.map(u => u.id === userId ? { ...u, plan } : u);
-      return NextResponse.json({ success: true, users: FALLBACK_USERS });
-    }
-
     if (action === 'update_confirmation_code') {
+      const adminAuth = await requireAdmin(req);
+      if (adminAuth.error) return adminAuth.error;
       const targetId = (userId || body.id || '').toLowerCase();
       const targetEmail = (email || body.email || '').trim().toLowerCase();
       const newCode = body.confirmationCode;
@@ -431,6 +436,9 @@ export async function POST(req: Request) {
     }
 
     if (action === 'confirm_email') {
+      const adminAuth = await requireAdmin(req);
+      if (adminAuth.error) return adminAuth.error;
+
       const targetId = (userId || body.id || '').toLowerCase();
       const targetEmail = (email || body.email || '').trim().toLowerCase();
       
@@ -450,7 +458,9 @@ export async function POST(req: Request) {
         }
         
         const users = await UserModel.find({}).lean();
-        return NextResponse.json({ success: true, user: updated, users });
+        const safeUsers = users.map(({ password: _pw, confirmationCode: _cc, confirmationCodeExpiresAt: _cce, ...u }: any) => u);
+        const { password: _pw, confirmationCode: _cc, confirmationCodeExpiresAt: _cce, ...safeUpdated } = updated as any;
+        return NextResponse.json({ success: true, user: safeUpdated, users: safeUsers });
       }
       
       FALLBACK_USERS = FALLBACK_USERS.map(u =>
@@ -461,13 +471,17 @@ export async function POST(req: Request) {
     }
 
     if (action === 'update_status') {
+      const adminAuth = await requireAdmin(req);
+      if (adminAuth.error) return adminAuth.error;
+
       const targetId = String(userId || body.id || '').trim();
       const targetEmail = (body.email || body.userEmail || '').trim().toLowerCase();
       if (useMongo) {
         const filter = buildUserFilter(targetId, targetEmail);
         await UserModel.updateMany(filter, { status });
         const users = await UserModel.find({}).lean();
-        return NextResponse.json({ success: true, users });
+        const safeUsers = users.map(({ password: _pw, confirmationCode: _cc, confirmationCodeExpiresAt: _cce, ...u }: any) => u);
+        return NextResponse.json({ success: true, users: safeUsers });
       }
       FALLBACK_USERS = FALLBACK_USERS.map(u =>
         (targetId && (u.id === targetId || u.id.toLowerCase() === targetId.toLowerCase())) || (targetEmail && u.email.toLowerCase() === targetEmail)
@@ -477,14 +491,18 @@ export async function POST(req: Request) {
     }
 
     if (action === 'update_plan') {
+      const adminAuth = await requireAdmin(req);
+      if (adminAuth.error) return adminAuth.error;
+
       const targetId = String(userId || body.id || '').trim();
       const targetEmail = (body.email || body.userEmail || '').trim().toLowerCase();
       const targetPlan = plan || body.plan || 'basic';
       if (useMongo) {
         const filter = buildUserFilter(targetId, targetEmail);
-        await UserModel.updateMany(filter, { plan: targetPlan, status: 'active' });
+        await UserModel.updateMany(filter, { plan: targetPlan, ...(body.status ? { status: body.status } : { status: 'active' }), ...(body.dueDate !== undefined ? { dueDate: Number(body.dueDate) } : {}) });
         const users = await UserModel.find({}).lean();
-        return NextResponse.json({ success: true, users });
+        const safeUsers = users.map(({ password: _pw, confirmationCode: _cc, confirmationCodeExpiresAt: _cce, ...u }: any) => u);
+        return NextResponse.json({ success: true, users: safeUsers });
       }
       FALLBACK_USERS = FALLBACK_USERS.map(u =>
         (targetId && (u.id === targetId || u.id.toLowerCase() === targetId.toLowerCase())) || (targetEmail && u.email.toLowerCase() === targetEmail)
@@ -494,6 +512,9 @@ export async function POST(req: Request) {
     }
 
     if (action === 'update_due_date') {
+      const adminAuth = await requireAdmin(req);
+      if (adminAuth.error) return adminAuth.error;
+
       const targetId = String(userId || body.id || '').trim();
       const targetEmail = (body.email || body.userEmail || '').trim().toLowerCase();
       const newDueDate = Number(body.dueDate) || 29;
@@ -502,7 +523,8 @@ export async function POST(req: Request) {
         const filter = buildUserFilter(targetId, targetEmail);
         await UserModel.updateMany(filter, { dueDate: newDueDate });
         const users = await UserModel.find({}).lean();
-        return NextResponse.json({ success: true, users, dueDate: newDueDate });
+        const safeUsers = users.map(({ password: _pw, confirmationCode: _cc, confirmationCodeExpiresAt: _cce, ...u }: any) => u);
+        return NextResponse.json({ success: true, users: safeUsers, dueDate: newDueDate });
       }
       FALLBACK_USERS = FALLBACK_USERS.map(u =>
         (targetId && (u.id === targetId || u.id.toLowerCase() === targetId.toLowerCase())) || (targetEmail && u.email.toLowerCase() === targetEmail)
@@ -512,21 +534,80 @@ export async function POST(req: Request) {
     }
 
     if (action === 'update_avatar') {
-      const targetId = String(userId || body.id || '').trim();
+      const auth = await requireAuth(req);
+      if (auth.error) return auth.error;
+
+      const isAdmin = isAdminRole(auth.user.role);
+      const targetId = isAdmin ? String(userId || body.id || '').trim() : auth.user.id;
+      const targetEmail = isAdmin ? String(body.email || '').trim().toLowerCase() : auth.user.email;
+
+      if (!isAdmin && body.email && String(body.email).trim().toLowerCase() !== auth.user.email) {
+        return NextResponse.json({ error: 'Acesso negado.' }, { status: 403 });
+      }
+
       if (useMongo) {
-        await UserModel.findOneAndUpdate(buildUserFilter(targetId, body.email), { avatar });
-        const users = await UserModel.find({}).lean();
-        return NextResponse.json({ success: true, users });
+        const updated = await UserModel.findOneAndUpdate(
+          buildUserFilter(targetId, targetEmail),
+          { avatar },
+          { new: true }
+        ).lean();
+        if (isAdmin) {
+          const users = await UserModel.find({}).lean();
+          const safeUsers = users.map(({ password: _pw, confirmationCode: _cc, confirmationCodeExpiresAt: _cce, ...u }: any) => u);
+          return NextResponse.json({ success: true, users: safeUsers });
+        }
+        const { password: _pw, confirmationCode: _cc, confirmationCodeExpiresAt: _cce, ...safeUser } = (updated || {}) as any;
+        return NextResponse.json({ success: true, user: safeUser });
       }
       FALLBACK_USERS = FALLBACK_USERS.map(u => (u.id === targetId || u.id.toLowerCase() === targetId.toLowerCase()) ? { ...u, avatar } : u);
-      return NextResponse.json({ success: true, users: FALLBACK_USERS });
+      return NextResponse.json({ success: true, users: isAdmin ? FALLBACK_USERS : undefined });
+    }
+
+    if (action === 'update_profile') {
+      const auth = await requireAuth(req);
+      if (auth.error) return auth.error;
+
+      const isAdmin = isAdminRole(auth.user.role);
+      const profilePayload = body.user || body;
+      const targetEmail = isAdmin && profilePayload?.email
+        ? String(profilePayload.email).trim().toLowerCase()
+        : auth.user.email;
+      const targetId = isAdmin && profilePayload?.id ? String(profilePayload.id).trim() : auth.user.id;
+
+      const updateFields: Record<string, any> = {};
+      if (typeof profilePayload?.name === 'string' && profilePayload.name.trim()) {
+        updateFields.name = sanitizeInput(profilePayload.name).slice(0, 120);
+      }
+      if (profilePayload?.birthdate !== undefined) {
+        updateFields.birthdate = profilePayload.birthdate ? String(profilePayload.birthdate).slice(0, 32) : null;
+      }
+      if (typeof profilePayload?.avatar === 'string') {
+        updateFields.avatar = profilePayload.avatar;
+      }
+
+      if (useMongo) {
+        const updated = await UserModel.findOneAndUpdate(
+          buildUserFilter(targetId, targetEmail),
+          { $set: updateFields },
+          { new: true }
+        ).lean();
+        if (!updated) {
+          return NextResponse.json({ error: 'Utilizador não encontrado' }, { status: 404 });
+        }
+        const { password: _pw, confirmationCode: _cc, confirmationCodeExpiresAt: _cce, ...safeUser } = updated as any;
+        return NextResponse.json({ success: true, user: safeUser });
+      }
+
+      return NextResponse.json({ success: true });
     }
 
     if (action === 'update_role') {
+      const adminAuth = await requireAdmin(req);
+      if (adminAuth.error) return adminAuth.error;
+
       const targetId = String(userId || body.id || body.userId || '').trim();
       const targetEmail = String(email || body.email || body.userEmail || '').trim().toLowerCase();
       const newRole = body.role;
-      const requestedByEmail = String(body.requestedByEmail || '').trim().toLowerCase();
 
       if (!newRole || !['user', 'admin', 'super_admin'].includes(newRole)) {
         return NextResponse.json({ error: 'Role inválida. Use "user", "admin" ou "super_admin".' }, { status: 400 });
@@ -542,18 +623,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Não é possível alterar as permissões do Super Administrador principal.' }, { status: 403 });
       }
 
-      // Validação do solicitante
-      const isRootSuperAdmin = requestedByEmail === 'admin@wehosthere.com';
-      if (!isRootSuperAdmin && requestedByEmail && useMongo) {
-        const requester = await UserModel.findOne({
-          email: { $regex: new RegExp(`^${requestedByEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') }
-        }).lean();
-        const requesterRole = (requester as any)?.role;
-        if (!requester || (requesterRole !== 'super_admin' && requesterRole !== 'admin')) {
-          console.warn('[Users API update_role] Permissão negada para solicitante:', requestedByEmail, 'Role:', requesterRole);
-          return NextResponse.json({ error: 'Apenas administradores podem gerir permissões de cargos.' }, { status: 403 });
-        }
-      }
+      const isRootSuperAdmin = adminAuth.user.role === 'super_admin' || adminAuth.user.email === 'admin@wehosthere.com';
 
       if (useMongo) {
         const filter = buildUserFilter(targetId, targetEmail);
@@ -673,20 +743,22 @@ export async function POST(req: Request) {
     }
 
     if (action === 'delete') {
+      const adminAuth = await requireAdmin(req);
+      if (adminAuth.error) return adminAuth.error;
+
       const targetId = (userId || body.userId || '').toLowerCase().trim();
       const targetEmail = (body.email || body.userEmail || '').toLowerCase().trim();
+      const escapedEmail = targetEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       
       if (useMongo) {
         // Protect root admin from deletion
         const isRootAdmin = targetEmail === 'admin@wehosthere.com' || targetId === 'admin_root';
         if (!isRootAdmin) {
           // Buscar usuário para enviar email antes de deletar
-          const userToDelete = await UserModel.findOne({
-            $or: [
-              { id: targetId },
-              { email: new RegExp(`^${targetEmail}$`, 'i') }
-            ]
-          });
+          const orDel: any[] = [];
+          if (targetId) orDel.push({ id: targetId });
+          if (targetEmail) orDel.push({ email: new RegExp(`^${escapedEmail}$`, 'i') });
+          const userToDelete = orDel.length > 0 ? await UserModel.findOne({ $or: orDel }) : null;
           
           // Enviar email de notificação antes de deletar
           if (userToDelete && userToDelete.email) {
@@ -699,15 +771,13 @@ export async function POST(req: Request) {
             });
           }
           
-          const deleteConditions: any[] = [];
-          if (targetId) deleteConditions.push({ id: targetId });
-          if (targetEmail) deleteConditions.push({ email: new RegExp(`^${targetEmail}$`, 'i') });
-          if (deleteConditions.length > 0) {
-            await UserModel.deleteMany({ $or: deleteConditions });
+          if (orDel.length > 0) {
+            await UserModel.deleteMany({ $or: orDel });
           }
         }
         const users = await UserModel.find({}).lean();
-        return NextResponse.json({ success: true, users });
+        const safeUsers = users.map(({ password: _pw, confirmationCode: _cc, confirmationCodeExpiresAt: _cce, ...u }: any) => u);
+        return NextResponse.json({ success: true, users: safeUsers });
       }
       
       // Para fallback, buscar usuário antes de deletar
@@ -736,6 +806,12 @@ export async function POST(req: Request) {
     }
 
     const reqEmail = (user?.email || body.email || '').trim().toLowerCase();
+
+    if (action !== 'register') {
+      // Qualquer outra mutação genérica em /api/users exige administrador autenticado
+      const adminAuth = await requireAdmin(req);
+      if (adminAuth.error) return adminAuth.error;
+    }
 
     if (action === 'register') {
       console.log('[Users API] Iniciando registro:', { email: reqEmail, hasUser: !!user, hasBody: !!body });
@@ -777,6 +853,12 @@ export async function POST(req: Request) {
     // Garantir que o userData.password também está em hash quando veio do objeto user
     if (userData.password && !userData.password.startsWith('$2')) {
       userData.password = await bcrypt.hash(userData.password, 12);
+    }
+
+    // 🔒 SEGURANÇA: No registo público, nunca aceitar role privilegiada nem status ativo pré-forjado
+    if (action === 'register') {
+      userData.role = 'user';
+      userData.status = 'pending';
     }
 
     // Adicionar campos de confirmação se existirem no body.user ou body
@@ -924,7 +1006,8 @@ export async function POST(req: Request) {
             const pendingInvite = await DomainInvitation.findOne(query);
             if (pendingInvite) {
               const dName = pendingInvite.domainName;
-              const domDoc = await EmailDomain.findOne({ domainName: new RegExp(`^${dName}$`, 'i') });
+              const escapedDomain = String(dName || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+              const domDoc = await EmailDomain.findOne({ domainName: new RegExp(`^${escapedDomain}$`, 'i') });
               if (domDoc) {
                 domDoc.customerId = cleanEmail;
                 domDoc.updatedAt = new Date();
@@ -934,7 +1017,7 @@ export async function POST(req: Request) {
                   {
                     $or: [
                       { domainId: domDoc._id.toString() },
-                      { email: { $regex: `@${dName}$`, $options: 'i' } }
+                      { email: { $regex: `@${escapedDomain}$`, $options: 'i' } }
                     ]
                   },
                   { $set: { customerId: cleanEmail, updatedAt: new Date() } }
@@ -943,15 +1026,15 @@ export async function POST(req: Request) {
                 await EmailAccountModel.updateMany(
                   {
                     $or: [
-                      { domain: new RegExp(`^${dName}$`, 'i') },
-                      { email: { $regex: `@${dName}$`, $options: 'i' } }
+                      { domain: new RegExp(`^${escapedDomain}$`, 'i') },
+                      { email: { $regex: `@${escapedDomain}$`, $options: 'i' } }
                     ]
                   },
                   { $set: { userEmail: cleanEmail } }
                 );
 
                 await SiteModel.findOneAndUpdate(
-                  { domain: new RegExp(`^${dName}$`, 'i') },
+                  { domain: new RegExp(`^${escapedDomain}$`, 'i') },
                   {
                     $set: {
                       domain: dName.toLowerCase().trim(),
@@ -982,8 +1065,13 @@ export async function POST(req: Request) {
         }
       }
 
+      const { password: _pw, confirmationCode: _cc, confirmationCodeExpiresAt: _cce, ...safeSaved } = (saved || {}) as any;
+      if (action === 'register') {
+        return NextResponse.json({ success: true, user: safeSaved });
+      }
       const users = await UserModel.find({}).lean();
-      return NextResponse.json({ success: true, user: saved, users });
+      const safeUsers = users.map(({ password: _upw, confirmationCode: _ucc, confirmationCodeExpiresAt: _ucce, ...u }: any) => u);
+      return NextResponse.json({ success: true, user: safeSaved, users: safeUsers });
     }
 
     const idx = FALLBACK_USERS.findIndex(u => u.email.toLowerCase() === reqEmail);

@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/serverAuth';
 import { connectDB } from '@/lib/mongodb';
 import CashvibeLoan from '@/models/CashvibeLoan';
 import CashvibePayment from '@/models/CashvibePayment';
 
 // POST /api/admin/cashvibe/loans/[id]/rollover - Aplicar Prorrogação / Rollover de Prazo
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: NextRequest,
+  { params }: { params: { id: string } }) {
+  const adminAuth = await requireAdmin(request);
+  if (adminAuth.error) return adminAuth.error;
+
   try {
     await connectDB();
     const { id } = params;

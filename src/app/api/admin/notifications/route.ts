@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/serverAuth';
 import { connectDB } from '@/lib/mongodb';
 
 export async function GET(req: Request) {
+  const adminAuth = await requireAdmin(req);
+  if (adminAuth.error) return adminAuth.error;
+
   try {
     await connectDB();
     
@@ -64,6 +68,9 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const adminAuth = await requireAdmin(req);
+  if (adminAuth.error) return adminAuth.error;
+
   try {
     await connectDB();
     

@@ -74,19 +74,15 @@ export interface KivoraError {
 }
 
 const KIVORA_BASE_URL = 'https://www.kivorapayments.com';
-const envKey = process.env.KIVORA_API_KEY || '';
-// 🔒 SEGURANÇA E AMBIENTE: Se a variável na Vercel for chave de teste (sk_test_) ou estiver vazia, usar a chave live oficial
-const KIVORA_API_KEY = (envKey && !envKey.startsWith('sk_test_'))
-  ? envKey
-  : Buffer.from('c2tfbGl2ZV9xQVBxUGZJYVFjbGEyMEpMTFdlZHEwczM1ZzNkU2ZkWA==', 'base64').toString('utf-8');
 
 const getHeaders = () => {
-  if (!KIVORA_API_KEY) {
-    console.warn('[KIVORA] ATENÇÃO: KIVORA_API_KEY não está definida nas variáveis de ambiente!');
+  const apiKey = process.env.KIVORA_API_KEY?.trim() || '';
+  if (!apiKey) {
+    throw new Error('[KIVORA] KIVORA_API_KEY não está definida nas variáveis de ambiente.');
   }
   return {
     'Content-Type': 'application/json',
-    'Authorization': `Bearer ${KIVORA_API_KEY}`
+    'Authorization': `Bearer ${apiKey}`
   };
 };
 

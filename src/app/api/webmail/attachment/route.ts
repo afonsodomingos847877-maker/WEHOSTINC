@@ -3,6 +3,7 @@ import { migaduImapSmtp } from '@/lib/migaduImapSmtp';
 import { connectDB } from '@/lib/mongodb';
 import { ExternalEmailAccount } from '@/models/ExternalEmailAccount';
 import { decryptPassword } from '@/lib/encryption';
+import { canAccessMailbox } from '@/lib/serverAuth';
 
 export const maxDuration = 30;
 
@@ -20,8 +21,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Email e UID são obrigatórios' }, { status: 400 });
     }
 
-    // Se senha não fornecida na query string, tentar encontrar em ExternalEmailAccount
+    // Se senha não fornecida, validar propriedade da sessão antes de usar credencial guardada
     if (!password) {
+      const authorized = await canAccessMailbox(request, email);
+      if (!authorized) {
+        return NextResponse.json({ error: 'Não autorizado a descarregar anexos desta conta' }, { status: 401 });
+      }
+
       try {
         await connectDB();
         const ext = await ExternalEmailAccount.findOne({
@@ -77,14 +83,16 @@ export async function GET(request: NextRequest) {
       else contentType = 'application/octet-stream';
     }
 
-    const dispositionType = isDownload ? 'attachment' : 'inline';
+    const forceDownload = contentType.includes('html') || contentType.includes('svg') || contentType.includes('xml');
+    const dispositionType = (isDownload || forceDownload) ? 'attachment' : 'inline';
 
     return new NextResponse(new Uint8Array(fileBuffer), {
       status: 200,
       headers: {
         'Content-Type': contentType,
-        'Content-Disposition': `${dispositionType}; filename="${rawFilename}"; filename*=UTF-8''${safeFilename}`,
+        'Content-Disposition': `${dispositionType}; filename="${rawFilename.replace(/["\r\n]/g, '')}"; filename*=UTF-8''${safeFilename}`,
         'Content-Length': fileBuffer.length.toString(),
+        'X-Content-Type-Options': 'nosniff',
         'Cache-Control': 'private, max-age=86400',
       },
     });

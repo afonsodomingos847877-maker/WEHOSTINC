@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getEmailProvider } from '@/lib/emailProviders/base';
 import { EmailDomain } from '@/models/EmailDomain';
 import { connectDB } from '@/lib/mongodb';
+import { canAccessDomain } from '@/lib/serverAuth';
 
 // POST - Activate a domain (with graceful fallback if Migadu DNS not yet propagated)
 export async function POST(
@@ -9,8 +10,12 @@ export async function POST(
   { params }: { params: { domain: string } }
 ) {
   try {
-    await connectDB();
     const domainName = params.domain;
+    const access = await canAccessDomain(request, domainName);
+    if (!access) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    }
+    await connectDB();
 
     let domain: any = await EmailDomain.findOne({ domainName: new RegExp(`^${domainName}$`, 'i') });
     if (!domain) {

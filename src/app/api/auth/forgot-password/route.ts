@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { connectDB } from '@/lib/mongodb';
+import UserModel from '@/lib/models/User';
 import { sendPasswordResetEmail } from '@/lib/sendgrid';
 import { generatePasswordResetToken } from '@/lib/resetToken';
 
@@ -18,9 +19,10 @@ export async function POST(req: Request) {
 
     const normalizedEmail = email.trim().toLowerCase();
 
-    // Buscar usuários
-    const users = await auth.fetchUsersAsync();
-    const user = users.find(u => u.email.toLowerCase() === normalizedEmail);
+    await connectDB();
+    const user = await UserModel.findOne({
+      email: { $regex: new RegExp(`^${normalizedEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') }
+    }).lean() as any;
 
     if (!user) {
       // Por segurança, não revelar se o email existe

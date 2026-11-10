@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import { EmailSignature } from '@/models/EmailSignature';
 import { uploadDataUrlToCloudinary } from '@/lib/cloudinaryUpload';
+import { canAccessMailbox } from '@/lib/serverAuth';
 
 // GET - Get signature for an email address
 export async function GET(request: NextRequest) {
@@ -12,6 +13,14 @@ export async function GET(request: NextRequest) {
 
     if (!email) {
       return NextResponse.json({ error: 'E-mail é obrigatório' }, { status: 400 });
+    }
+
+    if (!(await canAccessMailbox(request, email))) {
+      return NextResponse.json({ error: 'Não autorizado a alterar a assinatura desta conta' }, { status: 401 });
+    }
+
+    if (!(await canAccessMailbox(request, email))) {
+      return NextResponse.json({ error: 'Não autorizado a aceder à assinatura desta conta' }, { status: 401 });
     }
 
     const signature = await EmailSignature.findOne({ email: email.toLowerCase().trim() });
@@ -46,6 +55,10 @@ export async function POST(request: NextRequest) {
 
     if (!email) {
       return NextResponse.json({ error: 'E-mail é obrigatório' }, { status: 400 });
+    }
+
+    if (!(await canAccessMailbox(request, email))) {
+      return NextResponse.json({ error: 'Não autorizado a alterar a assinatura desta conta' }, { status: 401 });
     }
 
     // Se a imagem for base64 (data:image/...), enviar para o Cloudinary para que clientes de e-mail (Gmail, Outlook) renderizem perfeitamente

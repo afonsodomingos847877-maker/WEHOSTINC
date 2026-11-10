@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getEmailProvider } from '@/lib/emailProviders/base';
 import { EmailDomain } from '@/models/EmailDomain';
 import { EmailMailbox } from '@/models/EmailMailbox';
-import { auth } from '@/lib/auth';
 import { connectDB } from '@/lib/mongodb';
+import { canAccessDomain, requireAdmin } from '@/lib/serverAuth';
 
 // GET - Get domain details
 export async function GET(
@@ -11,8 +11,12 @@ export async function GET(
   { params }: { params: { domain: string } }
 ) {
   try {
-    await connectDB();
     const domainName = params.domain;
+    const access = await canAccessDomain(request, domainName);
+    if (!access) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    }
+    await connectDB();
     
     // First check our database (case-insensitive)
     let domain: any = await EmailDomain.findOne({ domainName: new RegExp(`^${domainName}$`, 'i') });
@@ -86,6 +90,9 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: { domain: string } }
 ) {
+  const adminAuth = await requireAdmin(request);
+  if (adminAuth.error) return adminAuth.error;
+
   try {
     await connectDB();
     const domainName = params.domain;
@@ -130,6 +137,9 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: { domain: string } }
 ) {
+  const adminAuth = await requireAdmin(request);
+  if (adminAuth.error) return adminAuth.error;
+
   try {
     await connectDB();
     const domainName = params.domain;

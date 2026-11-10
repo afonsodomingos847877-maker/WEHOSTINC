@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/serverAuth';
 import { connectDB } from '@/lib/mongodb';
 import CommunicationLogModel from '@/lib/models/CommunicationLog';
 import { dispatchMessage, DEFAULT_TEMPLATES, replaceTemplateVariables } from '@/lib/notifications';
@@ -6,6 +7,9 @@ import { dispatchMessage, DEFAULT_TEMPLATES, replaceTemplateVariables } from '@/
 let serverCommunicationTemplates: any[] = [...DEFAULT_TEMPLATES];
 
 export async function GET(req: Request) {
+  const adminAuth = await requireAdmin(req);
+  if (adminAuth.error) return adminAuth.error;
+
   const { searchParams } = new URL(req.url);
   const type = searchParams.get('type');
 
@@ -35,6 +39,9 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const adminAuth = await requireAdmin(req);
+  if (adminAuth.error) return adminAuth.error;
+
   try {
     const body = await req.json();
     const { action } = body;

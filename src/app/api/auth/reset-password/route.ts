@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import bcrypt from 'bcryptjs';
+import { connectDB } from '@/lib/mongodb';
+import UserModel from '@/lib/models/User';
 import { verifyPasswordResetToken } from '@/lib/resetToken';
 
 export const dynamic = 'force-dynamic';
@@ -41,9 +43,11 @@ export async function POST(req: Request) {
         );
       }
 
-      // Buscar usuário
-      const users = await auth.fetchUsersAsync();
-      const user = users.find(u => u.email.toLowerCase() === validation.email!.toLowerCase());
+      await connectDB();
+      const normalizedEmail = validation.email.trim().toLowerCase();
+      const user = await UserModel.findOne({
+        email: { $regex: new RegExp(`^${normalizedEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') }
+      });
 
       if (!user) {
         return NextResponse.json(
@@ -52,8 +56,9 @@ export async function POST(req: Request) {
         );
       }
 
-      // Atualizar senha
-      auth.updatePassword(user.email, password);
+      // Atualizar senha diretamente no banco com bcrypt
+      const hashedPassword = await bcrypt.hash(password, 12);
+      await UserModel.updateOne({ _id: user._id }, { $set: { password: hashedPassword } });
 
       console.log('[Reset Password] Senha redefinida com sucesso para:', user.email);
 

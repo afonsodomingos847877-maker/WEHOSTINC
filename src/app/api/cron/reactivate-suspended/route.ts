@@ -3,17 +3,17 @@ import { connectDB } from '@/lib/mongodb';
 import { sendEmail } from '@/lib/sendgrid';
 import { addAdminNotification } from '@/lib/notifications';
 import { SITE_URL } from '@/lib/siteConfig';
+import { requireCronSecret } from '@/lib/serverAuth';
 
 /**
  * Cron: Reativação de clientes suspensos — sequência de 3 emails em 7 dias
  * Schedule: 0 9 * * * (diário às 9h)
  */
 export async function GET(req: Request) {
+  const cronAuthError = requireCronSecret(req);
+  if (cronAuthError) return cronAuthError;
+
   try {
-    const authHeader = req.headers.get('authorization');
-    if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
-    }
 
     await connectDB();
 

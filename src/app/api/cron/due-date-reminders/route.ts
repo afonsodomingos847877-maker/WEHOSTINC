@@ -4,14 +4,13 @@ import UserModel from '@/lib/models/User';
 import SiteModel from '@/lib/models/Site';
 import CommunicationLog from '@/lib/models/CommunicationLog';
 import { dispatchMessage } from '@/lib/notifications';
+import { requireCronSecret } from '@/lib/serverAuth';
 
 export async function GET(request: Request) {
+  const cronAuthError = requireCronSecret(request);
+  if (cronAuthError) return cronAuthError;
+
   try {
-    // Validação de segurança opcional via CRON_SECRET
-    const authHeader = request.headers.get('authorization');
-    if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
-    }
 
     await connectDB();
 

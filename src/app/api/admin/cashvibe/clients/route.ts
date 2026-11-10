@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/serverAuth';
 import { connectDB } from '@/lib/mongodb';
 import CashvibeClient from '@/models/CashvibeClient';
 import CashvibeLoan from '@/models/CashvibeLoan';
 
 // GET /api/admin/cashvibe/clients - Listar todos os clientes
 export async function GET(request: NextRequest) {
+  const adminAuth = await requireAdmin(request);
+  if (adminAuth.error) return adminAuth.error;
+
   try {
     await connectDB();
 
@@ -59,6 +63,9 @@ export async function GET(request: NextRequest) {
 
 // POST /api/admin/cashvibe/clients - Cadastrar novo cliente
 export async function POST(request: NextRequest) {
+  const adminAuth = await requireAdmin(request);
+  if (adminAuth.error) return adminAuth.error;
+
   try {
     await connectDB();
     const body = await request.json();

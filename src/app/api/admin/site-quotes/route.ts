@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/serverAuth';
 import { connectDB } from '@/lib/mongodb';
 import { SiteQuoteLead } from '@/models/SiteQuoteLead';
 
@@ -6,6 +7,9 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export async function GET(req: NextRequest) {
+  const adminAuth = await requireAdmin(req);
+  if (adminAuth.error) return adminAuth.error;
+
   try {
     await connectDB();
     const { searchParams } = new URL(req.url);
@@ -83,6 +87,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
+  const adminAuth = await requireAdmin(req);
+  if (adminAuth.error) return adminAuth.error;
+
   try {
     await connectDB();
     const body = await req.json();
@@ -109,6 +116,9 @@ export async function PATCH(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const adminAuth = await requireAdmin(req);
+  if (adminAuth.error) return adminAuth.error;
+
   try {
     await connectDB();
     const { searchParams } = new URL(req.url);

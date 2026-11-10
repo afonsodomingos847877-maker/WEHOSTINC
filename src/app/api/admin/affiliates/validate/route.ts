@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/serverAuth';
 import { 
   validateAffiliateConsistency, 
   validateAllAffiliatesConsistency,
@@ -7,6 +8,9 @@ import {
 import affiliateAlertManager from '@/lib/affiliateAlerts';
 
 export async function GET(request: NextRequest) {
+  const adminAuth = await requireAdmin(request);
+  if (adminAuth.error) return adminAuth.error;
+
   try {
     const { searchParams } = new URL(request.url);
     const affiliateId = searchParams.get('affiliateId');
@@ -66,6 +70,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const adminAuth = await requireAdmin(request);
+  if (adminAuth.error) return adminAuth.error;
+
   try {
     const body = await request.json();
     const { affiliateId, commissionId } = body;

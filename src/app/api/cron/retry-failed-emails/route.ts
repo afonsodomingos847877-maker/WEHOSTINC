@@ -1,14 +1,13 @@
 import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import { sendEmail } from '@/lib/sendgrid';
+import { requireCronSecret } from '@/lib/serverAuth';
 
 export async function GET(req: Request) {
+  const cronAuthError = requireCronSecret(req);
+  if (cronAuthError) return cronAuthError;
+
   try {
-    // Verificar se é um cron job válido (proteção básica)
-    const authHeader = req.headers.get('authorization');
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
 
     await connectDB();
     const CommunicationLog = (await import('@/lib/models/CommunicationLog')).default;

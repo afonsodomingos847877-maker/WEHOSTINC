@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import { DomainSearchLog } from '@/models/DomainSearchLog';
+import { requireAdmin } from '@/lib/serverAuth';
+import { rateLimit, getRateLimitIdentifier } from '@/lib/rateLimiter';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export async function GET(req: NextRequest) {
+  const auth = await requireAdmin(req);
+  if (auth.error) return auth.error;
+
   try {
     await connectDB();
 
@@ -29,12 +34,13 @@ export async function GET(req: NextRequest) {
     if (filter === 'completed') query.checkoutStatus = 'completed';
     if (filter === 'searches_only') query.hasCheckoutAttempt = { $ne: true };
     if (q) {
+      const escapedQ = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       query.$or = [
-        { domain: { $regex: q, $options: 'i' } },
-        { userEmail: { $regex: q, $options: 'i' } },
-        { userName: { $regex: q, $options: 'i' } },
-        { userPhone: { $regex: q, $options: 'i' } },
-        { ip: { $regex: q, $options: 'i' } },
+        { domain: { $regex: escapedQ, $options: 'i' } },
+        { userEmail: { $regex: escapedQ, $options: 'i' } },
+        { userName: { $regex: escapedQ, $options: 'i' } },
+        { userPhone: { $regex: escapedQ, $options: 'i' } },
+        { ip: { $regex: escapedQ, $options: 'i' } },
       ];
     }
 
@@ -152,6 +158,12 @@ function fireLeadNotificationsAsync(data: DomainLeadAlertData) {
  */
 export async function POST(req: NextRequest) {
   try {
+    const clientIp = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
+    const rl = rateLimit(getRateLimitIdentifier(clientIp, 'domain_lead_log'), 20, 60000);
+    if (!rl.success) {
+      return NextResponse.json({ error: 'Muitas solicitações.' }, { status: 429 });
+    }
+
     await connectDB();
     const body = await req.json();
     const { domain, userName, userEmail, userPhone, checkoutStatus, checkoutOrderId } = body;
@@ -213,6 +225,9 @@ export async function POST(req: NextRequest) {
  * DELETE — Limpar logs (por id, por domain ou todos)
  */
 export async function DELETE(req: NextRequest) {
+  const auth = await requireAdmin(req);
+  if (auth.error) return auth.error;
+
   try {
     await connectDB();
     const { searchParams } = new URL(req.url);

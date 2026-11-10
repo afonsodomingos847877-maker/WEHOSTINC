@@ -2,17 +2,33 @@ import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { sendEmail } from '@/lib/sendgrid';
 import { generatePasswordResetToken } from '@/lib/resetToken';
+import { generateNumericCode, timingSafeCompare } from '@/lib/serverAuth';
 
-const SECRET_KEY =
-  process.env.NEXTAUTH_SECRET ||
-  process.env.JWT_SECRET ||
-  process.env.SESSION_SECRET ||
-  'wehosthere_reauth_master_key_9921_production';
+function getReauthSecret(): string {
+  const secret =
+    process.env.REAUTH_SECRET ||
+    process.env.NEXTAUTH_SECRET ||
+    process.env.JWT_SECRET ||
+    process.env.SESSION_SECRET;
+
+  if (secret && secret.trim().length > 0) {
+    return secret.trim();
+  }
+
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('[Reauthentication] Segredo HMAC não configurado em produção.');
+  }
+
+  if (!(globalThis as any).__wehostDevReauthSecret) {
+    (globalThis as any).__wehostDevReauthSecret = crypto.randomBytes(32).toString('hex');
+  }
+  return (globalThis as any).__wehostDevReauthSecret;
+}
 
 // Função para gerar a assinatura HMAC criptográfica do código
 function generateHmacSignature(email: string, expiresAt: number, code: string): string {
   const payload = `${email.trim().toLowerCase()}:${expiresAt}:${code.trim()}`;
-  return crypto.createHmac('sha256', SECRET_KEY).update(payload).digest('hex');
+  return crypto.createHmac('sha256', getReauthSecret()).update(payload).digest('hex');
 }
 
 export async function POST(req: NextRequest) {
@@ -33,8 +49,8 @@ export async function POST(req: NextRequest) {
     // AÇÃO 1: ENVIAR CÓDIGO DE REAUTENTICAÇÃO
     // ==========================================
     if (action === 'send') {
-      // Gerar código de 6 dígitos numéricos
-      const generatedCode = Math.floor(100000 + Math.random() * 900000).toString();
+      // Gerar código criptograficamente aleatório de 6 dígitos numéricos
+      const generatedCode = generateNumericCode(6);
       const expiresAt = Date.now() + 10 * 60 * 1000; // Válido por 10 minutos
 
       // Assinar criptograficamente com HMAC para garantir persistência stateless (Vercel Serverless)
@@ -42,7 +58,9 @@ export async function POST(req: NextRequest) {
       const tokenPayload = JSON.stringify({ email: normalizedEmail, expiresAt, sig });
       const signedToken = Buffer.from(tokenPayload).toString('base64');
 
-      console.log(`[Reauthentication] Código gerado para ${normalizedEmail}: ${generatedCode}`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[Reauthentication] Código gerado para ${normalizedEmail}`);
+      }
 
       // Envio de E-mail formatado profissional
       const emailHtml = `
@@ -123,15 +141,6 @@ export async function POST(req: NextRequest) {
       const rawToken = token || cookieToken;
 
       if (!rawToken) {
-        // Código universal de teste de desenvolvimento se não houver token
-        if (cleanCode === '999999') {
-          return NextResponse.json({
-            success: true,
-            message: 'Reautenticação de teste concluída com sucesso.',
-            verifiedAt: new Date().toISOString()
-          });
-        }
-
         return NextResponse.json(
           { success: false, error: 'Nenhum código ativo encontrado para este e-mail. Solicite um novo código.' },
           { status: 400 }
@@ -166,12 +175,11 @@ export async function POST(req: NextRequest) {
         return res;
       }
 
-      // Validação criptográfica do código
+      // Validação criptográfica timing-safe do código
       const expectedSig = generateHmacSignature(normalizedEmail, parsedToken.expiresAt, cleanCode);
-      const isSigValid = expectedSig === parsedToken.sig;
-      const isMasterCode = cleanCode === '999999';
+      const isSigValid = typeof parsedToken.sig === 'string' && timingSafeCompare(expectedSig, parsedToken.sig);
 
-      if (!isSigValid && !isMasterCode) {
+      if (!isSigValid) {
         return NextResponse.json(
           { success: false, error: 'Código incorreto. Por favor, verifique os dígitos introduzidos.' },
           { status: 400 }

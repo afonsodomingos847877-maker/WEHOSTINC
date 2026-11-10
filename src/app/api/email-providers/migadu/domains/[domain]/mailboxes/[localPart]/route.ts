@@ -3,6 +3,7 @@ import { getEmailProvider } from '@/lib/emailProviders/base';
 import { EmailMailbox } from '@/models/EmailMailbox';
 import EmailAccountModel from '@/lib/models/EmailAccount';
 import { connectDB } from '@/lib/mongodb';
+import { canAccessDomain, canAccessMailbox } from '@/lib/serverAuth';
 
 // GET - Get mailbox details
 export async function GET(
@@ -10,9 +11,12 @@ export async function GET(
   { params }: { params: { domain: string; localPart: string } }
 ) {
   try {
-    await connectDB();
     const { domain, localPart } = params;
     const email = `${localPart}@${domain}`;
+    if (!(await canAccessMailbox(request, email))) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    }
+    await connectDB();
 
     let mailbox: any = await EmailMailbox.findOne({ email: new RegExp(`^${email}$`, 'i') });
     
@@ -59,8 +63,20 @@ export async function PUT(
   try {
     await connectDB();
     const { domain, localPart } = params;
-    const body = await request.json();
+    const rawBody = await request.json();
     const email = `${localPart}@${domain}`;
+
+    const domainAccess = await canAccessDomain(request, domain);
+    const mailboxAccess = domainAccess ? true : await canAccessMailbox(request, email);
+    if (!mailboxAccess) {
+      return NextResponse.json({ error: 'Não autorizado a alterar esta caixa de correio' }, { status: 401 });
+    }
+
+    // Se o utilizador apenas tem acesso à própria caixa via Webmail (não é dono do domínio nem admin), só pode alterar a própria password
+    const body = domainAccess ? rawBody : (rawBody.password ? { password: rawBody.password } : null);
+    if (!body) {
+      return NextResponse.json({ error: 'Permissões insuficientes para alterar definições administrativas da caixa.' }, { status: 403 });
+    }
 
     const provider = getEmailProvider();
     let updatedProvMailbox: any = null;
@@ -132,8 +148,12 @@ export async function DELETE(
   { params }: { params: { domain: string; localPart: string } }
 ) {
   try {
-    await connectDB();
     const { domain, localPart } = params;
+    const access = await canAccessDomain(request, domain);
+    if (!access) {
+      return NextResponse.json({ error: 'Não autorizado a eliminar caixas de correio deste domínio' }, { status: 401 });
+    }
+    await connectDB();
     const email = `${localPart}@${domain}`;
 
     const provider = getEmailProvider();

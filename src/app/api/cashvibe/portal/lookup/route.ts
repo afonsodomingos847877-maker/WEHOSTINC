@@ -3,10 +3,18 @@ import { connectDB } from '@/lib/mongodb';
 import CashvibeClient from '@/models/CashvibeClient';
 import CashvibeLoan from '@/models/CashvibeLoan';
 import CashvibePayment from '@/models/CashvibePayment';
+import { rateLimit, getRateLimitIdentifier } from '@/lib/rateLimiter';
+import { setCashvibePortalCookie } from '@/lib/serverAuth';
 
 // POST /api/cashvibe/portal/lookup - Consulta pública de crédito para mutuários
 export async function POST(request: NextRequest) {
   try {
+    const clientIp = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+    const rl = rateLimit(getRateLimitIdentifier(clientIp, 'cashvibe_portal'), 10, 60000);
+    if (!rl.success) {
+      return NextResponse.json({ success: false, error: 'Muitas consultas. Aguarde um minuto.' }, { status: 429 });
+    }
+
     await connectDB();
     const body = await request.json();
 
@@ -25,12 +33,13 @@ export async function POST(request: NextRequest) {
     // Buscar cliente pelo telefone ou documento
     const query: any = { $or: [] };
     if (cleanPhone.length >= 7) {
-      const last8 = cleanPhone.slice(-8);
+      const last8 = cleanPhone.slice(-8).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       query.$or.push({ phone: { $regex: last8 } });
       query.$or.push({ secondaryPhone: { $regex: last8 } });
     }
     if (cleanDoc.length >= 4) {
-      query.$or.push({ documentNumber: { $regex: cleanDoc, $options: 'i' } });
+      const escapedDoc = cleanDoc.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      query.$or.push({ documentNumber: { $regex: `^${escapedDoc}$`, $options: 'i' } });
     }
 
     if (query.$or.length === 0) {
@@ -52,7 +61,7 @@ export async function POST(request: NextRequest) {
     const activeLoan = loans.find((l: any) => ['active', 'overdue', 'pending'].includes(l.status)) || null;
     const completedLoans = loans.filter((l: any) => l.status === 'paid');
 
-    return NextResponse.json({
+    const res = NextResponse.json({
       success: true,
       client: {
         name: client.name,
@@ -94,6 +103,7 @@ export async function POST(request: NextRequest) {
         supportWhatsApp: '+258845678901',
       },
     });
+    return setCashvibePortalCookie(res, String(client.id));
   } catch (error: any) {
     console.error('Erro na consulta do portal do mutuário:', error);
     return NextResponse.json(

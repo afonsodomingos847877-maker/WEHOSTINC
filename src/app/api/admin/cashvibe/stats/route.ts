@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/serverAuth';
 import { connectDB } from '@/lib/mongodb';
 import CashvibeClient from '@/models/CashvibeClient';
 import CashvibeLoan from '@/models/CashvibeLoan';
@@ -6,6 +7,9 @@ import CashvibePayment from '@/models/CashvibePayment';
 
 // GET /api/admin/cashvibe/stats - Indicadores Financeiros do Microcrédito Cashvibe
 export async function GET(request: NextRequest) {
+  const adminAuth = await requireAdmin(request);
+  if (adminAuth.error) return adminAuth.error;
+
   try {
     await connectDB();
 

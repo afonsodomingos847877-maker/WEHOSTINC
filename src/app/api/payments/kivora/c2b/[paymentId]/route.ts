@@ -1,10 +1,14 @@
 import { NextResponse } from 'next/server';
 import { kivora } from '@/lib/kivora';
+import { requireAuth } from '@/lib/serverAuth';
 
 export async function GET(
   req: Request,
   { params }: { params: { paymentId: string } }
 ) {
+  const auth = await requireAuth(req);
+  if (auth.error) return auth.error;
+
   try {
     const { paymentId } = params;
 

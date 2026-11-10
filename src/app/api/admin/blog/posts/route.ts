@@ -1,15 +1,22 @@
 import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
+import { requireAdmin } from '@/lib/serverAuth';
 
-// GET - Listar todos os posts
+// GET - Listar posts (público apenas para publicados; rascunhos/todos exigem admin)
 export async function GET(req: Request) {
   try {
+    const { searchParams } = new URL(req.url);
+    const status = searchParams.get('status') || 'published';
+
+    if (status !== 'published') {
+      const auth = await requireAdmin(req);
+      if (auth.error) return auth.error;
+    }
+
     await connectDB();
     
     const BlogPost = (await import('@/lib/models/BlogPost')).default;
     
-    const { searchParams } = new URL(req.url);
-    const status = searchParams.get('status') || 'published';
     const category = searchParams.get('category');
     const featured = searchParams.get('featured');
     const limit = parseInt(searchParams.get('limit') || '10');
@@ -73,6 +80,9 @@ export async function GET(req: Request) {
 
 // POST - Criar novo post
 export async function POST(req: Request) {
+  const auth = await requireAdmin(req);
+  if (auth.error) return auth.error;
+
   try {
     await connectDB();
     

@@ -16,7 +16,10 @@ export interface MpesaResponse {
 }
 
 const getBearerToken = (): string => {
-  const apiKey = process.env.MPESA_API_KEY || 'k5pn7gsxqncp14hz0200twavasp5b3tw';
+  const apiKey = process.env.MPESA_API_KEY?.trim() || '';
+  if (!apiKey) {
+    throw new Error('[M-PESA] MPESA_API_KEY não configurada nas variáveis de ambiente.');
+  }
   const publicKeyStr = (process.env.MPESA_PUBLIC_KEY || '').replace(/\\n/g, '\n');
 
   if (!publicKeyStr || !publicKeyStr.includes('BEGIN PUBLIC KEY')) {

@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
 import { kivora } from '@/lib/kivora';
+import { requireAdmin } from '@/lib/serverAuth';
 
 export async function POST(req: Request) {
+  const auth = await requireAdmin(req);
+  if (auth.error) return auth.error;
+
   try {
     const body = await req.json();
     const { phone, amount, reference } = body;

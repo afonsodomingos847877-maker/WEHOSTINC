@@ -4,6 +4,34 @@ import { ExternalEmailAccount, ExternalSecurityMode } from '@/models/ExternalEma
 import { migaduImapSmtp } from '@/lib/migaduImapSmtp';
 import { encryptPassword, decryptPassword } from '@/lib/encryption';
 import { EMAIL_PROVIDER_PRESETS } from '@/lib/externalEmailPresets';
+import { canAccessMailbox, getSessionUser, getWebmailSessionEmail, isAdminRole, setWebmailSessionCookie } from '@/lib/serverAuth';
+import { assertSafePublicHostname } from '@/lib/ssrfGuard';
+
+async function verifyOwnerCaller(request: NextRequest, ownerEmail?: string): Promise<{ ok: boolean; callerEmail: string; isAdmin: boolean }> {
+  const sessionUser = await getSessionUser(request);
+  const wmEmail = getWebmailSessionEmail(request);
+
+  if (!sessionUser && !wmEmail) {
+    return { ok: false, callerEmail: '', isAdmin: false };
+  }
+
+  const isAdmin = isAdminRole(sessionUser?.role);
+  const cleanOwner = (ownerEmail || '').trim().toLowerCase();
+
+  if (isAdmin) {
+    return { ok: true, callerEmail: cleanOwner || sessionUser?.email || wmEmail || '', isAdmin: true };
+  }
+
+  if (cleanOwner) {
+    if (sessionUser?.email === cleanOwner || wmEmail === cleanOwner) {
+      return { ok: true, callerEmail: cleanOwner, isAdmin: false };
+    }
+    const viaMailbox = await canAccessMailbox(request, cleanOwner);
+    return { ok: viaMailbox, callerEmail: viaMailbox ? cleanOwner : '', isAdmin: false };
+  }
+
+  return { ok: true, callerEmail: wmEmail || sessionUser?.email || '', isAdmin: false };
+}
 
 // GET - List connected external email accounts for an owner
 export async function GET(request: NextRequest) {
@@ -14,6 +42,11 @@ export async function GET(request: NextRequest) {
 
     if (!ownerEmail) {
       return NextResponse.json({ error: 'ownerEmail é obrigatório' }, { status: 400 });
+    }
+
+    const caller = await verifyOwnerCaller(request, ownerEmail);
+    if (!caller.ok) {
+      return NextResponse.json({ error: 'Não autorizado a listar contas externas deste utilizador' }, { status: 401 });
     }
 
     const accounts = await ExternalEmailAccount.find({
@@ -73,11 +106,26 @@ export async function POST(request: NextRequest) {
     const cleanOwnerEmail = (ownerEmail || '').toLowerCase().trim();
     const cleanEmail = (email || '').toLowerCase().trim();
 
+    const caller = await verifyOwnerCaller(request, action === 'test_connection' ? undefined : cleanOwnerEmail);
+    if (!caller.ok) {
+      return NextResponse.json({ error: 'Não autorizado. Inicie sessão primeiro.' }, { status: 401 });
+    }
+
     // 1. Action: Test connection live without saving
     if (action === 'test_connection') {
       if (!cleanEmail || !password || !imapHost || !smtpHost) {
         return NextResponse.json(
           { error: 'Email, senha, servidor IMAP e servidor SMTP são obrigatórios para testar a conexão.' },
+          { status: 400 }
+        );
+      }
+
+      try {
+        await assertSafePublicHostname(imapHost.trim());
+        await assertSafePublicHostname(smtpHost.trim());
+      } catch (ssrfErr: any) {
+        return NextResponse.json(
+          { error: ssrfErr?.message || 'Servidor IMAP/SMTP não permitido.' },
           { status: 400 }
         );
       }
@@ -122,7 +170,7 @@ export async function POST(request: NextRequest) {
 
       const plainPassword = decryptPassword(account.encryptedPassword);
 
-      return NextResponse.json({
+      const res = NextResponse.json({
         success: true,
         account: {
           email: account.email,
@@ -131,6 +179,7 @@ export async function POST(request: NextRequest) {
           password: plainPassword,
         },
       });
+      return setWebmailSessionCookie(res, account.email);
     }
 
     // 3. Action: Connect & save new external account
@@ -140,6 +189,16 @@ export async function POST(request: NextRequest) {
           error:
             'Preencha todos os campos obrigatórios (E-mail, Palavra-passe, Servidor IMAP e Servidor SMTP).',
         },
+        { status: 400 }
+      );
+    }
+
+    try {
+      await assertSafePublicHostname(imapHost.trim());
+      await assertSafePublicHostname(smtpHost.trim());
+    } catch (ssrfErr: any) {
+      return NextResponse.json(
+        { error: ssrfErr?.message || 'Servidor IMAP/SMTP não permitido.' },
         { status: 400 }
       );
     }
@@ -241,6 +300,11 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Conta não encontrada.' }, { status: 404 });
     }
 
+    const caller = await verifyOwnerCaller(request, account.ownerEmail);
+    if (!caller.ok) {
+      return NextResponse.json({ error: 'Não autorizado a sincronizar esta conta externa.' }, { status: 403 });
+    }
+
     const plainPassword = decryptPassword(account.encryptedPassword);
     if (!plainPassword) {
       account.connectionStatus = 'error';
@@ -306,8 +370,20 @@ export async function DELETE(request: NextRequest) {
     const email = (searchParams.get('email') || '').toLowerCase().trim();
 
     if (id) {
+      const existing = await ExternalEmailAccount.findById(id);
+      if (!existing) {
+        return NextResponse.json({ error: 'Conta externa não encontrada.' }, { status: 404 });
+      }
+      const caller = await verifyOwnerCaller(request, existing.ownerEmail);
+      if (!caller.ok) {
+        return NextResponse.json({ error: 'Não autorizado a remover esta conta externa.' }, { status: 403 });
+      }
       await ExternalEmailAccount.findByIdAndDelete(id);
     } else if (ownerEmail && email) {
+      const caller = await verifyOwnerCaller(request, ownerEmail);
+      if (!caller.ok) {
+        return NextResponse.json({ error: 'Não autorizado a remover esta conta externa.' }, { status: 403 });
+      }
       await ExternalEmailAccount.findOneAndDelete({ ownerEmail, email });
     } else {
       return NextResponse.json(

@@ -3,6 +3,7 @@ import { migaduImapSmtp } from '@/lib/migaduImapSmtp';
 import { connectDB } from '@/lib/mongodb';
 import { ExternalEmailAccount } from '@/models/ExternalEmailAccount';
 import { decryptPassword } from '@/lib/encryption';
+import { canAccessMailbox } from '@/lib/serverAuth';
 
 // GET - List messages from IMAP
 export async function GET(request: NextRequest) {
@@ -19,8 +20,16 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // If password was not passed via query string, try resolving from ExternalEmailAccount
+    // If password was not passed, verify authenticated session owns this mailbox before decrypting saved password
     if (!password) {
+      const authorized = await canAccessMailbox(request, email);
+      if (!authorized) {
+        return NextResponse.json(
+          { error: 'Não autorizado. Inicie sessão no Webmail para aceder a esta caixa.' },
+          { status: 401 }
+        );
+      }
+
       try {
         await connectDB();
         const ext = await ExternalEmailAccount.findOne({

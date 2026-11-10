@@ -11,6 +11,7 @@ import NewsletterModel from '@/lib/models/Newsletter';
 import AbandonedCartModel from '@/lib/models/AbandonedCart';
 import AnalyticsVisitModel from '@/lib/models/AnalyticsVisit';
 import { EmailDomain } from '@/models/EmailDomain';
+import { getSessionUser, isAdminRole } from '@/lib/serverAuth';
 
 // Base de conhecimento pública sobre produtos, planos e suporte da WEHOSTHERE
 const WEHOSTHERE_PUBLIC_KNOWLEDGE = `
@@ -65,7 +66,7 @@ Sobre a WEHOSTHERE:
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { query = '', history = [], userRole: clientRole, userEmail: clientEmail } = body;
+    const { query = '', history = [] } = body;
 
     if (!query || typeof query !== 'string') {
       return NextResponse.json({ error: 'Comando ou pergunta é obrigatório' }, { status: 400 });
@@ -73,33 +74,10 @@ export async function POST(request: NextRequest) {
 
     const cleanQuery = query.trim();
 
-    // 1. Verificar autenticação e permissões reais no MongoDB (Apenas se clientRole for admin)
-    let isAdmin = false;
-    let verifiedEmail: string | null = null;
-
-    if (clientRole === 'admin' && clientEmail && typeof clientEmail === 'string') {
-      const emailLower = clientEmail.toLowerCase().trim();
-      verifiedEmail = emailLower;
-      if (emailLower === 'info@wehosthere.com' || emailLower === 'admin@wehosthere.com') {
-        isAdmin = true;
-      } else {
-        try {
-          await connectDB();
-          const dbUser = await UserModel.findOne({
-            $or: [
-              { email: emailLower },
-              { email: { $regex: new RegExp(`^${emailLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') } }
-            ]
-          }).lean() as any;
-
-          if (dbUser && (dbUser.role === 'admin' || dbUser.role === 'super_admin')) {
-            isAdmin = true;
-          }
-        } catch (_) {}
-      }
-    } else if (clientEmail && typeof clientEmail === 'string') {
-      verifiedEmail = clientEmail.toLowerCase().trim();
-    }
+    // 1. Verificar autenticação e permissões reais pela sessão do servidor (nunca confiar em userRole/userEmail do body)
+    const sessionUser = await getSessionUser(request);
+    const isAdmin = isAdminRole(sessionUser?.role);
+    const verifiedEmail: string | null = sessionUser?.email || null;
 
     // 2. Montar contexto de acordo com o papel (Role) do utilizador
     let systemPrompt = '';

@@ -3,6 +3,7 @@ import { connectDB } from '@/lib/mongodb';
 import UserModel from '@/lib/models/User';
 import CommunicationLog from '@/lib/models/CommunicationLog';
 import { sendBirthdayEmail } from '@/lib/sendgrid';
+import { requireCronSecret } from '@/lib/serverAuth';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,24 +11,17 @@ export const dynamic = 'force-dynamic';
  * Endpoint de Cron Automático Diário para envio de felicitações de aniversário.
  * Rota: GET /api/cron/birthday-greetings
  *
- * Suporta também teste imediato:
+ * Suporta também teste imediato (autenticado com CRON_SECRET):
  * GET /api/cron/birthday-greetings?testEmail=exemplo@gmail.com&testName=Afonso
  */
 export async function GET(request: Request) {
+  const cronAuthError = requireCronSecret(request);
+  if (cronAuthError) return cronAuthError;
+
   try {
     const { searchParams } = new URL(request.url);
     const testEmail = searchParams.get('testEmail');
     const testName = searchParams.get('testName');
-
-    // Validação de segurança opcional via CRON_SECRET (apenas se configurado e não for teste com chave)
-    const authHeader = request.headers.get('authorization');
-    if (process.env.CRON_SECRET && !testEmail && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      // Permitir também se houver header de cron da Vercel
-      const isVercelCron = request.headers.get('user-agent')?.includes('vercel-cron');
-      if (!isVercelCron) {
-        return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
-      }
-    }
 
     // ── MODO TESTE RÁPIDO ──────────────────────────────────────────────────
     if (testEmail) {

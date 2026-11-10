@@ -3,6 +3,7 @@ import { rateLimit, getRateLimitIdentifier } from '@/lib/rateLimiter';
 import { connectDB } from '@/lib/mongodb';
 import UserModel from '@/lib/models/User';
 import { sendAccountActivatedEmail } from '@/lib/sendgrid';
+import { setSessionCookie } from '@/lib/serverAuth';
 
 export async function GET() {
   return NextResponse.json({ error: 'Use POST method to confirm email with code' }, { status: 405 });
@@ -97,24 +98,32 @@ export async function POST(request: NextRequest) {
 
     // 🔒 Ativar conta e limpar código de uso único
     await UserModel.updateOne(
-      { email: cleanEmail },
+      { _id: user._id },
       { 
         $set: { status: 'active' },
         $unset: { confirmationCode: 1, confirmationCodeExpiresAt: 1 }
       }
     );
 
-    console.log('[Confirm Email] Conta confirmada com sucesso para:', cleanEmail);
+    console.log('[Confirm Email] Conta confirmada com sucesso para:', user.email);
     
     // Enviar email de confirmação de ativação
     sendAccountActivatedEmail(user.email, user.name).catch((err: any) => {
       console.error('[Confirm Email] Erro ao enviar email de ativação:', err);
     });
     
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       message: 'Email confirmado com sucesso! A sua conta está agora ativa.'
     });
+
+    setSessionCookie(response, {
+      id: String(user.id || user._id),
+      email: user.email,
+      role: user.role || 'user',
+    });
+
+    return response;
   } catch (error) {
     console.error('[Confirm Email] Erro ao confirmar:', error);
     return NextResponse.json(

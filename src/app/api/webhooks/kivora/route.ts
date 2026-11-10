@@ -4,34 +4,31 @@ import { connectDB } from '@/lib/mongodb';
 import WebhookEventModel from '@/lib/models/WebhookEvent';
 import OrderModel from '@/lib/models/Order';
 import { apiEndpoint } from '@/lib/siteConfig';
+import { hasValidInternalAuth, requireAdmin, timingSafeCompare } from '@/lib/serverAuth';
 
-const KIVORA_WEBHOOK_SECRET = process.env.KIVORA_WEBHOOK_SECRET || 'whsec_Wr7vSNrJGVNcso7rR7gRM8IpPY9OZMQb';
-
-// 🔒 SEGURANÇA: Validação criptográfica da assinatura HMAC-SHA256 da Kivora
+// 🔒 SEGURANÇA: Validação criptográfica da assinatura HMAC-SHA256 da Kivora (fail-closed)
 function verifyKivoraSignature(rawBody: string, req: Request): { valid: boolean; reason?: string } {
-  const secret = KIVORA_WEBHOOK_SECRET;
+  const secret = process.env.KIVORA_WEBHOOK_SECRET?.trim();
   if (!secret) {
-    return { valid: true };
+    console.error('[KIVORA WEBHOOK] KIVORA_WEBHOOK_SECRET não configurado — rejeitando webhook (fail-closed).');
+    return { valid: false, reason: 'Segredo de webhook não configurado no servidor' };
   }
 
   const headers = req.headers;
   const url = new URL(req.url);
-  const querySecret = url.searchParams.get('secret');
+  const querySecret = url.searchParams.get('secret') || '';
 
-  // 1. Verificação por parâmetro secreto na URL (?secret=whsec_...)
-  if (querySecret && querySecret === secret) {
+  if (querySecret && timingSafeCompare(querySecret, secret)) {
     return { valid: true };
   }
 
-  // 2. Verificação por cabeçalho secreto direto (x-webhook-secret / x-kivora-secret)
-  const directSecret = headers.get('x-webhook-secret') || headers.get('x-kivora-secret');
-  if (directSecret && directSecret === secret) {
+  const directSecret = headers.get('x-webhook-secret') || headers.get('x-kivora-secret') || '';
+  if (directSecret && timingSafeCompare(directSecret, secret)) {
     return { valid: true };
   }
 
-  // 3. Verificação por Authorization Bearer
-  const authHeader = headers.get('authorization');
-  if (authHeader && (authHeader === `Bearer ${secret}` || authHeader === secret)) {
+  const authHeader = headers.get('authorization') || '';
+  if (authHeader && (timingSafeCompare(authHeader, `Bearer ${secret}`) || timingSafeCompare(authHeader, secret))) {
     return { valid: true };
   }
 
@@ -49,7 +46,7 @@ function verifyKivoraSignature(rawBody: string, req: Request): { valid: boolean;
 
   try {
     // Caso especial: o gateway enviou o próprio segredo no cabeçalho de assinatura
-    if (signatureHeader === secret) {
+    if (timingSafeCompare(signatureHeader, secret)) {
       return { valid: true };
     }
 
@@ -521,9 +518,10 @@ async function updateOrderStatus(
     if (reference) {
       queryConditions.push({ reference });
       queryConditions.push({ id: reference });
-      const cleanRef = reference.replace('REF_', '').replace('ORDER_', '');
-      if (cleanRef) {
-        queryConditions.push({ id: { $regex: new RegExp(cleanRef, 'i') } });
+      const cleanRef = reference.replace(/^REF_|^ORDER_/i, '').trim();
+      if (cleanRef && /^[a-zA-Z0-9_-]{3,64}$/.test(cleanRef)) {
+        const escapedRef = cleanRef.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        queryConditions.push({ id: { $regex: new RegExp(escapedRef, 'i') } });
       }
     }
 
@@ -598,27 +596,9 @@ async function updateOrderStatus(
 
 // Endpoint GET para o painel admin consultar os últimos eventos de webhook registrados
 export async function GET(req: Request) {
-  // 🔒 SEGURANÇA: Restringir acesso a chamadas autorizadas (same-origin ou token interno)
-  const origin = req.headers.get('origin');
-  const referer = req.headers.get('referer');
-  const authHeader = req.headers.get('x-internal-auth') || req.headers.get('authorization');
-  const internalSecret = process.env.NEXTAUTH_SECRET || '';
-
-  const isInternal = authHeader && (authHeader === internalSecret || authHeader === `Bearer ${internalSecret}`);
-  const isSameOrigin = (origin && (
-    origin === 'https://wehosthere.com' ||
-    origin === 'https://www.wehosthere.com' ||
-    origin === 'http://localhost:3000' ||
-    origin === 'http://localhost:3001'
-  )) || (referer && (
-    referer.startsWith('https://wehosthere.com') ||
-    referer.startsWith('https://www.wehosthere.com') ||
-    referer.startsWith('http://localhost:3000') ||
-    referer.startsWith('http://localhost:3001')
-  ));
-
-  if (!isInternal && !isSameOrigin) {
-    return NextResponse.json({ error: 'Acesso não autorizado aos registos' }, { status: 401 });
+  if (!hasValidInternalAuth(req)) {
+    const auth = await requireAdmin(req);
+    if (auth.error) return auth.error;
   }
 
   try {

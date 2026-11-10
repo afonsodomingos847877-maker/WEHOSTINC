@@ -3,6 +3,7 @@ import { rateLimit, getRateLimitIdentifier } from '@/lib/rateLimiter';
 import { sendWelcomeEmail } from '@/lib/sendgrid';
 import { connectDB } from '@/lib/mongodb';
 import UserModel from '@/lib/models/User';
+import { generateNumericCode } from '@/lib/serverAuth';
 
 export async function POST(request: NextRequest) {
   try {
@@ -58,8 +59,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Gerar novo código de confirmação de 6 dígitos (válido por 24 horas)
-    const newConfirmationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    // Gerar novo código de confirmação criptográfico de 6 dígitos (válido por 24 horas)
+    const newConfirmationCode = generateNumericCode(6);
     const newConfirmationCodeExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 
     // Atualizar no MongoDB

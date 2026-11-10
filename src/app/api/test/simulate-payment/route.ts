@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import User from '@/lib/models/User';
+import { blockInProduction } from '@/lib/serverAuth';
 
 export async function POST(request: NextRequest) {
+  const blocked = blockInProduction();
+  if (blocked) return blocked;
   try {
     await connectDB();
     

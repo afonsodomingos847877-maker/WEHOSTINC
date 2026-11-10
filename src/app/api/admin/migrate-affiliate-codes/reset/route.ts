@@ -1,17 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/serverAuth';
 import { connectDB } from '@/lib/mongodb';
 import Affiliate from '@/lib/models/Affiliate';
 import Commission from '@/lib/models/Commission';
 import AffiliateClick from '@/lib/models/AffiliateClick';
 
 export async function POST(request: NextRequest) {
-  try {
-    // Verificar se é admin
-    const authHeader = request.headers.get('authorization');
-    if (authHeader !== `Bearer ${process.env.ADMIN_SECRET || 'admin-secret'}`) {
-      return NextResponse.json({ success: false, error: 'Não autorizado' }, { status: 401 });
-    }
+  const adminAuth = await requireAdmin(request);
+  if (adminAuth.error) return adminAuth.error;
 
+  try {
     console.log('Iniciando reset de registros de afiliados...');
     await connectDB();
 

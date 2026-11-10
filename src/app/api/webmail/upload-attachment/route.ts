@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getSessionUser, getWebmailSessionEmail } from '@/lib/serverAuth';
 
 export async function POST(request: NextRequest) {
+  const wmEmail = getWebmailSessionEmail(request);
+  const portalUser = wmEmail ? null : await getSessionUser(request);
+  if (!wmEmail && !portalUser) {
+    return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 });
+  }
+
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File | null;

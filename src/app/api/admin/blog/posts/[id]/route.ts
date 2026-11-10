@@ -1,8 +1,12 @@
 import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
+import { requireAdmin } from '@/lib/serverAuth';
 
 // GET - Buscar post por ID
 export async function GET(req: Request, { params }: { params: { id: string } }) {
+  const auth = await requireAdmin(req);
+  if (auth.error) return auth.error;
+
   try {
     await connectDB();
     
@@ -46,6 +50,9 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
 
 // PUT - Atualizar post
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
+  const auth = await requireAdmin(req);
+  if (auth.error) return auth.error;
+
   try {
     await connectDB();
     
@@ -94,6 +101,9 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 
 // DELETE - Remover post
 export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+  const auth = await requireAdmin(req);
+  if (auth.error) return auth.error;
+
   try {
     await connectDB();
     

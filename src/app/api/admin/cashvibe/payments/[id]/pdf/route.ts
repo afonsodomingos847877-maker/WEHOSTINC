@@ -3,6 +3,7 @@ import { connectDB } from '@/lib/mongodb';
 import CashvibePayment from '@/models/CashvibePayment';
 import CashvibeLoan from '@/models/CashvibeLoan';
 import { generatePaymentReceiptPdf } from '@/lib/cashvibePdfGenerator';
+import { getCashvibePortalClientId, getSessionUser, isAdminRole } from '@/lib/serverAuth';
 
 // GET /api/admin/cashvibe/payments/[id]/pdf - Baixar PDF do Recibo Oficial
 export async function GET(
@@ -10,6 +11,14 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    const portalClientId = getCashvibePortalClientId(request);
+    const sessionUser = await getSessionUser(request);
+    const isAdmin = isAdminRole(sessionUser?.role);
+
+    if (!isAdmin && !portalClientId) {
+      return NextResponse.json({ success: false, error: 'Não autorizado' }, { status: 401 });
+    }
+
     await connectDB();
     const { id } = params;
 
@@ -20,6 +29,10 @@ export async function GET(
 
     if (!payment) {
       return NextResponse.json({ success: false, error: 'Recibo não encontrado' }, { status: 404 });
+    }
+
+    if (!isAdmin && String(payment.clientId) !== portalClientId) {
+      return NextResponse.json({ success: false, error: 'Acesso negado' }, { status: 403 });
     }
 
     const loan: any = await CashvibeLoan.findOne({ id: payment.loanId }).lean();

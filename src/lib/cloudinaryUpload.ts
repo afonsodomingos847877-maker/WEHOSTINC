@@ -8,9 +8,13 @@ export async function uploadDataUrlToCloudinary(dataUrl: string, folder = 'webma
   if (!dataUrl || !dataUrl.startsWith('data:image/')) return null;
 
   try {
-    const cloudName = process.env.CLOUDINARY_CLOUD_NAME || 'dnvnftvky';
-    const apiKey = process.env.CLOUDINARY_API_KEY || '259851568455899';
-    const apiSecret = process.env.CLOUDINARY_API_SECRET || '3hRsXzUVd3pnwn9IKQWN7UAeJLc';
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME?.trim();
+    const apiKey = process.env.CLOUDINARY_API_KEY?.trim();
+    const apiSecret = process.env.CLOUDINARY_API_SECRET?.trim();
+    if (!cloudName || !apiKey || !apiSecret) {
+      console.error('[Cloudinary] Variáveis CLOUDINARY_CLOUD_NAME/API_KEY/API_SECRET não configuradas.');
+      return null;
+    }
 
     const [header, base64Data] = dataUrl.split(',');
     if (!base64Data) return null;

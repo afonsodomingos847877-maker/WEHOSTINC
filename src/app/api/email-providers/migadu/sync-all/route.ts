@@ -5,9 +5,13 @@ import { EmailMailbox } from '@/models/EmailMailbox';
 import SiteModel from '@/lib/models/Site';
 import EmailAccountModel from '@/lib/models/EmailAccount';
 import { connectDB } from '@/lib/mongodb';
+import { requireAuth } from '@/lib/serverAuth';
 
 // POST - Sync and provision all platform domains & mailboxes to Migadu
 export async function POST(request: NextRequest) {
+  const authResult = await requireAuth(request);
+  if (authResult.error) return authResult.error;
+
   try {
     await connectDB();
     const provider = getEmailProvider();

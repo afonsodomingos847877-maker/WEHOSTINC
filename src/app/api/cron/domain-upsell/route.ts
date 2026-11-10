@@ -2,17 +2,17 @@ import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import { sendEmail } from '@/lib/sendgrid';
 import { SITE_URL } from '@/lib/siteConfig';
+import { requireCronSecret } from '@/lib/serverAuth';
 
 /**
  * Cron: Upsell automático pós-compra de domínio — sugerir hospedagem 24h depois
  * Schedule: 0 11 * * * (diário às 11h)
  */
 export async function GET(req: Request) {
+  const cronAuthError = requireCronSecret(req);
+  if (cronAuthError) return cronAuthError;
+
   try {
-    const authHeader = req.headers.get('authorization');
-    if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
-    }
 
     await connectDB();
 

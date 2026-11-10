@@ -3,8 +3,11 @@ import { connectDB } from '@/lib/mongodb';
 import { CourseModel } from '@/lib/models/CourseModel';
 import { ModuleModel } from '@/lib/models/ModuleModel';
 import { LessonModel } from '@/lib/models/LessonModel';
+import { blockInProduction } from '@/lib/serverAuth';
 
 export async function GET(request: NextRequest) {
+  const blocked = blockInProduction();
+  if (blocked) return blocked;
   try {
     await connectDB();
     

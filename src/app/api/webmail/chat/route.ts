@@ -4,6 +4,7 @@ import { WebmailChatMessage, WebmailPresence } from '@/models/WebmailChat';
 import { EmailMailbox } from '@/models/EmailMailbox';
 import EmailAccountModel from '@/lib/models/EmailAccount';
 import { getEmailProvider } from '@/lib/emailProviders/base';
+import { canAccessMailbox } from '@/lib/serverAuth';
 
 function buildDmChannel(emailA: string, emailB: string): string {
   const sorted = [emailA.trim().toLowerCase(), emailB.trim().toLowerCase()].sort();
@@ -30,6 +31,10 @@ export async function GET(request: NextRequest) {
 
     if (!email || !email.includes('@')) {
       return NextResponse.json({ error: 'E-mail válido é obrigatório' }, { status: 400 });
+    }
+
+    if (!(await canAccessMailbox(request, email))) {
+      return NextResponse.json({ error: 'Não autorizado a aceder ao chat desta caixa.' }, { status: 401 });
     }
 
     const domain = email.split('@')[1].toLowerCase();
@@ -282,6 +287,10 @@ export async function POST(request: NextRequest) {
     const fromEmail = (rawFrom || '').trim().toLowerCase();
     if (!fromEmail || !fromEmail.includes('@')) {
       return NextResponse.json({ error: 'Remetente inválido' }, { status: 400 });
+    }
+
+    if (!(await canAccessMailbox(request, fromEmail))) {
+      return NextResponse.json({ error: 'Não autorizado a enviar mensagens por esta conta.' }, { status: 401 });
     }
 
     const domain = fromEmail.split('@')[1].toLowerCase();

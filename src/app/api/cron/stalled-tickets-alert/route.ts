@@ -3,17 +3,17 @@ import { connectDB } from '@/lib/mongodb';
 import { addAdminNotification } from '@/lib/notifications';
 import { sendEmail } from '@/lib/sendgrid';
 import { SITE_URL } from '@/lib/siteConfig';
+import { requireCronSecret } from '@/lib/serverAuth';
 
 /**
  * Cron: Alerta de tickets abertos há mais de 24h sem resposta
  * Schedule: 0 14 * * * (diário às 14h)
  */
 export async function GET(req: Request) {
+  const cronAuthError = requireCronSecret(req);
+  if (cronAuthError) return cronAuthError;
+
   try {
-    const authHeader = req.headers.get('authorization');
-    if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
-    }
 
     await connectDB();
 

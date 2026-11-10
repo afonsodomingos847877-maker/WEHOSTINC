@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/serverAuth';
 import { sendRevistaInviteEmail } from '@/lib/sendgrid';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
+  const adminAuth = await requireAdmin(req);
+  if (adminAuth.error) return adminAuth.error;
+
   try {
     const body = await req.json();
     const { toEmail, inviteeName, proposedTopic, customNote, category } = body;

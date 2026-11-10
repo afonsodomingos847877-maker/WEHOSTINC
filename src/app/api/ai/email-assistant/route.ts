@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { DOMAIN_PRICES } from '@/lib/domains';
 import { hostingPlans } from '@/lib/data';
+import { getSessionUser, getWebmailSessionEmail } from '@/lib/serverAuth';
 
 function decodeHtmlEntitiesServer(text: string): string {
   return text
@@ -785,6 +786,12 @@ function buildContextualEmailReply(params: {
 
 // POST - Webmail AI Assistant (Summarize, Translate, Smart Reply, Improve Writing, Voice to Email)
 export async function POST(request: NextRequest) {
+  const wmEmail = getWebmailSessionEmail(request);
+  const portalUser = wmEmail ? null : await getSessionUser(request);
+  if (!wmEmail && !portalUser) {
+    return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 });
+  }
+
   try {
     const body = await request.json();
     const { 

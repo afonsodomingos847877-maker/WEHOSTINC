@@ -2,15 +2,14 @@ import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import OrderModel from '@/lib/models/Order';
 import { dispatchMessage } from '@/lib/notifications';
+import { requireCronSecret } from '@/lib/serverAuth';
 
 // Vercel Cron will hit this route using GET
 export async function GET(req: Request) {
+  const cronAuthError = requireCronSecret(req);
+  if (cronAuthError) return cronAuthError;
+
   try {
-    // Basic security for manual hits, though Vercel Cron handles its own auth internally via VERCEL_CRON_SECRET if configured.
-    const authHeader = req.headers.get('authorization');
-    if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
 
     await connectDB();
 

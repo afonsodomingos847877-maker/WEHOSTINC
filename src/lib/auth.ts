@@ -24,14 +24,12 @@ export interface AuthState {
 // Simulação de banco de dados em localStorage
 const STORAGE_KEY = 'wehosthere_auth';
 
-// Utilizador admin padrão — senha temporária para desenvolvimento
-// Em produção, a senha deve ser gerida via MongoDB/ambiente
+// Utilizador admin padrão (sem credenciais hardcoded no cliente)
 const DEFAULT_USERS: Array<User & { password?: string }> = [
   {
     id: 'admin_root',
     name: 'Administrador WEHOSTHERE',
     email: 'admin@wehosthere.com',
-    password: 'admin123', // Senha temporária para desenvolvimento local
     plan: 'enterprise',
     status: 'active',
     role: 'super_admin',
@@ -433,9 +431,12 @@ export const auth = {
         }
       } catch (e) {}
 
-      // 4. Invalidar sessão NextAuth via endpoint oficial do servidor
+      // 4. Invalidar sessões do servidor (NextAuth + Cookie de sessão próprio)
       try {
-        fetch('/api/auth/signout', { method: 'POST' }).catch(() => {});
+        await Promise.allSettled([
+          fetch('/api/auth/logout', { method: 'POST' }),
+          fetch('/api/auth/signout', { method: 'POST' })
+        ]);
       } catch (e) {}
 
       // 5. Notificar todos os componentes e abas ativas

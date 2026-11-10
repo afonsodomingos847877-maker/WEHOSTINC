@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/serverAuth';
 import { connectDB } from '@/lib/mongodb';
 import AnalyticsVisitModel from '@/lib/models/AnalyticsVisit';
 import AnalyticsMilestoneModel from '@/lib/models/AnalyticsMilestone';
 import { checkAndNotifyMilestones } from '@/lib/analyticsMilestones';
 import { sendAnalyticsMilestoneEmail } from '@/lib/sendgrid';
 
-export async function GET() {
+export async function GET(req: Request) {
+  const adminAuth = await requireAdmin(req);
+  if (adminAuth.error) return adminAuth.error;
+
   try {
     await connectDB();
 
@@ -59,6 +63,9 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const adminAuth = await requireAdmin(req);
+  if (adminAuth.error) return adminAuth.error;
+
   try {
     const body = await req.json().catch(() => ({}));
     const action = body.action || 'check'; // 'check' | 'test_email'

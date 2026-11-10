@@ -1,11 +1,15 @@
 import { NextResponse } from 'next/server';
 import { getStoryById, updateStory, deleteStory } from '@/lib/revistaData';
+import { requireAdmin } from '@/lib/serverAuth';
 
 export const dynamic = 'force-dynamic';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.wehosthere.com';
 
-export async function GET(_req: Request, { params }: { params: { id: string } }) {
+export async function GET(req: Request, { params }: { params: { id: string } }) {
+  const auth = await requireAdmin(req);
+  if (auth.error) return auth.error;
+
   try {
     const story = await getStoryById(params.id);
     if (!story) return NextResponse.json({ error: 'História não encontrada' }, { status: 404 });
@@ -16,6 +20,9 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
 }
 
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
+  const auth = await requireAdmin(req);
+  if (auth.error) return auth.error;
+
   try {
     const body = await req.json();
 
@@ -117,7 +124,10 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   }
 }
 
-export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+  const auth = await requireAdmin(req);
+  if (auth.error) return auth.error;
+
   try {
     const result = await deleteStory(params.id);
     return NextResponse.json({ success: result.success });

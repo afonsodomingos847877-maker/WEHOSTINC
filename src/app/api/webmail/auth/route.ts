@@ -3,6 +3,8 @@ import { migaduImapSmtp } from '@/lib/migaduImapSmtp';
 import { EmailMailbox } from '@/models/EmailMailbox';
 import { ExternalEmailAccount } from '@/models/ExternalEmailAccount';
 import { connectDB } from '@/lib/mongodb';
+import { rateLimit, getRateLimitIdentifier } from '@/lib/rateLimiter';
+import { setWebmailSessionCookie } from '@/lib/serverAuth';
 
 // POST - Authenticate webmail user via IMAP (supports WeHostHere internal mailboxes and external connected accounts)
 export async function POST(request: NextRequest) {
@@ -19,6 +21,11 @@ export async function POST(request: NextRequest) {
     }
 
     const cleanEmail = email.toLowerCase().trim();
+    const clientIp = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+    const rl = rateLimit(getRateLimitIdentifier(clientIp, cleanEmail), 15, 60000);
+    if (!rl.success) {
+      return NextResponse.json({ error: 'Muitas tentativas de autenticação. Aguarde um minuto.' }, { status: 429 });
+    }
 
     // 1. Check if mailbox exists in WeHostHere internal mailboxes
     const mailbox = await EmailMailbox.findOne({ email: cleanEmail });
@@ -45,7 +52,7 @@ export async function POST(request: NextRequest) {
       mailbox.lastLoginAt = new Date();
       await mailbox.save();
 
-      return NextResponse.json({
+      const res = NextResponse.json({
         success: true,
         mailbox: {
           email: mailbox.email,
@@ -57,6 +64,7 @@ export async function POST(request: NextRequest) {
           providerName: 'WeHostHere Corporativo'
         }
       });
+      return setWebmailSessionCookie(res, cleanEmail);
     }
 
     // 2. If not found in internal mailboxes, check if it's a registered external account
@@ -87,7 +95,7 @@ export async function POST(request: NextRequest) {
       externalAccount.connectionStatus = 'connected';
       await externalAccount.save();
 
-      return NextResponse.json({
+      const res = NextResponse.json({
         success: true,
         mailbox: {
           email: externalAccount.email,
@@ -99,6 +107,7 @@ export async function POST(request: NextRequest) {
           providerName: externalAccount.providerName
         }
       });
+      return setWebmailSessionCookie(res, cleanEmail);
     }
 
     // 3. Fallback: Se não estiver pré-cadastrado no MongoDB, tentar autenticar diretamente na Migadu
@@ -129,7 +138,7 @@ export async function POST(request: NextRequest) {
         await autoMailbox.save();
       }
 
-      return NextResponse.json({
+      const res = NextResponse.json({
         success: true,
         mailbox: {
           email: cleanEmail,
@@ -141,6 +150,7 @@ export async function POST(request: NextRequest) {
           providerName: 'WeHostHere Corporativo'
         }
       });
+      return setWebmailSessionCookie(res, cleanEmail);
     }
 
     return NextResponse.json(

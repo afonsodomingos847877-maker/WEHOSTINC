@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { provisionWebsiteOnVPS, createEmailAccountOnVPS, issueSSLOnVPS } from '@/lib/vps';
+import { requireAdmin } from '@/lib/serverAuth';
 
 export async function POST(req: NextRequest) {
+  const auth = await requireAdmin(req);
+  if (auth.error) return auth.error;
+
   try {
     const body = await req.json();
     const { action, domain, clientEmail, planId, emailUser, password } = body;

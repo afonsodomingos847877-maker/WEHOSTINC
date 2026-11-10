@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import NewsletterModel from '@/lib/models/Newsletter';
+import { blockInProduction } from '@/lib/serverAuth';
 
 export async function GET(req: Request) {
+  const blocked = blockInProduction();
+  if (blocked) return blocked;
   try {
     console.log('[Test Newsletter] Iniciando teste...');
     

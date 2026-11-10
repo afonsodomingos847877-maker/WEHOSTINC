@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import AiSiteModel from '@/lib/models/AiSite';
 import JSZip from 'jszip';
+import { getSessionUser, isAdminRole } from '@/lib/serverAuth';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,6 +34,13 @@ export async function GET(request: NextRequest) {
         { error: 'Website não encontrado ou sem código HTML disponível' },
         { status: 404 }
       );
+    }
+
+    if ((site as any).status !== 'published') {
+      const sessionUser = await getSessionUser(request);
+      if (!sessionUser || (!isAdminRole(sessionUser.role) && (site as any).userEmail !== sessionUser.email)) {
+        return NextResponse.json({ error: 'Não autorizado a exportar este rascunho' }, { status: 403 });
+      }
     }
 
     const projectTitle = site.title || 'Meu Website';

@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getEmailProvider } from '@/lib/emailProviders/base';
+import { blockInProduction } from '@/lib/serverAuth';
 
 // Debug route to test Migadu API connection
 export async function GET(request: NextRequest) {
+  const blocked = blockInProduction();
+  if (blocked) return blocked;
   try {
     console.log('[Migadu Test] Starting Migadu API test');
     

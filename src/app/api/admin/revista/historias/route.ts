@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getStoriesList, createStory } from '@/lib/revistaData';
 import { connectDB } from '@/lib/mongodb';
 import RevistaDownload from '@/models/RevistaDownload';
+import { requireAdmin } from '@/lib/serverAuth';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,6 +10,10 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const status = searchParams.get('status') || 'published';
+    if (status !== 'published') {
+      const auth = await requireAdmin(req);
+      if (auth.error) return auth.error;
+    }
     const category = searchParams.get('category') || undefined;
     const featured = searchParams.get('featured') === 'true' ? true : undefined;
     const limit = parseInt(searchParams.get('limit') || '30', 10);
@@ -50,6 +55,9 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const auth = await requireAdmin(req);
+  if (auth.error) return auth.error;
+
   try {
     const body = await req.json();
     const { title, excerpt, content } = body;

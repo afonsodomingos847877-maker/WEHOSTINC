@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/serverAuth';
 import { connectDB } from '@/lib/mongodb';
 import { sendNewsletterEmail } from '@/lib/sendgrid';
 
 export async function POST(req: Request) {
+  const adminAuth = await requireAdmin(req);
+  if (adminAuth.error) return adminAuth.error;
+
   try {
     console.log('[Admin Newsletter Send] ========== INICIANDO ENVIO ==========');
     console.log('[Admin Newsletter Send] Timestamp:', new Date().toISOString());
@@ -92,6 +96,9 @@ export async function POST(req: Request) {
 }
 
 export async function GET(req: Request) {
+  const adminAuth = await requireAdmin(req);
+  if (adminAuth.error) return adminAuth.error;
+
   try {
     await connectDB();
     

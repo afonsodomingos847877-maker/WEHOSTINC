@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { blockInProduction } from '@/lib/serverAuth';
 
 // Verificação segura de configuração do Google OAuth
 // Não expõe valores de variáveis de ambiente, apenas status
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
+  const blocked = blockInProduction();
+  if (blocked) return blocked;
   try {
     // Verificar se Google OAuth está configurado sem expor valores
     const googleClientId = process.env.GOOGLE_CLIENT_ID;

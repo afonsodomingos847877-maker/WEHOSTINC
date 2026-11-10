@@ -9,6 +9,7 @@ import AffiliateClick from '@/lib/models/AffiliateClick';
 import UserModel from '@/lib/models/User';
 import EnrollmentModel from '@/lib/models/Enrollment';
 import crypto from 'crypto';
+import { getSessionUser, hasValidInternalAuth, isAdminRole, requireAdmin, requireAuth } from '@/lib/serverAuth';
 
 let FALLBACK_ORDERS: any[] = [];
 
@@ -103,6 +104,16 @@ async function processAffiliateCommission(orderData: any, affiliateCode: string 
 }
 
 export async function GET(req: Request) {
+  let isAdminOrInternal = hasValidInternalAuth(req);
+  let sessionEmail = '';
+
+  if (!isAdminOrInternal) {
+    const auth = await requireAuth(req);
+    if (auth.error) return auth.error;
+    isAdminOrInternal = isAdminRole(auth.user.role);
+    sessionEmail = auth.user.email.toLowerCase().trim();
+  }
+
   try {
     const { searchParams } = new URL(req.url);
     const orderId = searchParams.get('orderId');
@@ -110,8 +121,14 @@ export async function GET(req: Request) {
     if (await tryMongo()) {
       // Se orderId for fornecido, buscar pedido específico
       if (orderId) {
-        const order = await OrderModel.findOne({ id: orderId }).lean();
+        const order = await OrderModel.findOne({ id: orderId }).lean() as any;
         if (order) {
+          if (!isAdminOrInternal) {
+            const ownerEmail = String(order.clientEmail || order.userEmail || '').toLowerCase().trim();
+            if (ownerEmail !== sessionEmail) {
+              return NextResponse.json({ success: false, error: 'Acesso negado' }, { status: 403 });
+            }
+          }
           const amt = Number(order.amount ?? order.valorFaturado ?? order.valorPorFaturar ?? 0);
           const mappedOrder = {
             ...order,
@@ -124,8 +141,16 @@ export async function GET(req: Request) {
         return NextResponse.json({ success: false, error: 'Pedido não encontrado' }, { status: 404 });
       }
       
-      // Caso contrário, buscar todos os pedidos
-      const orders = await OrderModel.find({}).sort({ createdAt: -1 }).lean();
+      // Admins veem todos os pedidos; clientes apenas os seus próprios pedidos
+      const orderQuery: any = {};
+      if (!isAdminOrInternal) {
+        const escapedEmail = sessionEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        orderQuery.$or = [
+          { clientEmail: { $regex: new RegExp(`^${escapedEmail}$`, 'i') } },
+          { userEmail: { $regex: new RegExp(`^${escapedEmail}$`, 'i') } }
+        ];
+      }
+      const orders = await OrderModel.find(orderQuery).sort({ createdAt: -1 }).lean();
 
       // Auto-reconciliação: se existirem pedidos pendentes com faturas já liquidadas/pagas em InvoiceModel
       try {
@@ -173,19 +198,22 @@ export async function GET(req: Request) {
     }
   } catch (e) { console.error('MongoDB indisponível (orders):', e); }
   
-  // Fallback para localStorage
+  // Fallback para memória (restrito ao utilizador autenticado ou admin)
   const { searchParams } = new URL(req.url);
   const orderId = searchParams.get('orderId');
+  const visibleFallback = isAdminOrInternal
+    ? FALLBACK_ORDERS
+    : FALLBACK_ORDERS.filter(o => String(o.clientEmail || o.userEmail || '').toLowerCase().trim() === sessionEmail);
   
   if (orderId) {
-    const order = FALLBACK_ORDERS.find(o => o.id === orderId);
+    const order = visibleFallback.find(o => o.id === orderId);
     if (order) {
       return NextResponse.json({ success: true, order });
     }
     return NextResponse.json({ success: false, error: 'Pedido não encontrado' }, { status: 404 });
   }
   
-  return NextResponse.json({ orders: FALLBACK_ORDERS });
+  return NextResponse.json({ orders: visibleFallback });
 }
 
 export async function POST(req: Request) {
@@ -199,11 +227,19 @@ export async function POST(req: Request) {
 
     // Action otimizado para verificar pagamento de curso específico
     if (action === 'check_course_payment') {
+      const auth = await requireAuth(req);
+      if (auth.error) return auth.error;
+
       if (!email || !courseTitle) {
         return NextResponse.json({ hasPaid: false }, { status: 400 });
       }
 
-      const normalizedEmail = email.toLowerCase().trim();
+      const normalizedEmail = String(email).toLowerCase().trim();
+      if (!isAdminRole(auth.user.role) && auth.user.email !== normalizedEmail) {
+        return NextResponse.json({ hasPaid: false, error: 'Acesso negado' }, { status: 403 });
+      }
+
+      const escapedTitle = String(courseTitle).trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
       if (useMongo) {
         // 1º Prioridade: Verificar Matrícula Ativa no Modelo Enrollment
@@ -211,7 +247,7 @@ export async function POST(req: Request) {
           studentEmail: normalizedEmail,
           status: 'active',
           $or: [
-            { courseTitle: { $regex: courseTitle, $options: 'i' } },
+            { courseTitle: { $regex: escapedTitle, $options: 'i' } },
             { courseId: body.courseId || 'NONE' }
           ]
         });
@@ -223,7 +259,7 @@ export async function POST(req: Request) {
         const hasPaid = await OrderModel.exists({
           clientEmail: normalizedEmail,
           status: 'completed',
-          serviceName: { $regex: courseTitle, $options: 'i' }
+          serviceName: { $regex: escapedTitle, $options: 'i' }
         });
         return NextResponse.json({ hasPaid: !!hasPaid });
       }
@@ -231,28 +267,19 @@ export async function POST(req: Request) {
       const hasPaid = FALLBACK_ORDERS.some(o => 
         o.clientEmail?.toLowerCase() === normalizedEmail &&
         o.status === 'completed' &&
-        o.serviceName?.toLowerCase().includes(courseTitle.toLowerCase())
+        o.serviceName?.toLowerCase().includes(String(courseTitle).toLowerCase())
       );
       return NextResponse.json({ hasPaid });
     }
 
     if (action === 'update_status') {
-      // 🔒 SEGURANÇA: Verificar se é permitido alterar status manualmente
+      const adminAuth = await requireAdmin(req);
+      if (adminAuth.error) return adminAuth.error;
+
+      // 🔒 SEGURANÇA: Apenas administradores autenticados podem alterar status manualmente
       let orderDoc: any = null;
       if (useMongo) {
         orderDoc = await OrderModel.findOne({ id: orderId }).lean();
-        
-        // Permitir aprovação manual se for transferência bancária, tiver comprovativo anexado, ou se chamado pelo painel admin (forceAdmin / referer /admin)
-        const referer = req.headers.get('referer') || '';
-        const origin = req.headers.get('origin') || '';
-        const isAdminCall = !!(body.forceAdmin || referer.includes('/admin') || origin.includes('/admin'));
-        const isMobileMoney = (orderDoc?.paymentMethod === 'mpesa' || orderDoc?.paymentMethod === 'emola');
-        if (orderDoc && isMobileMoney && !orderDoc.proofUrl && !isAdminCall && status === 'completed') {
-          return NextResponse.json(
-            { error: 'Pagamentos via M-Pesa/eMola devem ser confirmados apenas pelo webhook do gateway ou aprovados com comprovativo anexado.' },
-            { status: 403 }
-          );
-        }
         
         const isFinished = status === 'completed' || status === 'approved' || status === 'active';
         await OrderModel.findOneAndUpdate(
@@ -508,10 +535,14 @@ export async function POST(req: Request) {
     }
 
     if (action === 'delete') {
+      const adminAuth = await requireAdmin(req);
+      if (adminAuth.error) return adminAuth.error;
+
       const targetId = (orderId || body.id || '').toLowerCase().trim();
+      const escapedTargetId = targetId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       if (useMongo) {
         if (targetId) {
-          await OrderModel.deleteMany({ id: { $regex: new RegExp(`^${targetId}$`, 'i') } });
+          await OrderModel.deleteMany({ id: { $regex: new RegExp(`^${escapedTargetId}$`, 'i') } });
         }
         return NextResponse.json({ success: true, orders: await OrderModel.find({}).sort({ createdAt: -1 }).lean() });
       }
@@ -519,7 +550,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true, orders: FALLBACK_ORDERS });
     }
 
-    const orderData = order || { 
+    const sessionUser = await getSessionUser(req);
+    const isAdmin = isAdminRole(sessionUser?.role);
+
+    const rawOrder = order || { 
       id: body.id || `ORD-${Date.now().toString().slice(-5)}`, 
       clientName: body.clientName, 
       clientEmail: body.clientEmail, 
@@ -535,8 +569,35 @@ export async function POST(req: Request) {
       createdAt: body.createdAt || new Date().toISOString() 
     };
 
+    const orderData = {
+      ...rawOrder,
+      ...(isAdmin ? {} : {
+        status: 'pending',
+        valorFaturado: 0,
+        valorPorFaturar: Number(rawOrder.amount || rawOrder.valorPorFaturar || 0),
+      }),
+    };
+
     if (useMongo) {
-      const existing = await OrderModel.findOne({ id: orderData.id });
+      const existing = await OrderModel.findOne({ id: orderData.id }).lean() as any;
+      if (existing && !isAdmin) {
+        const ownerEmail = String(existing.clientEmail || existing.userEmail || '').toLowerCase().trim();
+        const isSameOwner = sessionUser && ownerEmail === sessionUser.email;
+        if (!isSameOwner || existing.status !== 'pending') {
+          return NextResponse.json({ error: 'Não autorizado a modificar pedido existente.' }, { status: 403 });
+        }
+        await OrderModel.findOneAndUpdate(
+          { id: orderData.id },
+          {
+            $set: {
+              ...(orderData.proofUrl ? { proofUrl: orderData.proofUrl, proofName: orderData.proofName } : {}),
+              ...(orderData.paymentMethod ? { paymentMethod: orderData.paymentMethod } : {}),
+              updatedAt: new Date().toISOString(),
+            },
+          }
+        );
+        return NextResponse.json({ success: true, order: existing });
+      }
       const isNew = !existing;
       await OrderModel.findOneAndUpdate({ id: orderData.id }, orderData, { upsert: true, new: true });
 
@@ -610,7 +671,14 @@ export async function POST(req: Request) {
         });
       }
 
-      return NextResponse.json({ success: true, order: orderData, orders: await OrderModel.find({}).sort({ createdAt: -1 }).lean() });
+      return NextResponse.json(
+        isAdmin
+          ? { success: true, order: orderData, orders: await OrderModel.find({}).sort({ createdAt: -1 }).lean() }
+          : { success: true, order: orderData }
+      );
+    }
+    if (!isAdmin) {
+      return NextResponse.json({ success: true, order: orderData });
     }
     const idx = FALLBACK_ORDERS.findIndex(o => o.id === orderData.id);
     const isNewFallback = idx < 0;

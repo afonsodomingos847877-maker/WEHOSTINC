@@ -1,21 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getEmailProvider } from '@/lib/emailProviders/base';
+import crypto from 'crypto';
 import { EmailDomain } from '@/models/EmailDomain';
 import { EmailMailbox } from '@/models/EmailMailbox';
-import { auth } from '@/lib/auth';
 import { connectDB } from '@/lib/mongodb';
+import { requireAdmin } from '@/lib/serverAuth';
 
 // Initialize default domain and emails for admin
 export async function POST(request: NextRequest) {
-  try {
-    // Temporarily disabled auth check for testing
-    // const user = await auth.getCurrentUser();
-    // if (!user || user.role !== 'admin') {
-    //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    // }
-    
-    console.log('[Initialize] Auth check temporarily disabled for testing');
+  const adminAuth = await requireAdmin(request);
+  if (adminAuth.error) return adminAuth.error;
 
+  try {
     const { domainName = 'wehosthere.com', createDefaultEmails = true } = await request.json();
 
     const provider = getEmailProvider();
@@ -35,8 +31,7 @@ export async function POST(request: NextRequest) {
     const existingDomain = await EmailDomain.findOne({ domainName });
     
     let domain;
-    // Use a default customerId for now since auth is disabled
-    const customerId = 'admin_default'; // Will be replaced with user.id when auth is re-enabled
+    const customerId = adminAuth.user.email || adminAuth.user.id || 'admin_default';
 
     if (existingDomain) {
       console.log('[Initialize] Domain already exists in DB:', domainName);
@@ -78,11 +73,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Step 3: Create default emails if requested
+    // Step 3: Create default emails if requested (senhas aleatórias criptográficas)
     const defaultEmails = createDefaultEmails ? [
-      { localPart: 'admin', name: 'WEHOSTHERE Admin', password: 'Admin@2024!' },
-      { localPart: 'info', name: 'WEHOSTHERE Info', password: 'Info@2024!' },
-      { localPart: 'suporte', name: 'WEHOSTHERE Suporte', password: 'Suporte@2024!' }
+      { localPart: 'admin', name: 'WEHOSTHERE Admin', password: crypto.randomBytes(12).toString('base64url') },
+      { localPart: 'info', name: 'WEHOSTHERE Info', password: crypto.randomBytes(12).toString('base64url') },
+      { localPart: 'suporte', name: 'WEHOSTHERE Suporte', password: crypto.randomBytes(12).toString('base64url') }
     ] : [];
 
     const createdEmails = [];
