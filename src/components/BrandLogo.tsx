@@ -23,7 +23,7 @@ export default function BrandLogo({
   logoHeightClass = 'h-5 sm:h-6 md:h-7 lg:h-8',
   className = '',
   dark = false,
-  showIcon = true
+  showIcon = false
 }: BrandLogoProps) {
   try {
     const isDarkStyle = dark;
