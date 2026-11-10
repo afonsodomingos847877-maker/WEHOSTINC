@@ -43,9 +43,10 @@ const nextConfig = {
     const shouldProxyApi = !isRender && (isVercel || process.env.NODE_ENV === 'production' || process.env.PROXY_TO_RENDER === 'true');
     const apiRewrites = shouldProxyApi ? [
       {
-        // Excluir rotas que fazem conexão SMTP de saída (send / external-accounts), pois o plano gratuito do Render
-        // bloqueia portas SMTP (465/587) causando timeout e erro 502; na Vercel o envio SMTP funciona normalmente.
-        source: '/api/:path((?!webmail/send/?$|webmail/external-accounts/?$).*)',
+        // Excluir rotas que fazem conexão SMTP de saída (send / external-accounts) e assistente IA do Webmail,
+        // pois o plano gratuito do Render bloqueia portas SMTP (465/587) e tem IP partilhado limitado para APIs de IA;
+        // na Vercel correm apenas quando acionadas manualmente pelo utilizador.
+        source: '/api/:path((?!webmail/send/?$|webmail/external-accounts/?$|ai/email-assistant/?$).*)',
         destination: `${backendUrl}/api/:path`,
       },
       {

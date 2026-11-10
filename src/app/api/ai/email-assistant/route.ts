@@ -276,16 +276,19 @@ function transformVoiceTranscriptToCorporateEmail(
   };
 }
 
-// Helper: Chamar LLM Open-Source (OpenRouter openai/gpt-oss-20b + fallback automático Pollinations gpt-oss-20b gratuito)
+// Helper: Chamar LLM Open-Source (OpenRouter / Groq -> fallback Pollinations gpt-oss-20b gratuito)
 async function callOpenSourceLLM(params: {
   systemPrompt: string;
   userPrompt: string;
   temperature?: number;
   seed?: number;
-}): Promise<{ text: string; provider: string; model: string } | null> {
+}): Promise<{ text?: string; provider?: string; model?: string; diagnostics: string[] }> {
   const { systemPrompt, userPrompt, temperature = 0.7, seed } = params;
+  const diagnostics: string[] = [];
   const openRouterKey = process.env.OPENROUTER_API_KEY?.trim();
   const openRouterModel = process.env.OPENROUTER_MODEL?.trim() || 'openai/gpt-oss-20b';
+  const groqKey = process.env.GROQ_API_KEY?.trim();
+  const groqModel = process.env.GROQ_MODEL?.trim() || 'openai/gpt-oss-20b';
 
   // 1. OpenRouter (quando chave válida configurada)
   if (openRouterKey) {
@@ -306,52 +309,101 @@ async function callOpenSourceLLM(params: {
           ],
           temperature,
         }),
-        signal: AbortSignal.timeout(18000),
+        signal: AbortSignal.timeout(16000),
       });
 
       if (res.ok) {
         const data = await res.json();
         const text = data?.choices?.[0]?.message?.content;
         if (text && String(text).trim()) {
-          return { text: String(text).trim(), provider: 'openrouter', model: data?.model || openRouterModel };
+          return { text: String(text).trim(), provider: 'openrouter', model: data?.model || openRouterModel, diagnostics };
         }
+        diagnostics.push('openrouter:empty');
       } else {
-        console.warn(`[AI OpenRouter] HTTP ${res.status} — a usar fallback open-source...`);
+        diagnostics.push(`openrouter:${res.status}`);
       }
-    } catch (err) {
-      console.warn('[AI OpenRouter] Falha de ligação — a usar fallback open-source:', err);
+    } catch (err: any) {
+      diagnostics.push(`openrouter:err:${err?.name || 'fail'}`);
     }
   }
 
-  // 2. Fallback Open-Source Gratuito (Pollinations -> gpt-oss-20b sem chave obrigatória)
-  try {
-    const res = await fetch('https://text.pollinations.ai/openai', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'openai-fast',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
-        temperature,
-        seed: seed ?? Math.floor(Math.random() * 100000),
-      }),
-      signal: AbortSignal.timeout(18000),
-    });
+  // 2. Groq (plano gratuito com suporte a openai/gpt-oss-20b e llama-3.3-70b)
+  if (groqKey) {
+    try {
+      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${groqKey}`,
+        },
+        body: JSON.stringify({
+          model: groqModel,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt },
+          ],
+          temperature,
+        }),
+        signal: AbortSignal.timeout(14000),
+      });
 
-    if (res.ok) {
-      const data = await res.json();
-      const text = data?.choices?.[0]?.message?.content;
-      if (text && String(text).trim()) {
-        return { text: String(text).trim(), provider: 'pollinations', model: data?.model || 'gpt-oss-20b' };
+      if (res.ok) {
+        const data = await res.json();
+        const text = data?.choices?.[0]?.message?.content;
+        if (text && String(text).trim()) {
+          return { text: String(text).trim(), provider: 'groq', model: data?.model || groqModel, diagnostics };
+        }
+        diagnostics.push('groq:empty');
+      } else {
+        diagnostics.push(`groq:${res.status}`);
       }
+    } catch (err: any) {
+      diagnostics.push(`groq:err:${err?.name || 'fail'}`);
     }
-  } catch (err) {
-    console.warn('[AI Pollinations] Fallback local ativado:', err);
   }
 
-  return null;
+  // 3. Fallback Open-Source Gratuito (Pollinations -> gpt-oss-20b sem chave obrigatória)
+  const pollinationsEndpoints = [
+    'https://text.pollinations.ai/openai',
+    'https://text.pollinations.ai/openai/v1/chat/completions',
+  ];
+  for (const endpoint of pollinationsEndpoints) {
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'User-Agent': 'WEHOSTHERE-Webmail/1.0 (+https://www.wehosthere.com)',
+        },
+        body: JSON.stringify({
+          model: 'openai-fast',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt },
+          ],
+          temperature,
+          seed: seed ?? Math.floor(Math.random() * 100000),
+        }),
+        signal: AbortSignal.timeout(16000),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const text = data?.choices?.[0]?.message?.content;
+        if (text && String(text).trim()) {
+          return { text: String(text).trim(), provider: 'pollinations', model: data?.model || 'gpt-oss-20b', diagnostics };
+        }
+        diagnostics.push('pollinations:empty');
+      } else {
+        diagnostics.push(`pollinations:${res.status}`);
+      }
+    } catch (err: any) {
+      diagnostics.push(`pollinations:err:${err?.name || 'fail'}`);
+    }
+  }
+
+  return { diagnostics };
 }
 
 // Helper: Extrair nome amigável do destinatário/remetente e da assinatura sem gerar placeholders [Nome]
@@ -502,13 +554,14 @@ function buildContextualEmailReply(params: {
   const asksDns = /\b(dns|apontar|apontamento|nameserver|ns1|ns2|cname|mx|outro servi[çc]o|outra hospedagem|externa)\b/i.test(fullContext);
   const asksExtraCosts = /\b(custo[s]? adicionai[s]?|taxa[s]?|extra[s]?|inclu[ií]do[s]?|oculto[s]?|gratu[ií]to)\b/i.test(fullContext);
 
-  const asksHosting = /\b(hospedagem|alojamento|hosting|plano[s]?|servidor|ssd|cpanel|wordpress|tr[áa]fego)\b/i.test(fullContext);
+  const asksHosting = /\b(hospedagem|alojamento|hosting|plano[s]? de hospedagem|servidor web|ssd|cpanel|wordpress|tr[áa]fego)\b/i.test(fullContext);
   const asksEmail = /\b(e-?mail corporativo|e-?mail profissional|webmail|imap|smtp|migadu|caixa[s]? de e-?mail)\b/i.test(fullContext);
-  const asksSiteCreation = /\b(cria[çc][ãa]o de site|criar site|loja online|e-?commerce|or[çc]amento|proposta|cota[çc][ãa]o|website|desenvolvimento)\b/i.test(fullContext);
-  const asksPayment = /\b(pagamento|pagar|m-?pesa|emola|e-?mola|cart[ãa]o|visa|mastercard|fatura|transfer[êe]ncia|mbway|pre[çc]o|valor)\b/i.test(fullContext);
+  const asksSiteCreation = /\b(cria[çc][ãa]o de site|criar\s+(?:um\s+)?site|fazer\s+(?:um\s+)?site|loja\s+online|e-?commerce|website|desenvolvimento\s+web|desenvolver\s+(?:um\s+)?site)\b/i.test(fullContext);
+  const asksPayment = /\b(pagamento|pagar|m-?pesa|emola|e-?mola|cart[ãa]o|visa|mastercard|fatura|transfer[êe]ncia|mbway)\b/i.test(fullContext);
   const asksVps = /\b(vps|servidor virtual|root|ip dedicado)\b/i.test(fullContext);
   const asksMeeting = /\b(reuni[ãa]o|encontro|chamada|call|agendar|hor[áa]rio|dispon[íi]vel)\b/i.test(fullContext);
   const asksSupport = /\b(erro|problema|falha|n[ãa]o funciona|suporte|ajuda|ticket|lento|offline|suspens[ãa]o)\b/i.test(fullContext);
+  const isConfirmation = /\b(confirmamos|confirmo|de acordo|aprovado|combinado|acordado|avan[çc]aremos|pr[óo]ximos passos)\b/i.test(fullContext);
 
   const sections: string[] = [];
 
@@ -682,7 +735,27 @@ function buildContextualEmailReply(params: {
     return `${greeting}\n\n${intro}\n\n${sections.join('\n\n')}\n\n${outro}`;
   }
 
-  // Fallback cordial quando o assunto é geral/administrativo (com 3 variações reais)
+  // Fallback cordial quando o assunto é geral/administrativo/confirmação (com 3 variações reais)
+  if (isConfirmation) {
+    if (isEn) {
+      if (variant === 1) {
+        return `${greeting}\n\nThank you for confirming! Everything is aligned on our side and we are ready to move forward with the next steps.\n\nBest,\n${signatureLabel}`;
+      }
+      if (variant === 2) {
+        return `${greeting}\n\nGreat news — thank you for your confirmation regarding "${subject || 'our agreement'}". We will proceed immediately and keep you updated.\n\nWarm regards,\n${signatureLabel}`;
+      }
+      return `${greeting}\n\nThank you for your confirmation and agreement. We are all set to advance with the next steps as discussed.\n\nBest regards,\n${signatureLabel}`;
+    }
+
+    if (variant === 1) {
+      return `${greeting}\n\nExcelente! Obrigado pela confirmação. Da nossa parte está tudo alinhado para avançarmos com os próximos passos.\n\nCumprimentos,\n${signatureLabel}`;
+    }
+    if (variant === 2) {
+      return `${greeting}\n\nFicamos muito satisfeitos com a confirmação! Vamos dar seguimento imediato conforme combinado e mantemos-vos atualizados.\n\nUm abraço,\n${signatureLabel}`;
+    }
+    return `${greeting}\n\nAgradecemos a confirmação! Estamos inteiramente alinhados e prontos para avançar com os próximos passos conforme acordado.\n\nCom os melhores cumprimentos,\n${signatureLabel}`;
+  }
+
   if (isEn) {
     if (variant === 1) {
       return `${greeting}\n\nMessage received regarding "${subject || 'your inquiry'}". Our team is already reviewing it and will reply with an update shortly.\n\nBest,\n${signatureLabel}`;
@@ -896,6 +969,7 @@ ${getWehosthereKnowledgeContext()}`;
         openUserPrompt = readableEmailText;
       }
 
+      let llmDiagnostics: string[] = [];
       if (openSystemPrompt && openUserPrompt) {
         const aiRes = await callOpenSourceLLM({
           systemPrompt: openSystemPrompt,
@@ -903,6 +977,7 @@ ${getWehosthereKnowledgeContext()}`;
           temperature: temp,
           seed: Date.now() + Number(variation || 0) * 97,
         });
+        llmDiagnostics = aiRes.diagnostics || [];
         if (aiRes?.text) {
           return NextResponse.json({
             success: true,
@@ -911,6 +986,9 @@ ${getWehosthereKnowledgeContext()}`;
             model: aiRes.model,
           });
         }
+      }
+      if (llmDiagnostics.length > 0) {
+        (request as any)._llmDiagnostics = llmDiagnostics;
       }
     }
 
@@ -1044,7 +1122,9 @@ ${getWehosthereKnowledgeContext()}`;
 
     return NextResponse.json({
       success: true,
-      result: stripMarkdownAsterisks(fallbackResult)
+      result: stripMarkdownAsterisks(fallbackResult),
+      provider: 'local-fallback',
+      diagnostics: (request as any)._llmDiagnostics || []
     });
   } catch (error: any) {
     console.error('[AI Email Assistant POST] Error:', error);
