@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { DOMAIN_PRICES } from '@/lib/domains';
+import { hostingPlans } from '@/lib/data';
 
 function decodeHtmlEntitiesServer(text: string): string {
   return text
@@ -274,6 +276,275 @@ function transformVoiceTranscriptToCorporateEmail(
   };
 }
 
+// Helper: Construir conhecimento oficial da WEHOSTHERE para respostas com IA
+function getWehosthereKnowledgeContext(): string {
+  const domainLines = DOMAIN_PRICES.map(
+    (d) => `  • ${d.extension} (${d.label}): ${d.price.toLocaleString('pt-MZ')} MT/ano (registo anual e renovação)`
+  ).join('\n');
+  const hostingLines = hostingPlans
+    .filter((p) => p.id !== 'website_creation')
+    .map(
+      (p) =>
+        `  • Plano ${p.name}: ${p.price.toLocaleString('pt-MZ')} MT/mês (${p.priceAnnual.toLocaleString('pt-MZ')} MT/ano) — ${p.features.sites === -1 ? 'Sites ilimitados' : `${p.features.sites} site(s)`}, ${p.features.emails === -1 ? 'E-mails ilimitados' : `${p.features.emails} contas de e-mail`}, ${p.features.storage}GB SSD, Tráfego ${p.features.bandwidth}${p.features.ssl ? ', SSL Gratuito' : ''}`
+    )
+    .join('\n');
+
+  return `WEHOSTHERE (Moçambique) — Base de Conhecimento Oficial:
+- Domínios (preço por 1 ano; renovação anual com gestão DNS completa gratuita incluída, sem taxas ocultas):
+${domainLines}
+  • Processo: Pesquisa e pedido em https://www.wehosthere.com/dominios; ativação em poucas horas (.com/.net) e 24-48h (.co.mz / .org.mz).
+  • DNS: Gestão total (A, CNAME, MX, TXT, Nameservers) para apontar para qualquer hospedagem externa sem custos extras.
+- Hospedagem de Sites:
+${hostingLines}
+- E-mail Corporativo (Migadu / Webmail): IMAP imap.migadu.com (993 SSL), SMTP smtp.migadu.com (465 SSL / 587 STARTTLS).
+- Criação de Sites & Lojas Online: Cotação instantânea em https://www.wehosthere.com/site-quote (integração M-Pesa/e-Mola).
+- Métodos de Pagamento: M-Pesa (Vodacom), e-Mola (Movitel), Cartões Visa/Mastercard e Transferência Bancária.
+- Contactos: info@wehosthere.com | WhatsApp/Tel: +258 84 833 5618 | https://www.wehosthere.com`;
+}
+
+// Helper: Limpar URLs redirecionadas (ex.: google.com/url?q=...) no texto do e-mail recebido
+function normalizeIncomingEmailText(raw: string): string {
+  return raw.replace(/https?:\/\/(?:www\.)?google\.com\/url\?[^\s)]*q=([^&\s)]+)[^\s)]*/gi, (_, target) => {
+    try {
+      return decodeURIComponent(target);
+    } catch {
+      return target;
+    }
+  });
+}
+
+// Helper: Detetar se o e-mail recebido está em inglês
+function isLikelyEnglishEmail(subject: string, text: string): boolean {
+  const sample = `${subject} ${text}`.toLowerCase();
+  const enMatches = (sample.match(/\b(hello|hi|dear|please|thank|thanks|regards|pricing|price|domain|hosting|would like|could you|how much|available|support|invoice|payment)\b/g) || []).length;
+  const ptMatches = (sample.match(/\b(olá|ola|prezado|bom dia|boa tarde|obrigado|obrigada|cumprimentos|preço|precos|preços|domínio|dominio|hospedagem|gostaria|podem|quanto|custa|renovação|renovar|atenciosamente|suporte|fatura)\b/g) || []).length;
+  return enMatches > ptMatches && enMatches >= 2;
+}
+
+// Helper: Gerar resposta inteligente contextualizada ao conteúdo real do e-mail recebido
+function buildContextualEmailReply(params: {
+  subject: string;
+  cleanText: string;
+  from: string;
+  fromName?: string;
+  senderName?: string;
+  tone: string;
+}): string {
+  const { subject, cleanText, from, fromName, senderName, tone } = params;
+  const normalizedText = normalizeIncomingEmailText(cleanText);
+  const fullContext = `${subject} ${normalizedText}`.toLowerCase();
+  const isEn = isLikelyEnglishEmail(subject, normalizedText);
+
+  // Nome amigável do destinatário
+  let recipientName = (fromName || '').trim();
+  if (!recipientName && from) {
+    const rawFromName = from.split('<')[0].replace(/["']/g, '').trim();
+    if (rawFromName && !rawFromName.includes('@')) {
+      recipientName = rawFromName;
+    } else {
+      const local = (from.split('@')[0] || '').replace(/[._\-0-9]+/g, ' ').trim();
+      if (local && !/^(info|admin|suporte|support|noreply|no-reply|contato|contact|wehosthereinc)$/i.test(local)) {
+        recipientName = local
+          .split(/\s+/)
+          .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+          .join(' ');
+      }
+    }
+  }
+
+  // Nome da assinatura do remetente
+  let signatureLabel = isEn ? 'WEHOSTHERE Team' : 'Equipa WEHOSTHERE';
+  if (senderName) {
+    const cleanSender = senderName.split('@')[0].trim().toLowerCase();
+    if (cleanSender === 'info' || cleanSender === 'suporte') {
+      signatureLabel = isEn ? 'WEHOSTHERE Support Team' : 'Equipa de Suporte WEHOSTHERE';
+    } else if (cleanSender === 'admin') {
+      signatureLabel = isEn ? 'WEHOSTHERE Administration' : 'Administração WEHOSTHERE';
+    } else if (cleanSender) {
+      signatureLabel = cleanSender.charAt(0).toUpperCase() + cleanSender.slice(1);
+    }
+  }
+
+  // Ações rápidas explícitas (aceitar / recusar)
+  if (tone === 'quick_accept') {
+    const nameStr = recipientName ? ` ${recipientName}` : '';
+    return isEn
+      ? `Dear${nameStr},\n\nThank you for your message. We confirm receipt and agree with the details presented.\n\nWe will proceed with the next steps as discussed.\n\nBest regards,\n${signatureLabel}`
+      : `Prezado(a)${nameStr},\n\nConfirmamos a receção da sua mensagem e estamos inteiramente de acordo com os pontos apresentados.\n\nDaremos seguimento aos próximos passos conforme alinhado.\n\nCom os melhores cumprimentos,\n${signatureLabel}`;
+  }
+
+  if (tone === 'quick_decline') {
+    const nameStr = recipientName ? ` ${recipientName}` : '';
+    return isEn
+      ? `Dear${nameStr},\n\nThank you sincerely for reaching out and for your consideration.\n\nAfter careful review, we are unable to proceed with this specific request at the moment, though we remain available for future opportunities.\n\nBest regards,\n${signatureLabel}`
+      : `Prezado(a)${nameStr},\n\nAgradecemos sinceramente pelo contacto e pela consideração.\n\nApós análise, não nos será possível avançar com esta solicitação específica neste momento, mantendo-nos disponíveis para futuras oportunidades.\n\nCordialmente,\n${signatureLabel}`;
+  }
+
+  // Deteção granular de temas/perguntas no e-mail
+  const asksDomain = /\b(dom[ií]nio|dominios|domínios|\.com|\.co\.mz|co\.mz|\.org\.mz|\.net|\.mz|tld|nameserver|whois)\b/i.test(fullContext);
+  const asksDomainProcess = /\b(processo|pesquisa|pesquisar|regist[oa]r?|ativa[çc][ãa]o|ativar|como funciona|adquirir|comprar)\b/i.test(fullContext);
+  const asksRenewalOrYear = /\b(ano|anual|renova[çc][ãa]o|renovar|validade|dura[çc][ãa]o|quanto custa)\b/i.test(fullContext);
+  const asksDns = /\b(dns|apontar|apontamento|nameserver|ns1|ns2|cname|mx|outro servi[çc]o|outra hospedagem|externa)\b/i.test(fullContext);
+  const asksExtraCosts = /\b(custo[s]? adicionai[s]?|taxa[s]?|extra[s]?|inclu[ií]do[s]?|oculto[s]?|gratu[ií]to)\b/i.test(fullContext);
+
+  const asksHosting = /\b(hospedagem|alojamento|hosting|plano[s]?|servidor|ssd|cpanel|wordpress|tr[áa]fego)\b/i.test(fullContext);
+  const asksEmail = /\b(e-?mail corporativo|e-?mail profissional|webmail|imap|smtp|migadu|caixa[s]? de e-?mail)\b/i.test(fullContext);
+  const asksSiteCreation = /\b(cria[çc][ãa]o de site|criar site|loja online|e-?commerce|or[çc]amento|proposta|cota[çc][ãa]o|website|desenvolvimento)\b/i.test(fullContext);
+  const asksPayment = /\b(pagamento|pagar|m-?pesa|emola|e-?mola|cart[ãa]o|visa|mastercard|fatura|transfer[êe]ncia|mbway|pre[çc]o|valor)\b/i.test(fullContext);
+  const asksVps = /\b(vps|servidor virtual|root|ip dedicado)\b/i.test(fullContext);
+  const asksMeeting = /\b(reuni[ãa]o|encontro|chamada|call|agendar|hor[áa]rio|dispon[íi]vel)\b/i.test(fullContext);
+  const asksSupport = /\b(erro|problema|falha|n[ãa]o funciona|suporte|ajuda|ticket|lento|offline|suspens[ãa]o)\b/i.test(fullContext);
+
+  const sections: string[] = [];
+
+  if (asksDomain) {
+    const comPrice = DOMAIN_PRICES.find((d) => d.extension === '.com')?.price || 1250;
+    const comzPrice = DOMAIN_PRICES.find((d) => d.extension === '.co.mz')?.price || 3000;
+    const orgmzPrice = DOMAIN_PRICES.find((d) => d.extension === '.org.mz')?.price || 3000;
+    const netPrice = DOMAIN_PRICES.find((d) => d.extension === '.net')?.price || 1300;
+
+    if (isEn) {
+      let domainBlock = `1. Domain Registration Pricing (Annual):\n• .com: ${comPrice.toLocaleString('en-US')} MT / year\n• .co.mz: ${comzPrice.toLocaleString('en-US')} MT / year\n• .org.mz: ${orgmzPrice.toLocaleString('en-US')} MT / year\n• .net: ${netPrice.toLocaleString('en-US')} MT / year`;
+      if (asksDomainProcess) {
+        domainBlock += `\n\n2. Search, Registration & Activation Process:\n• Search your desired name directly at https://www.wehosthere.com/dominios, select the extension, and complete checkout.\n• .com and .net domains are typically activated within a few hours; .co.mz domains take up to 24–48 hours due to national registry verification.`;
+      }
+      if (asksRenewalOrYear) {
+        domainBlock += `\n\n3. Registration Period & Renewal:\n• All listed prices cover 1 full year (12 months) of registration. Annual renewal follows the same yearly rate and can be managed directly in your client dashboard.`;
+      }
+      if (asksDns) {
+        domainBlock += `\n\n4. DNS Management & External Hosting:\n• Yes! You get full DNS management (A, CNAME, MX, TXT records and custom Nameservers) and can point your domain to any external hosting provider at any time.`;
+      }
+      if (asksExtraCosts) {
+        domainBlock += `\n\n5. Additional Costs & Included Services:\n• There are no hidden fees. Full DNS management, WHOIS protection, and local technical support are included free of charge. Web hosting or corporate email can be added separately if needed.`;
+      }
+      sections.push(domainBlock);
+    } else {
+      let stepNum = 1;
+      let domainBlock = `${stepNum++}. Preços Atuais de Domínios:\n• Domínio .com: ${comPrice.toLocaleString('pt-MZ')} MT / ano\n• Domínio .co.mz: ${comzPrice.toLocaleString('pt-MZ')} MT / ano\n• Domínio .org.mz: ${orgmzPrice.toLocaleString('pt-MZ')} MT / ano\n• Domínio .net: ${netPrice.toLocaleString('pt-MZ')} MT / ano`;
+
+      if (asksDomainProcess) {
+        domainBlock += `\n\n${stepNum++}. Processo de Pesquisa, Registo e Ativação:\n• Acede a https://www.wehosthere.com/dominios, pesquisa o nome pretendido para verificar a disponibilidade imediata e conclui o pedido online.\n• Extensões internacionais (.com, .net) ficam ativas em poucas horas após confirmação do pagamento; extensões nacionais (.co.mz / .org.mz) são ativadas em 24 a 48 horas devido à validação do registo nacional.`;
+      }
+      if (asksRenewalOrYear) {
+        domainBlock += `\n\n${stepNum++}. Duração do Registo e Renovação:\n• Sim, os valores apresentados correspondem a 1 ano completo (12 meses) de registo.\n• A renovação é igualmente anual pelo mesmo valor da extensão (.com: ${comPrice.toLocaleString('pt-MZ')} MT/ano | .co.mz: ${comzPrice.toLocaleString('pt-MZ')} MT/ano), com aviso prévio no painel do cliente.`;
+      }
+      if (asksDns) {
+        domainBlock += `\n\n${stepNum++}. Gestão de DNS e Apontamento para Outra Hospedagem:\n• Sim, tem autonomia total para gerir todos os registos DNS (A, AAAA, CNAME, MX, TXT) e alterar os Nameservers para apontar o domínio para qualquer outro serviço de hospedagem ou servidor externo.`;
+      }
+      if (asksExtraCosts) {
+        domainBlock += `\n\n${stepNum++}. Custos Adicionais e Serviços Incluídos:\n• Não existem custos ocultos na compra do domínio. O painel de gestão DNS gratuito, a proteção WHOIS (quando aplicável) e o suporte técnico local em português já estão incluídos.\n• Serviços como hospedagem de sites ou e-mail corporativo são opcionais e contratados apenas se desejar.`;
+      }
+      sections.push(domainBlock);
+    }
+  }
+
+  if (asksHosting) {
+    const basic = hostingPlans.find((p) => p.id === 'basic');
+    const pro = hostingPlans.find((p) => p.id === 'pro');
+    const ent = hostingPlans.find((p) => p.id === 'enterprise');
+    if (isEn) {
+      sections.push(
+        `Web Hosting Plans:\n• Basic (${basic?.price || 550} MT/mo): 1 website, 5 email accounts, 10GB SSD, unlimited bandwidth.\n• Professional (${pro?.price || 2500} MT/mo): 5 websites, 20 email accounts, 50GB SSD, free SSL.\n• Enterprise (${ent?.price || 6200} MT/mo): Unlimited websites & emails, 200GB SSD, free SSL & CDN.\nDetails: https://www.wehosthere.com/hospedagem`
+      );
+    } else if (!asksDns || fullContext.includes('hospedagem wehosthere') || fullContext.includes('planos de hospedagem') || fullContext.includes('alojamento')) {
+      sections.push(
+        `Planos de Hospedagem de Sites:\n• Plano Básico (${(basic?.price || 550).toLocaleString('pt-MZ')} MT/mês): 1 site, 5 contas de e-mail, 10GB SSD, tráfego ilimitado.\n• Plano Profissional (${(pro?.price || 2500).toLocaleString('pt-MZ')} MT/mês): 5 sites, 20 contas de e-mail, 50GB SSD, SSL gratuito.\n• Plano Empresarial (${(ent?.price || 6200).toLocaleString('pt-MZ')} MT/mês): Sites e e-mails ilimitados, 200GB SSD, SSL + CDN.\nMais detalhes em: https://www.wehosthere.com/hospedagem`
+      );
+    }
+  }
+
+  if (asksEmail) {
+    sections.push(
+      isEn
+        ? `Corporate Email:\n• Professional email with your own domain, secure Webmail access (https://www.wehosthere.com/webmail), anti-spam protection, and full IMAP (imap.migadu.com:993) / SMTP (smtp.migadu.com:465) support.`
+        : `E-mail Corporativo:\n• Contas profissionais com o seu próprio domínio, acesso imediato via Webmail (https://www.wehosthere.com/webmail), proteção anti-spam e compatibilidade com Outlook/Telemóvel (IMAP: imap.migadu.com porta 993 | SMTP: smtp.migadu.com porta 465/587).`
+    );
+  }
+
+  if (asksSiteCreation) {
+    sections.push(
+      isEn
+        ? `Website & Online Store Development:\n• We build responsive corporate websites, landing pages, and e-commerce stores with M-Pesa/e-Mola integration. You can request an instant quote at https://www.wehosthere.com/site-quote.`
+        : `Criação de Sites e Lojas Online:\n• Desenvolvemos websites modernos e responsivos, portais e lojas virtuais com integração M-Pesa e e-Mola. Pode simular ou solicitar cotação imediata em: https://www.wehosthere.com/site-quote.`
+    );
+  }
+
+  if (asksVps) {
+    sections.push(
+      isEn
+        ? `VPS Servers:\n• Dedicated NVMe SSD resources, root access, and high availability. View plans at https://www.wehosthere.com/vps.`
+        : `Servidores VPS:\n• Recursos dedicados em SSD NVMe, acesso root e alta disponibilidade. Veja as opções em: https://www.wehosthere.com/vps.`
+    );
+  }
+
+  if (asksPayment && !asksDomain) {
+    sections.push(
+      isEn
+        ? `Payment Methods:\n• We accept M-Pesa, e-Mola, Visa/Mastercard cards, and bank transfers with fast activation.`
+        : `Métodos de Pagamento:\n• Aceitamos M-Pesa (Vodacom), e-Mola (Movitel), cartões Visa/Mastercard e transferência bancária com confirmação rápida.`
+    );
+  } else if (asksDomain && asksPayment) {
+    sections.push(
+      isEn
+        ? `Payment Methods:\n• M-Pesa, e-Mola, Visa/Mastercard, and bank transfer are all supported.`
+        : `Formas de Pagamento Aceites:\n• Pode pagar facilmente via M-Pesa (Vodacom), e-Mola (Movitel), cartão Visa/Mastercard ou transferência bancária.`
+    );
+  }
+
+  if (asksMeeting) {
+    sections.push(
+      isEn
+        ? `Meeting / Call:\n• We would be glad to schedule a brief call or meeting. Please let us know your preferred date and time, or reach us on WhatsApp (+258 84 833 5618).`
+        : `Agendamento de Reunião:\n• Teremos todo o gosto em agendar uma conversa. Por favor, indique o dia e horário da sua preferência ou contacte-nos diretamente pelo WhatsApp (+258 84 833 5618).`
+    );
+  }
+
+  if (asksSupport && sections.length === 0) {
+    sections.push(
+      isEn
+        ? `Technical Support:\n• Our technical team has received your report and is reviewing it with priority. If possible, please confirm the domain or account email involved so we can speed up the resolution.`
+        : `Suporte Técnico:\n• A nossa equipa técnica já recebeu a sua ocorrência e está a analisar com prioridade. Caso ainda não tenha indicado, por favor confirme o domínio ou endereço da conta para acelerarmos a verificação.`
+    );
+  }
+
+  // Saudação e fecho conforme tom e idioma
+  const greeting = isEn
+    ? `Dear${recipientName ? ` ${recipientName}` : ''},`
+    : tone === 'friendly'
+    ? `Olá${recipientName ? ` ${recipientName}` : ''}!`
+    : tone === 'formal'
+    ? `Prezado(a)${recipientName ? ` ${recipientName}` : ''},`
+    : `Olá${recipientName ? ` ${recipientName}` : ''},`;
+
+  if (sections.length > 0) {
+    const intro = isEn
+      ? `Thank you for contacting WEHOSTHERE. Please find below the details regarding your inquiry:`
+      : tone === 'friendly'
+      ? `Muito obrigado pelo seu contacto! Seguem abaixo todos os esclarecimentos sobre as suas questões:`
+      : `Agradecemos o seu contacto com a WEHOSTHERE. Seguem abaixo os esclarecimentos detalhados sobre os pontos solicitados:`;
+
+    const outro = isEn
+      ? `If you need help completing your order or have any additional questions, we are fully available (also on WhatsApp: +258 84 833 5618).\n\nBest regards,\n${signatureLabel}`
+      : `Caso pretenda avançar ou tenha qualquer dúvida adicional, estamos inteiramente à disposição por aqui ou pelo WhatsApp (+258 84 833 5618).\n\nCom os melhores cumprimentos,\n${signatureLabel}`;
+
+    return `${greeting}\n\n${intro}\n\n${sections.join('\n\n')}\n\n${outro}`;
+  }
+
+  // Fallback cordial quando o assunto é geral/administrativo
+  if (isEn) {
+    return `${greeting}\n\nThank you for your email regarding "${subject || 'your request'}". We confirm receipt and are reviewing the details carefully.\n\nWe will get back to you shortly with a complete follow-up.\n\nBest regards,\n${signatureLabel}`;
+  }
+
+  if (tone === 'formal') {
+    return `${greeting}\n\nAgradecemos pelo contacto e pelas informações partilhadas relativamente a "${subject || 'este assunto'}".\n\nConfirmamos a receção da sua mensagem e daremos o devido seguimento com a maior brevidade possível.\n\nCom os melhores cumprimentos,\n${signatureLabel}`;
+  }
+  if (tone === 'friendly') {
+    return `${greeting}\n\nMuito obrigado pelo seu e-mail!\n\nConfirmamos a receção da sua mensagem e já estamos a dar atenção ao assunto. Em breve retornamos com mais novidades.\n\nTenha um excelente dia!\n\nAtenciosamente,\n${signatureLabel}`;
+  }
+
+  return `${greeting}\n\nObrigado pela sua mensagem referente a "${subject || 'este assunto'}". Confirmamos que foi recebida e já estamos a tratar do seguimento.\n\nEntraremos em contacto muito em breve.\n\nCom os melhores cumprimentos,\n${signatureLabel}`;
+}
+
 // POST - Webmail AI Assistant (Summarize, Translate, Smart Reply, Improve Writing, Voice to Email)
 export async function POST(request: NextRequest) {
   try {
@@ -283,6 +554,7 @@ export async function POST(request: NextRequest) {
       content = '', 
       subject = '', 
       from = '', 
+      fromName = '',
       recipient = '',
       senderName = '',
       tone = 'professional',
@@ -422,7 +694,7 @@ CORPO:
         if (action === 'summarize') {
           systemPrompt = 'Resuma o e-mail abaixo em português de forma clara, executiva e bem estruturada em 3 pontos-chave curtos usando o marcador "• ". NÃO utilize asteriscos (**) nem formatação Markdown. No final, adicione uma linha iniciada por "💡 Ação recomendada: " com o próximo passo sugerido.';
         } else if (action === 'reply') {
-          systemPrompt = `Escreva uma resposta profissional de e-mail em português no tom "${tone}". O e-mail recebido é sobre "${subject}" de "${from}". Responda de forma cortês, estruturada e pronta para envio, sem usar asteriscos (**).`;
+          systemPrompt = `Você é o assistente de atendimento oficial da WEHOSTHERE. Escreva uma resposta completa, educada e pronta para envio (tom "${tone}") respondendo objetivamente a TODAS as perguntas feitas no e-mail recebido sobre "${subject}" de "${fromName || from}". Responda no mesmo idioma do e-mail recebido e NÃO utilize asteriscos (**). Use exclusivamente os dados oficiais abaixo quando o assunto for domínios, hospedagem, e-mails, sites ou pagamentos:\n\n${getWehosthereKnowledgeContext()}`;
         } else if (action === 'improve') {
           systemPrompt = `Reescreva e aprimore o seguinte rascunho de e-mail em português, mantendo a mensagem central, mas com tom ${tone}, gramática perfeita, pontuação impecável e vocabulário corporativo de alto nível. Não utilize asteriscos (**).`;
         }
@@ -454,7 +726,7 @@ CORPO:
         if (action === 'summarize') {
           userPrompt = `Resuma o seguinte e-mail em 3 tópicos curtos e diretos iniciados por "• ", sem usar asteriscos (**), e termine com "💡 Ação recomendada: ...":\n\nAssunto: ${subject}\n${cleanText}`;
         } else if (action === 'reply') {
-          userPrompt = `Escreva uma resposta de e-mail com tom ${tone} (sem usar **) para a seguinte mensagem:\n\nAssunto: ${subject}\nDe: ${from}\nMensagem: ${cleanText}`;
+          userPrompt = `Responda ao e-mail abaixo em nome da WEHOSTHERE com tom ${tone} (sem usar **), respondendo diretamente a todas as perguntas com base nos dados oficiais:\n\n${getWehosthereKnowledgeContext()}\n\nAssunto: ${subject}\nDe: ${fromName || from}\nMensagem:\n${cleanText}`;
         } else if (action === 'improve') {
           userPrompt = `Aprimore este rascunho de e-mail com tom ${tone} e gramática impecável (sem usar **):\n\n${cleanText}`;
         }
@@ -519,18 +791,14 @@ CORPO:
 
       fallbackResult = `📌 Resumo Inteligente da Mensagem:\n${bulletPoints}\n💡 Ação recomendada: ${recommendedAction}`;
     } else if (action === 'reply') {
-      const senderName = from.split('<')[0].replace(/["']/g, '').trim() || 'Prezado(a)';
-      if (tone === 'formal') {
-        fallbackResult = `Prezado(a) ${senderName},\n\nAgradeço pelo contacto e pelas informações compartilhadas.\n\nRecepcionamos a sua mensagem referente a "${subject || 'este assunto'}" e já estamos a dar o devido seguimento.\n\nQualquer dúvida adicional ou atualização, estarei inteiramente à disposição.\n\nCom os melhores cumprimentos,\nEquipa`;
-      } else if (tone === 'friendly') {
-        fallbackResult = `Olá ${senderName},\n\nMuito obrigado pelo seu e-mail!\n\nConfirmamos a receção e já estamos a analisar com atenção. Em breve retornaremos com mais detalhes.\n\nTenha um excelente dia!\n\nAtenciosamente,`;
-      } else if (tone === 'quick_accept') {
-        fallbackResult = `Prezado(a) ${senderName},\n\nConfirmamos a receção e estamos de acordo com os termos apresentados.\n\nAvançaremos com os próximos passos conforme acordado.\n\nObrigado,\nEquipa`;
-      } else if (tone === 'quick_decline') {
-        fallbackResult = `Prezado(a) ${senderName},\n\nAgradecemos sinceramente pela proposta e pela consideração.\n\nNo momento, avaliámos a solicitação e não será possível prosseguir com esta solicitação específica.\n\nFicamos em contacto para futuras oportunidades.\n\nCordialmente,`;
-      } else {
-        fallbackResult = `Estimado(a) ${senderName},\n\nObrigado pela sua mensagem. Confirmamos que foi recebida e já se encontra em análise.\n\nEntraremos em contacto muito em breve.\n\nMelhores cumprimentos,`;
-      }
+      fallbackResult = buildContextualEmailReply({
+        subject,
+        cleanText: cleanEmailHtmlToReadableText(content) || cleanText,
+        from,
+        fromName,
+        senderName,
+        tone,
+      });
     } else if (action === 'improve') {
       // Clean up and polish format
       const lines = cleanText.split(/\n+/).map((l: string) => l.trim()).filter(Boolean);

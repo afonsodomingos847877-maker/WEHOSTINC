@@ -2702,12 +2702,15 @@ function WebmailContent() {
           content: selectedMessage.body,
           subject: selectedMessage.subject,
           from: selectedMessage.fromEmail,
+          fromName: selectedMessage.fromName || '',
+          senderName: selectedAccountEmail || '',
           tone
         })
       });
       const data = await res.json();
       if (data.success && data.result) {
         setReplyText(cleanAiText(data.result));
+        soundEffects.playAICompleteSound();
       }
     } catch (err) {
       console.error('Error generating AI reply:', err);
@@ -5266,7 +5269,21 @@ function WebmailContent() {
                     <Reply className="h-4 w-4 text-neutral-600" />
                     <span className="truncate">Resposta rápida para <span className="font-mono text-neutral-900">{selectedMessage.fromEmail}</span></span>
                   </span>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleGenerateAIReply('smart')}
+                      disabled={isGeneratingReply}
+                      className="px-2.5 py-1 rounded-xl text-[11px] font-bold transition cursor-pointer flex items-center gap-1.5 border border-primary-600/30 bg-gradient-to-r from-primary-600 to-indigo-600 hover:from-primary-700 hover:to-indigo-700 text-white shadow-xs disabled:opacity-50 active:scale-95"
+                      title="A IA lê este e-mail e gera uma resposta completa com 1 clique"
+                    >
+                      {isGeneratingReply ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin text-white" />
+                      ) : (
+                        <Sparkles className="h-3.5 w-3.5 text-amber-300" />
+                      )}
+                      <span>{isGeneratingReply ? 'A gerar resposta...' : 'Gerar Resposta IA'}</span>
+                    </button>
                     <button
                       type="button"
                       onClick={() => {
@@ -5393,11 +5410,11 @@ function WebmailContent() {
                 </div>
 
                 <textarea
-                  rows={3}
+                  rows={Math.min(12, Math.max(3, replyText ? replyText.split('\n').length + 1 : 3))}
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}
-                  placeholder="Escreva a sua resposta..."
-                  className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded-xl text-xs text-neutral-900 outline-none focus:bg-white focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 font-sans resize-none transition"
+                  placeholder="Escreva a sua resposta ou clique em «Gerar Resposta IA»..."
+                  className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded-xl text-xs text-neutral-900 outline-none focus:bg-white focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 font-sans resize-y transition leading-relaxed"
                 />
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   {quickReplyStatus !== 'idle' && (
