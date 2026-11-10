@@ -167,10 +167,13 @@ export const webmailManager = {
             attachments: attachments && attachments.length > 0 ? attachments : undefined
           };
         }
-      } catch (error) {
+
+        const errData = await res.json().catch(() => null);
+        throw new Error(errData?.error || `Erro ${res.status} ao enviar o e-mail.`);
+      } catch (error: any) {
         console.error('[Webmail] API send failed:', error);
         if (isProduction) {
-          throw new Error('Não foi possível enviar o email. O servidor de email não está disponível neste momento.');
+          throw new Error(error?.message || 'Não foi possível enviar o email. O servidor de email não está disponível neste momento.');
         }
       }
     }

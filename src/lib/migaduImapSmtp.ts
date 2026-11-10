@@ -124,6 +124,9 @@ export class MigaduImapSmtpService {
         pass: password,
       },
       logger: false,
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 20000,
       tls: {
         rejectUnauthorized: false,
       },
@@ -143,6 +146,9 @@ export class MigaduImapSmtpService {
         user: email,
         pass: password,
       },
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 20000,
       tls: {
         rejectUnauthorized: false,
       },
@@ -786,7 +792,7 @@ export class MigaduImapSmtpService {
       customHeaders['Importance'] = 'Low';
     }
 
-    await transporter.sendMail({
+    const mailPayload = {
       from: options.from,
       to: options.to.join(', '),
       cc: options.cc && options.cc.length > 0 ? options.cc.join(', ') : undefined,
@@ -795,9 +801,28 @@ export class MigaduImapSmtpService {
       text: options.text,
       html: options.html,
       attachments: options.attachments,
-      priority: options.priority === 'high' ? 'high' : options.priority === 'low' ? 'low' : 'normal',
+      priority: (options.priority === 'high' ? 'high' : options.priority === 'low' ? 'low' : 'normal') as 'high' | 'low' | 'normal',
       headers: customHeaders,
-    });
+    };
+
+    try {
+      await transporter.sendMail(mailPayload);
+    } catch (smtpErr: any) {
+      const msg = String(smtpErr?.message || smtpErr?.code || '');
+      const isTimeoutOrConnErr = /timeout|ETIMEDOUT|ECONNREFUSED|ESOCKET|ENOTFOUND|ECONNRESET/i.test(msg);
+      // Fallback automático para STARTTLS porta 587 se a porta 465 (SSL) falhar por bloqueio de rede
+      if (isTimeoutOrConnErr && config.smtpPort === 465) {
+        console.warn(`[SMTP] Porta 465 falhou (${msg}); tentando fallback STARTTLS na porta 587 para ${config.smtpHost}...`);
+        const fallbackTransporter = this.createSmtpTransporter(options.from, password, {
+          ...config,
+          smtpPort: 587,
+          smtpSecure: 'starttls',
+        });
+        await fallbackTransporter.sendMail(mailPayload);
+      } else {
+        throw smtpErr;
+      }
+    }
 
     // Save a copy to Sent folder on IMAP
     try {
