@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="500" height="500">
+  <!-- Fundo branco (obrigatório para BIMI) -->
+  <rect width="500" height="500" fill="#ffffff" rx="0"/>
+
+  <!-- Nuvem azul WEHOSTHERE -->
+  <!-- Corpo principal da nuvem -->
+  <g transform="translate(250, 240)">
+    <!-- Ondulações superiores da nuvem -->
+    <circle cx="-80" cy="-45" r="68" fill="#00AEEF"/>
+    <circle cx="0" cy="-75" r="82" fill="#00AEEF"/>
+    <circle cx="85" cy="-45" r="68" fill="#00AEEF"/>
+    <!-- Base da nuvem -->
+    <rect x="-145" y="-45" width="290" height="120" fill="#00AEEF" rx="10"/>
+    <!-- Ondulações inferiores -->
+    <circle cx="-80" cy="80" r="45" fill="#00AEEF"/>
+    <circle cx="0" cy="80" r="45" fill="#00AEEF"/>
+    <circle cx="80" cy="80" r="45" fill="#00AEEF"/>
+  </g>
+
+  <!-- Texto WeHosThere -->
+  <text
+    x="250"
+    y="262"
+    font-family="Arial, Helvetica, sans-serif"
+    font-size="58"
+    font-weight="bold"
+    fill="#ffffff"
+    text-anchor="middle"
+    dominant-baseline="middle"
+    letter-spacing="-1"
+  >WeHosThere</text>
+</svg>
