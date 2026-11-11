@@ -243,30 +243,38 @@ export async function runEmailAgentForMailbox(
       continue;
     }
 
-    const cooldownHours = Math.max(1, Number(config.cooldownHours || 12));
-    const cooldownCutoff = new Date(Date.now() - cooldownHours * 3600 * 1000);
-    const recentReplyToSameSender = await EmailAgentLog.exists({
-      agentEmail,
-      fromEmail: replyTarget,
-      status: 'replied',
-      createdAt: { $gte: cooldownCutoff },
-    });
+    // Verificar se é uma resposta numa conversa ativa (thread Reply)
+    // Se o assunto começa com Re: e o cliente está a continuar a conversa,
+    // o cooldown não deve bloquear — permitir resposta imediata ao thread.
+    const isThreadReply = /^re:/i.test(msg.subject || '') || (msg.references && msg.references.length > 0);
 
-    if (recentReplyToSameSender) {
-      try {
-        await EmailAgentLog.create({
-          agentEmail,
-          incomingMessageId: messageId,
-          incomingUid: msg.uid,
-          fromEmail: replyTarget,
-          fromName: msg.from.name || '',
-          subject: msg.subject || '(Sem assunto)',
-          status: 'skipped',
-          reason: `Cooldown ativo (${cooldownHours}h) para ${replyTarget}`,
-        });
-      } catch {}
-      skippedCount++;
-      continue;
+    if (!isThreadReply) {
+      // Cooldown apenas se NÃO for uma resposta a um thread existente
+      const cooldownHours = Math.max(1, Number(config.cooldownHours || 12));
+      const cooldownCutoff = new Date(Date.now() - cooldownHours * 3600 * 1000);
+      const recentReplyToSameSender = await EmailAgentLog.exists({
+        agentEmail,
+        fromEmail: replyTarget,
+        status: 'replied',
+        createdAt: { $gte: cooldownCutoff },
+      });
+
+      if (recentReplyToSameSender) {
+        try {
+          await EmailAgentLog.create({
+            agentEmail,
+            incomingMessageId: messageId,
+            incomingUid: msg.uid,
+            fromEmail: replyTarget,
+            fromName: msg.from.name || '',
+            subject: msg.subject || '(Sem assunto)',
+            status: 'skipped',
+            reason: `Cooldown ativo (${cooldownHours}h) para ${replyTarget}`,
+          });
+        } catch {}
+        skippedCount++;
+        continue;
+      }
     }
 
     try {
@@ -275,6 +283,12 @@ export async function runEmailAgentForMailbox(
           ? 'Afonso Domingos (WEHOSTHERE)'
           : `Equipa WEHOSTHERE (${agentEmail})`;
 
+      // Para respostas de thread, indicar no prompt que é uma continuação de conversa
+      const isThreadReply = /^re:/i.test(msg.subject || '') || (msg.references && msg.references.length > 0);
+      const threadInstruction = isThreadReply
+        ? 'Esta é uma RESPOSTA a uma conversa já em curso. O histórico da conversa está incluído no corpo do e-mail (linhas com ">" ou "----"). Leia o contexto completo da conversa e responda de forma coerente e natural à mensagem mais recente do cliente, como se fosse a continuação natural da conversa anterior.'
+        : '';
+
       const generated = await generateSmartReply({
         content: msg.html || msg.text || msg.subject,
         subject: msg.subject,
@@ -282,7 +296,7 @@ export async function runEmailAgentForMailbox(
         fromName: msg.from.name,
         senderName: senderDisplayName,
         tone: config.replyTone || 'professional',
-        prompt: config.customInstructions || '',
+        prompt: [config.customInstructions || '', threadInstruction].filter(Boolean).join('\n'),
         isAutomatedAgent: true,
       });
 
