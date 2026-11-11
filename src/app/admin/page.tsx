@@ -27,6 +27,7 @@ import { dispatchMessage, addAdminNotification } from '@/lib/notifications';
 import { soundEffects } from '@/lib/soundEffects';
 import AdminAiTopBar from '@/components/AdminAiTopBar';
 import AdminSidebar from '@/components/AdminSidebar';
+import EmailAgentControl from '@/components/EmailAgentControl';
 
 const ADMIN_CANNED_RESPONSES = [
   {
@@ -3914,6 +3915,15 @@ export default function AdminPage() {
               </table>
             </div>
           )}
+        </div>
+
+        {/* Secção do Agente IA de Auto-Resposta para E-mails */}
+        <div id="sec-agente-email" className="mb-6 sm:mb-8 scroll-mt-28">
+          <EmailAgentControl
+            variant="card"
+            targetEmail="info@wehosthere.com"
+            availableEmails={['info@wehosthere.com', 'admin@wehosthere.com', 'suporte@wehosthere.com']}
+          />
         </div>
 
         {/* Gestão Global de Contas de E-mail Corporativo */}

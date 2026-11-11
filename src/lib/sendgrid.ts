@@ -8,6 +8,8 @@ export interface SendEmailOptions {
   to: string;
   fromEmail?: string;
   fromName?: string;
+  replyTo?: string;
+  headers?: Record<string, string>;
   subject: string;
   text?: string;
   html?: string;
@@ -42,6 +44,8 @@ export async function sendEmail(opts: SendEmailOptions): Promise<{ success: bool
       body: JSON.stringify({
         from: fromFormatted,
         to: [opts.to],
+        ...(opts.replyTo ? { reply_to: opts.replyTo } : {}),
+        ...(opts.headers && Object.keys(opts.headers).length > 0 ? { headers: opts.headers } : {}),
         subject: opts.subject,
         html: bodyHtml,
         text: bodyText,

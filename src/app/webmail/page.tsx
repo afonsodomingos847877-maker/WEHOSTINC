@@ -22,6 +22,7 @@ import PageLoader from '@/components/PageLoader';
 import InternalDomainChat from '@/components/webmail/InternalDomainChat';
 import WebmailAnalyticsDashboard from '@/components/webmail/WebmailAnalyticsDashboard';
 import ExternalAccountsModal from '@/components/webmail/ExternalAccountsModal';
+import EmailAgentControl from '@/components/EmailAgentControl';
 import { apiEndpoint } from '@/lib/siteConfig';
 import dynamic from 'next/dynamic';
 import ContactPicker from '@/components/webmail/ContactPicker';
@@ -440,6 +441,25 @@ function WebmailContent() {
   const [webmailLoginLoading, setWebmailLoginLoading] = useState<boolean>(false); // Loading de login
   const [showExternalAccountsModal, setShowExternalAccountsModal] = useState<boolean>(false); // Modal de Contas Externas IMAP/SMTP
   const [externalAccountsCount, setExternalAccountsCount] = useState<number>(0); // Total de contas externas conectadas
+  const [showAgentModal, setShowAgentModal] = useState<boolean>(false); // Modal Modo Agente IA Auto-Resposta
+  const [agentActive, setAgentActive] = useState<boolean>(false);
+
+  useEffect(() => {
+    const emailToCheck = selectedAccountEmail || webmailLoginEmail || accounts[0]?.email;
+    if (!emailToCheck || !emailToCheck.includes('@')) return;
+    let cancelled = false;
+    fetch(`/api/webmail/agent?email=${encodeURIComponent(emailToCheck)}`, { credentials: 'include' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!cancelled && d?.config?.evaluation) {
+          setAgentActive(!!d.config.evaluation.active);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedAccountEmail, webmailLoginEmail, accounts]);
   const [animatedEmailPlaceholder, setAnimatedEmailPlaceholder] = useState<string>('');
 
   // Efeito máquina de escrever (Typewriter) para o placeholder de endereço de e-mail
@@ -3494,6 +3514,29 @@ function WebmailContent() {
             </button>
           ) : null}
 
+          {/* Botão Modo Agente IA Auto-Resposta */}
+          <button
+            type="button"
+            onClick={() => {
+              soundEffects.playFolderSwitchSound();
+              setShowAgentModal(true);
+            }}
+            className={`flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl transition cursor-pointer text-xs font-bold shadow-2xs shrink-0 active:scale-95 border ${
+              agentActive
+                ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600'
+                : 'bg-white hover:bg-neutral-100 text-neutral-900 border-neutral-300'
+            }`}
+            title="Ligar ou desligar o Agente IA de resposta automática"
+          >
+            <Bot className={`h-3.5 w-3.5 shrink-0 ${agentActive ? 'text-white' : 'text-indigo-600'}`} />
+            <span className="hidden sm:inline">Agente IA</span>
+            <span
+              className={`w-2 h-2 rounded-full ${
+                agentActive ? 'bg-emerald-200 animate-pulse' : 'bg-neutral-300'
+              }`}
+            />
+          </button>
+
           {/* Botão Conectar / Gerir Contas Externas (IMAP/SMTP) */}
           <button
             type="button"
@@ -4053,6 +4096,32 @@ function WebmailContent() {
               ) : (
                 <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
               )}
+            </button>
+
+            {/* Botão Modo Agente IA Auto-Resposta */}
+            <button
+              type="button"
+              onClick={() => {
+                soundEffects.playFolderSwitchSound();
+                setShowAgentModal(true);
+              }}
+              className={`w-full flex items-center justify-between px-3 py-1.5 rounded-xl transition-all duration-200 cursor-pointer border mt-1 font-bold ${
+                agentActive
+                  ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                  : 'bg-indigo-50/70 hover:bg-indigo-100 text-indigo-950 border-indigo-200'
+              }`}
+              title="Ligar/Desligar respostas automáticas por IA quando estiver ocupado"
+            >
+              <div className="flex items-center space-x-2.5 truncate">
+                <Bot className={`h-4 w-4 shrink-0 ${agentActive ? 'text-white' : 'text-indigo-600'}`} />
+                <div className="text-left truncate">
+                  <span className="block truncate text-xs">Agente IA (Auto)</span>
+                  <span className={`text-[10px] font-normal block truncate ${agentActive ? 'text-emerald-100' : 'text-indigo-700'}`}>
+                    {agentActive ? 'Ativo agora' : 'Desligado'}
+                  </span>
+                </div>
+              </div>
+              <span className={`w-2 h-2 rounded-full shrink-0 ${agentActive ? 'bg-emerald-200 animate-pulse' : 'bg-neutral-400'}`} />
             </button>
 
             {/* Botão de Contas Externas (IMAP/SMTP) */}
@@ -5605,6 +5674,18 @@ function WebmailContent() {
               >
                 <Edit3 className="h-5 w-5 text-white shrink-0" />
                 <span className="text-sm font-bold text-white">Novo Email</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => { setShowAgentModal(true); setShowMobileMenu(false); }}
+                className={`flex items-center space-x-3 p-4 rounded-2xl transition cursor-pointer border active:scale-95 ${
+                  agentActive
+                    ? 'bg-emerald-600 text-white border-emerald-600'
+                    : 'bg-indigo-50 hover:bg-indigo-100 text-indigo-950 border-indigo-200'
+                }`}
+              >
+                <Bot className={`h-5 w-5 shrink-0 ${agentActive ? 'text-white' : 'text-indigo-600'}`} />
+                <span className="text-sm font-bold">{agentActive ? 'Agente (ON)' : 'Agente IA'}</span>
               </button>
               <button
                 type="button"
@@ -7718,6 +7799,16 @@ function WebmailContent() {
           setUserAvatarUrl(avUrl);
         }}
       />
+
+      {showAgentModal && (
+        <EmailAgentControl
+          variant="modal"
+          targetEmail={selectedAccountEmail || webmailLoginEmail || accounts[0]?.email || 'info@wehosthere.com'}
+          initialImapPassword={mailboxPassword}
+          onClose={() => setShowAgentModal(false)}
+          onStatusChange={(active) => setAgentActive(active)}
+        />
+      )}
 
       {/* Modal de Gestão e Conexão de Contas de E-mail Externas (IMAP/SMTP) */}
       <ExternalAccountsModal

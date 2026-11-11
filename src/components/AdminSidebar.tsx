@@ -7,7 +7,7 @@ import {
   ShoppingBag, Mail, LifeBuoy, Globe, ShieldCheck, Tag, ArrowUp, 
   ChevronLeft, ChevronRight, Menu, X, RefreshCw, Eye, EyeOff, 
   Wallet, Handshake, FileText, GraduationCap, MessageSquare, 
-  BookOpen, Settings, Compass, Search
+  BookOpen, Settings, Compass, Search, Bot
 } from 'lucide-react';
 
 export interface AdminSidebarProps {
@@ -87,6 +87,7 @@ export default function AdminSidebar({
       'sec-emails-aprovacao',
       'sec-tickets',
       'sec-dominios',
+      'sec-agente-email',
       'sec-emails-global',
       'sec-auditoria',
       'sec-distribuicao'
@@ -193,6 +194,13 @@ export default function AdminSidebar({
       icon: Mail,
       badge: pendingEmailsCount > 0 ? `${pendingEmailsCount} pend.` : undefined,
       badgeColor: 'bg-amber-500 text-white',
+      group: 'page'
+    },
+    {
+      id: 'sec-agente-email',
+      label: 'Agente IA (E-mail)',
+      shortLabel: 'Agente IA',
+      icon: Bot,
       group: 'page'
     },
     {

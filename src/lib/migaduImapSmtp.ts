@@ -51,6 +51,27 @@ export interface SMTPSendOptions {
     content: Buffer;
     contentType?: string;
   }>;
+  inReplyTo?: string;
+  references?: string[];
+}
+
+export interface IncomingAgentMessage {
+  uid: number;
+  messageId: string;
+  references: string[];
+  from: { name: string; address: string };
+  replyTo?: string;
+  to: string[];
+  subject: string;
+  date: Date;
+  text: string;
+  html: string;
+  headers: {
+    autoSubmitted?: string;
+    precedence?: string;
+    listUnsubscribe?: string;
+    xAutoResponseSuppress?: string;
+  };
 }
 
 export class MigaduImapSmtpService {
@@ -802,6 +823,8 @@ export class MigaduImapSmtpService {
       html: options.html,
       attachments: options.attachments,
       priority: (options.priority === 'high' ? 'high' : options.priority === 'low' ? 'low' : 'normal') as 'high' | 'low' | 'normal',
+      inReplyTo: options.inReplyTo,
+      references: options.references,
       headers: customHeaders,
     };
 
@@ -825,13 +848,23 @@ export class MigaduImapSmtpService {
     }
 
     // Save a copy to Sent folder on IMAP
+    await this.appendSentMessage(options, password, config);
+  }
+
+  /**
+   * Append a sent message copy to IMAP Sent folder (usable even when sent via HTTPS API like Resend)
+   */
+  async appendSentMessage(
+    options: SMTPSendOptions,
+    password: string,
+    customConfig?: ExternalServerConfig
+  ): Promise<void> {
+    const config = await this.resolveServerConfig(options.from, customConfig);
     try {
       const client = this.createImapClient(options.from, password, config);
-
       await client.connect();
       const sentFolder = await this.resolveMailboxPath(client, 'Sent');
 
-      // Build raw message buffer
       const mailGen = nodemailer.createTransport({ streamTransport: true, newline: 'windows' });
       const rawMessage = await new Promise<Buffer>((resolve, reject) => {
         mailGen.sendMail(
@@ -843,6 +876,8 @@ export class MigaduImapSmtpService {
             subject: options.subject,
             text: options.text,
             html: options.html,
+            inReplyTo: options.inReplyTo,
+            references: options.references,
             attachments: options.attachments,
           },
           (err, info) => {
@@ -878,6 +913,92 @@ export class MigaduImapSmtpService {
       await client.logout();
     } catch (appendErr) {
       console.warn('[IMAP] Could not append sent message to IMAP Sent folder:', appendErr);
+    }
+  }
+
+  /**
+   * Fetch recent unread messages in INBOX for autonomous AI agent inspection (does NOT mark as read)
+   */
+  async listRecentUnreadForAgent(
+    email: string,
+    password: string,
+    maxAgeHours: number = 24,
+    limit: number = 20,
+    customConfig?: ExternalServerConfig
+  ): Promise<IncomingAgentMessage[]> {
+    const config = await this.resolveServerConfig(email, customConfig);
+    const client = this.createImapClient(email, password, config);
+    const results: IncomingAgentMessage[] = [];
+
+    try {
+      await client.connect();
+      const mailbox = await this.openMailboxSmart(client, 'INBOX');
+      if (!mailbox || mailbox.exists === 0) {
+        await client.logout();
+        return [];
+      }
+
+      const sinceDate = new Date(Date.now() - Math.max(1, maxAgeHours) * 3600 * 1000);
+      const searchResult = await client.search({ seen: false, since: sinceDate }, { uid: true });
+      const uids = Array.isArray(searchResult) ? searchResult : [];
+      if (uids.length === 0) {
+        await client.logout();
+        return [];
+      }
+
+      const targetUids = uids.slice(-Math.max(1, limit));
+      const uidRange = targetUids.join(',');
+
+      for await (const msg of client.fetch(uidRange, { envelope: true, source: true, flags: true, uid: true }, { uid: true })) {
+        if (!msg.source) continue;
+        try {
+          const parsed = await simpleParser(msg.source);
+          const getHeader = (name: string): string | undefined => {
+            const val = parsed.headers?.get(name.toLowerCase());
+            if (!val) return undefined;
+            if (typeof val === 'string') return val;
+            if (typeof val === 'object' && 'text' in val && typeof (val as any).text === 'string') return (val as any).text;
+            if (typeof val === 'object' && 'value' in val) return String((val as any).value);
+            return String(val);
+          };
+
+          const rawFrom = parsed.from?.value?.[0];
+          const fromAddress = (rawFrom?.address || msg.envelope?.from?.[0]?.address || '').trim().toLowerCase();
+          const fromName = (rawFrom?.name || msg.envelope?.from?.[0]?.name || '').trim();
+          const messageId = (parsed.messageId || msg.envelope?.messageId || `uid:${msg.uid}`).trim();
+          const refsRaw = parsed.references;
+          const references = Array.isArray(refsRaw) ? refsRaw.map(String) : refsRaw ? [String(refsRaw)] : [];
+          const replyTo = parsed.replyTo?.value?.[0]?.address?.trim().toLowerCase();
+          const toList = (msg.envelope?.to || []).map((t) => (t.address || '').toLowerCase()).filter(Boolean);
+
+          results.push({
+            uid: msg.uid,
+            messageId,
+            references,
+            from: { name: fromName, address: fromAddress },
+            replyTo,
+            to: toList,
+            subject: parsed.subject || msg.envelope?.subject || '(Sem assunto)',
+            date: parsed.date || msg.envelope?.date || new Date(),
+            text: (parsed.text || '').trim(),
+            html: typeof parsed.html === 'string' ? parsed.html : (parsed.textAsHtml || ''),
+            headers: {
+              autoSubmitted: getHeader('auto-submitted'),
+              precedence: getHeader('precedence'),
+              listUnsubscribe: getHeader('list-unsubscribe'),
+              xAutoResponseSuppress: getHeader('x-auto-response-suppress'),
+            },
+          });
+        } catch (parseErr) {
+          console.warn('[IMAP Agent] Failed parsing unread UID', msg.uid, parseErr);
+        }
+      }
+
+      await client.logout();
+      return results;
+    } catch (err) {
+      try { await client.logout(); } catch {}
+      throw err;
     }
   }
 }
