@@ -1,5 +1,5 @@
 import { DOMAIN_PRICES } from '@/lib/domains';
-import { hostingPlans } from '@/lib/data';
+import { hostingPlans, websiteTypes } from '@/lib/data';
 
 export function decodeHtmlEntitiesServer(text: string): string {
   return text
@@ -147,18 +147,74 @@ export function getWehosthereKnowledgeContext(): string {
         `  • Plano ${p.name}: ${p.price.toLocaleString('pt-MZ')} MT/mês (${p.priceAnnual.toLocaleString('pt-MZ')} MT/ano) — ${p.features.sites === -1 ? 'Sites ilimitados' : `${p.features.sites} site(s)`}, ${p.features.emails === -1 ? 'E-mails ilimitados' : `${p.features.emails} contas de e-mail`}, ${p.features.storage}GB SSD, Tráfego ${p.features.bandwidth}${p.features.ssl ? ', SSL Gratuito' : ''}`
     )
     .join('\n');
+  const websiteLines = websiteTypes
+    .map(
+      (w) =>
+        `  • ${w.name}: ${w.basePrice.toLocaleString('pt-MZ')} MT (${w.priceNote}) — prazo estimado: ${w.deliveryDays} dias úteis`
+    )
+    .join('\n');
 
-  return `WEHOSTHERE (Moçambique) — Base de Conhecimento Oficial:
-- Domínios (preço por 1 ano; renovação anual com gestão DNS completa gratuita incluída, sem taxas ocultas):
+  return `WEHOSTHERE (Moçambique) — Base de Conhecimento Completa Oficial:
+
+1. DOMÍNIOS & .CO.MZ (https://www.wehosthere.com/dominios | https://www.wehosthere.com/dominio-co-mz):
 ${domainLines}
-  • Processo: Pesquisa e pedido em https://www.wehosthere.com/dominios; ativação em poucas horas (.com/.net) e 24-48h (.co.mz / .org.mz).
-  • DNS: Gestão total (A, CNAME, MX, TXT, Nameservers) para apontar para qualquer hospedagem externa sem custos extras.
-- Hospedagem de Sites:
+  • Regras .co.mz / .org.mz (CIUEM): Requer Alvará Comercial / Registo Comercial / BR e NUIT da entidade. Ativação em 24-48h. Extensões internacionais (.com, .net) ativam em poucas horas.
+  • DNS: Gestão DNS gratuita e completa (A, CNAME, MX, TXT, Nameservers) para apontar para qualquer hospedagem externa sem taxas ocultas.
+
+2. HOSPEDAGEM WEB & WORDPRESS (https://www.wehosthere.com/hospedagem | https://www.wehosthere.com/hospedagem-wordpress):
 ${hostingLines}
-- E-mail Corporativo (Migadu / Webmail): IMAP imap.migadu.com (993 SSL), SMTP smtp.migadu.com (465 SSL / 587 STARTTLS).
-- Criação de Sites & Lojas Online: Cotação instantânea em https://www.wehosthere.com/site-quote (integração M-Pesa/e-Mola).
-- Métodos de Pagamento: M-Pesa (Vodacom), e-Mola (Movitel), Cartões Visa/Mastercard e Transferência Bancária.
-- Contactos: info@wehosthere.com | WhatsApp/Tel: +258 84 833 5618 | https://www.wehosthere.com`;
+  • Inclui cPanel, SSL Let's Encrypt gratuito e suporte a WordPress/WooCommerce 1-clique com M-Pesa/Kivora.
+
+3. SERVIDORES VPS (https://www.wehosthere.com/vps):
+  • VPS Basic: 2.500 MT/mês (1 vCPU, 2 GB RAM, 40 GB NVMe, 1 TB tráfego, IP dedicado, Acesso Root/SSH)
+  • VPS Pro: 5.000 MT/mês (2 vCPU, 4 GB RAM, 80 GB NVMe, 2 TB tráfego, IP dedicado, Acesso Root/SSH)
+  • VPS Enterprise: 10.000 MT/mês (4 vCPU, 8 GB RAM, 160 GB NVMe, 4 TB tráfego, IP dedicado, Acesso Root/SSH)
+
+4. CRIAÇÃO DE SITES & ORÇAMENTO (https://www.wehosthere.com/criar-site | https://www.wehosthere.com/site-quote | https://www.wehosthere.com/loja-online | https://www.wehosthere.com/vendas-online):
+${websiteLines}
+  • Simulador de cotação interativo disponível em https://www.wehosthere.com/site-quote.
+
+5. ALUGUER DE SISTEMAS PRONTOS / SaaS (https://www.wehosthere.com/systems):
+  • Sistema de Gestão Financeira: 2.500 MT/mês ou 25.000 MT/ano (Setup gratuito 0 MT; fluxo de caixa, faturamento, integração M-Pesa/e-Mola, relatórios PDF/Excel).
+  • Sistema de Gestão de Inscrições: 2.000 MT/mês ou 20.000 MT/ano (Setup gratuito 0 MT; matrículas, eventos, validação M-Pesa e credenciais digitais).
+  • Página de Vendas Profissional: 1.500 MT/mês ou 15.000 MT/ano (Setup gratuito 0 MT; landing page de alta conversão com checkout M-Pesa e botão WhatsApp).
+
+6. CRIADOR DE SITES COM IA & SOLUÇÕES IA (https://www.wehosthere.com/ai-website-builder | https://www.wehosthere.com/inteligencia-artificial):
+  • AI Website Builder: Permite gerar e publicar sites com inteligência artificial em 1 clique diretamente na infraestrutura WEHOSTHERE (experimentação gratuita).
+
+7. E-MAIL PROFISSIONAL, WEBMAIL & CONFIGURAÇÃO (https://www.wehosthere.com/email-profissional | https://www.wehosthere.com/email-corporativo | https://www.wehosthere.com/webmail | https://www.wehosthere.com/ajuda/configurar-email):
+  • Planos avulsos de E-mail Profissional: Básico 350 MT/mês (1 conta, 10 GB), Profissional 800 MT/mês (5 contas, 50 GB), Empresarial 1.500 MT/mês (contas ilimitadas, 100 GB/conta).
+  • Servidores (Migadu): Entrada IMAP imap.migadu.com (Porta 993 SSL/TLS) | Saída SMTP smtp.migadu.com (Porta 465 SSL/TLS ou 587 STARTTLS) | POP3 pop.migadu.com (Porta 995 SSL/TLS).
+  • Regra técnica importante: O nome de utilizador (username) é SEMPRE o endereço de e-mail completo (ex: nome@empresa.co.mz).
+
+8. ACADEMIA WEB WEHOSTHERE & CERTIFICADOS (https://www.wehosthere.com/academy | https://www.wehosthere.com/verify-certificate):
+  • Curso "Criação de Página de Vendas Profissional" (12h, 13 módulos): Módulo 1 (Aula Aberta) gratuito; acesso completo (módulos 2 a 13) + Certificado Oficial por 500 MT.
+  • Autenticidade dos certificados verificável publicamente por código em https://www.wehosthere.com/verify-certificate.
+
+9. REVISTA DIGITAL "CODANDO HISTÓRIAS" (https://www.wehosthere.com/revista | https://www.wehosthere.com/revista/submeter):
+  • Revista comunitária de tecnologia, código, startups, IA, design e carreira em Moçambique, com exportação em PDF.
+  • Desenvolvedores e autores podem submeter artigos gratuitamente em https://www.wehosthere.com/revista/submeter.
+
+10. PROGRAMA DE AFILIADOS / PARCEIROS (https://www.wehosthere.com/dashboard/affiliates):
+  • Comissão: 30% sobre qualquer contratação (hospedagem, domínio, aluguer de sistema ou criação de site).
+  • Janela de atribuição: Cookie de 30 dias via link exclusivo (/ref/codigo).
+  • Saque mínimo: 1.000 MT via M-Pesa, Transferência Bancária ou PayPal.
+
+11. SCALEPAY, CASHVIBE & PAGAMENTOS ONLINE (https://www.wehosthere.com/scalepay | https://www.wehosthere.com/pagamentos-online | https://www.wehosthere.com/cashvibe/meu-credito):
+  • ScalePay: Gateway/solução de pagamentos digitais para lojas e empresas em Moçambique (M-Pesa, Visa/Mastercard, API REST).
+  • Cashvibe: Portal de microcrédito — consulta de empréstimos por telefone ou BI em https://www.wehosthere.com/cashvibe/meu-credito e envio de comprovativos para WhatsApp +258 84 567 8901.
+  • Métodos aceites na WEHOSTHERE: M-Pesa (Vodacom), e-Mola (Movitel), Cartões Visa/Mastercard e Transferência Bancária.
+
+12. GUIAS DE NEGÓCIO DIGITAL & BLOG (https://www.wehosthere.com/dropshipping | https://www.wehosthere.com/produtos-digitais | https://www.wehosthere.com/plr | https://www.wehosthere.com/blog):
+  • Conteúdos e soluções sobre Dropshipping em Moçambique, Venda de Produtos Digitais, Licenças PLR e Blog oficial da plataforma.
+
+13. TERMOS, SLA & POLÍTICA COMERCIAL (https://www.wehosthere.com/terms | https://www.wehosthere.com/privacy):
+  • Modelo pré-pago; SLA de 99,9% de disponibilidade (uptime).
+  • Atraso no pagamento: Suspensão após 3 dias de atraso; remoção definitiva após 7 dias.
+  • Cancelamento/Reembolso: Cancelamento disponível a qualquer momento, sem reembolso proporcional de períodos já pagos.
+
+14. CONTACTOS OFICIAIS:
+  • E-mail: info@wehosthere.com | WhatsApp / Telefone: +258 84 833 5618 (Cashvibe: +258 84 567 8901) | Site: https://www.wehosthere.com`;
 }
 
 export async function callOpenSourceLLM(params: {
@@ -327,9 +383,14 @@ export function buildContextualEmailReply(params: {
 
   const asksHosting = /\b(hospedagem|alojamento|hosting|plano[s]? de hospedagem|servidor web|ssd|cpanel|wordpress|tr[áa]fego)\b/i.test(fullContext);
   const asksEmail = /\b(e-?mail corporativo|e-?mail profissional|webmail|imap|smtp|migadu|caixa[s]? de e-?mail)\b/i.test(fullContext);
-  const asksSiteCreation = /\b(cria[çc][ãa]o de site|criar\s+(?:um\s+)?site|fazer\s+(?:um\s+)?site|loja\s+online|e-?commerce|website|desenvolvimento\s+web|desenvolver\s+(?:um\s+)?site)\b/i.test(fullContext);
-  const asksPayment = /\b(pagamento|pagar|m-?pesa|emola|e-?mola|cart[ãa]o|visa|mastercard|fatura|transfer[êe]ncia|mbway)\b/i.test(fullContext);
-  const asksVps = /\b(vps|servidor virtual|root|ip dedicado)\b/i.test(fullContext);
+  const asksSiteCreation = /\b(cria[çc][ãa]o de site|criar\s+(?:um\s+)?site|fazer\s+(?:um\s+)?site|loja\s+online|e-?commerce|website|desenvolvimento\s+web|desenvolver\s+(?:um\s+)?site|landing\s+page)\b/i.test(fullContext);
+  const asksPayment = /\b(pagamento|pagar|m-?pesa|emola|e-?mola|cart[ãa]o|visa|mastercard|fatura|transfer[êe]ncia|mbway|scalepay|cashvibe|cr[ée]dito)\b/i.test(fullContext);
+  const asksVps = /\b(vps|servidor virtual|root|ip dedicado|nvme)\b/i.test(fullContext);
+  const asksAcademy = /\b(academia|academy|curso[s]?|aula[s]?|certificado[s]?|forma[çc][ãa]o)\b/i.test(fullContext);
+  const asksRevista = /\b(revista|codando hist[óo]rias|artigo[s]?|publicar artigo|submeter)\b/i.test(fullContext);
+  const asksAffiliates = /\b(afiliado[s]?|parceiro[s]?|comiss[ãa]o|comiss[õo]es|indica[çc][ãa]o|ref|ganhar dinheiro)\b/i.test(fullContext);
+  const asksSystems = /\b(aluguer de sistema|alugar sistema|sistema de gest[ãa]o|gest[ãa]o financeira|gest[ãa]o de inscri[çc][õo]es|saas|sistemas prontos)\b/i.test(fullContext);
+  const asksAiBuilder = /\b(ai website builder|construtor.*ia|site.*ia|intelig[êe]ncia artificial)\b/i.test(fullContext);
   const asksMeeting = /\b(reuni[ãa]o|encontro|chamada|call|agendar|hor[áa]rio|dispon[íi]vel)\b/i.test(fullContext);
   const asksSupport = /\b(erro|problema|falha|n[ãa]o funciona|suporte|ajuda|ticket|lento|offline|suspens[ãa]o)\b/i.test(fullContext);
   const isConfirmation = /\b(confirmamos|confirmo|de acordo|aprovado|combinado|acordado|avan[çc]aremos|pr[óo]ximos passos)\b/i.test(fullContext);
@@ -403,16 +464,56 @@ export function buildContextualEmailReply(params: {
   if (asksSiteCreation) {
     sections.push(
       isEn
-        ? `Website & Online Store Development:\n• We build responsive corporate websites, landing pages, and e-commerce stores with M-Pesa/e-Mola integration. You can request an instant quote at https://www.wehosthere.com/site-quote.`
-        : `Criação de Sites e Lojas Online:\n• Desenvolvemos websites modernos e responsivos, portais e lojas virtuais com integração M-Pesa e e-Mola. Pode simular ou solicitar cotação imediata em: https://www.wehosthere.com/site-quote.`
+        ? `Website & Online Store Development:\n• Landing Page: from 12,000 MT (7 business days)\n• Portfolio: 15,000 MT (10 business days)\n• Institutional Website: from 25,000 MT (14 business days)\n• Online Store (E-commerce with M-Pesa/e-Mola): from 65,000 MT (30 business days)\n• Custom Web Systems / CRM / ERP: from 150,000 MT (by quote)\nRequest an instant quote at: https://www.wehosthere.com/site-quote`
+        : `Criação de Sites, Lojas Online e Sistemas:\n• Landing Page: 12.000 MT (7 dias úteis)\n• Portfólio: 15.000 MT (10 dias úteis)\n• Website Institucional: 25.000 MT (14 dias úteis)\n• Loja Virtual (E-commerce com M-Pesa/e-Mola): 65.000 MT (30 dias úteis)\n• Sistema Web / ERP / SaaS: a partir de 150.000 MT (sob orçamento)\nSimule ou peça cotação em segundos em: https://www.wehosthere.com/site-quote`
     );
   }
 
   if (asksVps) {
     sections.push(
       isEn
-        ? `VPS Servers:\n• Dedicated NVMe SSD resources, root access, and high availability. View plans at https://www.wehosthere.com/vps.`
-        : `Servidores VPS:\n• Recursos dedicados em SSD NVMe, acesso root e alta disponibilidade. Veja as opções em: https://www.wehosthere.com/vps.`
+        ? `VPS Servers (Dedicated NVMe SSD, Dedicated IP & Root SSH):\n• VPS Basic: 2,500 MT/mo (1 vCPU, 2 GB RAM, 40 GB NVMe, 1 TB)\n• VPS Pro: 5,000 MT/mo (2 vCPU, 4 GB RAM, 80 GB NVMe, 2 TB)\n• VPS Enterprise: 10,000 MT/mo (4 vCPU, 8 GB RAM, 160 GB NVMe, 4 TB)\nDetails: https://www.wehosthere.com/vps`
+        : `Servidores VPS (NVMe SSD Dedicado, IP Dedicado e Acesso Root SSH):\n• VPS Basic: 2.500 MT/mês (1 vCPU, 2 GB RAM, 40 GB NVMe, 1 TB tráfego)\n• VPS Pro: 5.000 MT/mês (2 vCPU, 4 GB RAM, 80 GB NVMe, 2 TB tráfego)\n• VPS Enterprise: 10.000 MT/mês (4 vCPU, 8 GB RAM, 160 GB NVMe, 4 TB tráfego)\nVeja mais em: https://www.wehosthere.com/vps`
+    );
+  }
+
+  if (asksSystems) {
+    sections.push(
+      isEn
+        ? `Ready-to-Use Rentable Systems (Zero Setup Fee):\n• Financial Management System: 2,500 MT/mo or 25,000 MT/year\n• Registration & Enrollment System: 2,000 MT/mo or 20,000 MT/year\n• Professional Sales Page: 1,500 MT/mo or 15,000 MT/year\nExplore at: https://www.wehosthere.com/systems`
+        : `Aluguer de Sistemas Prontos (Setup Gratuito 0 MT):\n• Sistema de Gestão Financeira: 2.500 MT/mês ou 25.000 MT/ano\n• Sistema de Gestão de Inscrições: 2.000 MT/mês ou 20.000 MT/ano\n• Página de Vendas Profissional: 1.500 MT/mês ou 15.000 MT/ano\nSaiba mais em: https://www.wehosthere.com/systems`
+    );
+  }
+
+  if (asksAcademy) {
+    sections.push(
+      isEn
+        ? `WEHOSTHERE Web Academy & Certificates:\n• Course "Criação de Página de Vendas Profissional" (12h, 13 modules): Module 1 is free (open preview); full course + official verifiable certificate costs 500 MT.\n• Portal: https://www.wehosthere.com/academy | Verify certificate: https://www.wehosthere.com/verify-certificate`
+        : `Academia Web WEHOSTHERE & Certificados:\n• Curso "Criação de Página de Vendas Profissional" (12h, 13 módulos): o Módulo 1 é gratuito (degustação); o curso completo + Certificado Oficial custa 500 MT.\n• Aceda em: https://www.wehosthere.com/academy | Validação de certificados em: https://www.wehosthere.com/verify-certificate`
+    );
+  }
+
+  if (asksRevista) {
+    sections.push(
+      isEn
+        ? `Codando Histórias Digital Magazine:\n• Mozambique's tech, dev, startups, AI, and career magazine — read online, download as PDF, or submit your own article at https://www.wehosthere.com/revista (submissions: https://www.wehosthere.com/revista/submeter).`
+        : `Revista Digital "Codando Histórias":\n• A nossa revista tech de Moçambique (Código, Startups, IA, Design e Carreira), com leitura gratuita e download em PDF.\n• Leia em: https://www.wehosthere.com/revista | Submeta o seu artigo em: https://www.wehosthere.com/revista/submeter`
+    );
+  }
+
+  if (asksAffiliates) {
+    sections.push(
+      isEn
+        ? `WEHOSTHERE Affiliate Program:\n• Commission: 30% on every referral purchase (hosting, domains, rentable systems, or website creation).\n• Cookie window: 30 days | Minimum payout: 1,000 MT via M-Pesa, Bank Transfer, or PayPal.\n• Dashboard: https://www.wehosthere.com/dashboard/affiliates`
+        : `Programa de Afiliados WEHOSTHERE:\n• Comissão: 30% em qualquer contratação feita através do seu link exclusivo (/ref/seu-codigo).\n• Validade do cookie: 30 dias | Saque mínimo: 1.000 MT via M-Pesa, Transferência Bancária ou PayPal.\n• Painel de Afiliados: https://www.wehosthere.com/dashboard/affiliates`
+    );
+  }
+
+  if (asksAiBuilder) {
+    sections.push(
+      isEn
+        ? `AI Website Builder:\n• Generate and publish modern websites with AI in one click on WEHOSTHERE infrastructure: https://www.wehosthere.com/ai-website-builder`
+        : `Criador de Sites com IA:\n• Gere e publique sites modernos com inteligência artificial em 1 clique diretamente na WEHOSTHERE: https://www.wehosthere.com/ai-website-builder`
     );
   }
 
@@ -602,17 +703,18 @@ export async function generateSmartReply(params: GenerateSmartReplyParams): Prom
     ? `\n- Escreva diretamente em nome de Afonso Domingos / WEHOSTHERE de forma 100% natural, humana e prestativa. NUNCA mencione que é um robô, IA ou assistente automático, e NUNCA adicione avisos ou notas de resposta automática.`
     : '';
 
-  const openSystemPrompt = `Você é o assistente de e-mail da WEHOSTHERE. Escreva uma resposta completa e pronta para enviar, especificamente adaptada ao conteúdo real do e-mail recebido.
+  const openSystemPrompt = `Você é o assistente de e-mail oficial da WEHOSTHERE. Escreva uma resposta completa e pronta para enviar, especificamente adaptada ao conteúdo real do e-mail recebido.
 Regras obrigatórias:
 - Leia com atenção o e-mail recebido e responda diretamente ao que essa mensagem diz ou pergunta.
-- NÃO copie nem inclua tabelas de preços, links ou planos de serviços se o e-mail recebido NÃO perguntou sobre preços ou serviços.
+- NÃO copie nem despeje tabelas inteiras ou serviços não relacionados se o e-mail recebido perguntou apenas sobre um assunto específico (ou se não perguntou sobre serviços/preços).
+- Quando o cliente perguntar sobre um serviço, produto, rota, política, Academia Web, Revista, Afiliados, VPS, Sites, Sistemas ou pagamentos, inclua apenas os factos exatos e o link oficial específico (https://www.wehosthere.com/...) desse tema.
 - Tom solicitado: ${toneDesc}.
 - Idioma: responda no mesmo idioma do e-mail recebido (${isEnIncoming ? 'Inglês' : 'Português'}).
 - Saudação: dirija-se a ${recipientName ? `"${recipientName}"` : 'forma cordial adequada (ex.: "Prezado(a)," ou "Olá,")'}. NUNCA escreva placeholders entre colchetes como [Nome], [Seu Nome], [Empresa].
 - Assinatura final: assine como "${signatureLabel}".
 - NÃO use asteriscos (** ou *) nem formatação Markdown.${altRule}${agentRule}
 
-Caso (e SOMENTE caso) o e-mail pergunte sobre produtos, preços, domínios, hospedagem, e-mail ou pagamentos da WEHOSTHERE, use estes factos oficiais:
+Base de Conhecimento Oficial Completa da Plataforma WEHOSTHERE (use apenas as secções relevantes à pergunta):
 ${getWehosthereKnowledgeContext()}`;
 
   const openUserPrompt = `E-mail recebido:\nAssunto: ${subject || '(Sem assunto)'}\nDe: ${fromName ? `${fromName} <${from}>` : from}\n\nConteúdo:\n${readableEmailText.slice(0, 3500)}\n\nInstrução extra: ${prompt || 'Nenhuma'}`;
