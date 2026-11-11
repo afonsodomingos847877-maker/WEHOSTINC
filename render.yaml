@@ -38,3 +38,5 @@ services:
         value: https://kivorapayments-nu.vercel.app
       - key: KIVORA_API_KEY
         sync: false
+      - key: CRON_SECRET
+        sync: false

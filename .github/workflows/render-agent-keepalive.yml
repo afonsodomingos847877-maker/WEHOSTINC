@@ -1,0 +1,26 @@
+name: Render AI Email Agent & Keepalive
+
+on:
+  schedule:
+    # Executa a cada 10 minutos para manter o Render acordado e responder e-mails
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  run-email-agent:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger AI Email Agent on Render
+        run: |
+          echo "Disparando verificação automática de e-mail no Render..."
+          RESPONSE=$(curl -fsS -m 90 \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET || '1f68a2837fbfbc2452ecff2c845d1f28' }}" \
+            "https://wehostinc.onrender.com/api/cron/ai-email-agent" || true)
+          echo "Resposta do Render: $RESPONSE"
+
+          if [ -z "$RESPONSE" ] || echo "$RESPONSE" | grep -q "error"; then
+            echo "Fallback para Vercel..."
+            curl -fsS -m 60 \
+              -H "Authorization: Bearer ${{ secrets.CRON_SECRET || '1f68a2837fbfbc2452ecff2c845d1f28' }}" \
+              "https://www.wehosthere.com/api/cron/ai-email-agent" || true
+          fi
