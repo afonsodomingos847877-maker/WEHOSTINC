@@ -8,6 +8,7 @@ import {
   EmailAgentConfigDocument,
   EmailAgentLog,
 } from '@/models/EmailAgentConfig';
+import { sendPushToAdmins } from '@/lib/pushService';
 
 export interface AgentActiveEvaluation {
   active: boolean;
@@ -392,6 +393,18 @@ export async function runEmailAgentForMailbox(
         status: 'replied',
         reason: `Respondido via ${sendChannel.toUpperCase()} (${generated.provider})`,
         provider: generated.provider,
+      });
+
+      // Notificação push ao administrador — aparece no telemóvel imediatamente
+      const senderLabel = msg.from.name ? `${msg.from.name} <${replyTarget}>` : replyTarget;
+      sendPushToAdmins({
+        title: `📧 Agente respondeu a ${msg.from.name || replyTarget}`,
+        message: `"${(msg.subject || '(Sem assunto)').slice(0, 80)}" — Resposta automática enviada com sucesso.`,
+        url: '/webmail',
+        tag: `agent-reply-${messageId.slice(0, 20)}`,
+        data: { fromEmail: replyTarget, fromName: msg.from.name || '', subject: msg.subject },
+      }).catch((pushErr) => {
+        console.warn('[EmailAgent] Push notification falhou (não crítico):', pushErr?.message);
       });
 
       repliedCount++;
