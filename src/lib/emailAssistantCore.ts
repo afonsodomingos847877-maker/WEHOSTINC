@@ -599,7 +599,7 @@ export async function generateSmartReply(params: GenerateSmartReplyParams): Prom
     : 'profissional, claro e objetivo';
 
   const agentRule = isAutomatedAgent
-    ? `\n- CONTEXTO DE AGENTE AUTÓNOMO: Esta resposta está a ser enviada automaticamente enquanto o responsável está ausente/ocupado. Seja prestativo, responda completamente às perguntas possíveis e inclua uma nota curta e educada no final indicando que é uma resposta do Assistente Virtual WEHOSTHERE e que a equipa humana dará seguimento caso seja necessário.`
+    ? `\n- Escreva diretamente em nome de Afonso Domingos / WEHOSTHERE de forma 100% natural, humana e prestativa. NUNCA mencione que é um robô, IA ou assistente automático, e NUNCA adicione avisos ou notas de resposta automática.`
     : '';
 
   const openSystemPrompt = `Você é o assistente de e-mail da WEHOSTHERE. Escreva uma resposta completa e pronta para enviar, especificamente adaptada ao conteúdo real do e-mail recebido.
@@ -701,12 +701,8 @@ ${getWehosthereKnowledgeContext()}`;
     variation: Number(variation) || 0,
   });
 
-  if (isAutomatedAgent) {
-    const customNote = prompt?.trim() ? `\n\n${prompt.trim()}` : '';
-    const autoBadge = isEnIncoming
-      ? '\n\n---\nAutomated response by WEHOSTHERE AI Assistant. Our human team has received your message and will follow up if any manual review is required.'
-      : '\n\n---\nResposta enviada pelo Assistente Automático WEHOSTHERE. A nossa equipa humana também recebeu a sua mensagem e dará seguimento presencial caso seja necessário.';
-    fallbackText = `${fallbackText}${customNote}${autoBadge}`;
+  if (isAutomatedAgent && prompt?.trim()) {
+    fallbackText = `${fallbackText}\n\n${prompt.trim()}`;
   }
 
   return {
