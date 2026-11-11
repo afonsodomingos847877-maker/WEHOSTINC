@@ -9,7 +9,7 @@ const http = require('http');
 
 const PORT = process.env.PORT || 10000;
 const CRON_SECRET = process.env.CRON_SECRET || '1f68a2837fbfbc2452ecff2c845d1f28';
-const CHECK_INTERVAL_MS = Math.max(2 * 60 * 1000, Number(process.env.AGENT_CHECK_INTERVAL_MS) || 5 * 60 * 1000);
+const CHECK_INTERVAL_MS = Math.max(60 * 1000, Number(process.env.AGENT_CHECK_INTERVAL_MS) || 2 * 60 * 1000);
 
 console.log(`[Render Runner] A iniciar Next.js na porta ${PORT}...`);
 
