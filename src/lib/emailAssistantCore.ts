@@ -119,15 +119,17 @@ export function resolveReplyIdentities(from: string, fromName?: string, senderNa
     }
   }
 
-  let signatureLabel = isEn ? 'WEHOSTHERE Team' : 'Equipa WEHOSTHERE';
+  let signatureLabel = isEn ? 'Afonso Domingos | WEHOSTHERE' : 'Afonso Domingos | WEHOSTHERE';
   if (senderName) {
     const cleanSender = senderName.split('@')[0].trim().toLowerCase();
-    if (cleanSender === 'info' || cleanSender === 'suporte') {
+    if (cleanSender === 'info' || cleanSender.includes('afonso')) {
+      signatureLabel = 'Afonso Domingos | WEHOSTHERE';
+    } else if (cleanSender === 'suporte') {
       signatureLabel = isEn ? 'WEHOSTHERE Support Team' : 'Equipa de Suporte WEHOSTHERE';
     } else if (cleanSender === 'admin') {
       signatureLabel = isEn ? 'WEHOSTHERE Administration' : 'Administração WEHOSTHERE';
     } else if (cleanSender) {
-      signatureLabel = cleanSender.charAt(0).toUpperCase() + cleanSender.slice(1);
+      signatureLabel = `${cleanSender.charAt(0).toUpperCase() + cleanSender.slice(1)} | WEHOSTHERE`;
     }
   }
 

@@ -270,12 +270,17 @@ export async function runEmailAgentForMailbox(
     }
 
     try {
+      const senderDisplayName =
+        agentEmail === 'info@wehosthere.com'
+          ? 'Afonso Domingos (WEHOSTHERE)'
+          : `Equipa WEHOSTHERE (${agentEmail})`;
+
       const generated = await generateSmartReply({
         content: msg.html || msg.text || msg.subject,
         subject: msg.subject,
         from: replyTarget,
         fromName: msg.from.name,
-        senderName: agentEmail,
+        senderName: senderDisplayName,
         tone: config.replyTone || 'professional',
         prompt: config.customInstructions || '',
         isAutomatedAgent: true,
@@ -285,18 +290,39 @@ export async function runEmailAgentForMailbox(
         ? msg.subject
         : `Re: ${msg.subject || 'O seu contacto WEHOSTHERE'}`;
 
-      const replyText = generated.result;
-      const replyHtml = `<div style="font-family:'Segoe UI',Arial,sans-serif;font-size:14px;line-height:1.6;color:#0f172a;white-space:normal;">${escapeHtml(replyText).replace(/\n/g, '<br/>')}</div>`;
+      const rawReplyText = generated.result.trim();
+      const hasSignatureAlready = /Afonso Domingos/i.test(rawReplyText);
+      const corporateSignatureText = hasSignatureAlready
+        ? ''
+        : `\n\n--\nAfonso Domingos\nWEHOSTHERE — Hospedagem & Soluções Web\nWhatsApp / Tel: +258 84 833 5618\nEmail: ${agentEmail} | Web: https://www.wehosthere.com`;
+
+      const replyText = `${rawReplyText}${corporateSignatureText}`;
+
+      const corporateSignatureHtml = `
+<div style="margin-top:20px;padding-top:16px;border-top:1px solid #e2e8f0;font-family:'Segoe UI',Arial,sans-serif;color:#334155;font-size:13px;line-height:1.6;">
+  <div style="font-size:14px;font-weight:700;color:#0f172a;">Afonso Domingos</div>
+  <div style="color:#2563eb;font-weight:600;font-size:12px;margin-bottom:6px;">WEHOSTHERE — Hospedagem &amp; Soluções Web</div>
+  <div style="color:#475569;font-size:12px;">📱 WhatsApp / Tel: <strong>+258 84 833 5618</strong></div>
+  <div style="color:#475569;font-size:12px;">📧 Email: <a href="mailto:${agentEmail}" style="color:#2563eb;text-decoration:none;">${agentEmail}</a></div>
+  <div style="color:#475569;font-size:12px;">🌐 Website: <a href="https://www.wehosthere.com" style="color:#2563eb;text-decoration:none;">www.wehosthere.com</a></div>
+</div>`;
+
+      const replyHtml = `<div style="font-family:'Segoe UI',Arial,sans-serif;font-size:14px;line-height:1.6;color:#0f172a;white-space:normal;">${escapeHtml(rawReplyText).replace(/\n/g, '<br/>')}${corporateSignatureHtml}</div>`;
 
       const referencesHeader = Array.from(
         new Set([...(msg.references || []), messageId].filter(Boolean))
       ).join(' ');
 
+      const fromDisplayName =
+        agentEmail === 'info@wehosthere.com'
+          ? 'Afonso Domingos | WEHOSTHERE'
+          : 'WEHOSTHERE Suporte';
+
       let sendChannel = 'resend';
       const resendRes = await sendViaResend({
         to: replyTarget,
         fromEmail: agentEmail,
-        fromName: 'WEHOSTHERE',
+        fromName: fromDisplayName,
         replyTo: agentEmail,
         subject: replySubject,
         text: replyText,
