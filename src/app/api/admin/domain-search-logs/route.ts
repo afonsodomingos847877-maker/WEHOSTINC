@@ -137,8 +137,8 @@ function fireLeadNotificationsAsync(data: DomainLeadAlertData) {
         });
       } catch {}
 
+      if (process.env.ADMIN_NOTIFICATION_EMAIL) recipientEmails.add(process.env.ADMIN_NOTIFICATION_EMAIL.toLowerCase().trim());
       if (process.env.ADMIN_EMAIL) recipientEmails.add(process.env.ADMIN_EMAIL.toLowerCase().trim());
-      if (process.env.EMAIL_USER?.includes('@')) recipientEmails.add(process.env.EMAIL_USER.toLowerCase().trim());
       if (recipientEmails.size === 0) recipientEmails.add('info@wehosthere.com');
 
       // 3. Enviar e-mail de alerta de lead

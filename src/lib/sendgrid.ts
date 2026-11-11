@@ -1560,7 +1560,7 @@ export async function sendAdminNewSubmissionEmail(opts: {
   category: string;
   storyId: string;
 }): Promise<{ success: boolean; error?: string }> {
-  const adminEmail = process.env.ADMIN_EMAIL || 'afonso@wehosthere.com';
+  const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || process.env.ADMIN_EMAIL || 'info@wehosthere.com';
   const adminReviewUrl = `${SITE_URL}/admin/revista/editar/${opts.storyId}`;
 
   return sendEmail({
