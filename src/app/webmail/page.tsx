@@ -443,10 +443,16 @@ function WebmailContent() {
   const [externalAccountsCount, setExternalAccountsCount] = useState<number>(0); // Total de contas externas conectadas
   const [showAgentModal, setShowAgentModal] = useState<boolean>(false); // Modal Modo Agente IA Auto-Resposta
   const [agentActive, setAgentActive] = useState<boolean>(false);
+  const activeAgentEmail = (selectedAccountEmail || webmailLoginEmail || accounts[0]?.email || '').trim().toLowerCase();
+  const isWehosthereAccount = activeAgentEmail.endsWith('@wehosthere.com');
 
   useEffect(() => {
     const emailToCheck = selectedAccountEmail || webmailLoginEmail || accounts[0]?.email;
-    if (!emailToCheck || !emailToCheck.includes('@')) return;
+    if (!emailToCheck || !emailToCheck.includes('@') || !emailToCheck.trim().toLowerCase().endsWith('@wehosthere.com')) {
+      setAgentActive(false);
+      setShowAgentModal(false);
+      return;
+    }
     let cancelled = false;
     fetch(`/api/webmail/agent?email=${encodeURIComponent(emailToCheck)}`, { credentials: 'include' })
       .then((r) => (r.ok ? r.json() : null))
@@ -3674,7 +3680,8 @@ function WebmailContent() {
             </button>
           ) : null}
 
-          {/* Botão Modo Agente IA Auto-Resposta */}
+          {/* Botão Modo Agente IA Auto-Resposta (apenas contas @wehosthere.com) */}
+          {isWehosthereAccount && (
           <button
             type="button"
             onClick={() => {
@@ -3696,6 +3703,8 @@ function WebmailContent() {
               }`}
             />
           </button>
+
+          )}
 
           {/* Botão Conectar / Gerir Contas Externas (IMAP/SMTP) */}
           <button
@@ -8106,7 +8115,7 @@ function WebmailContent() {
         }}
       />
 
-      {showAgentModal && (
+      {showAgentModal && isWehosthereAccount && (
         <EmailAgentControl
           variant="modal"
           targetEmail={selectedAccountEmail || webmailLoginEmail || accounts[0]?.email || 'info@wehosthere.com'}
