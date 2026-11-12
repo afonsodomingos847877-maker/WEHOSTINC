@@ -337,32 +337,28 @@ export default function DomainMailboxesPage() {
       {/* Main Container */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
 
-        {/* Outlook & Mobile Connection Banner */}
-        <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-primary-900 text-white rounded-3xl p-6 sm:p-7 shadow-sm relative overflow-hidden">
-          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="space-y-2 max-w-2xl">
-              <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-bold bg-white/15 text-white backdrop-blur-md">
-                <Sparkles className="h-3.5 w-3.5 text-blue-300" />
-                <span>Compatível com Todos os Aplicativos</span>
-              </div>
-              <h2 className="text-xl sm:text-2xl font-black tracking-tight">
-                Como conectar o e-mail no Outlook, Thunderbird ou Telemóvel?
+        {/* Outlook & Mobile Connection Banner (Clean & Compact) */}
+        <div className="bg-white border border-gray-200 rounded-2xl px-5 py-4 shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h2 className="text-sm sm:text-base font-bold text-gray-900">
+                Conectar no Outlook, Thunderbird ou Telemóvel
               </h2>
-              <p className="text-blue-100 text-xs sm:text-sm leading-relaxed">
-                Use os servidores seguros <strong>IMAP</strong> (entrada) e <strong>SMTP</strong> (saída) para sincronizar seus e-mails em tempo real no computador, iPhone ou Android.
+              <p className="text-gray-500 text-xs mt-0.5">
+                Configuração IMAP e SMTP para clientes de e-mail externos.
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
               <button
                 onClick={() => {
                   setActiveClientTab('outlook');
                   handleOpenConfigModal();
                 }}
-                className="flex items-center space-x-2 bg-white text-gray-900 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold hover:bg-blue-50 transition shadow-md"
+                className="flex items-center space-x-1.5 bg-gray-900 text-white px-3.5 py-2 rounded-xl text-xs font-semibold hover:bg-black transition cursor-pointer"
               >
-                <Laptop className="h-4 w-4 text-blue-600" />
-                <span>Guia Microsoft Outlook</span>
+                <Laptop className="h-3.5 w-3.5" />
+                <span>Guia Outlook</span>
               </button>
 
               <button
@@ -370,10 +366,10 @@ export default function DomainMailboxesPage() {
                   setActiveClientTab('general');
                   handleOpenConfigModal();
                 }}
-                className="flex items-center space-x-2 bg-white/20 hover:bg-white/30 text-white border border-white/30 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition backdrop-blur-md"
+                className="flex items-center space-x-1.5 bg-white hover:bg-gray-50 text-gray-800 border border-gray-300 px-3.5 py-2 rounded-xl text-xs font-semibold transition cursor-pointer"
               >
-                <Server className="h-4 w-4" />
-                <span>Ver Todos os Dados IMAP/SMTP</span>
+                <Server className="h-3.5 w-3.5 text-gray-600" />
+                <span>Dados IMAP/SMTP</span>
               </button>
             </div>
           </div>
