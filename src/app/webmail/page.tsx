@@ -6263,23 +6263,13 @@ function WebmailContent() {
 
                     {/* Campo de destinatários (vários e-mails) com seletor de contactos acoplado */}
                     <div className="relative">
-                      <div className="pr-9">
-                        <RecipientInput
-                          value={composeTo}
-                          onChange={setComposeTo}
-                          contacts={knownContacts}
-                          excludeEmails={[selectedAccountEmail]}
-                          placeholder="email@exemplo.com"
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setShowToPicker(!showToPicker)}
-                        className="absolute right-1.5 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-primary-600 transition"
-                        title="Ver contactos guardados"
-                      >
-                        <Users className="w-4 h-4" />
-                      </button>
+                      <RecipientInput
+                        value={composeTo}
+                        onChange={setComposeTo}
+                        contacts={knownContacts}
+                        excludeEmails={[selectedAccountEmail]}
+                        placeholder="email@exemplo.com"
+                      />
 
                       {/* Dropdown de selecção rápida de contactos (adiciona ao invés de substituir) */}
                       <ContactPicker
@@ -6357,24 +6347,24 @@ function WebmailContent() {
                             setShowVoiceToEmailPanel(false);
                           }
                         }}
-                        className={`text-[11px] font-extrabold px-2.5 py-1 rounded-lg border transition cursor-pointer flex items-center space-x-1.5 shadow-2xs ${
+                        className={`text-[11px] font-semibold px-2.5 py-1 rounded-lg border transition cursor-pointer flex items-center space-x-1.5 ${
                           showVoiceToEmailPanel || (isRecordingVoice && voiceTargetMode === 'compose')
                             ? 'bg-neutral-900 text-white border-neutral-900'
-                            : 'bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200'
+                            : 'bg-white hover:bg-neutral-100 text-neutral-700 border-neutral-200'
                         }`}
                         title="Voice to Email: Fale e o sistema transforma a sua voz num e-mail profissional"
                       >
-                        <Mic className={`w-3.5 h-3.5 ${isRecordingVoice && voiceTargetMode === 'compose' ? 'text-rose-400 animate-pulse' : 'text-rose-600'}`} />
+                        <Mic className={`w-3.5 h-3.5 ${isRecordingVoice && voiceTargetMode === 'compose' ? 'text-white animate-pulse' : 'text-neutral-600'}`} />
                         <span>Voice to Email</span>
                       </button>
                       <button
                         type="button"
                         onClick={() => handleSpeakEmailText('compose')}
                         disabled={(!composeBody && !composeSubject) && !(isSpeakingEmail && speakingSource === 'compose')}
-                        className={`text-[11px] font-bold px-2.5 py-1 rounded-lg border transition cursor-pointer flex items-center space-x-1 disabled:opacity-50 ${
+                        className={`text-[11px] font-semibold px-2.5 py-1 rounded-lg border transition cursor-pointer flex items-center space-x-1 disabled:opacity-50 ${
                           isSpeakingEmail && speakingSource === 'compose'
-                            ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs'
-                            : 'text-sky-700 hover:text-sky-900 bg-sky-50 hover:bg-sky-100 border-sky-200'
+                            ? 'bg-neutral-900 text-white border-neutral-900'
+                            : 'bg-white hover:bg-neutral-100 text-neutral-700 border-neutral-200'
                         }`}
                         title="Ouvir em áudio o e-mail que escreveu antes de enviar"
                       >
@@ -6385,7 +6375,7 @@ function WebmailContent() {
                           </>
                         ) : (
                           <>
-                            <Volume2 className="w-3 h-3 text-sky-600" />
+                            <Volume2 className="w-3 h-3 text-neutral-600" />
                             <span>Ouvir E-mail</span>
                           </>
                         )}
@@ -6394,38 +6384,38 @@ function WebmailContent() {
                         type="button"
                         onClick={handleImproveWithAI}
                         disabled={isImprovingDraft || !composeBody}
-                        className="text-[11px] font-bold text-purple-700 hover:text-purple-900 bg-purple-50 hover:bg-purple-100 px-2.5 py-1 rounded-lg border border-purple-200 transition cursor-pointer flex items-center space-x-1 disabled:opacity-50"
+                        className="text-[11px] font-semibold text-neutral-700 hover:text-neutral-900 bg-white hover:bg-neutral-100 px-2.5 py-1 rounded-lg border border-neutral-200 transition cursor-pointer flex items-center space-x-1 disabled:opacity-50"
                         title="Aprimorar redação com IA"
                       >
-                        {isImprovingDraft ? <Loader2 className="w-3 h-3 animate-spin text-purple-600" /> : <Sparkles className="w-3 h-3 text-purple-600" />}
+                        {isImprovingDraft ? <Loader2 className="w-3 h-3 animate-spin text-neutral-600" /> : <Sparkles className="w-3 h-3 text-neutral-600" />}
                         <span>{isImprovingDraft ? 'Aprimorando...' : 'Melhorar com IA'}</span>
                       </button>
                       <button
                         type="button"
                         onClick={() => handleTranslateDraft('pt')}
                         disabled={isTranslatingDraft !== null || (!composeBody && !composeSubject)}
-                        className="text-[11px] font-bold text-emerald-700 hover:text-emerald-900 bg-emerald-50 hover:bg-emerald-100 px-2 py-1 rounded-lg border border-emerald-200 transition cursor-pointer flex items-center space-x-1 disabled:opacity-50"
+                        className="text-[11px] font-semibold text-neutral-700 hover:text-neutral-900 bg-white hover:bg-neutral-100 px-2 py-1 rounded-lg border border-neutral-200 transition cursor-pointer flex items-center space-x-1 disabled:opacity-50"
                         title="Traduzir mensagem escrita para Português"
                       >
-                        {isTranslatingDraft === 'pt' ? <Loader2 className="w-3 h-3 animate-spin text-emerald-600" /> : <Languages className="w-3 h-3 text-emerald-600" />}
+                        {isTranslatingDraft === 'pt' ? <Loader2 className="w-3 h-3 animate-spin text-neutral-600" /> : <Languages className="w-3 h-3 text-neutral-600" />}
                         <span>PT</span>
                       </button>
                       <button
                         type="button"
                         onClick={() => handleTranslateDraft('en')}
                         disabled={isTranslatingDraft !== null || (!composeBody && !composeSubject)}
-                        className="text-[11px] font-bold text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 px-2 py-1 rounded-lg border border-indigo-200 transition cursor-pointer flex items-center space-x-1 disabled:opacity-50"
+                        className="text-[11px] font-semibold text-neutral-700 hover:text-neutral-900 bg-white hover:bg-neutral-100 px-2 py-1 rounded-lg border border-neutral-200 transition cursor-pointer flex items-center space-x-1 disabled:opacity-50"
                         title="Traduzir mensagem escrita para Inglês (English)"
                       >
-                        {isTranslatingDraft === 'en' ? <Loader2 className="w-3 h-3 animate-spin text-indigo-600" /> : <Languages className="w-3 h-3 text-indigo-600" />}
+                        {isTranslatingDraft === 'en' ? <Loader2 className="w-3 h-3 animate-spin text-neutral-600" /> : <Languages className="w-3 h-3 text-neutral-600" />}
                         <span>EN</span>
                       </button>
                       <button
                         type="button"
                         onClick={handleInsertSignature}
-                        className="text-[11px] font-bold text-primary-600 hover:text-primary-800 bg-primary-50 hover:bg-primary-100 px-2.5 py-1 rounded-lg border border-primary-200 transition cursor-pointer flex items-center space-x-1"
+                        className="text-[11px] font-semibold text-neutral-700 hover:text-neutral-900 bg-white hover:bg-neutral-100 px-2.5 py-1 rounded-lg border border-neutral-200 transition cursor-pointer flex items-center space-x-1"
                       >
-                        <FileSignature className="w-3 h-3 text-primary-600" />
+                        <FileSignature className="w-3 h-3 text-neutral-600" />
                         <span>Assinatura</span>
                       </button>
                       <button
@@ -6932,11 +6922,11 @@ function WebmailContent() {
                 <div className="space-y-1.5 pt-1">
                   <div className="flex flex-wrap items-center justify-between gap-2 p-2 bg-gray-50 border border-gray-200 rounded-xl">
                     <div className="flex items-center gap-2">
-                      <label className="cursor-pointer inline-flex items-center space-x-1.5 px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[11px] font-bold rounded-lg transition border border-emerald-200">
+                      <label className="cursor-pointer inline-flex items-center space-x-1.5 px-2.5 py-1 bg-white hover:bg-neutral-100 text-neutral-800 text-[11px] font-semibold rounded-lg transition border border-neutral-300">
                         {uploadingAttachment ? (
-                          <Loader2 className="w-3 h-3 animate-spin text-emerald-600" />
+                          <Loader2 className="w-3 h-3 animate-spin text-neutral-600" />
                         ) : (
-                          <Paperclip className="w-3 h-3 text-emerald-600" />
+                          <Paperclip className="w-3 h-3 text-neutral-600" />
                         )}
                         <span>{uploadingAttachment ? 'A carregar...' : 'Anexar Ficheiro'}</span>
                         <input
@@ -7140,8 +7130,8 @@ function WebmailContent() {
                     disabled={sendingMsg || uploadingAttachment}
                     className={`sm:flex-1 py-2.5 font-bold text-xs rounded-xl transition cursor-pointer shadow-2xs flex items-center justify-center space-x-1.5 border ${
                       showSchedulePicker || composeScheduledFor
-                        ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600'
-                        : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border-emerald-300'
+                        ? 'bg-neutral-900 hover:bg-black text-white border-neutral-900'
+                        : 'bg-white hover:bg-neutral-100 text-neutral-800 border-neutral-300'
                     }`}
                     title="Programar o envio deste e-mail para uma data e hora específica"
                   >
