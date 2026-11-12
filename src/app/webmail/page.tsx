@@ -5428,22 +5428,6 @@ function WebmailContent() {
                   <div className="flex items-center gap-1.5">
                     <button
                       type="button"
-                      onClick={() => handleGenerateAIReply('formal')}
-                      disabled={isGeneratingReply}
-                      className="px-2.5 py-1.5 bg-white/10 hover:bg-white/20 border border-white/10 text-white rounded-xl text-[11px] font-medium transition cursor-pointer"
-                    >
-                      Formal
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleGenerateAIReply('friendly')}
-                      disabled={isGeneratingReply}
-                      className="px-2.5 py-1.5 bg-white/10 hover:bg-white/20 border border-white/10 text-white rounded-xl text-[11px] font-medium transition cursor-pointer"
-                    >
-                      Amigável
-                    </button>
-                    <button
-                      type="button"
                       onClick={() => handleGenerateAIReply('quick_accept')}
                       disabled={isGeneratingReply}
                       className="px-3 py-1.5 bg-white hover:bg-neutral-100 text-neutral-900 rounded-xl text-[11px] font-semibold transition shadow-xs cursor-pointer"
