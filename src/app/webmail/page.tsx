@@ -531,6 +531,7 @@ function WebmailContent() {
 
   // Filter & Refresh State
   const [filterType, setFilterType] = useState<'all' | 'unread' | 'overdue' | 'attachments' | 'starred' | 'pinned' | 'priority'>('all');
+  const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'week' | 'month' | `m:${number}`>('all');
   const [isRefreshingWebmail, setIsRefreshingWebmail] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
 
@@ -3448,7 +3449,33 @@ function WebmailContent() {
       m.fromEmail.toLowerCase().includes(q) ||
       m.body.toLowerCase().includes(q);
 
-    return matchesFolder && matchesFilter && matchesSearch;
+    let matchesDate = true;
+    if (dateFilter !== 'all') {
+      const msgDate = new Date(m.date);
+      if (isNaN(msgDate.getTime())) {
+        matchesDate = false;
+      } else {
+        const now = new Date();
+        if (dateFilter === 'today') {
+          matchesDate =
+            msgDate.getFullYear() === now.getFullYear() &&
+            msgDate.getMonth() === now.getMonth() &&
+            msgDate.getDate() === now.getDate();
+        } else if (dateFilter === 'week') {
+          const weekAgo = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6);
+          matchesDate = msgDate >= weekAgo;
+        } else if (dateFilter === 'month') {
+          matchesDate =
+            msgDate.getFullYear() === now.getFullYear() &&
+            msgDate.getMonth() === now.getMonth();
+        } else if (dateFilter.startsWith('m:')) {
+          const targetMonth = Number(dateFilter.slice(2));
+          matchesDate = msgDate.getMonth() === targetMonth;
+        }
+      }
+    }
+
+    return matchesFolder && matchesFilter && matchesDate && matchesSearch;
   });
 
   const currentAccountObj = accounts.find(a => a.email.toLowerCase() === selectedAccountEmail.toLowerCase());
@@ -4490,6 +4517,79 @@ function WebmailContent() {
           </div>
 
           {/* List */}
+          {/* Date & Month Filters */}
+          {!isFiltersCollapsed && (
+            <div className="px-3 py-2 border-b border-neutral-100 flex items-center space-x-1.5 text-[11px] font-semibold overflow-x-auto bg-white">
+              <button
+                type="button"
+                onClick={() => setDateFilter(dateFilter === 'today' ? 'all' : 'today')}
+                className={`px-2.5 py-1 rounded-xl whitespace-nowrap transition cursor-pointer border ${
+                  dateFilter === 'today'
+                    ? 'bg-neutral-900 text-white font-bold border-neutral-900 shadow-xs'
+                    : 'bg-white text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 border-neutral-200'
+                }`}
+              >
+                Hoje
+              </button>
+              <button
+                type="button"
+                onClick={() => setDateFilter(dateFilter === 'week' ? 'all' : 'week')}
+                className={`px-2.5 py-1 rounded-xl whitespace-nowrap transition cursor-pointer border ${
+                  dateFilter === 'week'
+                    ? 'bg-neutral-900 text-white font-bold border-neutral-900 shadow-xs'
+                    : 'bg-white text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 border-neutral-200'
+                }`}
+              >
+                Semana
+              </button>
+              <button
+                type="button"
+                onClick={() => setDateFilter(dateFilter === 'month' ? 'all' : 'month')}
+                className={`px-2.5 py-1 rounded-xl whitespace-nowrap transition cursor-pointer border ${
+                  dateFilter === 'month'
+                    ? 'bg-neutral-900 text-white font-bold border-neutral-900 shadow-xs'
+                    : 'bg-white text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 border-neutral-200'
+                }`}
+              >
+                Este Mês
+              </button>
+              <select
+                value={dateFilter.startsWith('m:') ? dateFilter : 'all'}
+                onChange={(e) => setDateFilter(e.target.value as 'all' | `m:${number}`)}
+                aria-label="Filtrar por mês"
+                className={`px-2 py-1 rounded-xl border text-[11px] font-semibold outline-none cursor-pointer transition ${
+                  dateFilter.startsWith('m:')
+                    ? 'bg-neutral-900 text-white font-bold border-neutral-900 shadow-xs'
+                    : 'bg-white text-neutral-700 hover:bg-neutral-100 border-neutral-200'
+                }`}
+              >
+                <option value="all" className="bg-white text-neutral-900">Por mês...</option>
+                <option value="m:0" className="bg-white text-neutral-900">Jan</option>
+                <option value="m:1" className="bg-white text-neutral-900">Fev</option>
+                <option value="m:2" className="bg-white text-neutral-900">Mar</option>
+                <option value="m:3" className="bg-white text-neutral-900">Abr</option>
+                <option value="m:4" className="bg-white text-neutral-900">Mai</option>
+                <option value="m:5" className="bg-white text-neutral-900">Jun</option>
+                <option value="m:6" className="bg-white text-neutral-900">Jul</option>
+                <option value="m:7" className="bg-white text-neutral-900">Ago</option>
+                <option value="m:8" className="bg-white text-neutral-900">Set</option>
+                <option value="m:9" className="bg-white text-neutral-900">Out</option>
+                <option value="m:10" className="bg-white text-neutral-900">Nov</option>
+                <option value="m:11" className="bg-white text-neutral-900">Dez</option>
+              </select>
+              {dateFilter !== 'all' && (
+                <button
+                  type="button"
+                  onClick={() => setDateFilter('all')}
+                  className="px-2 py-1 rounded-xl text-[11px] font-semibold text-rose-600 hover:bg-rose-50 border border-rose-200 whitespace-nowrap transition cursor-pointer"
+                  title="Limpar filtro de data"
+                >
+                  Limpar
+                </button>
+              )}
+            </div>
+          )}
+
           {/* Bulk Selection Toolbar */}
           {displayMessages.length > 0 && (
             <div className="px-3 py-2 border-b border-neutral-100 bg-neutral-50/80 flex items-center justify-between gap-2 text-xs">
