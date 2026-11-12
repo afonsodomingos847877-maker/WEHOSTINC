@@ -5212,485 +5212,31 @@ function WebmailContent() {
                       </div>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleSendScheduledNow(selectedMessage)}
-                        disabled={sendingMsg}
-                        className="px-3 py-1.5 bg-neutral-900 hover:bg-black text-white rounded-xl text-[11px] font-bold transition flex items-center space-x-1.5 cursor-pointer shadow-xs"
-                      >
-                        <Send className="w-3.5 h-3.5" />
-                        <span>{sendingMsg ? 'A enviar...' : 'Enviar Agora'}</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleEditScheduledMessage(selectedMessage)}
-                        className="px-3 py-1.5 bg-white hover:bg-emerald-100 text-emerald-900 border border-emerald-300 rounded-xl text-[11px] font-bold transition flex items-center space-x-1.5 cursor-pointer"
-                      >
-                        <Edit3 className="w-3.5 h-3.5" />
-                        <span>Editar / Reagendar</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleCancelScheduledMessage(selectedMessage)}
-                        className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-[11px] font-bold transition flex items-center space-x-1.5 cursor-pointer"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                        <span>Cancelar Agendamento</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-              {(() => {
-                const sec = analyzeEmailSecurity(selectedMessage, selectedAccountEmail, trustedSenders);
-                if (sec.level === 'safe') return null;
-                const isHigh = sec.level === 'high';
-                return (
-                  <div
-                    className={`rounded-2xl p-4 sm:p-5 border shadow-xs space-y-3 transition-all ${
-                      isHigh
-                        ? 'bg-rose-50/95 border-rose-300 text-rose-950'
-                        : 'bg-amber-50/95 border-amber-300 text-amber-950'
-                    }`}
-                  >
-                    <div className="flex flex-wrap items-start justify-between gap-2">
-                      <div className="flex items-center space-x-2.5">
-                        <div
-                          className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
-                            isHigh ? 'bg-rose-600 text-white' : 'bg-amber-500 text-white'
-                          }`}
-                        >
-                          <AlertCircle className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span
-                              className={`text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full inline-flex items-center gap-1 ${
-                                isHigh
-                                  ? 'bg-rose-200/80 text-rose-900'
-                                  : 'bg-amber-200/80 text-amber-900'
-                              }`}
-                            >
-                              {isHigh ? (
-                                <>
-                                  <ShieldAlert className="w-3 h-3 text-rose-800 shrink-0" />
-                                  <span>Risco Elevado Detetado</span>
-                                </>
-                              ) : (
-                                <>
-                                  <AlertCircle className="w-3 h-3 text-amber-800 shrink-0" />
-                                  <span>Alerta de Segurança IA</span>
-                                </>
-                              )}
-                            </span>
-                          </div>
-                          <h3 className="text-xs sm:text-sm font-extrabold mt-0.5">{sec.title}</h3>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteMessage(selectedMessage.id)}
-                          className={`px-3 py-1.5 rounded-xl text-[11px] font-bold transition flex items-center space-x-1.5 cursor-pointer shadow-2xs ${
-                            isHigh
-                              ? 'bg-rose-600 hover:bg-rose-700 text-white'
-                              : 'bg-amber-600 hover:bg-amber-700 text-white'
-                          }`}
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                          <span>Eliminar E-mail</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleTrustSender(selectedMessage.fromEmail)}
-                          className="px-2.5 py-1.5 bg-white hover:bg-neutral-100 text-neutral-700 border border-neutral-300 rounded-xl text-[11px] font-semibold transition cursor-pointer"
-                          title="Confiar neste remetente e ocultar alertas futuros"
-                        >
-                          Confiar no Remetente
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="pl-1 space-y-1.5 text-xs">
-                      <p className="font-bold text-[11px] uppercase tracking-wider opacity-80">
-                        Motivos identificados pela verificação inteligente:
-                      </p>
-                      <ul className="space-y-1">
-                        {sec.reasons.map((reason, idx) => (
-                          <li key={idx} className="flex items-start space-x-2 leading-relaxed">
-                            <span className={`font-bold mt-0.5 ${isHigh ? 'text-rose-600' : 'text-amber-600'}`}>•</span>
-                            <span>{reason}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    <div
-                      className={`p-2.5 rounded-xl border text-[11px] flex items-start space-x-2 ${
-                        isHigh
-                          ? 'bg-rose-100/70 border-rose-200 text-rose-900'
-                          : 'bg-amber-100/70 border-amber-200 text-amber-900'
-                      }`}
-                    >
-                      <ShieldCheck className="w-4 h-4 shrink-0 mt-0.5" />
-                      <div className="space-y-0.5">
-                        <span className="font-bold block">Recomendações de Proteção WEHOSTHERE:</span>
-                        <span>{sec.tips.join(' ')}</span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })()}
-
-              {/* AI Assistant Smart Bar (Clean Minimalist) */}
-              <div className="bg-neutral-900 rounded-2xl px-3 py-2 text-white shadow-sm border border-neutral-800 space-y-2.5">
-                <div className="flex flex-wrap items-center justify-between gap-1.5">
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    {/* Tradução compacta (PT / EN) */}
-                    <div className="flex items-center bg-white/10 border border-white/10 rounded-xl p-0.5">
-                      <span className="px-1.5 text-neutral-400 flex items-center" title="Traduzir e-mail">
-                        <Globe className="h-3.5 w-3.5" />
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => handleTranslateEmail('pt')}
-                        disabled={isTranslatingEmail !== null}
-                        className={`px-2 py-1 rounded-lg text-[11px] font-semibold transition flex items-center gap-1 cursor-pointer ${
-                          translatedEmail?.msgId === selectedMessage.id && translatedEmail?.lang === 'pt'
-                            ? 'bg-white text-neutral-900'
-                            : 'text-white/85 hover:bg-white/15'
-                        }`}
-                        title="Traduzir e-mail para Português"
-                      >
-                        {isTranslatingEmail === 'pt' && <Loader2 className="h-3 w-3 animate-spin" />}
-                        <span>PT</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleTranslateEmail('en')}
-                        disabled={isTranslatingEmail !== null}
-                        className={`px-2 py-1 rounded-lg text-[11px] font-semibold transition flex items-center gap-1 cursor-pointer ${
-                          translatedEmail?.msgId === selectedMessage.id && translatedEmail?.lang === 'en'
-                            ? 'bg-white text-neutral-900'
-                            : 'text-white/85 hover:bg-white/15'
-                        }`}
-                        title="Traduzir e-mail para Inglês (English)"
-                      >
-                        {isTranslatingEmail === 'en' && <Loader2 className="h-3 w-3 animate-spin" />}
-                        <span>EN</span>
-                      </button>
-                      {translatedEmail?.msgId === selectedMessage.id && (
-                        <button
-                          type="button"
-                          onClick={() => setTranslatedEmail(null)}
-                          className="px-1.5 py-1 rounded-lg text-[10px] font-medium text-neutral-300 hover:text-white hover:bg-white/10 transition cursor-pointer"
-                          title="Voltar ao idioma original"
-                        >
-                          Original
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Ouvir E-mail (Ícone) */}
-                    <button
-                      type="button"
-                      onClick={() => handleSpeakEmailText('email')}
-                      className={`p-2 rounded-xl transition flex items-center justify-center cursor-pointer border ${
-                        isSpeakingEmail && speakingSource === 'email'
-                          ? 'bg-white text-neutral-900 border-white'
-                          : 'bg-white/10 hover:bg-white/20 border-white/10 text-white'
-                      }`}
-                      title={isSpeakingEmail && speakingSource === 'email' ? 'A ouvir e-mail...' : 'Ouvir e-mail em áudio'}
-                      aria-label="Ouvir e-mail"
-                    >
-                      {isSpeakingEmail && speakingSource === 'email' ? (
-                        <Volume2 className="h-3.5 w-3.5 animate-pulse" />
-                      ) : (
-                        <Headphones className="h-3.5 w-3.5" />
-                      )}
-                    </button>
-
-                    {/* Resumir com IA (Ícone) */}
-                    <button
-                      type="button"
-                      onClick={handleSummarizeWithAI}
-                      disabled={isGeneratingSummary}
-                      className="p-2 bg-white/10 hover:bg-white/20 border border-white/10 text-white rounded-xl transition flex items-center justify-center disabled:opacity-50 cursor-pointer"
-                      title={isGeneratingSummary ? 'A resumir...' : 'Resumir e-mail'}
-                      aria-label="Resumir e-mail"
-                    >
-                      {isGeneratingSummary ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Lightbulb className="h-3.5 w-3.5" />}
-                    </button>
-                  </div>
-
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => handleGenerateAIReply('quick_accept')}
-                      disabled={isGeneratingReply}
-                      className="px-3 py-1.5 bg-white hover:bg-neutral-100 text-neutral-900 rounded-xl text-[11px] font-semibold transition shadow-xs cursor-pointer"
-                    >
-                      Confirmar
-                    </button>
-                  </div>
-                </div>
-
-                {/* Mini Player de Áudio do E-mail (Quando a leitura por voz está ativa) */}
-                {isSpeakingEmail && speakingSource === 'email' && (
-                  <div className="p-3 bg-white/[0.08] rounded-xl border border-emerald-500/30 flex flex-wrap items-center justify-between gap-2 animate-in fade-in duration-200">
-                    <div className="flex items-center space-x-2.5 min-w-0">
-                      <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-emerald-400 shrink-0">
-                        <Volume2 className={`h-4 w-4 ${!isPausedSpeech ? 'animate-pulse' : ''}`} />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-extrabold text-white truncate">
-                            {isPausedSpeech ? 'Leitura em Áudio Pausada' : 'A Ler E-mail em Voz Alta'}
-                          </span>
-                          <span className="px-1.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 text-[10px] font-extrabold">
-                            {speechSpeed}x
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-neutral-300 truncate">
-                          {selectedMessage.subject || '(Sem assunto)'} — {selectedMessage.fromName || selectedMessage.fromEmail}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center space-x-1.5">
-                      <button
-                        type="button"
-                        onClick={handleCycleSpeechSpeed}
-                        className="px-2.5 py-1 bg-white/10 hover:bg-white/20 text-white rounded-lg text-[11px] font-extrabold transition cursor-pointer border border-white/10"
-                        title="Alterar velocidade de leitura (1x, 1.25x, 1.5x)"
-                      >
-                        {speechSpeed}x
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleTogglePauseEmailSpeech}
-                        className="px-2.5 py-1 bg-emerald-500 hover:bg-emerald-400 text-neutral-950 rounded-lg text-[11px] font-extrabold transition cursor-pointer flex items-center gap-1"
-                        title={isPausedSpeech ? 'Continuar leitura' : 'Pausar leitura'}
-                      >
-                        {isPausedSpeech ? <Play className="h-3 w-3 fill-current" /> : <Pause className="h-3 w-3 fill-current" />}
-                        <span>{isPausedSpeech ? 'Continuar' : 'Pausar'}</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleStopEmailSpeech}
-                        className="px-2.5 py-1 bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 border border-rose-500/30 rounded-lg text-[11px] font-bold transition cursor-pointer flex items-center gap-1"
-                        title="Parar leitura"
-                      >
-                        <Square className="h-3 w-3 fill-current" />
-                        <span>Parar</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* AI Summary Box */}
-                {aiSummary && (() => {
-                  const cleaned = cleanAiText(aiSummary);
-                  const rawLines = cleaned
-                    .split(/\n+/)
-                    .map(l => l.trim())
-                    .filter(Boolean);
-
-                  const bulletLines: string[] = [];
-                  let actionLine = '';
-
-                  for (const line of rawLines) {
-                    const lower = line.toLowerCase();
-                    if (lower.includes('resumo inteligente da mensagem')) {
-                      continue;
-                    }
-                    if (lower.startsWith('💡') || lower.includes('ação recomendada:')) {
-                      actionLine = line.replace(/^💡\s*/i, '').replace(/^ação recomendada:\s*/i, '').trim();
-                    } else {
-                      bulletLines.push(line.replace(/^[•\-\*]\s*/, '').trim());
-                    }
-                  }
-
-                  return (
-                    <div className="p-3.5 sm:p-4 bg-white/[0.07] rounded-xl border border-white/15 text-xs text-neutral-100 relative space-y-2.5">
-                      <div className="flex items-center justify-between pr-6">
-                        <div className="flex items-center space-x-2">
-                          <Pin className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
-                          <span className="font-bold text-white tracking-wide text-xs sm:text-[13px]">
-                            Resumo Inteligente da Mensagem
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setAiSummary(null)}
-                          className="absolute top-3 right-3 text-white/50 hover:text-white transition p-1 rounded-lg hover:bg-white/10"
-                          title="Fechar resumo"
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-
-                      <ul className="space-y-1.5 pl-1">
-                        {bulletLines.map((item, idx) => (
-                          <li key={idx} className="flex items-start space-x-2 text-neutral-200 leading-relaxed">
-                            <span className="text-emerald-400 font-bold mt-0.5 shrink-0">•</span>
-                            <span className="flex-1">{item}</span>
-                          </li>
-                        ))}
-                      </ul>
-
-                      {actionLine && (
-                        <div className="pt-2 mt-2 border-t border-white/10 flex items-start space-x-2 text-[11px] sm:text-xs text-amber-200/95">
-                          <Lightbulb className="h-3.5 w-3.5 text-amber-400 shrink-0 mt-0.5" />
-                          <div>
-                            <span className="font-bold text-white">Ação recomendada: </span>
-                            <span>{actionLine}</span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()}
-              </div>
-
-              {/* Body card */}
-              <div className="bg-white rounded-3xl p-4 sm:p-6 shadow-2xs border border-neutral-200 flex-1 space-y-4">
-                {translatedEmail && translatedEmail.msgId === selectedMessage.id ? (
-                  <div className="space-y-3">
-                    <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 bg-emerald-50/90 border border-emerald-200 rounded-2xl text-xs">
-                      <div className="flex items-center space-x-2 text-emerald-900 font-bold">
-                        <Languages className="h-4 w-4 text-emerald-700 shrink-0" />
-                        <span>
-                          {translatedEmail.lang === 'pt'
-                            ? 'E-mail traduzido para Português (PT)'
-                            : 'E-mail traduzido para Inglês (EN)'}
-                        </span>
-                      </div>
-                      <div className="flex items-center space-x-1.5">
-                        <button
-                          type="button"
-                          onClick={() => handleTranslateEmail(translatedEmail.lang === 'pt' ? 'en' : 'pt')}
-                          disabled={isTranslatingEmail !== null}
-                          className="px-2.5 py-1 bg-white hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg text-[11px] font-bold transition cursor-pointer inline-flex items-center gap-1"
-                        >
-                          <Globe className="h-3 w-3 text-emerald-600" />
-                          <span>{translatedEmail.lang === 'pt' ? 'Ver em Inglês' : 'Ver em Português'}</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setTranslatedEmail(null)}
-                          className="px-2.5 py-1 bg-neutral-900 hover:bg-neutral-800 text-white rounded-lg text-[11px] font-bold transition cursor-pointer"
-                        >
-                          Ver Original
-                        </button>
-                      </div>
-                    </div>
-                    <div className="whitespace-pre-line text-sm text-neutral-900 leading-relaxed font-sans font-normal">
-                      {translatedEmail.body}
-                    </div>
-                  </div>
-                ) : (() => {
-                  let cleanBody = stripRawHeaders(selectedMessage.body);
-                  if (cleanBody.includes('&lt;') && cleanBody.includes('&gt;')) {
-                    cleanBody = decodeHtmlEntities(cleanBody);
-                  }
-                  const isHtml = /<[a-z][\s\S]*>/i.test(cleanBody);
-                  if (isHtml) {
-                    cleanBody = rewriteEmailImages(cleanBody, selectedMessage.attachments);
-                  }
-                  return isHtml ? (
-                    <div 
-                      className="prose prose-sm max-w-none text-neutral-900 font-sans break-words overflow-x-auto leading-relaxed [&_p]:my-1.5 [&_div]:my-1 [&_*]:text-neutral-900 [&_img]:max-w-full [&_img]:h-auto [&_img]:inline-block"
-                      ref={(el) => {
-                        // Ocultar imagens que mesmo assim não carregam (evita o ícone de imagem quebrada)
-                        if (!el) return;
-                        el.querySelectorAll('img').forEach((img) => {
-                          img.onerror = () => { img.style.display = 'none'; };
-                          if (img.complete && img.naturalWidth === 0 && img.getAttribute('src')) {
-                            img.style.display = 'none';
-                          }
-                        });
-                      }}
-                      dangerouslySetInnerHTML={{ __html: cleanBody }}
-                    />
-                  ) : (
-                    <div className="whitespace-pre-line text-sm text-neutral-900 leading-relaxed font-sans font-normal">
-                      {cleanBody}
-                    </div>
-                  );
-                })()}
-
-                {/* Exibição de Ficheiros Anexados */}
-                {selectedMessage.attachments && selectedMessage.attachments.length > 0 && (
-                  <div className="mt-6 pt-4 border-t border-neutral-100 space-y-2">
-                    <span className="text-xs font-bold text-neutral-800 flex items-center space-x-1.5">
-                      <Paperclip className="h-4 w-4 text-neutral-600" />
-                      <span>{selectedMessage.attachments.length} Ficheiro(s) Anexado(s)</span>
-                    </span>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {selectedMessage.attachments.map((att, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => {
-                            const attUrl = att.url && att.url.startsWith('/api/webmail/attachment') && !att.url.includes('&password=') && mailboxPassword
-                              ? `${att.url}&password=${encodeURIComponent(mailboxPassword)}`
-                              : att.url;
-                            setPreviewAttachment({ ...att, url: attUrl });
-                          }}
-                          className="p-2.5 bg-neutral-50 hover:bg-neutral-100 rounded-xl border border-neutral-200 flex items-center justify-between transition group cursor-pointer"
-                        >
-                          <div className="flex items-center space-x-2 truncate">
-                            <FileText className="h-4 w-4 text-neutral-600 shrink-0" />
-                            <span className="text-xs font-bold text-neutral-800 truncate group-hover:text-black">{att.name}</span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            {att.type?.startsWith('image/') && (
-                              <ImageIcon className="h-3.5 w-3.5 text-neutral-400" />
-                            )}
-                            <Download className="h-3.5 w-3.5 text-neutral-400 group-hover:text-neutral-900 shrink-0" />
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Quick Reply Form */}
-              <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-2xs border border-neutral-200 space-y-3">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="text-xs font-bold text-neutral-700 flex items-center space-x-1.5">
-                    <Reply className="h-4 w-4 text-neutral-600" />
-                    <span className="truncate">Resposta rápida para <span className="font-mono text-neutral-900">{selectedMessage.fromEmail}</span></span>
-                  </span>
-                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-1.5">
                     <button
                       type="button"
                       onClick={() => handleGenerateAIReply('smart', hasAiGeneratedReply && !!replyText.trim())}
                       disabled={isGeneratingReply}
-                      className="px-2.5 py-1 rounded-xl text-[11px] font-bold transition cursor-pointer flex items-center gap-1.5 border border-primary-600/30 bg-gradient-to-r from-primary-600 to-indigo-600 hover:from-primary-700 hover:to-indigo-700 text-white shadow-xs disabled:opacity-50 active:scale-95"
+                      className="px-3 py-1 rounded-xl text-[11px] font-semibold transition cursor-pointer flex items-center gap-1.5 border border-neutral-900 bg-neutral-900 hover:bg-black text-white shadow-2xs disabled:opacity-50 active:scale-95"
                       title={
                         hasAiGeneratedReply && replyText.trim()
                           ? 'Gerar uma versão alternativa diferente da resposta atual'
-                          : 'A IA lê este e-mail e gera uma resposta completa com 1 clique'
+                          : 'Gerar resposta automática com base no e-mail'
                       }
                     >
                       {isGeneratingReply ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin text-white" />
                       ) : hasAiGeneratedReply && replyText.trim() ? (
-                        <RefreshCw className="h-3.5 w-3.5 text-amber-300" />
+                        <RefreshCw className="h-3.5 w-3.5 text-white" />
                       ) : (
-                        <Sparkles className="h-3.5 w-3.5 text-amber-300" />
+                        <Wand2 className="h-3.5 w-3.5 text-white" />
                       )}
                       <span>
                         {isGeneratingReply
-                          ? 'A gerar resposta...'
+                          ? 'A gerar...'
                           : hasAiGeneratedReply && replyText.trim()
-                          ? `Gerar Outra (v${(aiReplyVariation % 3) + 1})`
-                          : 'Gerar Resposta IA'}
+                          ? `Outra (v${(aiReplyVariation % 3) + 1})`
+                          : 'Gerar Resposta'}
                       </span>
                     </button>
                     <button
@@ -5704,22 +5250,22 @@ function WebmailContent() {
                           startVoiceRecording('quick_reply');
                         }
                       }}
-                      className={`px-2.5 py-1 rounded-xl text-[11px] font-bold transition cursor-pointer flex items-center gap-1.5 border ${
+                      className={`px-2.5 py-1 rounded-xl text-[11px] font-semibold transition cursor-pointer flex items-center gap-1.5 border ${
                         isRecordingVoice && voiceTargetMode === 'quick_reply'
-                          ? 'bg-rose-600 text-white border-rose-600 animate-pulse shadow-sm'
-                          : 'bg-neutral-900 hover:bg-black text-white border-neutral-900'
+                          ? 'bg-neutral-900 text-white border-neutral-900 animate-pulse shadow-sm'
+                          : 'bg-white hover:bg-neutral-100 text-neutral-800 border-neutral-200'
                       }`}
-                      title="Fale e a IA transforma a sua voz num e-mail profissional"
+                      title="Ditar resposta por voz"
                     >
                       {isRecordingVoice && voiceTargetMode === 'quick_reply' ? (
                         <>
                           <MicOff className="h-3.5 w-3.5 text-white" />
-                          <span>Parar Voz</span>
+                          <span>Parar</span>
                         </>
                       ) : (
                         <>
-                          <Mic className="h-3.5 w-3.5 text-emerald-400" />
-                          <span>Voice to Email</span>
+                          <Mic className="h-3.5 w-3.5 text-neutral-600" />
+                          <span>Voz</span>
                         </>
                       )}
                     </button>
@@ -5727,56 +5273,51 @@ function WebmailContent() {
                       type="button"
                       onClick={() => handleSpeakEmailText('quick_reply')}
                       disabled={!replyText.trim() && !(isSpeakingEmail && speakingSource === 'quick_reply')}
-                      className={`px-2.5 py-1 rounded-xl text-[11px] font-bold transition cursor-pointer flex items-center gap-1.5 border disabled:opacity-40 ${
+                      className={`px-2.5 py-1 rounded-xl text-[11px] font-semibold transition cursor-pointer flex items-center gap-1.5 border disabled:opacity-40 ${
                         isSpeakingEmail && speakingSource === 'quick_reply'
-                          ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
-                          : 'bg-neutral-100 hover:bg-neutral-200 text-neutral-800 border-neutral-200'
+                          ? 'bg-neutral-900 text-white border-neutral-900 shadow-sm'
+                          : 'bg-white hover:bg-neutral-100 text-neutral-800 border-neutral-200'
                       }`}
-                      title="Ouvir em áudio a resposta escrita antes de enviar"
+                      title="Ouvir em áudio a resposta escrita"
                     >
                       {isSpeakingEmail && speakingSource === 'quick_reply' ? (
                         <>
                           <VolumeX className="h-3.5 w-3.5 animate-pulse" />
-                          <span>Parar Áudio</span>
+                          <span>Parar</span>
                         </>
                       ) : (
                         <>
-                          <Volume2 className="h-3.5 w-3.5 text-neutral-700" />
+                          <Volume2 className="h-3.5 w-3.5 text-neutral-600" />
                           <span>Ouvir</span>
                         </>
                       )}
                     </button>
                     <div className="inline-flex items-center rounded-xl border border-neutral-200 bg-neutral-100 p-0.5">
+                      <span className="px-1.5 text-neutral-500 flex items-center" title="Traduzir resposta">
+                        <Languages className="h-3 w-3" />
+                      </span>
                       <button
                         type="button"
                         onClick={() => handleTranslateQuickReply('pt')}
                         disabled={isTranslatingQuickReply !== null || !replyText.trim()}
-                        className="px-2 py-0.5 rounded-lg text-[10px] font-bold text-neutral-700 hover:bg-white hover:text-emerald-700 transition flex items-center gap-1 disabled:opacity-40 cursor-pointer"
+                        className="px-2 py-0.5 rounded-lg text-[10px] font-semibold text-neutral-700 hover:bg-white hover:text-neutral-900 transition flex items-center gap-1 disabled:opacity-40 cursor-pointer"
                         title="Traduzir esta resposta para Português"
                       >
-                        {isTranslatingQuickReply === 'pt' ? (
-                          <Loader2 className="h-3 w-3 animate-spin text-emerald-600" />
-                        ) : (
-                          <Languages className="h-3 w-3 text-emerald-600" />
-                        )}
+                        {isTranslatingQuickReply === 'pt' && <Loader2 className="h-3 w-3 animate-spin text-neutral-700" />}
                         <span>PT</span>
                       </button>
                       <button
                         type="button"
                         onClick={() => handleTranslateQuickReply('en')}
                         disabled={isTranslatingQuickReply !== null || !replyText.trim()}
-                        className="px-2 py-0.5 rounded-lg text-[10px] font-bold text-neutral-700 hover:bg-white hover:text-indigo-700 transition flex items-center gap-1 disabled:opacity-40 cursor-pointer"
+                        className="px-2 py-0.5 rounded-lg text-[10px] font-semibold text-neutral-700 hover:bg-white hover:text-neutral-900 transition flex items-center gap-1 disabled:opacity-40 cursor-pointer"
                         title="Traduzir esta resposta para Inglês"
                       >
-                        {isTranslatingQuickReply === 'en' ? (
-                          <Loader2 className="h-3 w-3 animate-spin text-indigo-600" />
-                        ) : (
-                          <Languages className="h-3 w-3 text-indigo-600" />
-                        )}
+                        {isTranslatingQuickReply === 'en' && <Loader2 className="h-3 w-3 animate-spin text-neutral-700" />}
                         <span>EN</span>
                       </button>
                     </div>
-                    <span className="text-[10px] text-neutral-400 hidden sm:inline">Shift + Enter para nova linha</span>
+                    <span className="text-[11px] text-neutral-400 hidden sm:inline">Shift + Enter para nova linha</span>
                   </div>
                 </div>
 
