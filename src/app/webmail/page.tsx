@@ -5344,62 +5344,48 @@ function WebmailContent() {
                 );
               })()}
 
-              {/* AI Assistant Smart Bar (Tesla Minimalist Dark Card) */}
-              <div className="bg-neutral-900 rounded-2xl p-3.5 sm:p-4 text-white shadow-sm border border-neutral-800 space-y-3">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center space-x-2 text-xs font-bold">
-                    <Sparkles className="h-4 w-4 text-neutral-300" />
-                    <span>IA Integrado</span>
-                  </div>
-
+              {/* AI Assistant Smart Bar (Clean Minimalist) */}
+              <div className="bg-neutral-900 rounded-2xl px-3 py-2 text-white shadow-sm border border-neutral-800 space-y-2.5">
+                <div className="flex flex-wrap items-center justify-between gap-1.5">
                   <div className="flex flex-wrap items-center gap-1.5">
-                    {/* Seletor de Tradução Instantânea (Português / Inglês) */}
-                    <div className="flex items-center bg-white/10 border border-white/15 rounded-xl p-0.5 mr-0.5">
-                      <span className="text-[10px] font-bold text-neutral-300 px-2 flex items-center gap-1">
-                        <Globe className="h-3 w-3 text-emerald-400 shrink-0" />
-                        <span className="hidden sm:inline">Traduzir:</span>
+                    {/* Tradução compacta (PT / EN) */}
+                    <div className="flex items-center bg-white/10 border border-white/10 rounded-xl p-0.5">
+                      <span className="px-1.5 text-neutral-400 flex items-center" title="Traduzir e-mail">
+                        <Globe className="h-3.5 w-3.5" />
                       </span>
                       <button
                         type="button"
                         onClick={() => handleTranslateEmail('pt')}
                         disabled={isTranslatingEmail !== null}
-                        className={`px-2 py-1 rounded-lg text-[11px] font-bold transition flex items-center space-x-1 cursor-pointer ${
+                        className={`px-2 py-1 rounded-lg text-[11px] font-semibold transition flex items-center gap-1 cursor-pointer ${
                           translatedEmail?.msgId === selectedMessage.id && translatedEmail?.lang === 'pt'
-                            ? 'bg-emerald-500 text-white shadow-xs'
-                            : 'text-white/90 hover:bg-white/15'
+                            ? 'bg-white text-neutral-900'
+                            : 'text-white/85 hover:bg-white/15'
                         }`}
                         title="Traduzir e-mail para Português"
                       >
-                        {isTranslatingEmail === 'pt' ? (
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                        ) : (
-                          <Languages className="h-3 w-3 opacity-85" />
-                        )}
-                        <span>Português</span>
+                        {isTranslatingEmail === 'pt' && <Loader2 className="h-3 w-3 animate-spin" />}
+                        <span>PT</span>
                       </button>
                       <button
                         type="button"
                         onClick={() => handleTranslateEmail('en')}
                         disabled={isTranslatingEmail !== null}
-                        className={`px-2 py-1 rounded-lg text-[11px] font-bold transition flex items-center space-x-1 cursor-pointer ${
+                        className={`px-2 py-1 rounded-lg text-[11px] font-semibold transition flex items-center gap-1 cursor-pointer ${
                           translatedEmail?.msgId === selectedMessage.id && translatedEmail?.lang === 'en'
-                            ? 'bg-emerald-500 text-white shadow-xs'
-                            : 'text-white/90 hover:bg-white/15'
+                            ? 'bg-white text-neutral-900'
+                            : 'text-white/85 hover:bg-white/15'
                         }`}
                         title="Traduzir e-mail para Inglês (English)"
                       >
-                        {isTranslatingEmail === 'en' ? (
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                        ) : (
-                          <Languages className="h-3 w-3 opacity-85" />
-                        )}
-                        <span>Inglês</span>
+                        {isTranslatingEmail === 'en' && <Loader2 className="h-3 w-3 animate-spin" />}
+                        <span>EN</span>
                       </button>
                       {translatedEmail?.msgId === selectedMessage.id && (
                         <button
                           type="button"
                           onClick={() => setTranslatedEmail(null)}
-                          className="px-2 py-1 rounded-lg text-[10px] font-semibold text-amber-300 hover:bg-white/10 transition cursor-pointer"
+                          className="px-1.5 py-1 rounded-lg text-[10px] font-medium text-neutral-300 hover:text-white hover:bg-white/10 transition cursor-pointer"
                           title="Voltar ao idioma original"
                         >
                           Original
@@ -5407,39 +5393,44 @@ function WebmailContent() {
                       )}
                     </div>
 
-                    {/* Botão Ouvir E-mail em Áudio (Text-to-Speech) */}
+                    {/* Ouvir E-mail (Ícone) */}
                     <button
                       type="button"
                       onClick={() => handleSpeakEmailText('email')}
-                      className={`px-2.5 py-1.5 rounded-xl text-[11px] font-bold transition flex items-center space-x-1.5 cursor-pointer border ${
+                      className={`p-2 rounded-xl transition flex items-center justify-center cursor-pointer border ${
                         isSpeakingEmail && speakingSource === 'email'
-                          ? 'bg-emerald-500 text-neutral-950 border-emerald-400 shadow-sm'
+                          ? 'bg-white text-neutral-900 border-white'
                           : 'bg-white/10 hover:bg-white/20 border-white/10 text-white'
                       }`}
-                      title="Ouvir este e-mail em áudio"
+                      title={isSpeakingEmail && speakingSource === 'email' ? 'A ouvir e-mail...' : 'Ouvir e-mail em áudio'}
+                      aria-label="Ouvir e-mail"
                     >
                       {isSpeakingEmail && speakingSource === 'email' ? (
-                        <Volume2 className="h-3.5 w-3.5 animate-pulse text-neutral-950" />
+                        <Volume2 className="h-3.5 w-3.5 animate-pulse" />
                       ) : (
-                        <Headphones className="h-3.5 w-3.5 text-emerald-400" />
+                        <Headphones className="h-3.5 w-3.5" />
                       )}
-                      <span>{isSpeakingEmail && speakingSource === 'email' ? 'A Ouvir...' : 'Ouvir E-mail'}</span>
                     </button>
 
+                    {/* Resumir com IA (Ícone) */}
                     <button
                       type="button"
                       onClick={handleSummarizeWithAI}
                       disabled={isGeneratingSummary}
-                      className="px-2.5 py-1.5 bg-white/10 hover:bg-white/20 border border-white/10 text-white rounded-xl text-[11px] font-bold transition flex items-center space-x-1 disabled:opacity-50 cursor-pointer"
+                      className="p-2 bg-white/10 hover:bg-white/20 border border-white/10 text-white rounded-xl transition flex items-center justify-center disabled:opacity-50 cursor-pointer"
+                      title={isGeneratingSummary ? 'A resumir...' : 'Resumir e-mail'}
+                      aria-label="Resumir e-mail"
                     >
-                      {isGeneratingSummary ? <Loader2 className="h-3 w-3 animate-spin" /> : <Lightbulb className="h-3 w-3 text-neutral-300" />}
-                      <span>{isGeneratingSummary ? 'Resumindo...' : 'Resumir'}</span>
+                      {isGeneratingSummary ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Lightbulb className="h-3.5 w-3.5" />}
                     </button>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
                     <button
                       type="button"
                       onClick={() => handleGenerateAIReply('formal')}
                       disabled={isGeneratingReply}
-                      className="px-2.5 py-1.5 bg-white/10 hover:bg-white/20 border border-white/10 text-white rounded-xl text-[11px] font-semibold transition cursor-pointer"
+                      className="px-2.5 py-1.5 bg-white/10 hover:bg-white/20 border border-white/10 text-white rounded-xl text-[11px] font-medium transition cursor-pointer"
                     >
                       Formal
                     </button>
@@ -5447,7 +5438,7 @@ function WebmailContent() {
                       type="button"
                       onClick={() => handleGenerateAIReply('friendly')}
                       disabled={isGeneratingReply}
-                      className="px-2.5 py-1.5 bg-white/10 hover:bg-white/20 border border-white/10 text-white rounded-xl text-[11px] font-semibold transition cursor-pointer"
+                      className="px-2.5 py-1.5 bg-white/10 hover:bg-white/20 border border-white/10 text-white rounded-xl text-[11px] font-medium transition cursor-pointer"
                     >
                       Amigável
                     </button>
@@ -5455,7 +5446,7 @@ function WebmailContent() {
                       type="button"
                       onClick={() => handleGenerateAIReply('quick_accept')}
                       disabled={isGeneratingReply}
-                      className="px-3 py-1.5 bg-white hover:bg-neutral-100 text-neutral-900 rounded-xl text-[11px] font-bold transition shadow-xs cursor-pointer"
+                      className="px-3 py-1.5 bg-white hover:bg-neutral-100 text-neutral-900 rounded-xl text-[11px] font-semibold transition shadow-xs cursor-pointer"
                     >
                       Confirmar
                     </button>
