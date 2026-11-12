@@ -107,7 +107,7 @@ function setupQuillFormats(Quill: any) {
 const ReactQuill = dynamic(
   async () => {
     const rq = await import('react-quill');
-    const Quill = (rq as any).Quill;
+    const Quill = (rq as any).Quill || (rq as any).default?.Quill;
     if (Quill) {
       setupQuillFormats(Quill);
     }
@@ -152,7 +152,15 @@ function prepareEmailBodyForSending(html: string): string {
     // Alinhamentos
     .replace(/class="([^"]*)ql-align-center([^"]*)"/gi, 'class="$1$2" style="text-align: center;"')
     .replace(/class="([^"]*)ql-align-right([^"]*)"/gi, 'class="$1$2" style="text-align: right;"')
-    .replace(/class="([^"]*)ql-align-justify([^"]*)"/gi, 'class="$1$2" style="text-align: justify;"');
+    .replace(/class="([^"]*)ql-align-justify([^"]*)"/gi, 'class="$1$2" style="text-align: justify;"')
+    // Unificar atributos style duplicados na mesma tag HTML (ex: cor + fonte + tamanho)
+    .replace(/<([a-z0-9]+)\b([^>]*)>/gi, (tag, tagName, attrs) => {
+      const styleMatches = [...attrs.matchAll(/\sstyle="([^"]*)"/gi)];
+      if (styleMatches.length <= 1) return tag;
+      const mergedStyle = styleMatches.map(m => m[1].trim().replace(/;$/, '')).filter(Boolean).join('; ');
+      const cleanedAttrs = attrs.replace(/\sstyle="[^"]*"/gi, '');
+      return `<${tagName}${cleanedAttrs} style="${mergedStyle};">`;
+    });
 }
 
 function decodeHtmlEntities(str: string): string {
@@ -640,7 +648,7 @@ function WebmailContent() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       import('react-quill').then((rq) => {
-        const Quill = (rq as any).Quill;
+        const Quill = (rq as any).Quill || (rq as any).default?.Quill;
         if (Quill) {
           setupQuillFormats(Quill);
         }
@@ -6865,7 +6873,8 @@ function WebmailContent() {
                       .webmail-quill-editor .ql-editor [style*="font-size: 32px"] { font-size: 32px !important; }
 
                       /* Preservar cores e realce selecionados pelo usuário */
-                      .webmail-quill-editor .ql-editor [style*="color"] {
+                      .webmail-quill-editor .ql-editor [style*="color"],
+                      .webmail-quill-editor .ql-editor [style*="color"] * {
                         -webkit-text-fill-color: currentColor !important;
                       }
                       .webmail-quill-editor .ql-editor [style*="background-color"] {

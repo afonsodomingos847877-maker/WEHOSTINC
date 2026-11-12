@@ -233,11 +233,11 @@ select optgroup {
   border-color: #e5e7eb !important;
 }
 
-.ql-toolbar.ql-snow .ql-stroke {
+.ql-toolbar.ql-snow .ql-stroke:not(.ql-color-label) {
   stroke: #374151 !important;
 }
 
-.ql-toolbar.ql-snow .ql-fill {
+.ql-toolbar.ql-snow .ql-fill:not(.ql-color-label) {
   fill: #374151 !important;
 }
 
