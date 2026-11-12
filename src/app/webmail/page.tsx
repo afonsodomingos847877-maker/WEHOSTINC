@@ -478,6 +478,7 @@ function WebmailContent() {
 
   // Efeito máquina de escrever (Typewriter) para o placeholder de endereço de e-mail
   useEffect(() => {
+    if (mailboxPassword && !showWebmailLogin) return;
     const placeholders = [
       'colaborador@suaempresa.co.mz',
       'direccao@suaempresa.com',
@@ -516,7 +517,7 @@ function WebmailContent() {
 
     timeoutId = setTimeout(tick, 300);
     return () => clearTimeout(timeoutId);
-  }, []);
+  }, [mailboxPassword, showWebmailLogin]);
 
   const [currentFolder, setCurrentFolder] = useState<'inbox' | 'notifications' | 'sent' | 'starred' | 'trash' | 'drafts' | 'scheduled'>('inbox');
   const [messages, setMessages] = useState<WebmailMessage[]>([]);
@@ -6602,8 +6603,16 @@ function WebmailContent() {
                     </div>
                   )}
 
-                  <div 
-                    onClick={() => {
+                  <div
+                    onMouseDownCapture={(e) => {
+                      const target = e.target as HTMLElement | null;
+                      if (target?.closest('.ql-toolbar') && !target.closest('input, select, textarea')) {
+                        e.preventDefault();
+                      }
+                    }}
+                    onClick={(e) => {
+                      const target = e.target as HTMLElement | null;
+                      if (target?.closest('.ql-toolbar')) return;
                       if (typeof document !== 'undefined') {
                         const ql = document.querySelector('.webmail-quill-editor .ql-editor') as HTMLElement;
                         if (ql && document.activeElement !== ql) {
