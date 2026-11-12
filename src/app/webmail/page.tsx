@@ -504,11 +504,26 @@ function WebmailContent() {
     return () => clearTimeout(timeoutId);
   }, []);
 
-  const [currentFolder, setCurrentFolder] = useState<'inbox' | 'sent' | 'starred' | 'trash' | 'drafts' | 'scheduled'>('inbox');
+  const [currentFolder, setCurrentFolder] = useState<'inbox' | 'notifications' | 'sent' | 'starred' | 'trash' | 'drafts' | 'scheduled'>('inbox');
   const [messages, setMessages] = useState<WebmailMessage[]>([]);
   const [selectedMessage, setSelectedMessage] = useState<WebmailMessage | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [deleteConfirmModal, setDeleteConfirmModal] = useState<{ isOpen: boolean; msgId: string; subject: string; isPermanent: boolean } | null>(null);
+  const [deleteConfirmModal, setDeleteConfirmModal] = useState<{ isOpen: boolean; msgId: string; msgIds?: string[]; subject: string; isPermanent: boolean } | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+
+  const isNotificationEmail = (msg: WebmailMessage): boolean => {
+    const from = (msg.fromEmail || '').trim().toLowerCase();
+    return (
+      from.startsWith('noreply@') ||
+      from.startsWith('no-reply@') ||
+      from.startsWith('do-not-reply@') ||
+      from.startsWith('donotreply@') ||
+      from.startsWith('notifications@') ||
+      from.startsWith('notification@') ||
+      from.startsWith('mailer-daemon@')
+    );
+  };
 
   // New email sound detection
   const knownInboxIdsRef = useRef<Set<string>>(new Set());
@@ -1625,6 +1640,7 @@ function WebmailContent() {
   // Dynamic folder counters across folder switches
   const [folderStats, setFolderStats] = useState<{
     inboxUnread: number;
+    notificationsUnread: number;
     starred: number;
     drafts: number;
     scheduled: number;
@@ -1632,6 +1648,7 @@ function WebmailContent() {
     trash: number;
   }>({
     inboxUnread: 0,
+    notificationsUnread: 0,
     starred: 0,
     drafts: 0,
     scheduled: 0,
@@ -1677,8 +1694,9 @@ function WebmailContent() {
 
   // Carregamento com Cache Instantâneo (Stale-While-Revalidate)
   useEffect(() => {
+    setSelectedIds(new Set());
     if (selectedAccountEmail && mailboxPassword) {
-      const folder = currentFolder === 'starred' ? 'inbox' : currentFolder as 'inbox' | 'sent' | 'drafts' | 'trash' | 'scheduled';
+      const folder = (currentFolder === 'starred' || currentFolder === 'notifications') ? 'inbox' : currentFolder as 'inbox' | 'sent' | 'drafts' | 'trash' | 'scheduled';
       
       // 1. EXIBIÇÃO INSTANTÂNEA: Se temos mensagens em cache, exibe imediatamente (0ms)
       const cached = getCachedMessages(selectedAccountEmail, currentFolder);
@@ -1700,7 +1718,7 @@ function WebmailContent() {
       (async () => {
         try {
           const msgs = await webmailManager.getMessages(selectedAccountEmail, mailboxPassword, folder);
-          const filtered = currentFolder === 'starred' ? msgs.filter(m => m.starred) : msgs;
+          const filtered = currentFolder === 'starred' ? msgs.filter(m => m.starred) : currentFolder === 'notifications' ? msgs.filter(m => isNotificationEmail(m)) : currentFolder === 'inbox' ? msgs.filter(m => !isNotificationEmail(m)) : msgs;
           
           // Gravar no cache rápido
           setCachedMessages(selectedAccountEmail, currentFolder, filtered);
@@ -1716,9 +1734,10 @@ function WebmailContent() {
 
           // Atualizar contadores
           if (folder === 'inbox') {
-            const unread = msgs.filter(m => !m.isRead).length;
+            const unread = msgs.filter(m => !m.isRead && !isNotificationEmail(m)).length;
+            const notificationsUnread = msgs.filter(m => !m.isRead && isNotificationEmail(m)).length;
             const starred = msgs.filter(m => m.starred).length;
-            setFolderStats(prev => ({ ...prev, inboxUnread: unread, starred }));
+            setFolderStats(prev => ({ ...prev, inboxUnread: unread, notificationsUnread, starred }));
           } else if (folder === 'sent') {
             setFolderStats(prev => ({ ...prev, sent: msgs.length }));
           } else if (folder === 'trash') {
@@ -1759,9 +1778,9 @@ function WebmailContent() {
 
     const autoSyncTimer = setInterval(() => {
       if (typeof document !== 'undefined' && document.hidden) return;
-      const folder = currentFolder === 'starred' ? 'inbox' : currentFolder as 'inbox' | 'sent' | 'drafts' | 'trash' | 'scheduled';
+      const folder = (currentFolder === 'starred' || currentFolder === 'notifications') ? 'inbox' : currentFolder as 'inbox' | 'sent' | 'drafts' | 'trash' | 'scheduled';
       webmailManager.getMessages(selectedAccountEmail, mailboxPassword, folder).then(msgs => {
-        const filtered = currentFolder === 'starred' ? msgs.filter(m => m.starred) : msgs;
+        const filtered = currentFolder === 'starred' ? msgs.filter(m => m.starred) : currentFolder === 'notifications' ? msgs.filter(m => isNotificationEmail(m)) : currentFolder === 'inbox' ? msgs.filter(m => !isNotificationEmail(m)) : msgs;
         setMessages(prev => {
           const hasNew = prev.length !== filtered.length || (prev[0] && filtered[0] && prev[0].id !== filtered[0].id);
           if (hasNew) {
@@ -1783,19 +1802,21 @@ function WebmailContent() {
   }, [selectedAccountEmail, mailboxPassword, currentFolder]);
 
   const refreshMessages = async () => {
+    setSelectedIds(new Set());
     if (selectedAccountEmail && mailboxPassword) {
       setIsRefreshingWebmail(true);
       try {
-        const folder = currentFolder === 'starred' ? 'inbox' : currentFolder as 'inbox' | 'sent' | 'drafts' | 'trash' | 'scheduled';
+        const folder = (currentFolder === 'starred' || currentFolder === 'notifications') ? 'inbox' : currentFolder as 'inbox' | 'sent' | 'drafts' | 'trash' | 'scheduled';
         const msgs = await webmailManager.getMessages(selectedAccountEmail, mailboxPassword, folder);
-        const filtered = currentFolder === 'starred' ? msgs.filter(m => m.starred) : msgs;
+        const filtered = currentFolder === 'starred' ? msgs.filter(m => m.starred) : currentFolder === 'notifications' ? msgs.filter(m => isNotificationEmail(m)) : currentFolder === 'inbox' ? msgs.filter(m => !isNotificationEmail(m)) : msgs;
         setCachedMessages(selectedAccountEmail, currentFolder, filtered);
         setMessages(filtered);
         setLastSyncedTime(new Date());
         if (folder === 'inbox') {
-          const unread = msgs.filter(m => !m.isRead).length;
+          const unread = msgs.filter(m => !m.isRead && !isNotificationEmail(m)).length;
+          const notificationsUnread = msgs.filter(m => !m.isRead && isNotificationEmail(m)).length;
           const starred = msgs.filter(m => m.starred).length;
-          setFolderStats(prev => ({ ...prev, inboxUnread: unread, starred }));
+          setFolderStats(prev => ({ ...prev, inboxUnread: unread, notificationsUnread, starred }));
         } else if (folder === 'scheduled') {
           setFolderStats(prev => ({ ...prev, scheduled: msgs.length }));
         }
@@ -2068,6 +2089,110 @@ function WebmailContent() {
     } catch (err) {
       console.error('[Webmail] Error deleting/moving message:', err);
     } finally {
+      setDeleteConfirmModal(null);
+    }
+  };
+
+  const toggleSelectId = (id: string, e?: React.MouseEvent | React.ChangeEvent) => {
+    if (e) e.stopPropagation();
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = (visibleMsgs: WebmailMessage[]) => {
+    if (visibleMsgs.length === 0) return;
+    const allSelected = visibleMsgs.every(m => selectedIds.has(m.id));
+    if (allSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(visibleMsgs.map(m => m.id)));
+    }
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedIds.size === 0) return;
+    const ids = Array.from(selectedIds);
+    const isPermanent = currentFolder === 'trash';
+    setDeleteConfirmModal({
+      isOpen: true,
+      msgId: ids[0],
+      msgIds: ids,
+      subject: `${ids.length} ${ids.length === 1 ? 'e-mail selecionado' : 'e-mails selecionados'}`,
+      isPermanent,
+    });
+  };
+
+  const executeBulkDelete = async (msgIds: string[]) => {
+    if (msgIds.length === 0) {
+      setDeleteConfirmModal(null);
+      return;
+    }
+    setIsBulkDeleting(true);
+    const idSet = new Set(msgIds);
+    const targetMsgs = messages.filter(m => idSet.has(m.id));
+
+    setMessages(prev => prev.filter(m => !idSet.has(m.id)));
+    if (selectedMessage && idSet.has(selectedMessage.id)) {
+      setSelectedMessage(null);
+    }
+    setSelectedIds(new Set());
+
+    setFolderStats(prev => {
+      let inboxDelta = 0;
+      let notifDelta = 0;
+      let trashDelta = 0;
+      let sentDelta = 0;
+      let draftsDelta = 0;
+      let starredDelta = 0;
+      for (const m of targetMsgs) {
+        if (m.folder === 'inbox' && !m.isRead) {
+          if (isNotificationEmail(m)) notifDelta += 1;
+          else inboxDelta += 1;
+        }
+        if (m.folder === 'trash') trashDelta -= 1;
+        else trashDelta += 1;
+        if (m.folder === 'sent') sentDelta += 1;
+        if (m.folder === 'drafts') draftsDelta += 1;
+        if (m.starred) starredDelta += 1;
+      }
+      return {
+        ...prev,
+        inboxUnread: Math.max(prev.inboxUnread - inboxDelta, 0),
+        notificationsUnread: Math.max(prev.notificationsUnread - notifDelta, 0),
+        trash: Math.max(prev.trash + trashDelta, 0),
+        sent: Math.max(prev.sent - sentDelta, 0),
+        drafts: Math.max(prev.drafts - draftsDelta, 0),
+        starred: Math.max(prev.starred - starredDelta, 0),
+      };
+    });
+    soundEffects.playDeleteEmailSound();
+
+    try {
+      await Promise.allSettled(
+        targetMsgs.map(msg => {
+          const isAlreadyInTrash = msg.folder === 'trash';
+          const imapFolder =
+            msg.folder === 'sent'
+              ? 'Sent'
+              : msg.folder === 'trash'
+              ? 'Trash'
+              : msg.folder === 'drafts'
+              ? 'Drafts'
+              : 'INBOX';
+          if (isAlreadyInTrash) {
+            return webmailManager.deletePermanently(msg.id, selectedAccountEmail, mailboxPassword, msg.uid, imapFolder);
+          }
+          return webmailManager.moveFolder(msg.id, 'trash', selectedAccountEmail, mailboxPassword, msg.uid, imapFolder);
+        })
+      );
+    } catch (err) {
+      console.error('[Webmail] Error in bulk delete:', err);
+    } finally {
+      setIsBulkDeleting(false);
       setDeleteConfirmModal(null);
     }
   };
@@ -3300,6 +3425,10 @@ function WebmailContent() {
     let matchesFolder = false;
     if (currentFolder === 'starred') {
       matchesFolder = m.starred && m.folder !== 'trash';
+    } else if (currentFolder === 'notifications') {
+      matchesFolder = m.folder === 'inbox' && isNotificationEmail(m);
+    } else if (currentFolder === 'inbox') {
+      matchesFolder = m.folder === 'inbox' && !isNotificationEmail(m);
     } else {
       matchesFolder = m.folder === currentFolder;
     }
@@ -3331,6 +3460,10 @@ function WebmailContent() {
   const unreadInboxCount = currentFolder === 'inbox' 
     ? messages.filter(m => !m.isRead).length 
     : folderStats.inboxUnread;
+
+  const notificationsUnreadCount = currentFolder === 'notifications'
+    ? messages.filter(m => !m.isRead && isNotificationEmail(m)).length
+    : folderStats.notificationsUnread;
 
   const starredCount = currentFolder === 'starred'
     ? messages.length
@@ -3529,7 +3662,7 @@ function WebmailContent() {
             title="Ligar ou desligar o Agente IA de resposta automática"
           >
             <Bot className={`h-3.5 w-3.5 shrink-0 ${agentActive ? 'text-white' : 'text-indigo-600'}`} />
-            <span className="hidden sm:inline">Agente IA</span>
+            <span className="hidden sm:inline">Modo Agente</span>
             <span
               className={`w-2 h-2 rounded-full ${
                 agentActive ? 'bg-emerald-200 animate-pulse' : 'bg-neutral-300'
@@ -3624,7 +3757,7 @@ function WebmailContent() {
         <div className="bg-primary-50 border-b border-primary-200 px-4 py-2 flex items-center justify-between text-xs text-primary-800 font-medium">
           <div className="flex items-center space-x-2">
             <Loader2 className="h-4 w-4 animate-spin text-primary-600 shrink-0" />
-            <span>A sincronizar mensagens... ({currentFolder === 'inbox' ? 'Caixa de Entrada' : currentFolder === 'sent' ? 'Enviados' : currentFolder === 'drafts' ? 'Rascunhos' : currentFolder === 'trash' ? 'Lixeira' : 'Com Estrela'})</span>
+            <span>A sincronizar mensagens... ({currentFolder === 'inbox' ? 'Caixa de Entrada' : currentFolder === 'notifications' ? 'Notificações' : currentFolder === 'sent' ? 'Enviados' : currentFolder === 'drafts' ? 'Rascunhos' : currentFolder === 'trash' ? 'Lixeira' : 'Com Estrela'})</span>
           </div>
           <span className="text-[11px] text-primary-600 font-mono hidden sm:inline-block">IMAP SSL Â· Servidor Seguro</span>
         </div>
@@ -3783,6 +3916,23 @@ function WebmailContent() {
           {unreadInboxCount > 0 && (
             <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ml-1 ${currentFolder === 'inbox' ? 'bg-white text-neutral-900' : 'bg-neutral-200 text-neutral-700'}`}>
               {unreadInboxCount}
+            </span>
+          )}
+        </button>
+
+        <button
+          onClick={() => { soundEffects.playFolderSwitchSound(); setCurrentFolder('notifications'); setSelectedMessage(null); }}
+          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl whitespace-nowrap font-bold transition-all duration-200 shrink-0 border ${
+            currentFolder === 'notifications' 
+              ? 'bg-neutral-900 text-white shadow-xs border-neutral-900' 
+              : 'bg-neutral-100 text-neutral-600 hover:text-neutral-900 hover:bg-neutral-200/70 border-neutral-200/80'
+          }`}
+        >
+          <Bell className="h-3.5 w-3.5" />
+          <span>Notificações</span>
+          {notificationsUnreadCount > 0 && (
+            <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ml-1 ${currentFolder === 'notifications' ? 'bg-white text-neutral-900' : 'bg-neutral-200 text-neutral-700'}`}>
+              {notificationsUnreadCount}
             </span>
           )}
         </button>
@@ -3952,6 +4102,27 @@ function WebmailContent() {
             </button>
 
             <button
+              onClick={() => { soundEffects.playFolderSwitchSound(); setShowAnalyticsDashboard(false); setCurrentFolder('notifications'); }}
+              className={`w-full flex items-center justify-between px-3 py-1.5 rounded-xl transition-all duration-200 cursor-pointer border ${
+                !showAnalyticsDashboard && currentFolder === 'notifications' 
+                  ? 'bg-neutral-900 text-white border-neutral-900 font-bold shadow-xs' 
+                  : 'hover:bg-neutral-100 text-neutral-600 hover:text-neutral-900 border-transparent'
+              }`}
+            >
+              <div className="flex items-center space-x-2.5">
+                <Bell className={`h-4 w-4 ${!showAnalyticsDashboard && currentFolder === 'notifications' ? 'text-white' : 'text-neutral-500'}`} />
+                <span>Notificações</span>
+              </div>
+              {notificationsUnreadCount > 0 && (
+                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold shadow-2xs ${
+                  !showAnalyticsDashboard && currentFolder === 'notifications' ? 'bg-white text-neutral-900' : 'bg-neutral-200 text-neutral-700'
+                }`}>
+                  {notificationsUnreadCount}
+                </span>
+              )}
+            </button>
+
+            <button
               onClick={() => { soundEffects.playFolderSwitchSound(); setShowAnalyticsDashboard(false); setCurrentFolder('starred'); }}
               className={`w-full flex items-center justify-between px-3 py-1.5 rounded-xl transition-all duration-200 cursor-pointer border ${
                 !showAnalyticsDashboard && currentFolder === 'starred' 
@@ -4098,32 +4269,6 @@ function WebmailContent() {
               )}
             </button>
 
-            {/* Botão Modo Agente IA Auto-Resposta */}
-            <button
-              type="button"
-              onClick={() => {
-                soundEffects.playFolderSwitchSound();
-                setShowAgentModal(true);
-              }}
-              className={`w-full flex items-center justify-between px-3 py-1.5 rounded-xl transition-all duration-200 cursor-pointer border mt-1 font-bold ${
-                agentActive
-                  ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
-                  : 'bg-indigo-50/70 hover:bg-indigo-100 text-indigo-950 border-indigo-200'
-              }`}
-              title="Ligar/Desligar respostas automáticas por IA quando estiver ocupado"
-            >
-              <div className="flex items-center space-x-2.5 truncate">
-                <Bot className={`h-4 w-4 shrink-0 ${agentActive ? 'text-white' : 'text-indigo-600'}`} />
-                <div className="text-left truncate">
-                  <span className="block truncate text-xs">Agente IA (Auto)</span>
-                  <span className={`text-[10px] font-normal block truncate ${agentActive ? 'text-emerald-100' : 'text-indigo-700'}`}>
-                    {agentActive ? 'Ativo agora' : 'Desligado'}
-                  </span>
-                </div>
-              </div>
-              <span className={`w-2 h-2 rounded-full shrink-0 ${agentActive ? 'bg-emerald-200 animate-pulse' : 'bg-neutral-400'}`} />
-            </button>
-
             {/* Botão de Contas Externas (IMAP/SMTP) */}
             <button
               type="button"
@@ -4217,15 +4362,29 @@ function WebmailContent() {
         <section className={`w-full md:w-80 lg:w-96 min-h-0 overflow-hidden bg-white border-r border-neutral-200 flex flex-col shrink-0 ${selectedMessage ? 'hidden md:flex' : 'flex'}`}>
           {/* Search Input & Filter Pills */}
           <div className="p-3 border-b border-neutral-100 space-y-2">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-400" />
-              <input
-                type="text"
-                placeholder="Pesquisar e-mails..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 bg-neutral-100 border border-neutral-200 rounded-xl text-xs text-neutral-900 outline-none focus:bg-white focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 font-medium placeholder:text-neutral-400 transition"
-              />
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-400" />
+                <input
+                  type="text"
+                  placeholder="Pesquisar e-mails..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 bg-neutral-100 border border-neutral-200 rounded-xl text-xs text-neutral-900 outline-none focus:bg-white focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 font-medium placeholder:text-neutral-400 transition"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  soundEffects.playFolderSwitchSound();
+                  refreshMessages();
+                }}
+                disabled={isRefreshingWebmail || isLoadingMessages}
+                title="Atualizar mensagens"
+                className="p-2 bg-neutral-100 hover:bg-neutral-200 border border-neutral-200 rounded-xl text-neutral-700 hover:text-neutral-900 transition cursor-pointer shrink-0 disabled:opacity-50 active:scale-95"
+              >
+                <RefreshCw className={`h-4 w-4 ${isRefreshingWebmail ? 'animate-spin text-primary-600' : ''}`} />
+              </button>
             </div>
 
             {/* Filter Pills */}
@@ -4331,6 +4490,45 @@ function WebmailContent() {
           </div>
 
           {/* List */}
+          {/* Bulk Selection Toolbar */}
+          {displayMessages.length > 0 && (
+            <div className="px-3 py-2 border-b border-neutral-100 bg-neutral-50/80 flex items-center justify-between gap-2 text-xs">
+              <label className="flex items-center space-x-2 cursor-pointer select-none text-neutral-700 font-semibold hover:text-neutral-900">
+                <input
+                  type="checkbox"
+                  checked={displayMessages.length > 0 && displayMessages.every(m => selectedIds.has(m.id))}
+                  onChange={() => toggleSelectAll(displayMessages)}
+                  className="h-3.5 w-3.5 rounded border-neutral-300 text-neutral-900 accent-neutral-900 cursor-pointer"
+                />
+                <span>
+                  {selectedIds.size > 0
+                    ? `${selectedIds.size} selecionado${selectedIds.size > 1 ? 's' : ''}`
+                    : 'Selecionar tudo'}
+                </span>
+              </label>
+              {selectedIds.size > 0 && (
+                <div className="flex items-center space-x-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedIds(new Set())}
+                    className="px-2 py-1 text-[11px] font-semibold text-neutral-600 hover:text-neutral-900 hover:bg-neutral-200/70 rounded-lg transition cursor-pointer"
+                  >
+                    Limpar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleBulkDelete}
+                    disabled={isBulkDeleting}
+                    className="flex items-center space-x-1 px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-bold rounded-lg transition cursor-pointer shadow-2xs disabled:opacity-50"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                    <span>Eliminar ({selectedIds.size})</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="flex-1 overflow-y-auto divide-y divide-neutral-100 relative">
             {/* Barra de Processamento / Sincronização Ativa com Contagem de Percentagem até 100% */}
             {isSyncVisible && (
@@ -4410,6 +4608,14 @@ function WebmailContent() {
                     }`}
                   >
                     <div className="flex flex-col items-center space-y-2 shrink-0 pt-0.5">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(msg.id)}
+                        onChange={(e) => toggleSelectId(msg.id, e)}
+                        onClick={(e) => e.stopPropagation()}
+                        title="Selecionar e-mail"
+                        className="h-3.5 w-3.5 rounded border-neutral-300 text-neutral-900 accent-neutral-900 cursor-pointer"
+                      />
                       <button
                         type="button"
                         onClick={(e) => handleToggleStar(msg.id, e)}
@@ -7774,7 +7980,7 @@ function WebmailContent() {
               </button>
               <button
                 type="button"
-                onClick={() => executeDeleteMessage(deleteConfirmModal.msgId)}
+                onClick={() => deleteConfirmModal.msgIds && deleteConfirmModal.msgIds.length > 0 ? executeBulkDelete(deleteConfirmModal.msgIds) : executeDeleteMessage(deleteConfirmModal.msgId)}
                 className={`flex-1 py-3 text-white font-black text-xs rounded-2xl transition cursor-pointer shadow-md flex items-center justify-center space-x-2 ${deleteConfirmModal.isPermanent ? 'bg-rose-600 hover:bg-rose-700' : 'bg-amber-600 hover:bg-amber-700'}`}
               >
                 <Trash2 className="h-4 w-4" />
