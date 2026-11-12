@@ -1687,7 +1687,7 @@ function WebmailContent() {
     folderCacheRef.current[key] = msgs;
     if (typeof window !== 'undefined') {
       try {
-        sessionStorage.setItem(`wehost_cache_${key}`, JSON.stringify(msgs.slice(0, 80)));
+        sessionStorage.setItem(`wehost_cache_${key}`, JSON.stringify(msgs.slice(0, 100)));
       } catch {}
     }
   };

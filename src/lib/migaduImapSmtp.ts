@@ -366,7 +366,7 @@ export class MigaduImapSmtpService {
     email: string,
     password: string,
     folder: string = 'INBOX',
-    limit: number = 25,
+    limit: number = 100,
     customConfig?: ExternalServerConfig
   ): Promise<IMAPMessage[]> {
     const config = await this.resolveServerConfig(email, customConfig);

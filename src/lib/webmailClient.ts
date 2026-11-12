@@ -385,7 +385,7 @@ export const webmailManager = {
         const existing = localStorage.getItem(cacheKey);
         const list: WebmailMessage[] = existing ? JSON.parse(existing) : [];
         list.unshift(sentMessage);
-        localStorage.setItem(cacheKey, JSON.stringify(list.slice(0, 35)));
+        localStorage.setItem(cacheKey, JSON.stringify(list.slice(0, 100)));
       } catch {
         try {
           const cacheKey = `${WEBMAIL_SENT_KEY}_${accountEmail.toLowerCase()}`;

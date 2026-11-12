@@ -12,6 +12,8 @@ export async function GET(request: NextRequest) {
     const email = (searchParams.get('email') || '').trim();
     let password = searchParams.get('password') || '';
     const folder = searchParams.get('folder') || 'INBOX';
+    const rawLimit = Number(searchParams.get('limit'));
+    const limit = Number.isFinite(rawLimit) && rawLimit > 0 ? Math.min(Math.floor(rawLimit), 200) : 100;
 
     if (!email) {
       return NextResponse.json(
@@ -51,7 +53,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const imapMessages = await migaduImapSmtp.listMessages(email, password, folder);
+    const imapMessages = await migaduImapSmtp.listMessages(email, password, folder, limit);
     
     // Convert to WebmailMessage format
     const messages = imapMessages.map(msg => ({
