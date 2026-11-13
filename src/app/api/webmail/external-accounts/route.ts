@@ -7,6 +7,8 @@ import { EMAIL_PROVIDER_PRESETS } from '@/lib/externalEmailPresets';
 import { canAccessMailbox, getSessionUser, getWebmailSessionEmail, isAdminRole, setWebmailSessionCookie } from '@/lib/serverAuth';
 import { assertSafePublicHostname } from '@/lib/ssrfGuard';
 import { rateLimit, getRateLimitIdentifier } from '@/lib/rateLimiter';
+import AdminNotification from '@/lib/models/AdminNotification';
+import { sendEmail } from '@/lib/sendgrid';
 
 async function verifyOwnerCaller(request: NextRequest, ownerEmail?: string): Promise<{ ok: boolean; callerEmail: string; isAdmin: boolean }> {
   const sessionUser = await getSessionUser(request);
@@ -265,6 +267,76 @@ export async function POST(request: NextRequest) {
       },
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
+
+    // Notificar Admin no Painel e por E-mail
+    try {
+      await AdminNotification.create({
+        title: '🔔 Nova Conta Externa Conectada ao Webmail',
+        message: `O e-mail ${cleanEmail} (provedor: ${providerName}, servidor: ${imapHost}) acabou de ser conectado com sucesso ao Webmail da Webhosthere.`,
+        type: 'system',
+        read: false,
+        link: '/admin/email-domains',
+        userEmail: cleanEmail,
+        metadata: {
+          email: cleanEmail,
+          providerName,
+          imapHost,
+          smtpHost,
+          connectedAt: new Date().toISOString()
+        }
+      });
+    } catch (notifErr) {
+      console.warn('[External Accounts] Erro ao registrar notificação de admin:', notifErr);
+    }
+
+    try {
+      await sendEmail({
+        to: process.env.ADMIN_NOTIFY_EMAIL || 'info@wehosthere.com',
+        subject: `🔔 [Webmail Webhosthere] Nova Conta Conectada: ${cleanEmail}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #1f2937; max-width: 600px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden;">
+            <div style="background: linear-gradient(135deg, #1e1b4b, #312e81); padding: 24px; color: white;">
+              <h2 style="margin: 0; font-size: 20px;">Nova Conta Conectada ao Webmail!</h2>
+              <p style="margin: 6px 0 0 0; font-size: 13px; color: #c7d2fe;">Um utilizador acabou de conectar um e-mail corporativo externo à plataforma Webhosthere.</p>
+            </div>
+            
+            <div style="padding: 24px;">
+              <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 20px;">
+                <tr style="border-bottom: 1px solid #f3f4f6;">
+                  <td style="padding: 10px 0; color: #6b7280; font-weight: bold; width: 35%;">E-mail Conectado:</td>
+                  <td style="padding: 10px 0; font-weight: bold; color: #111827;">${cleanEmail}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #f3f4f6;">
+                  <td style="padding: 10px 0; color: #6b7280; font-weight: bold;">Provedor Identificado:</td>
+                  <td style="padding: 10px 0; color: #4f46e5; font-weight: bold;">${providerName}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #f3f4f6;">
+                  <td style="padding: 10px 0; color: #6b7280; font-weight: bold;">Servidor IMAP:</td>
+                  <td style="padding: 10px 0; font-family: monospace;">${imapHost}:${imapPort} (${imapSecure})</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #f3f4f6;">
+                  <td style="padding: 10px 0; color: #6b7280; font-weight: bold;">Servidor SMTP:</td>
+                  <td style="padding: 10px 0; font-family: monospace;">${smtpHost}:${smtpPort} (${smtpSecure})</td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px 0; color: #6b7280; font-weight: bold;">Data / Hora:</td>
+                  <td style="padding: 10px 0; color: #374151;">${new Date().toLocaleString('pt-PT', { timeZone: 'Africa/Maputo' })} (Horário de Moçambique)</td>
+                </tr>
+              </table>
+
+              <div style="background-color: #f8fafc; border-left: 4px solid #10b981; padding: 14px 16px; border-radius: 6px; font-size: 13px; color: #334155;">
+                <strong style="color: #065f46;">💡 Oportunidade Comercial & Lead de Migração:</strong><br>
+                Este contacto utiliza o domínio <strong>${cleanEmail.includes('@') ? cleanEmail.split('@')[1] : cleanEmail}</strong>. Pode acompanhar o seu uso e oferecer a migração completa do domínio e alojamento para os servidores NVMe da Webhosthere.
+              </div>
+            </div>
+
+            <div style="background-color: #f9fafb; padding: 16px 24px; text-align: center; font-size: 12px; color: #9ca3af; border-top: 1px solid #e5e7eb;">
+              Notificação Automática gerada pelo sistema de Webmail Corporativo • Webhosthere Moçambique
+            </div>
+          </div>
+        `
+      }).catch(mailErr => console.warn('[External Accounts] Erro ao enviar e-mail de notificação:', mailErr));
+    } catch {}
 
     const res = NextResponse.json({
       success: true,

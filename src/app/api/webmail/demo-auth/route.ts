@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { setWebmailSessionCookie } from '@/lib/serverAuth';
 import { rateLimit, getRateLimitIdentifier } from '@/lib/rateLimiter';
 import { DEMO_EMAIL } from '@/lib/demoWebmailData';
+import AdminNotification from '@/lib/models/AdminNotification';
+import { connectDB } from '@/lib/mongodb';
 
 // POST - Autenticação instantânea para o Modo de Demonstração (sem expor palavra-passe no frontend)
 export async function POST(request: NextRequest) {
@@ -14,6 +16,21 @@ export async function POST(request: NextRequest) {
         { status: 429 }
       );
     }
+
+    try {
+      await connectDB();
+      await AdminNotification.create({
+        title: '🧪 Novo Visitante em Modo de Teste no Webmail',
+        message: `Um visitante iniciou o Modo de Demonstração (teste@wehosthere.com) a partir do endereço IP ${clientIp}.`,
+        type: 'system',
+        read: false,
+        link: '/admin/email-domains',
+        metadata: {
+          clientIp,
+          timestamp: new Date().toISOString()
+        }
+      });
+    } catch {}
 
     const res = NextResponse.json({
       success: true,
