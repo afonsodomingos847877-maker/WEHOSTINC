@@ -3,9 +3,45 @@ import { getToken } from 'next-auth/jwt';
 import { connectDB } from '@/lib/mongodb';
 import UserModel from '@/lib/models/User';
 
+function resolvePublicBaseUrl(req: NextRequest): string {
+  const isLocalHost = (value: string) =>
+    /^(https?:\/\/)?(localhost|127\.0\.0\.1)(:\d+)?(\/|$)/i.test(value.trim());
+
+  if (process.env.NODE_ENV !== 'production') {
+    return req.nextUrl.origin;
+  }
+
+  const configuredUrl = (
+    process.env.NEXTAUTH_URL ||
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    ''
+  ).trim().replace(/\/+$/, '');
+
+  if (configuredUrl && !isLocalHost(configuredUrl)) {
+    return configuredUrl;
+  }
+
+  const forwardedHost = (req.headers.get('x-forwarded-host') || req.headers.get('host') || '')
+    .split(',')[0]
+    .trim();
+  const forwardedProto = (req.headers.get('x-forwarded-proto') || 'https')
+    .split(',')[0]
+    .trim();
+
+  if (
+    forwardedHost &&
+    !isLocalHost(forwardedHost) &&
+    !forwardedHost.endsWith('.onrender.com')
+  ) {
+    return `${forwardedProto}://${forwardedHost}`;
+  }
+
+  return 'https://www.wehosthere.com';
+}
+
 export async function GET(req: NextRequest) {
-  const url = req.nextUrl.clone();
-  const baseUrl = url.origin;
+  const baseUrl = resolvePublicBaseUrl(req);
+
 
   try {
     const secret = process.env.NEXTAUTH_SECRET;

@@ -3744,7 +3744,7 @@ function WebmailContent() {
           {mailboxPassword && (
             <button
               onClick={handleWebmailLogout}
-              className="p-2 hover:bg-neutral-100 rounded-xl text-neutral-500 hover:text-neutral-900 transition cursor-pointer shrink-0"
+              className="hidden sm:flex p-2 hover:bg-neutral-100 rounded-xl text-neutral-500 hover:text-neutral-900 transition cursor-pointer shrink-0"
               title="Sair do Webmail"
             >
               <LogOut className="h-4 w-4" />
@@ -3832,8 +3832,17 @@ function WebmailContent() {
 
       {/* Se não autenticado: Apresenta Tela de Login Única, Centralizada e Elegante (Estilo Tesla) */}
       {!mailboxPassword && !isAccountPending ? (
-        <div className="flex-1 flex items-center justify-center p-4 sm:p-8 bg-neutral-50/60">
-          <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-8 border border-neutral-200/90 shadow-sm text-left space-y-6 animate-in zoom-in-95 duration-150">
+        <div className="relative overflow-hidden flex-1 flex items-center justify-center p-4 sm:p-8">
+          {/* Imagem de fundo */}
+          <img
+            src="/webbackground2.jpg"
+            alt="background"
+            className="absolute inset-0 w-full h-full object-cover"
+            draggable={false}
+          />
+          {/* Overlay escuro semitransparente para legibilidade */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/60" />
+          <div className="relative z-10 w-full max-w-md bg-white/95 backdrop-blur-md rounded-3xl p-6 sm:p-8 border border-white/40 shadow-2xl text-left space-y-6 animate-in zoom-in-95 duration-150">
             <div className="text-center space-y-1.5 pb-2 border-b border-neutral-100">
               <div className="w-12 h-12 bg-neutral-100 text-neutral-900 rounded-2xl flex items-center justify-center mx-auto mb-3 border border-neutral-200 shadow-2xs">
                 <Lock className="h-6 w-6 text-neutral-800" />
@@ -5933,7 +5942,7 @@ function WebmailContent() {
       </div>
 
       {/* Mobile FAB: Escrever E-mail (Azul do Sistema) */}
-      {!showCompose && (
+      {!showCompose && !selectedMessage && (
         <button
           type="button"
           onClick={handleOpenCompose}
@@ -6019,8 +6028,8 @@ function WebmailContent() {
 
       {/* MODAL: Escrever E-mail (Compose) */}
       {showCompose && (
-        <div className="fixed inset-0 z-[9999] bg-black/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-hidden">
-          <div className={`bg-white rounded-3xl shadow-2xl p-4 sm:p-5 ${isComposeExpanded ? 'sm:max-w-4xl' : 'sm:max-w-2xl'} w-full border border-gray-100 animate-in zoom-in-95 duration-200 max-h-[92vh] overflow-y-auto`}>
+        <div className="fixed inset-0 z-[9999] bg-black/70 backdrop-blur-sm flex items-center justify-center p-1.5 sm:p-4 overflow-hidden">
+          <div className={`bg-white rounded-2xl sm:rounded-3xl shadow-2xl p-3.5 sm:p-5 ${isComposeExpanded ? 'sm:max-w-4xl' : 'sm:max-w-2xl'} w-full border border-gray-100 animate-in zoom-in-95 duration-200 max-h-[92vh] overflow-y-auto`}>
             {isAccountPending ? (
               <div className="text-center py-6 space-y-4">
                 <div className="w-14 h-14 bg-amber-100 rounded-full flex items-center justify-center mx-auto text-amber-600 border border-amber-200 shadow-2xs">
@@ -7097,7 +7106,7 @@ function WebmailContent() {
                   </div>
                 )}
 
-                <div className="flex flex-col sm:flex-row gap-2 pt-1">
+                <div className="flex flex-col-reverse sm:flex-row gap-2 pt-1">
                   <button
                     type="button"
                     onClick={handleCloseCompose}
