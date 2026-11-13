@@ -4044,43 +4044,26 @@ function WebmailContent() {
               </button>
             </form>
 
-            {/* Separador e Botão Oficial "Experimentar em Modo de Teste" */}
-            <div className="pt-2 border-t border-neutral-100 space-y-3">
-              <div className="relative flex items-center justify-center">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-neutral-200" />
-                </div>
-                <span className="relative bg-white/95 px-3 text-[11px] font-bold uppercase tracking-wider text-neutral-400">
-                  ou experimente sem registo
-                </span>
-              </div>
-
+            {/* Botão Compacto "Modo de Teste" */}
+            <div className="pt-2 border-t border-neutral-100 flex items-center justify-center">
               <button
                 type="button"
                 onClick={handleEnterDemoMode}
                 disabled={demoLoginLoading || webmailLoginLoading}
-                className="group relative w-full py-3 px-4 bg-gradient-to-r from-indigo-50 via-blue-50 to-emerald-50 hover:from-indigo-100 hover:via-blue-100 hover:to-emerald-100 border border-indigo-200/80 hover:border-indigo-400 text-neutral-900 rounded-xl transition-all duration-200 cursor-pointer shadow-xs flex items-center justify-center space-x-2.5 active:scale-98"
+                className="group inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-lg bg-neutral-100 hover:bg-neutral-200/90 text-neutral-700 hover:text-neutral-900 text-xs font-semibold transition active:scale-95 cursor-pointer border border-neutral-200/80"
               >
                 {demoLoginLoading ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin text-indigo-600" />
-                    <span className="text-xs sm:text-sm font-extrabold text-indigo-900">A preparar Modo de Teste...</span>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin text-neutral-700" />
+                    <span>A carregar modo de teste...</span>
                   </>
                 ) : (
                   <>
-                    <Sparkles className="h-4 w-4 text-indigo-600 group-hover:rotate-12 transition-transform duration-200" />
-                    <span className="text-xs sm:text-sm font-extrabold text-neutral-900 group-hover:text-indigo-950">
-                      Experimentar em Modo de Teste
-                    </span>
-                    <span className="text-[10px] bg-emerald-600 text-white font-black px-2 py-0.5 rounded-full uppercase tracking-wider ml-1 shadow-2xs">
-                      Grátis
-                    </span>
+                    <Sparkles className="h-3.5 w-3.5 text-indigo-600 group-hover:rotate-12 transition-transform" />
+                    <span>Experimentar em Modo de Teste</span>
                   </>
                 )}
               </button>
-              <p className="text-[11px] text-neutral-500 text-center leading-relaxed">
-                Acesse instantaneamente com a conta <strong className="font-mono text-neutral-800">teste@wehosthere.com</strong> para explorar caixa de entrada, envio simulado e pastas.
-              </p>
             </div>
 
             <p className="text-[11px] text-neutral-400 text-center pt-2 border-t border-neutral-100">
