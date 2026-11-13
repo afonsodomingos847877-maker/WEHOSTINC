@@ -7,6 +7,10 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { email, password, uid, folder, starred } = body;
 
+    if (email && email.toLowerCase().trim() === 'teste@wehosthere.com') {
+      return NextResponse.json({ success: true, isDemo: true });
+    }
+
     const numericUid = Number(uid);
     if (!email || !password || isNaN(numericUid)) {
       return NextResponse.json(

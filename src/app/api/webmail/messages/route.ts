@@ -4,6 +4,7 @@ import { connectDB } from '@/lib/mongodb';
 import { ExternalEmailAccount } from '@/models/ExternalEmailAccount';
 import { decryptPassword } from '@/lib/encryption';
 import { canAccessMailbox } from '@/lib/serverAuth';
+import { getDemoMessages, isDemoAccount } from '@/lib/demoWebmailData';
 
 // GET - List messages from IMAP
 export async function GET(request: NextRequest) {
@@ -20,6 +21,12 @@ export async function GET(request: NextRequest) {
         { error: 'Email é obrigatório' },
         { status: 400 }
       );
+    }
+
+    // Modo de Demonstração (teste@wehosthere.com) - Retorna catálogo de mensagens de teste
+    if (isDemoAccount(email)) {
+      const messages = getDemoMessages(folder);
+      return NextResponse.json({ success: true, messages, isDemo: true });
     }
 
     // If password was not passed, verify authenticated session owns this mailbox before decrypting saved password

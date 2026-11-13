@@ -7,6 +7,7 @@ import { decryptPassword } from '@/lib/encryption';
 import { replaceDataImagesWithCloudinary } from '@/lib/cloudinaryUpload';
 import { canAccessMailbox } from '@/lib/serverAuth';
 import { safeFetchPublicUrl } from '@/lib/ssrfGuard';
+import { isDemoAccount } from '@/lib/demoWebmailData';
 
 export const maxDuration = 60;
 
@@ -131,6 +132,21 @@ export async function POST(request: NextRequest) {
     }
 
     const cleanEmail = (email || '').trim().toLowerCase();
+
+    // Modo de Demonstração (teste@wehosthere.com) - Simula envio com sucesso e previne spam para destinatários externos reais
+    if (isDemoAccount(cleanEmail)) {
+      if (!to || (!emailBody && processedAttachments.length === 0)) {
+        return NextResponse.json(
+          { error: 'Destinatário e conteúdo são obrigatórios para o teste de envio.' },
+          { status: 400 }
+        );
+      }
+      return NextResponse.json({
+        success: true,
+        isDemo: true,
+        message: 'Mensagem de demonstração simulada com sucesso! Em modo de teste, nenhum e-mail real é enviado para proteger destinatários externos.'
+      });
+    }
 
     // If password not passed in payload, require mailbox session/ownership before decrypting stored password
     if (!password && cleanEmail) {

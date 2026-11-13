@@ -24,3 +24,4 @@ jobs:
               -H "Authorization: Bearer ${{ secrets.CRON_SECRET || '1f68a2837fbfbc2452ecff2c845d1f28' }}" \
               "https://www.wehosthere.com/api/cron/ai-email-agent" || true
           fi
+

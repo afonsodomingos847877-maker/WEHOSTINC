@@ -27,6 +27,7 @@ import { apiEndpoint } from '@/lib/siteConfig';
 import dynamic from 'next/dynamic';
 import ContactPicker from '@/components/webmail/ContactPicker';
 import RecipientInput, { normalizeRecipients, findInvalidRecipients, splitRecipients } from '@/components/webmail/RecipientInput';
+import { isDemoAccount, DEMO_EMAIL } from '@/lib/demoWebmailData';
 
 const templateCategoryIcons: Record<string, React.ElementType> = {
   'Boas-vindas': Sparkles,
@@ -453,6 +454,8 @@ function WebmailContent() {
   const [agentActive, setAgentActive] = useState<boolean>(false);
   const activeAgentEmail = (selectedAccountEmail || webmailLoginEmail || accounts[0]?.email || '').trim().toLowerCase();
   const isWehosthereAccount = activeAgentEmail.endsWith('@wehosthere.com');
+  const isDemoMode = (selectedAccountEmail || webmailLoginEmail || '').trim().toLowerCase() === DEMO_EMAIL;
+  const [demoLoginLoading, setDemoLoginLoading] = useState<boolean>(false);
 
   useEffect(() => {
     const emailToCheck = selectedAccountEmail || webmailLoginEmail || accounts[0]?.email;
@@ -1401,6 +1404,11 @@ function WebmailContent() {
     setPasswordSuccess('');
 
     const targetEmail = (selectedAccountEmail || webmailLoginEmail || accounts[0]?.email || '').trim();
+    if (targetEmail.toLowerCase() === DEMO_EMAIL) {
+      setPasswordError('A alteração de palavra-passe está desativada na conta pública de demonstração.');
+      return;
+    }
+
     if (!targetEmail || !targetEmail.includes('@')) {
       setPasswordError('Informe um endereço de e-mail corporativo válido para alterar a senha.');
       return;
@@ -2707,10 +2715,58 @@ function WebmailContent() {
     }
   };
 
+    const handleEnterDemoMode = async () => {
+    if (demoLoginLoading || webmailLoginLoading) return;
+    setDemoLoginLoading(true);
+    setWebmailLoginError('');
+    setWebmailLoginEmail(DEMO_EMAIL);
+    setSelectedAccountEmail(DEMO_EMAIL);
+
+    try {
+      const res = await fetch(apiEndpoint('/api/webmail/demo-auth'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (data.success || res.ok) {
+        soundEffects.playLoginSuccessSound();
+        setSelectedAccountEmail(DEMO_EMAIL);
+        setMailboxPassword('demo_session_active');
+        try {
+          sessionStorage.setItem('wm_active_email', DEMO_EMAIL);
+          sessionStorage.setItem(`wm_pwd_${DEMO_EMAIL}`, 'demo_session_active');
+          localStorage.setItem('wm_active_email', DEMO_EMAIL);
+          localStorage.setItem(`wm_pwd_${DEMO_EMAIL}`, 'demo_session_active');
+          localStorage.setItem(`webmail_auth_${DEMO_EMAIL}`, 'demo_session_active');
+        } catch {}
+        setShowWebmailLogin(false);
+        setWebmailLoginEmail('');
+        setWebmailLoginPassword('');
+      } else {
+        setWebmailLoginError(data.error || 'Erro ao iniciar modo de teste.');
+      }
+    } catch (err) {
+      console.error('[Webmail Demo] Error entering demo mode:', err);
+      soundEffects.playLoginSuccessSound();
+      setSelectedAccountEmail(DEMO_EMAIL);
+      setMailboxPassword('demo_session_active');
+      setShowWebmailLogin(false);
+    } finally {
+      setDemoLoginLoading(false);
+    }
+  };
+
   const handleWebmailLogout = () => {
     try {
       sessionStorage.removeItem('wm_active_email');
       localStorage.removeItem('wm_active_email');
+      try {
+        sessionStorage.removeItem(`wm_pwd_${DEMO_EMAIL}`);
+        localStorage.removeItem(`wm_pwd_${DEMO_EMAIL}`);
+        localStorage.removeItem(`webmail_auth_${DEMO_EMAIL}`);
+      } catch {}
       if (selectedAccountEmail) {
         sessionStorage.removeItem(`wm_pwd_${selectedAccountEmail.toLowerCase()}`);
         localStorage.removeItem(`wm_pwd_${selectedAccountEmail.toLowerCase()}`);
@@ -3769,6 +3825,46 @@ function WebmailContent() {
         </div>
       </header>
 
+      {/* Banner Oficial do Modo de Demonstração */}
+      {isDemoMode && mailboxPassword && (
+        <div className="bg-gradient-to-r from-neutral-900 via-indigo-950 to-neutral-900 text-white px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 shadow-md border-b border-indigo-500/30 animate-in fade-in duration-200">
+          <div className="flex items-center space-x-3">
+            <div className="bg-indigo-600/40 border border-indigo-400/50 rounded-xl p-1.5 shrink-0 flex items-center justify-center">
+              <Sparkles className="h-4 w-4 text-amber-300 animate-pulse" />
+            </div>
+            <div>
+              <div className="flex items-center space-x-2">
+                <span className="text-xs font-black uppercase tracking-wider text-amber-300">
+                  MODO DE DEMONSTRAÇÃO
+                </span>
+                <span className="text-[10px] bg-indigo-500/30 text-indigo-200 border border-indigo-400/30 font-bold px-2 py-0.2 rounded-full">
+                  teste@wehosthere.com
+                </span>
+              </div>
+              <p className="text-[11px] text-neutral-300 mt-0.5 leading-relaxed">
+                Está a experimentar o Webmail da Webhosthere. Explore a caixa de entrada, envio de demonstração, pastas e pesquisa.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-2 shrink-0">
+            <Link
+              href="/cpanel"
+              className="text-xs font-extrabold bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white px-3.5 py-1.5 rounded-xl transition shadow-xs flex items-center space-x-1.5 active:scale-98"
+            >
+              <span>Criar Conta Corporativa</span>
+              <ChevronRight className="h-3.5 w-3.5" />
+            </Link>
+            <button
+              type="button"
+              onClick={handleWebmailLogout}
+              className="text-xs font-bold text-neutral-300 hover:text-white px-3 py-1.5 rounded-xl hover:bg-white/10 transition border border-white/10 cursor-pointer"
+            >
+              Sair da Demo
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Alerta de Perda de Conexão à Internet (Offline) */}
       {!isOnline && (
         <div className="bg-rose-600 text-white px-4 py-2.5 flex items-center justify-between text-xs font-bold shadow-md animate-in slide-in-from-top-2 duration-200">
@@ -3947,6 +4043,45 @@ function WebmailContent() {
                 )}
               </button>
             </form>
+
+            {/* Separador e Botão Oficial "Experimentar em Modo de Teste" */}
+            <div className="pt-2 border-t border-neutral-100 space-y-3">
+              <div className="relative flex items-center justify-center">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-neutral-200" />
+                </div>
+                <span className="relative bg-white/95 px-3 text-[11px] font-bold uppercase tracking-wider text-neutral-400">
+                  ou experimente sem registo
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleEnterDemoMode}
+                disabled={demoLoginLoading || webmailLoginLoading}
+                className="group relative w-full py-3 px-4 bg-gradient-to-r from-indigo-50 via-blue-50 to-emerald-50 hover:from-indigo-100 hover:via-blue-100 hover:to-emerald-100 border border-indigo-200/80 hover:border-indigo-400 text-neutral-900 rounded-xl transition-all duration-200 cursor-pointer shadow-xs flex items-center justify-center space-x-2.5 active:scale-98"
+              >
+                {demoLoginLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin text-indigo-600" />
+                    <span className="text-xs sm:text-sm font-extrabold text-indigo-900">A preparar Modo de Teste...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4 text-indigo-600 group-hover:rotate-12 transition-transform duration-200" />
+                    <span className="text-xs sm:text-sm font-extrabold text-neutral-900 group-hover:text-indigo-950">
+                      Experimentar em Modo de Teste
+                    </span>
+                    <span className="text-[10px] bg-emerald-600 text-white font-black px-2 py-0.5 rounded-full uppercase tracking-wider ml-1 shadow-2xs">
+                      Grátis
+                    </span>
+                  </>
+                )}
+              </button>
+              <p className="text-[11px] text-neutral-500 text-center leading-relaxed">
+                Acesse instantaneamente com a conta <strong className="font-mono text-neutral-800">teste@wehosthere.com</strong> para explorar caixa de entrada, envio simulado e pastas.
+              </p>
+            </div>
 
             <p className="text-[11px] text-neutral-400 text-center pt-2 border-t border-neutral-100">
               Protegido com encriptação SSL/TLS via servidores IMAP/SMTP dedicados.

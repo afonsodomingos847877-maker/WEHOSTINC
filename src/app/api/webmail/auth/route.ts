@@ -27,6 +27,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Muitas tentativas de autenticação. Aguarde um minuto.' }, { status: 429 });
     }
 
+    // 0. Modo de Demonstração Oficial (teste@wehosthere.com)
+    if (cleanEmail === 'teste@wehosthere.com') {
+      const res = NextResponse.json({
+        success: true,
+        isDemo: true,
+        mailbox: {
+          email: cleanEmail,
+          name: 'Conta de Demonstração',
+          maySend: true,
+          mayReceive: true,
+          mayAccessImap: true,
+          isExternal: false,
+          providerName: 'Modo Demonstração WEHOSTHERE'
+        }
+      });
+      return setWebmailSessionCookie(res, cleanEmail);
+    }
+
     // 1. Check if mailbox exists in WeHostHere internal mailboxes
     const mailbox = await EmailMailbox.findOne({ email: cleanEmail });
     
