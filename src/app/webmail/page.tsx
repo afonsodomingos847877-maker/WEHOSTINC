@@ -4044,8 +4044,8 @@ function WebmailContent() {
               </button>
             </form>
 
-            {/* Botão Compacto "Modo de Teste" */}
-            <div className="pt-2 border-t border-neutral-100 flex items-center justify-center">
+            {/* Botão Compacto "Modo de Teste" & Conectar Conta Externa */}
+            <div className="pt-2 border-t border-neutral-100 flex flex-col items-center justify-center space-y-2">
               <button
                 type="button"
                 onClick={handleEnterDemoMode}
@@ -4063,6 +4063,19 @@ function WebmailContent() {
                     <span>Experimentar em Modo de Teste</span>
                   </>
                 )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  soundEffects.playFolderSwitchSound();
+                  setShowExternalAccountsModal(true);
+                }}
+                className="text-[11px] font-semibold text-neutral-500 hover:text-neutral-900 transition hover:underline cursor-pointer flex items-center space-x-1"
+                title="Conectar contas externas (cPanel, Hostinger, Zoho, etc.)"
+              >
+                <Server className="h-3 w-3 text-neutral-400" />
+                <span>Conectar conta externa (cPanel, Hostinger, etc.)</span>
               </button>
             </div>
 

@@ -6,6 +6,7 @@ import { encryptPassword, decryptPassword } from '@/lib/encryption';
 import { EMAIL_PROVIDER_PRESETS } from '@/lib/externalEmailPresets';
 import { canAccessMailbox, getSessionUser, getWebmailSessionEmail, isAdminRole, setWebmailSessionCookie } from '@/lib/serverAuth';
 import { assertSafePublicHostname } from '@/lib/ssrfGuard';
+import { rateLimit, getRateLimitIdentifier } from '@/lib/rateLimiter';
 
 async function verifyOwnerCaller(request: NextRequest, ownerEmail?: string): Promise<{ ok: boolean; callerEmail: string; isAdmin: boolean }> {
   const sessionUser = await getSessionUser(request);
@@ -46,7 +47,12 @@ export async function GET(request: NextRequest) {
 
     const caller = await verifyOwnerCaller(request, ownerEmail);
     if (!caller.ok) {
-      return NextResponse.json({ error: 'Não autorizado a listar contas externas deste utilizador' }, { status: 401 });
+      // Visitante sem sessão ativa: devolver presets para permitir conexão da primeira conta externa
+      return NextResponse.json({
+        success: true,
+        accounts: [],
+        presets: EMAIL_PROVIDER_PRESETS,
+      });
     }
 
     const accounts = await ExternalEmailAccount.find({
@@ -106,13 +112,19 @@ export async function POST(request: NextRequest) {
     const cleanOwnerEmail = (ownerEmail || '').toLowerCase().trim();
     const cleanEmail = (email || '').toLowerCase().trim();
 
-    const caller = await verifyOwnerCaller(request, action === 'test_connection' ? undefined : cleanOwnerEmail);
-    if (!caller.ok) {
-      return NextResponse.json({ error: 'Não autorizado. Inicie sessão primeiro.' }, { status: 401 });
-    }
+    const caller = await verifyOwnerCaller(request, cleanOwnerEmail);
 
-    // 1. Action: Test connection live without saving
+    // 1. Action: Test connection live without saving (aberto para visitantes com rate-limit)
     if (action === 'test_connection') {
+      const clientIp = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+      const rl = rateLimit(getRateLimitIdentifier(clientIp, 'test_ext_conn'), 20, 60000);
+      if (!rl.success) {
+        return NextResponse.json(
+          { error: 'Muitas tentativas de teste de conexão. Por favor aguarde um momento.' },
+          { status: 429 }
+        );
+      }
+
       if (!cleanEmail || !password || !imapHost || !smtpHost) {
         return NextResponse.json(
           { error: 'Email, senha, servidor IMAP e servidor SMTP são obrigatórios para testar a conexão.' },
@@ -154,14 +166,16 @@ export async function POST(request: NextRequest) {
 
     // 2. Action: Retrieve decrypted credentials for switching account in Webmail session
     if (action === 'switch_session') {
-      if (!cleanOwnerEmail || !cleanEmail) {
+      const targetOwner = cleanOwnerEmail || cleanEmail;
+      if (!targetOwner || !cleanEmail) {
         return NextResponse.json({ error: 'ownerEmail e email são obrigatórios' }, { status: 400 });
       }
 
       const account = await ExternalEmailAccount.findOne({
-        ownerEmail: cleanOwnerEmail,
-        email: cleanEmail,
-        isActive: true,
+        $or: [
+          { ownerEmail: targetOwner, email: cleanEmail, isActive: true },
+          { email: cleanEmail, isActive: true },
+        ],
       });
 
       if (!account) {
@@ -182,8 +196,10 @@ export async function POST(request: NextRequest) {
       return setWebmailSessionCookie(res, account.email);
     }
 
-    // 3. Action: Connect & save new external account
-    if (!cleanOwnerEmail || !cleanEmail || !password || !imapHost || !smtpHost) {
+    // 3. Action: Connect & save new external account (permite utilizador logado OU visitante conectando a sua própria conta)
+    const effectiveOwnerEmail = caller.ok && cleanOwnerEmail ? cleanOwnerEmail : cleanEmail;
+
+    if (!cleanEmail || !password || !imapHost || !smtpHost) {
       return NextResponse.json(
         {
           error:
@@ -229,9 +245,9 @@ export async function POST(request: NextRequest) {
     const encryptedPassword = encryptPassword(password);
 
     const updatedAccount = await ExternalEmailAccount.findOneAndUpdate(
-      { ownerEmail: cleanOwnerEmail, email: cleanEmail },
+      { ownerEmail: effectiveOwnerEmail, email: cleanEmail },
       {
-        ownerEmail: cleanOwnerEmail,
+        ownerEmail: effectiveOwnerEmail,
         email: cleanEmail,
         displayName: displayName || cleanEmail.split('@')[0],
         providerName,
@@ -250,8 +266,9 @@ export async function POST(request: NextRequest) {
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
 
-    return NextResponse.json({
+    const res = NextResponse.json({
       success: true,
+      autoLogin: true,
       message: 'Conta externa conectada e validada com sucesso!',
       account: {
         id: updatedAccount._id.toString(),
@@ -267,8 +284,10 @@ export async function POST(request: NextRequest) {
         smtpSecure: updatedAccount.smtpSecure,
         connectionStatus: updatedAccount.connectionStatus,
         lastSyncedAt: updatedAccount.lastSyncedAt,
+        password: password,
       },
     });
+    return setWebmailSessionCookie(res, cleanEmail);
   } catch (error: any) {
     console.error('[External Accounts POST] Error:', error);
     return NextResponse.json(

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import {
   Server, Mail, Plus, RefreshCw, Trash2, CheckCircle2, AlertCircle,
   ShieldCheck, Eye, EyeOff, Loader2, ArrowRight, ExternalLink, X, Globe,
-  Check, Lock, ChevronDown, BarChart3, HelpCircle, LogOut, Wifi, Settings
+  Check, Lock, ChevronDown, BarChart3, HelpCircle, LogOut, Wifi, Settings, Sparkles
 } from 'lucide-react';
 import Link from 'next/link';
 import { EMAIL_PROVIDER_PRESETS } from '@/lib/externalEmailPresets';
@@ -86,8 +86,12 @@ export default function ExternalAccountsModal({
 
   // Fetch accounts on modal open
   useEffect(() => {
-    if (isOpen && ownerEmail) {
-      fetchAccounts();
+    if (isOpen) {
+      if (ownerEmail && ownerEmail !== 'geral@wehosthere.com' && ownerEmail !== 'teste@wehosthere.com') {
+        fetchAccounts();
+      } else {
+        setActiveTab('add');
+      }
     }
   }, [isOpen, ownerEmail]);
 
@@ -236,12 +240,22 @@ export default function ExternalAccountsModal({
         return;
       }
 
-      setFormSuccess('Conta externa conectada com sucesso!');
+      setFormSuccess('Conta externa conectada com sucesso! A entrar no Webmail...');
       // Reset form
+      const connectedEmail = data.account?.email || email;
       setEmail('');
       setPassword('');
       setDisplayName('');
       setTestResult(null);
+
+      if (onSwitchAccount && connectedEmail) {
+        setTimeout(() => {
+          onSwitchAccount(connectedEmail);
+          onClose();
+        }, 800);
+        return;
+      }
+
       // Refresh list
       await fetchAccounts();
       setTimeout(() => {
@@ -617,6 +631,13 @@ export default function ExternalAccountsModal({
           {/* TAB 2: ADD EXTERNAL ACCOUNT */}
           {activeTab === 'add' && (
             <form onSubmit={handleConnectAccount} className="space-y-5">
+              <div className="p-3.5 bg-gradient-to-r from-indigo-50 via-blue-50 to-emerald-50 border border-indigo-200/80 rounded-2xl flex items-start space-x-2.5">
+                <Sparkles className="h-4 w-4 text-indigo-600 shrink-0 mt-0.5" />
+                <div className="text-xs text-indigo-950">
+                  <strong className="font-extrabold text-indigo-900 block">Conecte a sua conta de e-mail existente</strong>
+                  <span>Use o Webmail da Webhosthere com contas de outros provedores (cPanel, Hostinger, Zoho, Google Workspace ou servidor próprio).</span>
+                </div>
+              </div>
               {/* Preset Provider Selector */}
               <div>
                 <label className="block text-xs font-bold text-neutral-700 mb-2">
