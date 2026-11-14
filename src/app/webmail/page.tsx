@@ -3827,39 +3827,28 @@ function WebmailContent() {
 
       {/* Banner Oficial do Modo de Demonstração */}
       {isDemoMode && mailboxPassword && (
-        <div className="bg-gradient-to-r from-neutral-900 via-indigo-950 to-neutral-900 text-white px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 shadow-md border-b border-indigo-500/30 animate-in fade-in duration-200">
-          <div className="flex items-center space-x-3">
-            <div className="bg-indigo-600/40 border border-indigo-400/50 rounded-xl p-1.5 shrink-0 flex items-center justify-center">
-              <Sparkles className="h-4 w-4 text-amber-300 animate-pulse" />
-            </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <span className="text-xs font-black uppercase tracking-wider text-amber-300">
-                  MODO DE DEMONSTRAÇÃO
-                </span>
-                <span className="text-[10px] bg-indigo-500/30 text-indigo-200 border border-indigo-400/30 font-bold px-2 py-0.2 rounded-full">
-                  teste@wehosthere.com
-                </span>
-              </div>
-              <p className="text-[11px] text-neutral-300 mt-0.5 leading-relaxed">
-                Está a experimentar o Webmail da Webhosthere. Explore a caixa de entrada, envio de demonstração, pastas e pesquisa.
-              </p>
-            </div>
+        <div className="bg-white text-neutral-900 px-4 py-2 flex items-center justify-between border-b border-neutral-200 animate-in fade-in duration-150">
+          <div className="flex items-center space-x-2 text-xs">
+            <span className="font-bold text-neutral-900">
+              Modo de Demonstração
+            </span>
+            <span className="text-neutral-500 font-mono text-[11px]">
+              (teste@wehosthere.com)
+            </span>
           </div>
           <div className="flex items-center space-x-2 shrink-0">
             <Link
               href="/cpanel"
-              className="text-xs font-extrabold bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white px-3.5 py-1.5 rounded-xl transition shadow-xs flex items-center space-x-1.5 active:scale-98"
+              className="text-xs font-bold bg-neutral-900 hover:bg-black text-white px-3 py-1.5 rounded-xl transition shadow-2xs active:scale-95"
             >
-              <span>Criar Conta Corporativa</span>
-              <ChevronRight className="h-3.5 w-3.5" />
+              Criar Conta
             </Link>
             <button
               type="button"
               onClick={handleWebmailLogout}
-              className="text-xs font-bold text-neutral-300 hover:text-white px-3 py-1.5 rounded-xl hover:bg-white/10 transition border border-white/10 cursor-pointer"
+              className="text-xs font-semibold text-neutral-600 hover:text-neutral-900 px-3 py-1.5 rounded-xl hover:bg-neutral-100 transition border border-neutral-200 cursor-pointer active:scale-95"
             >
-              Sair da Demo
+              Sair
             </button>
           </div>
         </div>
