@@ -4397,43 +4397,31 @@ function WebmailContent() {
             <button
               type="button"
               onClick={() => { soundEffects.playFolderSwitchSound(); setShowAnalyticsDashboard(!showAnalyticsDashboard); }}
-              className={`w-full flex items-center justify-between px-3 py-1.5 rounded-xl transition-all duration-200 cursor-pointer border mt-1 ${
+              className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl transition-all duration-200 cursor-pointer border mt-1 ${
                 showAnalyticsDashboard
                   ? 'bg-neutral-900 text-white border-neutral-900 font-bold shadow-xs'
                   : 'bg-indigo-50/80 hover:bg-indigo-100 text-indigo-950 border-indigo-200 font-bold'
               }`}
               title="Abrir Dashboard Interativo de Relatórios e Gráficos"
             >
-              <div className="flex items-center space-x-2.5 truncate">
-                <BarChart3 className={`h-4 w-4 shrink-0 ${showAnalyticsDashboard ? 'text-emerald-400' : 'text-indigo-600'}`} />
-                <div className="text-left truncate">
-                  <span className="block truncate">Analytics &amp; Dados</span>
-                  <span className={`text-[10px] font-normal block truncate ${showAnalyticsDashboard ? 'text-neutral-300' : 'text-indigo-700'}`}>
-                    Relatórios interativos
-                  </span>
-                </div>
-              </div>
+              <BarChart3 className={`h-4 w-4 shrink-0 ${showAnalyticsDashboard ? 'text-emerald-400' : 'text-indigo-600'}`} />
+              <span className="truncate text-xs font-bold">Analytics &amp; Dados</span>
             </button>
 
             {/* Botão de Chat Interno Corporativo (@dominio) */}
             <button
               type="button"
               onClick={() => { soundEffects.playFolderSwitchSound(); setShowInternalChat(!showInternalChat); }}
-              className={`w-full flex items-center justify-between px-3 py-1.5 rounded-xl transition-all duration-200 cursor-pointer border mt-1 ${
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all duration-200 cursor-pointer border mt-1 ${
                 showInternalChat
                   ? 'bg-emerald-600 text-white border-emerald-600 font-bold shadow-xs'
                   : 'bg-emerald-50/80 hover:bg-emerald-100 text-emerald-950 border-emerald-200 font-bold'
               }`}
-              title="Abrir Chat Interno da Equipa (mesmo domínio)"
+              title="Abrir Chat Interno da Equipa"
             >
               <div className="flex items-center space-x-2.5 truncate">
                 <MessageSquare className={`h-4 w-4 shrink-0 ${showInternalChat ? 'text-white' : 'text-emerald-600'}`} />
-                <div className="text-left truncate">
-                  <span className="block truncate">Chat da Equipa</span>
-                  <span className={`text-[10px] font-normal block truncate ${showInternalChat ? 'text-emerald-100' : 'text-emerald-700'}`}>
-                    {internalChatOnline > 0 ? `${internalChatOnline} online agora` : `@${selectedAccountEmail.split('@')[1] || 'dominio'}`}
-                  </span>
-                </div>
+                <span className="truncate text-xs font-bold">Chat da Equipa</span>
               </div>
               {internalChatUnread > 0 ? (
                 <span className="text-[10px] px-2 py-0.5 rounded-full font-black bg-emerald-400 text-neutral-950 shadow-2xs">
@@ -4451,19 +4439,12 @@ function WebmailContent() {
                 soundEffects.playFolderSwitchSound();
                 setShowExternalAccountsModal(true);
               }}
-              className="w-full flex items-center justify-between px-3 py-1.5 rounded-xl transition-all duration-200 cursor-pointer border mt-1 bg-neutral-50/80 hover:bg-neutral-100 text-neutral-800 border-neutral-200 font-bold"
+              className="w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all duration-200 cursor-pointer border mt-1 bg-neutral-50/80 hover:bg-neutral-100 text-neutral-800 border-neutral-200 font-bold"
               title="Conectar e gerir contas de e-mail de outros provedores (IMAP/SMTP)"
             >
               <div className="flex items-center space-x-2.5 truncate">
                 <Server className="h-4 w-4 shrink-0 text-primary-600" />
-                <div className="text-left truncate">
-                  <span className="block truncate text-xs">Contas Externas</span>
-                  <span className="text-[10px] font-normal block truncate text-neutral-500">
-                    {externalAccountsCount > 0
-                      ? `${externalAccountsCount} conectada${externalAccountsCount > 1 ? 's' : ''}`
-                      : 'Adicionar conta externa'}
-                  </span>
-                </div>
+                <span className="truncate text-xs font-bold">Contas Externas</span>
               </div>
               <Plus className="h-3.5 w-3.5 text-neutral-400 shrink-0" />
             </button>
@@ -4479,12 +4460,7 @@ function WebmailContent() {
               >
                 <div className="flex items-center space-x-2.5 truncate">
                   <Globe className="h-4 w-4 text-emerald-600 shrink-0" />
-                  <div className="text-left truncate">
-                    <span className="block truncate text-xs font-bold">Visitar Site</span>
-                    <span className="text-[10px] font-mono text-neutral-500 block truncate">
-                      {selectedAccountEmail.split('@')[1].toLowerCase()}
-                    </span>
-                  </div>
+                  <span className="truncate text-xs font-bold">Visitar Site</span>
                 </div>
                 <ExternalLink className="h-3.5 w-3.5 text-neutral-400 shrink-0" />
               </a>
