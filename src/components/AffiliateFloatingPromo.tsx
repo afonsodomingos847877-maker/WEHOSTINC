@@ -8,7 +8,7 @@ import { soundEffects } from '@/lib/soundEffects';
 
 const SESSION_DISMISS_KEY = 'wehost_affiliate_promo_dismissed';
 const DELAY_MS = 5000; // 5 segundos
-const ROTATE_INTERVAL_MS = 7000; // 7 segundos por campanha
+const ROTATE_INTERVAL_MS = 5000; // 5 segundos por campanha
 
 interface PromoCampaign {
   id: 'affiliate' | 'webmail' | 'academy' | 'ai-builder' | 'revista' | 'systems' | 'loja-online';
