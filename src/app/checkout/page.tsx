@@ -2379,8 +2379,8 @@ function CheckoutContent() {
                     </label>
 
                     <div className="flex items-center space-x-3">
-                      <label className="cursor-pointer inline-flex items-center space-x-2 px-4 py-2.5 bg-white hover:bg-emerald-100/50 text-emerald-800 text-xs font-bold rounded-xl transition border border-emerald-300 shadow-sm">
-                        <Paperclip className="w-4 h-4 text-emerald-600" />
+                      <label className={`cursor-pointer inline-flex items-center space-x-2 px-4 py-2.5 text-xs font-extrabold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] select-none ${proofName ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-2 border-emerald-400' : 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white ring-2 ring-emerald-500/25'}`}>
+                        <Upload className={`w-4 h-4 ${proofName ? 'text-emerald-600' : 'text-white'}`} />
                         <span>{proofName ? 'Substituir Comprovativo' : 'Carregar Comprovativo'}</span>
                         <input
                           type="file"
