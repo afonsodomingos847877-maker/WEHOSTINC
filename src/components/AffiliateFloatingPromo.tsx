@@ -8,6 +8,49 @@ import { soundEffects } from '@/lib/soundEffects';
 
 const SESSION_DISMISS_KEY = 'wehost_affiliate_promo_dismissed';
 const DELAY_MS = 5000; // 5 segundos
+const ROTATE_INTERVAL_MS = 10000; // 10 segundos por campanha
+
+interface PromoCampaign {
+  id: 'affiliate' | 'academy' | 'revista';
+  title: string;
+  badge: string;
+  badgeClass: string;
+  description: string;
+  ctaLabel: string;
+  href?: string;
+}
+
+const PROMO_CAMPAIGNS: PromoCampaign[] = [
+  {
+    id: 'affiliate',
+    title: 'Ganhe 30% de Comissão!',
+    badge: 'Renda Extra',
+    badgeClass: 'bg-emerald-100 text-emerald-800',
+    description:
+      'Indique os nossos serviços e transforme as suas recomendações numa oportunidade de renda extra.',
+    ctaLabel: 'Ser Afiliado',
+  },
+  {
+    id: 'academy',
+    title: 'Academia Web WeHostHere',
+    badge: 'Cursos & Certificados',
+    badgeClass: 'bg-sky-100 text-sky-800',
+    description:
+      'Aprenda programação, cloud e design na prática com cursos e certificado oficial verificado.',
+    ctaLabel: 'Explorar Academia',
+    href: '/academy',
+  },
+  {
+    id: 'revista',
+    title: 'Revista Tech & Startups',
+    badge: 'Leitura Grátis',
+    badgeClass: 'bg-violet-100 text-violet-800',
+    description:
+      'Artigos, guias de código, IA, design e tendências digitais para impulsionar o seu negócio.',
+    ctaLabel: 'Ler Revista',
+    href: '/revista',
+  },
+];
 
 export default function AffiliateFloatingPromo() {
   const router = useRouter();
@@ -16,6 +59,16 @@ export default function AffiliateFloatingPromo() {
   const [isRendered, setIsRendered] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAffiliate, setIsAffiliate] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
+  const availableCampaigns = isAffiliate
+    ? PROMO_CAMPAIGNS.filter((c) => c.id !== 'affiliate')
+    : PROMO_CAMPAIGNS;
+
+  const currentCampaign = availableCampaigns[activeIndex % availableCampaigns.length] || availableCampaigns[0];
 
   // Notificar outros componentes (ex: Assistente Virtual) para esconder o ícone lateral quando a barra estiver visível
   useEffect(() => {
@@ -50,45 +103,59 @@ export default function AffiliateFloatingPromo() {
     }
 
     let isMounted = true;
+    let timer: ReturnType<typeof setTimeout> | null = null;
 
     // 3. Verificar estado do utilizador no backend
     fetch('/api/affiliates/check-status', { credentials: 'include' })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
-        if (!isMounted || !data) return;
+        if (!isMounted) return;
 
-        setIsAuthenticated(!!data.authenticated);
+        if (data) {
+          setIsAuthenticated(!!data.authenticated);
+          setIsAffiliate(!!data.isAffiliate);
+        }
 
-        // Se já for afiliado, não exibir
-        if (data.isAffiliate) return;
-
-        // Monta o componente escondido na base
+        // Monta o componente escondido na base (para quem já é afiliado, promove Academia e Revista)
         setIsRendered(true);
 
         // 4. Temporizador de 5 segundos para fazer a barra subir suavemente de baixo para cima
-        const timer = setTimeout(() => {
+        timer = setTimeout(() => {
           if (isMounted) {
             setIsVisible(true);
           }
         }, DELAY_MS);
-
-        return () => clearTimeout(timer);
       })
       .catch((err) => {
         console.warn('[AffiliatePromo] Erro ao verificar estado:', err);
         setIsRendered(true);
-        const timer = setTimeout(() => {
+        timer = setTimeout(() => {
           if (isMounted) {
             setIsVisible(true);
           }
         }, DELAY_MS);
-        return () => clearTimeout(timer);
       });
 
     return () => {
       isMounted = false;
+      if (timer) clearTimeout(timer);
     };
   }, [pathname]);
+
+  // Rotação suave entre Afiliados, Academia Web e Revista
+  useEffect(() => {
+    if (!isVisible || isPaused || availableCampaigns.length <= 1) return;
+
+    const interval = setInterval(() => {
+      setIsTransitioning(true);
+      setTimeout(() => {
+        setActiveIndex((prev) => (prev + 1) % availableCampaigns.length);
+        setIsTransitioning(false);
+      }, 220);
+    }, ROTATE_INTERVAL_MS);
+
+    return () => clearInterval(interval);
+  }, [isVisible, isPaused, availableCampaigns.length]);
 
   const handleDismiss = () => {
     soundEffects.playClickSound();
@@ -109,6 +176,11 @@ export default function AffiliateFloatingPromo() {
 
   const handleClickAction = () => {
     soundEffects.playClickSound();
+
+    if (currentCampaign.href) {
+      router.push(currentCampaign.href);
+      return;
+    }
 
     if (isAuthenticated) {
       // Cenários B e C: Vai direto ao painel / adesão de afiliados
@@ -142,6 +214,8 @@ export default function AffiliateFloatingPromo() {
       )}
       <aside
         aria-label="Barra Promocional do Programa de Afiliados"
+        onMouseEnter={() => setIsPaused(true)}
+        onMouseLeave={() => setIsPaused(false)}
         className={`fixed bottom-0 left-0 right-0 z-[60] w-full bg-white border-t border-slate-200/95 shadow-[0_-10px_35px_-5px_rgba(0,0,0,0.12)] transition-transform duration-700 ease-out transform ${
           isVisible ? 'translate-y-0' : 'translate-y-full pointer-events-none'
         }`}
@@ -159,17 +233,17 @@ export default function AffiliateFloatingPromo() {
               className="w-full h-full object-contain select-none"
             />
           </div>
-          <div className="min-w-0">
+          <div className={`min-w-0 transition-opacity duration-200 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs sm:text-sm font-extrabold text-slate-900 tracking-tight leading-tight">
-                Ganhe 30% de Comissão!
+                {currentCampaign.title}
               </span>
-              <span className="hidden md:inline-flex text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
-                Renda Extra
+              <span className={`hidden md:inline-flex text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${currentCampaign.badgeClass}`}>
+                {currentCampaign.badge}
               </span>
             </div>
             <p className="text-[11px] sm:text-xs text-slate-600 line-clamp-1 sm:line-clamp-2 mt-0.5 leading-snug">
-              Indique os nossos serviços e transforme as suas recomendações numa oportunidade de renda extra.
+              {currentCampaign.description}
             </p>
           </div>
         </div>
@@ -179,10 +253,10 @@ export default function AffiliateFloatingPromo() {
           <button
             type="button"
             onClick={handleClickAction}
-            className="inline-flex items-center space-x-1.5 bg-[#0284c7] hover:bg-[#0369a1] text-white text-xs sm:text-sm font-bold px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl transition-all shadow-xs hover:shadow-md hover:scale-[1.02] active:scale-95 cursor-pointer whitespace-nowrap"
-            title="Aderir ao Programa de Afiliados"
+            className={`inline-flex items-center space-x-1.5 bg-[#0284c7] hover:bg-[#0369a1] text-white text-xs sm:text-sm font-bold px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl transition-all shadow-xs hover:shadow-md hover:scale-[1.02] active:scale-95 cursor-pointer whitespace-nowrap ${isTransitioning ? 'opacity-70' : 'opacity-100'}`}
+            title={currentCampaign.title}
           >
-            <span>Ser Afiliado</span>
+            <span>{currentCampaign.ctaLabel}</span>
             <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </button>
 
