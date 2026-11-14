@@ -576,49 +576,49 @@ export default function DashboardPage() {
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-3">
                 <Link
                   href="/dashboard/sites"
-                  className="w-full h-11 sm:h-12 flex items-center justify-center space-x-1.5 sm:space-x-2 bg-emerald-500 hover:bg-emerald-400 text-white px-3 sm:px-4 rounded-xl font-bold text-xs sm:text-sm shadow-md transition whitespace-nowrap"
+                  className="w-full h-11 sm:h-12 flex items-center justify-center space-x-1.5 sm:space-x-2 bg-primary-600 hover:bg-primary-500 text-white px-3 sm:px-4 rounded-xl font-bold text-xs sm:text-sm shadow-md shadow-primary-900/30 transition whitespace-nowrap"
                 >
                   <Globe className="h-4 w-4 sm:h-5 sm:w-5" />
                   <span>{t('dash.btn_new_site')}</span>
                 </Link>
                 <Link
                   href="/dashboard/email"
-                  className="w-full h-11 sm:h-12 flex items-center justify-center space-x-1.5 sm:space-x-2 bg-primary-600 hover:bg-primary-500 text-white px-3 sm:px-4 rounded-xl font-bold text-xs sm:text-sm shadow-md transition whitespace-nowrap"
+                  className="w-full h-11 sm:h-12 flex items-center justify-center space-x-1.5 sm:space-x-2 bg-white/10 hover:bg-white/20 text-white border border-white/15 backdrop-blur-sm px-3 sm:px-4 rounded-xl font-semibold text-xs sm:text-sm transition whitespace-nowrap"
                 >
                   <Mail className="h-4 w-4 sm:h-5 sm:w-5" />
                   <span>{t('dash.btn_email')}</span>
                 </Link>
                 <Link
                   href="/dashboard/domains"
-                  className="w-full h-11 sm:h-12 flex items-center justify-center space-x-1.5 sm:space-x-2 bg-white text-gray-900 hover:bg-gray-100 px-3 sm:px-4 rounded-xl transition font-bold text-xs sm:text-sm shadow-sm whitespace-nowrap"
+                  className="w-full h-11 sm:h-12 flex items-center justify-center space-x-1.5 sm:space-x-2 bg-white/10 hover:bg-white/20 text-white border border-white/15 backdrop-blur-sm px-3 sm:px-4 rounded-xl transition font-semibold text-xs sm:text-sm whitespace-nowrap"
                 >
-                  <Plus className="h-4 w-4 sm:h-5 sm:w-5 text-primary-600" />
+                  <Plus className="h-4 w-4 sm:h-5 sm:w-5 text-primary-300" />
                   <span>Registar Domínio</span>
                 </Link>
                 <Link
                   href="/dashboard/visual-builder"
-                  className="w-full h-11 sm:h-12 flex items-center justify-center space-x-1.5 sm:space-x-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-3 sm:px-4 rounded-xl font-extrabold text-xs sm:text-sm shadow-md transition whitespace-nowrap"
+                  className="w-full h-11 sm:h-12 flex items-center justify-center space-x-1.5 sm:space-x-2 bg-white/10 hover:bg-white/20 text-white border border-white/15 backdrop-blur-sm px-3 sm:px-4 rounded-xl font-semibold text-xs sm:text-sm transition whitespace-nowrap"
                 >
                   <Layers className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
                   <span>Editor Visual Pro</span>
                 </Link>
                 <Link
                   href="/site-quote"
-                  className="w-full h-11 sm:h-12 flex items-center justify-center space-x-1.5 sm:space-x-2 bg-amber-400 hover:bg-amber-300 text-gray-900 px-3 sm:px-4 rounded-xl font-extrabold text-xs sm:text-sm shadow-md transition whitespace-nowrap"
+                  className="w-full h-11 sm:h-12 flex items-center justify-center space-x-1.5 sm:space-x-2 bg-white/10 hover:bg-white/20 text-white border border-white/15 backdrop-blur-sm px-3 sm:px-4 rounded-xl font-semibold text-xs sm:text-sm transition whitespace-nowrap"
                 >
-                  <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-gray-900" />
+                  <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-primary-300" />
                   <span>{t('dash.btn_request_site')}</span>
                 </Link>
                 <Link
                   href="/dashboard/systems"
-                  className="w-full h-11 sm:h-12 flex items-center justify-center space-x-1.5 sm:space-x-2 bg-purple-500 text-white px-3 sm:px-4 rounded-xl hover:bg-purple-400 transition font-semibold text-xs sm:text-sm shadow-md whitespace-nowrap"
+                  className="w-full h-11 sm:h-12 flex items-center justify-center space-x-1.5 sm:space-x-2 bg-white/10 hover:bg-white/20 text-white border border-white/15 backdrop-blur-sm px-3 sm:px-4 rounded-xl transition font-semibold text-xs sm:text-sm whitespace-nowrap"
                 >
                   <Star className="h-4 w-4 sm:h-5 sm:w-5" />
                   <span>{t('dash.btn_systems')}</span>
                 </Link>
                 <Link
                   href="/dashboard/uptime"
-                  className="w-full h-11 sm:h-12 flex items-center justify-center space-x-1.5 sm:space-x-2 bg-slate-800 text-slate-200 hover:text-white px-3 sm:px-4 rounded-xl hover:bg-slate-700 transition font-semibold text-xs sm:text-sm shadow-md whitespace-nowrap"
+                  className="w-full h-11 sm:h-12 flex items-center justify-center space-x-1.5 sm:space-x-2 bg-white/10 hover:bg-white/20 text-white border border-white/15 backdrop-blur-sm px-3 sm:px-4 rounded-xl transition font-semibold text-xs sm:text-sm whitespace-nowrap"
                 >
                   <Activity className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-400" />
                   <span>{t('dash.btn_uptime')}</span>
