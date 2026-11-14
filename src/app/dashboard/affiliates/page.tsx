@@ -178,6 +178,71 @@ export default function AffiliatesPage() {
   const [eventsLoading, setEventsLoading] = useState(false);
   const [eventFilter, setEventFilter] = useState<string>('all');
   const [expandedSession, setExpandedSession] = useState<string | null>(null);
+  const [reportPrefs, setReportPrefs] = useState<{ daily: boolean; weekly: boolean; monthly: boolean }>({
+    daily: true,
+    weekly: true,
+    monthly: true,
+  });
+  const [reportSummaries, setReportSummaries] = useState<Record<string, any> | null>(null);
+  const [sendingReport, setSendingReport] = useState<string | null>(null);
+  const [reportFeedback, setReportFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  const fetchAffiliateReports = async () => {
+    try {
+      const res = await fetch('/api/affiliates/reports', { credentials: 'include' });
+      const data = await res.json();
+      if (data.success) {
+        if (data.reportPreferences) setReportPrefs(data.reportPreferences);
+        if (data.summaries) setReportSummaries(data.summaries);
+      }
+    } catch (err) {
+      console.error('Erro ao carregar preferências de relatórios:', err);
+    }
+  };
+
+  const toggleReportPref = async (key: 'daily' | 'weekly' | 'monthly') => {
+    const next = { ...reportPrefs, [key]: !reportPrefs[key] };
+    setReportPrefs(next);
+    try {
+      await fetch('/api/affiliates/reports', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(next),
+      });
+    } catch (err) {
+      console.error('Erro ao salvar preferência de relatório:', err);
+    }
+  };
+
+  const sendReportNow = async (period: 'daily' | 'weekly' | 'monthly') => {
+    setSendingReport(period);
+    setReportFeedback(null);
+    try {
+      const res = await fetch('/api/affiliates/reports', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ period }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setReportFeedback({ type: 'success', text: data.message || 'Relatório enviado para o seu e-mail!' });
+      } else {
+        setReportFeedback({ type: 'error', text: data.error || 'Erro ao enviar relatório.' });
+      }
+    } catch {
+      setReportFeedback({ type: 'error', text: 'Falha de ligação ao enviar relatório.' });
+    } finally {
+      setSendingReport(null);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'performance' && affiliate) {
+      fetchAffiliateReports();
+    }
+  }, [activeTab, affiliate]);
 
   const fetchAffiliateEvents = async (filterType = eventFilter) => {
     setEventsLoading(true);
@@ -1453,6 +1518,93 @@ export default function AffiliatesPage() {
                 <p className="text-gray-500">Carregando dados de performance...</p>
               </div>
             )}
+          </div>
+        )}
+
+        {activeTab === 'performance' && (
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 md:p-8 mt-6 space-y-5">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+              <div>
+                <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                  <Mail className="h-5 w-5 text-primary-600" />
+                  <span>Relatórios Automáticos por E-mail</span>
+                </h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  Receba automaticamente no seu e-mail o resumo diário, semanal e mensal do seu desempenho e jornada de visitantes.
+                </p>
+              </div>
+            </div>
+
+            {reportFeedback && (
+              <div
+                className={`p-3 rounded-xl text-sm font-medium border ${
+                  reportFeedback.type === 'success'
+                    ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                    : 'bg-red-50 text-red-800 border-red-200'
+                }`}
+              >
+                {reportFeedback.text}
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {([
+                { key: 'daily', title: 'Relatório Diário', schedule: 'Todos os dias às 08:00' },
+                { key: 'weekly', title: 'Relatório Semanal', schedule: 'Todas as segundas-feiras às 08:00' },
+                { key: 'monthly', title: 'Relatório Mensal', schedule: 'Todo dia 1 do mês às 08:00' },
+              ] as const).map((item) => {
+                const summary = reportSummaries?.[item.key];
+                const enabled = reportPrefs[item.key];
+                return (
+                  <div key={item.key} className="border border-gray-200 rounded-xl p-4 bg-slate-50/70 flex flex-col justify-between gap-4">
+                    <div>
+                      <div className="flex items-center justify-between gap-2">
+                        <h4 className="font-bold text-gray-900">{item.title}</h4>
+                        <button
+                          type="button"
+                          onClick={() => toggleReportPref(item.key)}
+                          className={`px-3 py-1 rounded-full text-xs font-bold transition ${
+                            enabled
+                              ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
+                              : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                          }`}
+                        >
+                          {enabled ? 'Ativo' : 'Desativado'}
+                        </button>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">{item.schedule}</p>
+
+                      {summary && (
+                        <div className="mt-3 pt-3 border-t border-gray-200 grid grid-cols-3 gap-2 text-center">
+                          <div>
+                            <p className="text-[11px] text-gray-500">Cliques</p>
+                            <p className="text-sm font-bold text-gray-900">{summary.clicks}</p>
+                          </div>
+                          <div>
+                            <p className="text-[11px] text-gray-500">Conversões</p>
+                            <p className="text-sm font-bold text-gray-900">{summary.conversions}</p>
+                          </div>
+                          <div>
+                            <p className="text-[11px] text-gray-500">Ganhos</p>
+                            <p className="text-sm font-bold text-emerald-700">{summary.earnings.toLocaleString('pt-MZ')} MT</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => sendReportNow(item.key)}
+                      disabled={sendingReport === item.key}
+                      className="w-full py-2 px-3 rounded-xl bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white text-xs font-bold transition flex items-center justify-center gap-2"
+                    >
+                      <Mail className="h-3.5 w-3.5" />
+                      <span>{sendingReport === item.key ? 'A enviar...' : 'Enviar Agora por E-mail'}</span>
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
 

@@ -23,6 +23,11 @@ export interface IAffiliate extends Document {
   payoutNotes?: string;
   payoutProcessedAt?: string;
   addedByAdmin?: boolean;
+  reportPreferences?: {
+    daily?: boolean;
+    weekly?: boolean;
+    monthly?: boolean;
+  };
   createdAt: string;
   updatedAt: string;
 }
@@ -51,6 +56,11 @@ const AffiliateSchema = new Schema<IAffiliate>(
     payoutNotes: String,
     payoutProcessedAt: String,
     addedByAdmin: { type: Boolean, default: false },
+    reportPreferences: {
+      daily: { type: Boolean, default: true },
+      weekly: { type: Boolean, default: true },
+      monthly: { type: Boolean, default: true },
+    },
     createdAt: { type: String, default: () => new Date().toISOString() },
     updatedAt: { type: String, default: () => new Date().toISOString() },
   },
