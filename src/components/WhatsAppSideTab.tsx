@@ -1,25 +1,76 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
+import { X } from 'lucide-react';
+
+const WHATSAPP_HIDDEN_KEY = 'wehost_whatsapp_tab_hidden';
+
+const HIDDEN_ROUTE_PREFIXES = [
+  '/webmail',
+  '/admin',
+  '/dashboard',
+  '/checkout',
+  '/test-payment',
+  '/login',
+  '/register',
+  '/forgot-password',
+  '/reset-password',
+  '/confirm-email',
+  '/ai-website-builder',
+  '/academy',
+  '/revista',
+];
 
 export default function WhatsAppSideTab() {
   const pathname = usePathname();
+  const [isHidden, setIsHidden] = useState(false);
 
-  // Não exibir no webmail
-  if (pathname?.startsWith('/webmail')) return null;
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem(WHATSAPP_HIDDEN_KEY) === 'true') {
+        setIsHidden(true);
+      }
+    } catch {}
+  }, []);
+
+  const isExcludedRoute = HIDDEN_ROUTE_PREFIXES.some((prefix) =>
+    pathname?.startsWith(prefix)
+  );
+
+  if (isExcludedRoute || isHidden) return null;
+
+  const handleHide = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsHidden(true);
+    try {
+      sessionStorage.setItem(WHATSAPP_HIDDEN_KEY, 'true');
+    } catch {}
+  };
 
   const whatsappUrl = 'https://wa.me/258848335618?text=Ol%C3%A1%2C%20gostaria%20de%20saber%20mais%20sobre%20os%20servi%C3%A7os%20WEHOSTHERE';
 
   return (
-    <aside aria-label="Contacto WhatsApp">
+    <aside aria-label="Contacto WhatsApp" className="fixed left-0 top-1/2 -translate-y-1/2 z-40 group/tab">
+      {/* Botão discreto para esconder a aba de WhatsApp */}
+      <button
+        type="button"
+        onClick={handleHide}
+        aria-label="Esconder botão do WhatsApp"
+        title="Esconder WhatsApp"
+        className="absolute -top-2.5 -right-2.5 z-10 w-5 h-5 rounded-full bg-white border border-slate-200 shadow-sm text-slate-400 hover:text-slate-700 hover:bg-slate-50 flex items-center justify-center opacity-80 hover:opacity-100 transition-all duration-200 cursor-pointer active:scale-90"
+      >
+        <X className="w-3 h-3" />
+      </button>
+
       <a
         href={whatsappUrl}
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Falar connosco pelo WhatsApp (+258 84 833 5618)"
         title="Falar connosco pelo WhatsApp (+258 84 833 5618)"
-        className="fixed left-0 top-1/2 -translate-y-1/2 z-40 group flex flex-col items-center bg-white/95 hover:bg-white text-slate-800 py-3 sm:py-3.5 px-2 sm:px-2.5 rounded-r-2xl border-y border-r border-slate-200 shadow-[0_6px_25px_-5px_rgba(0,0,0,0.12)] hover:shadow-[0_10px_30px_-5px_rgba(2,132,199,0.3)] hover:border-primary-300 transition-all duration-300 hover:translate-x-0.5 active:scale-95 cursor-pointer backdrop-blur-md"
+        className="group flex flex-col items-center bg-white/95 hover:bg-white text-slate-800 py-3 sm:py-3.5 px-2 sm:px-2.5 rounded-r-2xl border-y border-r border-slate-200 shadow-[0_6px_25px_-5px_rgba(0,0,0,0.12)] hover:shadow-[0_10px_30px_-5px_rgba(2,132,199,0.3)] hover:border-primary-300 transition-all duration-300 hover:translate-x-0.5 active:scale-95 cursor-pointer backdrop-blur-md"
       >
         {/* Indicador de Status Online Pulsante em Azul do Sistema */}
         <span className="w-1.5 h-1.5 rounded-full bg-[#0284c7] mb-2 shadow-[0_0_8px_rgba(2,132,199,0.8)] animate-pulse" />
