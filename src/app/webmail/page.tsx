@@ -4432,22 +4432,6 @@ function WebmailContent() {
               )}
             </button>
 
-            {/* Botão de Contas Externas (IMAP/SMTP) */}
-            <button
-              type="button"
-              onClick={() => {
-                soundEffects.playFolderSwitchSound();
-                setShowExternalAccountsModal(true);
-              }}
-              className="w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all duration-200 cursor-pointer border mt-1 bg-neutral-50/80 hover:bg-neutral-100 text-neutral-800 border-neutral-200 font-bold"
-              title="Conectar e gerir contas de e-mail de outros provedores (IMAP/SMTP)"
-            >
-              <div className="flex items-center space-x-2.5 truncate">
-                <Server className="h-4 w-4 shrink-0 text-primary-600" />
-                <span className="truncate text-xs font-bold">Contas Externas</span>
-              </div>
-              <Plus className="h-3.5 w-3.5 text-neutral-400 shrink-0" />
-            </button>
 
             {/* Atalho Direto para Visitar o Site do Domínio da Empresa */}
             {selectedAccountEmail && selectedAccountEmail.includes('@') && (
