@@ -8,6 +8,36 @@ export default function ScrollToTop() {
   const pathname = usePathname();
   const [isVisible, setIsVisible] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [hasBottomBar, setHasBottomBar] = useState(false);
+
+  useEffect(() => {
+    const syncBottomBar = () => {
+      setHasBottomBar(
+        document.body.hasAttribute('data-affiliate-promo-open') ||
+        document.body.hasAttribute('data-scroll-card-open')
+      );
+    };
+
+    const handlePromoOrCardState = () => {
+      syncBottomBar();
+    };
+
+    syncBottomBar();
+    window.addEventListener('wehost:affiliate-promo-state', handlePromoOrCardState);
+    window.addEventListener('wehost:scroll-card-state', handlePromoOrCardState);
+
+    const attrObserver = new MutationObserver(syncBottomBar);
+    attrObserver.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['data-affiliate-promo-open', 'data-scroll-card-open'],
+    });
+
+    return () => {
+      window.removeEventListener('wehost:affiliate-promo-state', handlePromoOrCardState);
+      window.removeEventListener('wehost:scroll-card-state', handlePromoOrCardState);
+      attrObserver.disconnect();
+    };
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -94,7 +124,11 @@ export default function ScrollToTop() {
   const isBeforeHalf = roundedPercentage < 48;
 
   return (
-    <div className="fixed bottom-6 right-5 z-40 animate-in fade-in zoom-in-90 duration-300">
+    <div
+      className={`fixed right-5 z-[70] transition-all duration-300 animate-in fade-in zoom-in-90 ${
+        hasBottomBar ? 'bottom-[88px] sm:bottom-[92px]' : 'bottom-6'
+      }`}
+    >
       {/* Cápsula Vertical Flutuante de Scroll */}
       <div className="relative group bg-white/95 backdrop-blur-xl border border-gray-200/90 shadow-[0_10px_30px_-5px_rgba(0,0,0,0.12),0_0_0_1px_rgba(255,255,255,0.8)_inset] rounded-full p-1.5 flex flex-col items-center gap-1 w-11 sm:w-12 transition-all duration-300 hover:shadow-primary-500/15 hover:border-primary-300">
         
