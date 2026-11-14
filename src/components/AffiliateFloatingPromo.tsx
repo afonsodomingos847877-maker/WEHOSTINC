@@ -11,7 +11,7 @@ const DELAY_MS = 5000; // 5 segundos
 const ROTATE_INTERVAL_MS = 10000; // 10 segundos por campanha
 
 interface PromoCampaign {
-  id: 'affiliate' | 'academy' | 'revista';
+  id: 'affiliate' | 'webmail' | 'academy' | 'ai-builder' | 'revista' | 'systems' | 'loja-online';
   title: string;
   badge: string;
   badgeClass: string;
@@ -31,6 +31,16 @@ const PROMO_CAMPAIGNS: PromoCampaign[] = [
     ctaLabel: 'Ser Afiliado',
   },
   {
+    id: 'webmail',
+    title: 'Webmail Corporativo Demo',
+    badge: 'Teste Grátis',
+    badgeClass: 'bg-blue-100 text-blue-800',
+    description:
+      'Experimente o nosso Webmail Corporativo grátis agora mesmo — sem precisar criar conta.',
+    ctaLabel: 'Testar Webmail',
+    href: '/webmail',
+  },
+  {
     id: 'academy',
     title: 'Academia Web WeHostHere',
     badge: 'Cursos & Certificados',
@@ -41,6 +51,16 @@ const PROMO_CAMPAIGNS: PromoCampaign[] = [
     href: '/academy',
   },
   {
+    id: 'ai-builder',
+    title: 'Criador de Sites com IA',
+    badge: 'Rápido & Profissional',
+    badgeClass: 'bg-indigo-100 text-indigo-800',
+    description:
+      'Crie o site da sua empresa com Inteligência Artificial em minutos, pronto para publicar.',
+    ctaLabel: 'Criar Site com IA',
+    href: '/ai-website-builder',
+  },
+  {
     id: 'revista',
     title: 'Revista Tech & Startups',
     badge: 'Leitura Grátis',
@@ -49,6 +69,26 @@ const PROMO_CAMPAIGNS: PromoCampaign[] = [
       'Artigos, guias de código, IA, design e tendências digitais para impulsionar o seu negócio.',
     ctaLabel: 'Ler Revista',
     href: '/revista',
+  },
+  {
+    id: 'systems',
+    title: 'Sistemas Prontos a Usar',
+    badge: 'ERP & Faturação',
+    badgeClass: 'bg-amber-100 text-amber-800',
+    description:
+      'Precisa de sistema de faturação, CRM ou gestão de stock? Alugue pronto a usar sem complicações.',
+    ctaLabel: 'Ver Sistemas',
+    href: '/systems',
+  },
+  {
+    id: 'loja-online',
+    title: 'Loja Online + M-Pesa e e-Mola',
+    badge: 'E-commerce MZ',
+    badgeClass: 'bg-teal-100 text-teal-800',
+    description:
+      'Venda online 24/7 com pagamentos locais M-Pesa e e-Mola integrados diretamente na sua loja.',
+    ctaLabel: 'Criar Loja',
+    href: '/loja-online',
   },
 ];
 
