@@ -7,8 +7,16 @@ import { cookies } from 'next/headers';
 // SEO FIX: Esta página anteriormente redirecionava para /api/affiliates/[code]
 // gerando uma cadeia de 2 redirects: /ref → /api → /
 // Agora processa o rastreamento diretamente e faz um único redirect para /
-export default async function ReferralPage({ params }: { params: { code: string } }) {
+export default async function ReferralPage({
+  params,
+  searchParams,
+}: {
+  params: { code: string };
+  searchParams?: { to?: string };
+}) {
   const { code } = params;
+  const rawTo = searchParams?.to || '/';
+  const targetPath = rawTo.startsWith('/') && !rawTo.startsWith('//') ? rawTo : '/';
 
   try {
     await connectDB();
@@ -26,7 +34,7 @@ export default async function ReferralPage({ params }: { params: { code: string 
           userAgent: 'unknown',
           referrer: 'unknown',
           convertedToSale: false,
-          landingPage: '/',
+          landingPage: targetPath,
         });
 
         await Affiliate.findByIdAndUpdate(
@@ -50,6 +58,6 @@ export default async function ReferralPage({ params }: { params: { code: string 
     console.error('[Ref] Erro ao processar referral:', err);
   }
 
-  // Redirect único direto para a homepage — sem cadeia intermédia
-  redirect('/');
+  // Redirect único direto para o destino — sem cadeia intermédia
+  redirect(targetPath);
 }

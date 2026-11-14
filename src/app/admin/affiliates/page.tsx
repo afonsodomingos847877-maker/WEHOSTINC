@@ -103,6 +103,54 @@ export default function AdminAffiliatesPage() {
   const [platformUsers, setPlatformUsers] = useState<Array<{ id: string; name: string; email: string; phone?: string; isAffiliate: boolean; affiliateStatus?: string | null }>>([]);
   const [loadingPlatformUsers, setLoadingPlatformUsers] = useState(false);
   const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [commissionSettings, setCommissionSettings] = useState({
+    defaultCommissionRate: 30,
+    minPayoutAmount: 1000,
+    allowBalanceCredit: true,
+    eligibleServices: ['hosting', 'domain', 'email', 'site', 'systems', 'academy', 'vps', 'loja-online'],
+  });
+  const [savingSettings, setSavingSettings] = useState(false);
+  const [settingsSavedMsg, setSettingsSavedMsg] = useState('');
+
+  useEffect(() => {
+    fetch('/api/admin/affiliates/settings')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d?.success && d.settings) {
+          setCommissionSettings({
+            defaultCommissionRate: d.settings.defaultCommissionRate ?? 30,
+            minPayoutAmount: d.settings.minPayoutAmount ?? 1000,
+            allowBalanceCredit: d.settings.allowBalanceCredit ?? true,
+            eligibleServices: d.settings.eligibleServices || ['hosting', 'domain', 'email', 'site', 'systems', 'academy', 'vps', 'loja-online'],
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleSaveCommissionSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingSettings(true);
+    setSettingsSavedMsg('');
+    try {
+      const res = await fetch('/api/admin/affiliates/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(commissionSettings),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSettingsSavedMsg('Configurações guardadas com sucesso!');
+        setTimeout(() => setSettingsSavedMsg(''), 3000);
+      } else {
+        alert(data.error || 'Erro ao guardar configurações.');
+      }
+    } catch {
+      alert('Erro ao ligar ao servidor.');
+    } finally {
+      setSavingSettings(false);
+    }
+  };
 
   const openAddAffiliateModal = async () => {
     setAddAffiliateError('');
@@ -750,6 +798,80 @@ export default function AdminAffiliatesPage() {
                 </table>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'affiliates' && (
+        <div className="mt-6 bg-white/80 backdrop-blur-xl rounded-2xl shadow-xl border border-white/50 p-6">
+          <h3 className="text-base font-bold text-gray-900 mb-1">Regras Comerciais & Comissões</h3>
+          <p className="text-xs text-gray-500 mb-4">Altere a percentagem de comissão, mínimo de saque e serviços elegíveis sem mexer no código.</p>
+          <form onSubmit={handleSaveCommissionSettings} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">Comissão Padrão (%)</label>
+              <input
+                type="number"
+                min={1}
+                max={90}
+                value={commissionSettings.defaultCommissionRate}
+                onChange={(e) => setCommissionSettings({ ...commissionSettings, defaultCommissionRate: Number(e.target.value) })}
+                className="w-full px-3.5 py-2 border border-gray-300 rounded-xl text-sm bg-white"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">Saque Mínimo (MZN)</label>
+              <input
+                type="number"
+                min={50}
+                value={commissionSettings.minPayoutAmount}
+                onChange={(e) => setCommissionSettings({ ...commissionSettings, minPayoutAmount: Number(e.target.value) })}
+                className="w-full px-3.5 py-2 border border-gray-300 rounded-xl text-sm bg-white"
+              />
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <label className="flex items-center space-x-2 text-xs text-gray-700 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={commissionSettings.allowBalanceCredit}
+                  onChange={(e) => setCommissionSettings({ ...commissionSettings, allowBalanceCredit: e.target.checked })}
+                  className="rounded border-gray-300 text-blue-600"
+                />
+                <span>Permitir crédito na plataforma</span>
+              </label>
+              <button
+                type="submit"
+                disabled={savingSettings}
+                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold transition cursor-pointer disabled:opacity-50 shrink-0"
+              >
+                {savingSettings ? 'A guardar...' : 'Guardar Regras'}
+              </button>
+            </div>
+          </form>
+          <div className="mt-4 flex flex-wrap gap-2 items-center">
+            <span className="text-xs font-semibold text-gray-600 mr-1">Serviços elegíveis:</span>
+            {['hosting', 'domain', 'email', 'site', 'systems', 'academy', 'vps', 'loja-online'].map((svc) => {
+              const checked = commissionSettings.eligibleServices.includes(svc);
+              return (
+                <button
+                  key={svc}
+                  type="button"
+                  onClick={() => {
+                    setCommissionSettings((prev) => ({
+                      ...prev,
+                      eligibleServices: checked
+                        ? prev.eligibleServices.filter((s) => s !== svc)
+                        : [...prev.eligibleServices, svc],
+                    }));
+                  }}
+                  className={`px-2.5 py-1 rounded-full text-xs font-medium transition cursor-pointer ${
+                    checked ? 'bg-blue-600 text-white' : 'bg-white border border-gray-300 text-gray-600'
+                  }`}
+                >
+                  {svc}
+                </button>
+              );
+            })}
+            {settingsSavedMsg && <span className="text-xs font-semibold text-emerald-600 ml-2">{settingsSavedMsg}</span>}
           </div>
         </div>
       )}

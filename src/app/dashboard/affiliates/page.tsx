@@ -130,6 +130,63 @@ export default function AffiliatesPage() {
   const [performancePeriod, setPerformancePeriod] = useState('30');
   const [errorMessage, setErrorMessage] = useState('');
   const [errorType, setErrorType] = useState<'auth' | 'network' | 'api' | 'unknown'>('unknown');
+  const [selectedServicePath, setSelectedServicePath] = useState<string>('/');
+  const [showQrCode, setShowQrCode] = useState(false);
+  const [affiliateSettings, setAffiliateSettings] = useState<{ defaultCommissionRate: number; minPayoutAmount: number; allowBalanceCredit: boolean }>({
+    defaultCommissionRate: 30,
+    minPayoutAmount: 1000,
+    allowBalanceCredit: true,
+  });
+  const [showCreditModal, setShowCreditModal] = useState(false);
+  const [creditAmount, setCreditAmount] = useState('');
+  const [convertingCredit, setConvertingCredit] = useState(false);
+  const [creditError, setCreditError] = useState('');
+  const [creditSuccess, setCreditSuccess] = useState('');
+
+  useEffect(() => {
+    fetch('/api/admin/affiliates/settings')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d?.success && d.settings) {
+          setAffiliateSettings({
+            defaultCommissionRate: d.settings.defaultCommissionRate ?? 30,
+            minPayoutAmount: d.settings.minPayoutAmount ?? 1000,
+            allowBalanceCredit: d.settings.allowBalanceCredit ?? true,
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleConvertCredit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setConvertingCredit(true);
+    setCreditError('');
+    setCreditSuccess('');
+    try {
+      const res = await fetch('/api/affiliates/convert-credit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: Number(creditAmount) }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        setCreditError(data.error || 'Erro ao converter saldo.');
+        return;
+      }
+      setCreditSuccess(data.message || 'Saldo convertido em crédito!');
+      setCreditAmount('');
+      fetchAffiliateData();
+      setTimeout(() => {
+        setShowCreditModal(false);
+        setCreditSuccess('');
+      }, 1500);
+    } catch {
+      setCreditError('Erro de ligação ao servidor.');
+    } finally {
+      setConvertingCredit(false);
+    }
+  };
 
 
 
@@ -678,7 +735,7 @@ export default function AffiliatesPage() {
                   {affiliate.payoutDetails?.mpesaPhone ? (
                     <div className="text-right">
                       <div className="text-lg font-bold text-emerald-900 font-mono">
-                        {affiliate.payoutDetails.mpesaPhone}
+                        {affiliate.payoutDetails?.mpesaPhone}
                       </div>
                       <span className="text-xs text-emerald-600">✓ Verificado</span>
                     </div>
@@ -702,23 +759,87 @@ export default function AffiliatesPage() {
               </div>
               
               {/* Mostrar link apenas se telefone estiver verificado */}
-              {affiliate.payoutDetails?.mpesaPhone ? (
+              {affiliate.status === 'active' || affiliate.payoutDetails?.mpesaPhone ? (
                 <>
-                  <div className="flex flex-col md:flex-row md:items-center space-y-3 md:space-y-0 md:space-x-3 mb-4">
-                    <input
-                      type="text"
-                      value={affiliate.affiliateLink}
-                      readOnly
-                      className="flex-1 px-5 py-4 bg-gradient-to-r from-gray-50 to-gray-100 border-2 border-gray-200 rounded-xl text-gray-700 font-mono text-sm"
-                    />
-                    <button
-                      onClick={() => copyToClipboard(affiliate.affiliateLink)}
-                      className="flex items-center justify-center space-x-2 px-6 py-4 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl hover:from-primary-600 hover:to-primary-700 transition font-semibold shadow-lg"
-                    >
-                      {copied ? <CheckCircle2 className="h-5 w-5" /> : <Copy className="h-5 w-5" />}
-                      <span>{copied ? 'Copiado!' : 'Copiar'}</span>
-                    </button>
-                  </div>
+                  {/* Gerador de Links Diretos por Produto + QR Code */}
+                  {(() => {
+                    const targetLink =
+                      selectedServicePath === '/'
+                        ? affiliate.affiliateLink
+                        : `${affiliate.affiliateLink}?to=${encodeURIComponent(selectedServicePath)}`;
+                    return (
+                      <>
+                        <div className="mb-3 flex flex-col sm:flex-row sm:items-center gap-2">
+                          <label className="text-xs font-semibold text-gray-600 shrink-0">
+                            Destino do Link:
+                          </label>
+                          <select
+                            value={selectedServicePath}
+                            onChange={(e) => setSelectedServicePath(e.target.value)}
+                            className="px-3 py-2 bg-white border border-gray-300 rounded-xl text-xs font-medium text-gray-800 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                          >
+                            <option value="/">Página Inicial (Geral)</option>
+                            <option value="/hospedagem">Hospedagem de Sites</option>
+                            <option value="/email-corporativo">Email Corporativo</option>
+                            <option value="/dominios">Registo de Domínios</option>
+                            <option value="/academy">Academia Web (Cursos)</option>
+                            <option value="/ai-website-builder">Criador de Sites com IA</option>
+                            <option value="/loja-online">Loja Online + M-Pesa</option>
+                            <option value="/systems">Sistemas Prontos</option>
+                          </select>
+                          <button
+                            type="button"
+                            onClick={() => setShowQrCode((v) => !v)}
+                            className="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition cursor-pointer"
+                          >
+                            <span>{showQrCode ? 'Ocultar QR Code' : 'Ver QR Code'}</span>
+                          </button>
+                        </div>
+
+                        <div className="flex flex-col md:flex-row md:items-center space-y-3 md:space-y-0 md:space-x-3 mb-4">
+                          <input
+                            type="text"
+                            value={targetLink}
+                            readOnly
+                            className="flex-1 px-5 py-4 bg-gradient-to-r from-gray-50 to-gray-100 border-2 border-gray-200 rounded-xl text-gray-700 font-mono text-sm"
+                          />
+                          <button
+                            onClick={() => copyToClipboard(targetLink)}
+                            className="flex items-center justify-center space-x-2 px-6 py-4 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl hover:from-primary-600 hover:to-primary-700 transition font-semibold shadow-lg cursor-pointer"
+                          >
+                            {copied ? <CheckCircle2 className="h-5 w-5" /> : <Copy className="h-5 w-5" />}
+                            <span>{copied ? 'Copiado!' : 'Copiar'}</span>
+                          </button>
+                        </div>
+
+                        {showQrCode && (
+                          <div className="mb-4 p-4 bg-slate-50 border border-slate-200 rounded-xl flex flex-col sm:flex-row items-center gap-4">
+                            <img
+                              src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(targetLink)}`}
+                              alt="QR Code do Link de Afiliado"
+                              className="w-32 h-32 rounded-lg border border-white shadow-sm bg-white p-1"
+                            />
+                            <div className="text-center sm:text-left">
+                              <h4 className="text-sm font-bold text-slate-900">QR Code de Parceiro</h4>
+                              <p className="text-xs text-slate-600 mt-1 mb-3">
+                                Partilhe este QR Code em cartões de visita, propostas ou WhatsApp. Qualquer leitura regista automaticamente o seu código.
+                              </p>
+                              <a
+                                href={`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(targetLink)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                download={`qrcode-${affiliate.affiliateCode}.png`}
+                                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold transition"
+                              >
+                                <Download className="w-3.5 h-3.5" />
+                                <span>Abrir / Baixar QR Code HD</span>
+                              </a>
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
                   
                   {/* Social Media Share Buttons */}
                   <div className="flex flex-wrap items-center gap-2 pt-4 border-t border-gray-200">
@@ -807,22 +928,97 @@ export default function AffiliatesPage() {
             </div>
 
             {/* Payout Button */}
-            {stats && stats.availableBalance >= 1000 && (
-              <div className="bg-gradient-to-r from-emerald-500 to-teal-600 rounded-2xl shadow-xl p-8 text-white">
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            {/* Payout & Credit Conversion Bar */}
+            {stats && stats.availableBalance >= 50 && (
+              <div className="bg-gradient-to-r from-emerald-500 to-teal-600 rounded-2xl shadow-xl p-6 sm:p-8 text-white">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                   <div>
-                    <h3 className="text-xl font-bold mb-1">🎉 Você tem saldo disponível para saque!</h3>
-                    <p className="text-emerald-100">
-                      Saldo: {stats.availableBalance.toLocaleString('pt-MZ')} MZN
+                    <h3 className="text-xl font-bold mb-1">
+                      {stats.availableBalance >= affiliateSettings.minPayoutAmount
+                        ? '🎉 Você tem saldo disponível para saque!'
+                        : '💡 Saldo disponível de comissões'}
+                    </h3>
+                    <p className="text-emerald-100 text-sm">
+                      Saldo disponível: <strong>{stats.availableBalance.toLocaleString('pt-MZ')} MZN</strong>
+                      {stats.availableBalance < affiliateSettings.minPayoutAmount && (
+                        <span> (Saque a partir de {affiliateSettings.minPayoutAmount.toLocaleString('pt-MZ')} MZN ou converta já em crédito!)</span>
+                      )}
                     </p>
                   </div>
-                  <button
-                    onClick={() => setShowPayoutModal(true)}
-                    className="flex items-center space-x-2 bg-white text-emerald-600 px-8 py-4 rounded-xl hover:bg-emerald-50 transition font-semibold shadow-lg"
-                  >
-                    <Wallet className="h-5 w-5" />
-                    <span>Solicitar Saque</span>
-                  </button>
+                  <div className="flex flex-wrap items-center gap-3">
+                    {affiliateSettings.allowBalanceCredit && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCreditError('');
+                          setCreditSuccess('');
+                          setCreditAmount(String(Math.floor(stats.availableBalance)));
+                          setShowCreditModal(true);
+                        }}
+                        className="flex items-center space-x-2 bg-emerald-950/30 hover:bg-emerald-950/50 border border-white/30 text-white px-5 py-3.5 rounded-xl transition font-semibold cursor-pointer text-sm"
+                      >
+                        <Sparkles className="h-4 w-4" />
+                        <span>Converter em Crédito WeHostHere</span>
+                      </button>
+                    )}
+                    {stats.availableBalance >= affiliateSettings.minPayoutAmount && (
+                      <button
+                        onClick={() => setShowPayoutModal(true)}
+                        className="flex items-center space-x-2 bg-white text-emerald-600 px-6 py-3.5 rounded-xl hover:bg-emerald-50 transition font-semibold shadow-lg cursor-pointer text-sm"
+                      >
+                        <Wallet className="h-4 w-4" />
+                        <span>Solicitar Saque</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Modal: Converter Saldo em Crédito */}
+            {showCreditModal && stats && (
+              <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+                <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 text-gray-900">
+                  <h3 className="text-lg font-bold mb-2">Converter Saldo em Crédito WeHostHere</h3>
+                  <p className="text-xs text-gray-600 mb-4">
+                    Use o seu saldo de comissões (mínimo 50 MZN) como crédito na sua conta para pagar domínios, hospedagem ou renovações. Saldo disponível: <strong>{stats.availableBalance.toLocaleString('pt-MZ')} MZN</strong>.
+                  </p>
+                  <form onSubmit={handleConvertCredit} className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1">Valor a converter (MZN)</label>
+                      <input
+                        type="number"
+                        min={50}
+                        max={stats.availableBalance}
+                        required
+                        value={creditAmount}
+                        onChange={(e) => setCreditAmount(e.target.value)}
+                        className="w-full px-3.5 py-2 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500"
+                      />
+                    </div>
+                    {creditError && (
+                      <div className="p-2.5 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700">{creditError}</div>
+                    )}
+                    {creditSuccess && (
+                      <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-700 font-semibold">{creditSuccess}</div>
+                    )}
+                    <div className="flex justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowCreditModal(false)}
+                        className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-xl cursor-pointer"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={convertingCredit}
+                        className="px-4 py-2 text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl disabled:opacity-50 cursor-pointer"
+                      >
+                        {convertingCredit ? 'A converter...' : 'Confirmar Conversão'}
+                      </button>
+                    </div>
+                  </form>
                 </div>
               </div>
             )}

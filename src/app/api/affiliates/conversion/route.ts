@@ -3,100 +3,159 @@ import { connectDB } from '@/lib/mongodb';
 import AffiliateClick from '@/lib/models/AffiliateClick';
 import Affiliate from '@/lib/models/Affiliate';
 import Commission from '@/lib/models/Commission';
+import UserModel from '@/lib/models/User';
+import { getAffiliateSettings } from '@/lib/models/AffiliateSettings';
 
 export async function POST(request: NextRequest) {
   try {
     await connectDB();
-    
+
     const body = await request.json();
-    const { affiliateCode, orderId, amount, customerEmail, customerName } = body;
+    const { affiliateCode, orderId, amount, customerEmail, customerName, serviceType } = body;
 
     if (!affiliateCode || !orderId || !amount) {
-      return NextResponse.json({ 
-        success: false, 
-        error: 'Código de afiliado, orderId e amount são obrigatórios' 
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Código de afiliado, orderId e amount são obrigatórios',
+        },
+        { status: 400 }
+      );
     }
 
-    // Get client info
-    const ipAddress = request.headers.get('x-forwarded-for') || 
-                      request.headers.get('x-real-ip') || 
-                      'unknown';
+    // Evitar comissões duplicadas para o mesmo pedido
+    const existingCommission = await Commission.findOne({ orderId });
+    if (existingCommission) {
+      return NextResponse.json({
+        success: true,
+        duplicate: true,
+        message: 'Comissão já registada anteriormente para este pedido.',
+      });
+    }
 
-    // Find the most recent click from this affiliate that visited checkout
-    const recentClick = await AffiliateClick.findOne({
+    // Ler regras comerciais configuradas no Admin
+    const settings = await getAffiliateSettings();
+    if (
+      serviceType &&
+      Array.isArray(settings.eligibleServices) &&
+      settings.eligibleServices.length > 0 &&
+      !settings.eligibleServices.includes(String(serviceType))
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `O serviço "${serviceType}" não é elegível para comissão no momento.`,
+        },
+        { status: 200 }
+      );
+    }
+
+    const ipAddress =
+      request.headers.get('x-forwarded-for') ||
+      request.headers.get('x-real-ip') ||
+      'unknown';
+
+    // 1. Procurar clique recente pelo IP
+    let recentClick = await AffiliateClick.findOne({
       affiliateCode,
       convertedToSale: false,
       ipAddress,
     }).sort({ clickedAt: -1 });
 
-    if (!recentClick) {
-      console.log(`[Affiliate] No recent click found for affiliate ${affiliateCode}`);
-      return NextResponse.json({ 
-        success: false, 
-        error: 'Nenhum clique recente encontrado para este afiliado' 
-      }, { status: 404 });
+    // 2. Fallback caso o cliente tenha mudado de IP (ex: 4G -> Wi-Fi)
+    let confirmedByReferral = false;
+    if (!recentClick && customerEmail) {
+      const referredUser = await UserModel.findOne({
+        email: String(customerEmail).toLowerCase(),
+        referredBy: affiliateCode,
+      }).select('id');
+      if (referredUser) {
+        confirmedByReferral = true;
+      }
     }
 
-    // Find affiliate by code to get userId
+    if (!recentClick && !confirmedByReferral) {
+      recentClick = await AffiliateClick.findOne({
+        affiliateCode,
+        convertedToSale: false,
+      }).sort({ clickedAt: -1 });
+    }
+
+    if (!recentClick && !confirmedByReferral) {
+      console.log(`[Affiliate] No recent click or referral found for affiliate ${affiliateCode}`);
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Nenhum clique recente encontrado para este afiliado',
+        },
+        { status: 404 }
+      );
+    }
+
     const affiliate = await Affiliate.findOne({ affiliateCode });
     if (!affiliate) {
       console.log(`[Affiliate] Affiliate not found for code ${affiliateCode}`);
-      return NextResponse.json({ 
-        success: false, 
-        error: 'Afiliado não encontrado' 
-      }, { status: 404 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Afiliado não encontrado',
+        },
+        { status: 404 }
+      );
     }
 
-    // Update the click to mark as converted
-    await AffiliateClick.findByIdAndUpdate(recentClick._id, {
-      convertedToSale: true,
-      conversionOrderId: orderId,
-      conversionDate: new Date().toISOString(),
-      abandonedCheckout: false,
-    });
+    if (recentClick) {
+      await AffiliateClick.findByIdAndUpdate(recentClick._id, {
+        convertedToSale: true,
+        conversionOrderId: orderId,
+        conversionDate: new Date().toISOString(),
+        abandonedCheckout: false,
+      });
+    }
 
-    // Create commission
-    const commissionAmount = amount * 0.30; // 30% commission
+    const ratePercent = settings.defaultCommissionRate || 30;
+    const commissionAmount = Number(amount) * (ratePercent / 100);
+
     await Commission.create({
       affiliateId: affiliate.userId,
       orderId,
       orderAmount: amount,
+      commissionRate: ratePercent,
       commissionAmount,
       status: 'pending',
       referredCustomerEmail: customerEmail || '',
       referredCustomerName: customerName || '',
-      referredCustomerId: customerEmail || '', // Usar email como ID temporário
+      referredCustomerId: customerEmail || '',
       createdAt: new Date().toISOString(),
-      statusHistory: [{
-        status: 'pending',
-        changedAt: new Date().toISOString(),
-        changedBy: 'system',
-        note: 'Comissão criada automaticamente após conversão'
-      }],
+      statusHistory: [
+        {
+          status: 'pending',
+          changedAt: new Date().toISOString(),
+          changedBy: 'system',
+          note: `Comissão criada automaticamente após conversão (${ratePercent}%)`,
+        },
+      ],
       validatedAt: new Date().toISOString(),
-      isConsistent: true
+      isConsistent: true,
     });
 
-    // Update affiliate stats
     await Affiliate.findByIdAndUpdate(affiliate._id, {
-      $inc: { 
+      $inc: {
         totalEarnings: commissionAmount,
         availableBalance: commissionAmount,
-        totalConversions: 1
-      }
+        totalConversions: 1,
+      },
     });
 
-    console.log(`[Affiliate] Conversion tracked for affiliate ${affiliateCode}, order: ${orderId}, commission: ${commissionAmount}`);
+    console.log(
+      `[Affiliate] Conversion tracked for affiliate ${affiliateCode}, order: ${orderId}, commission: ${commissionAmount} (${ratePercent}%)`
+    );
 
-    // Enviar e-mail e push de notificação de comissão ao afiliado
     try {
-      const UserModel = (await import('@/lib/models/User')).default;
       const affiliateUser = await UserModel.findOne({
-        $or: [{ id: affiliate.userId }, { email: affiliate.userId }]
+        $or: [{ id: affiliate.userId }, { email: affiliate.userId }],
       });
-      
-      // 1. E-mail de comissão
+
       if (affiliateUser && affiliateUser.email) {
         const { sendAffiliateCommissionEmail } = await import('@/lib/affiliateEmails');
         sendAffiliateCommissionEmail(
@@ -109,7 +168,6 @@ export async function POST(request: NextRequest) {
         ).catch((err: any) => console.error('[Affiliate Commission Email] Erro:', err));
       }
 
-      // 2. 🔔 Push imediato no telemóvel do afiliado
       const targetIdentifier = affiliateUser?.email || affiliate.userId;
       if (targetIdentifier) {
         const { sendPushToUser } = await import('@/lib/pushService');
@@ -117,24 +175,27 @@ export async function POST(request: NextRequest) {
           title: '💸 Nova Comissão Recebida!',
           message: `Parabéns! Acabou de ganhar ${commissionAmount.toLocaleString('pt-MZ')} MZN de comissão por uma venda de ${amount.toLocaleString('pt-MZ')} MZN!`,
           url: '/dashboard/affiliates',
-          tag: `affiliate-sale-${orderId}`
+          tag: `affiliate-sale-${orderId}`,
         });
       }
     } catch (notifErr) {
       console.error('[Affiliate Conversion] Erro ao notificar afiliado da comissão:', notifErr);
     }
 
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       message: 'Conversão rastreada com sucesso',
-      commissionAmount
+      commissionAmount,
+      commissionRate: ratePercent,
     });
-
   } catch (error) {
     console.error('Erro ao rastrear conversão:', error);
-    return NextResponse.json({ 
-      success: false, 
-      error: 'Erro ao rastrear conversão' 
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Erro ao rastrear conversão',
+      },
+      { status: 500 }
+    );
   }
 }
