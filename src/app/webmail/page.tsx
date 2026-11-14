@@ -679,6 +679,46 @@ function WebmailContent() {
   // Collapse states
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [composeTypedText, setComposeTypedText] = useState('Escrever E-mail');
+  const [replyPlaceholderTyped, setReplyPlaceholderTyped] = useState('Escreva aqui a sua resposta...');
+
+  useEffect(() => {
+    const phrases = [
+      'Escreva aqui a sua resposta...',
+      'Digite o seu e-mail ou clique em «Gerar Resposta IA»...',
+      'Escreva uma mensagem para responder rapidamente...'
+    ];
+    let phraseIndex = 0;
+    let charIndex = 0;
+    let isDeleting = false;
+    let timeoutId: ReturnType<typeof setTimeout>;
+
+    const tick = () => {
+      const current = phrases[phraseIndex];
+      if (!isDeleting) {
+        if (charIndex < current.length) {
+          charIndex++;
+          setReplyPlaceholderTyped(current.slice(0, charIndex));
+          timeoutId = setTimeout(tick, 45);
+        } else {
+          isDeleting = true;
+          timeoutId = setTimeout(tick, 2400);
+        }
+      } else {
+        if (charIndex > 0) {
+          charIndex--;
+          setReplyPlaceholderTyped(current.slice(0, charIndex));
+          timeoutId = setTimeout(tick, 22);
+        } else {
+          isDeleting = false;
+          phraseIndex = (phraseIndex + 1) % phrases.length;
+          timeoutId = setTimeout(tick, 220);
+        }
+      }
+    };
+
+    timeoutId = setTimeout(tick, 300);
+    return () => clearTimeout(timeoutId);
+  }, []);
 
   useEffect(() => {
     const phrases = ['Escrever E-mail', 'Nova Mensagem', 'Enviar E-mail'];
@@ -5988,7 +6028,7 @@ function WebmailContent() {
                   rows={Math.min(12, Math.max(3, replyText ? replyText.split('\n').length + 1 : 3))}
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}
-                  placeholder="Escreva a sua resposta ou clique em «Gerar Resposta IA»..."
+                  placeholder={`${replyPlaceholderTyped}|`}
                   className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded-xl text-xs text-neutral-900 outline-none focus:bg-white focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 font-sans resize-y transition leading-relaxed"
                 />
                 <div className="flex flex-wrap items-center justify-between gap-2">
