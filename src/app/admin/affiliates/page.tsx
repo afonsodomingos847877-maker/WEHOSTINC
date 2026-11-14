@@ -100,6 +100,28 @@ export default function AdminAffiliatesPage() {
   const [addingAffiliate, setAddingAffiliate] = useState(false);
   const [addAffiliateError, setAddAffiliateError] = useState('');
   const [addAffiliateSuccess, setAddAffiliateSuccess] = useState('');
+  const [platformUsers, setPlatformUsers] = useState<Array<{ id: string; name: string; email: string; phone?: string; isAffiliate: boolean; affiliateStatus?: string | null }>>([]);
+  const [loadingPlatformUsers, setLoadingPlatformUsers] = useState(false);
+  const [userSearchQuery, setUserSearchQuery] = useState('');
+
+  const openAddAffiliateModal = async () => {
+    setAddAffiliateError('');
+    setAddAffiliateSuccess('');
+    setUserSearchQuery('');
+    setShowAddAffiliateModal(true);
+    try {
+      setLoadingPlatformUsers(true);
+      const res = await fetch('/api/admin/affiliates/create');
+      const data = await res.json();
+      if (data.success && Array.isArray(data.users)) {
+        setPlatformUsers(data.users);
+      }
+    } catch (err) {
+      console.error('Erro ao carregar utilizadores:', err);
+    } finally {
+      setLoadingPlatformUsers(false);
+    }
+  };
 
   const [materialForm, setMaterialForm] = useState({
     title: '',
@@ -642,7 +664,7 @@ export default function AdminAffiliatesPage() {
                 onClick={() => {
                   setAddAffiliateError('');
                   setAddAffiliateSuccess('');
-                  setShowAddAffiliateModal(true);
+                  openAddAffiliateModal();
                 }}
                 className="inline-flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-semibold text-sm shadow-md hover:shadow-lg transition-all cursor-pointer"
               >
@@ -751,7 +773,72 @@ export default function AdminAffiliatesPage() {
             </p>
             <form onSubmit={handleCreateAffiliate} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">Email do Utilizador *</label>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">Selecionar Utilizador da Plataforma</label>
+                <input
+                  type="text"
+                  value={userSearchQuery}
+                  onChange={(e) => setUserSearchQuery(e.target.value)}
+                  placeholder="Pesquisar por nome ou email..."
+                  className="w-full px-3.5 py-2 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-2"
+                />
+                <div className="max-h-40 overflow-y-auto border border-gray-200 rounded-xl divide-y divide-gray-100 bg-gray-50/50">
+                  {loadingPlatformUsers ? (
+                    <div className="p-3 text-center text-xs text-gray-500">A carregar utilizadores...</div>
+                  ) : (
+                    (() => {
+                      const q = userSearchQuery.trim().toLowerCase();
+                      const filtered = platformUsers
+                        .filter((u) => !q || u.name?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q))
+                        .sort((a, b) => Number(a.isAffiliate) - Number(b.isAffiliate));
+                      if (filtered.length === 0) {
+                        return <div className="p-3 text-center text-xs text-gray-500">Nenhum utilizador encontrado.</div>;
+                      }
+                      return filtered.slice(0, 50).map((u) => {
+                        const isSelected = addAffiliateEmail.toLowerCase() === u.email?.toLowerCase();
+                        const isAlreadyActive = u.affiliateStatus === 'active';
+                        return (
+                          <button
+                            key={u.id || u.email}
+                            type="button"
+                            disabled={isAlreadyActive}
+                            onClick={() => {
+                              setAddAffiliateEmail(u.email);
+                              if (u.phone && !addAffiliatePhone) {
+                                setAddAffiliatePhone(u.phone);
+                              }
+                            }}
+                            className={`w-full text-left px-3 py-2 flex items-center justify-between gap-2 text-xs transition ${
+                              isAlreadyActive
+                                ? 'opacity-50 cursor-not-allowed bg-gray-100/60'
+                                : isSelected
+                                ? 'bg-blue-50 text-blue-900 font-semibold'
+                                : 'hover:bg-white cursor-pointer'
+                            }`}
+                          >
+                            <div className="min-w-0">
+                              <div className="truncate font-medium text-gray-900">{u.name}</div>
+                              <div className="truncate text-[11px] text-gray-500">{u.email}</div>
+                            </div>
+                            {isAlreadyActive ? (
+                              <span className="shrink-0 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-semibold">
+                                Já Afiliado
+                              </span>
+                            ) : isSelected ? (
+                              <span className="shrink-0 px-2 py-0.5 rounded-full bg-blue-600 text-white text-[10px] font-semibold">
+                                Selecionado
+                              </span>
+                            ) : (
+                              <span className="shrink-0 text-[10px] text-blue-600 font-semibold">Selecionar</span>
+                            )}
+                          </button>
+                        );
+                      });
+                    })()
+                  )}
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">Email do Utilizador Selecionado *</label>
                 <input
                   type="email"
                   required

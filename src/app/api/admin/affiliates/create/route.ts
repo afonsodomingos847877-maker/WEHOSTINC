@@ -34,6 +34,62 @@ async function generateUniqueAffiliateCode(userName?: string): Promise<string> {
   return Date.now().toString().slice(-6);
 }
 
+export async function GET(request: NextRequest) {
+  const adminAuth = await requireAdmin(request);
+  if (adminAuth.error) return adminAuth.error;
+
+  try {
+    await connectDB();
+
+    const [users, affiliates] = await Promise.all([
+      User.find({})
+        .select('id name email phone createdAt')
+        .sort({ createdAt: -1 })
+        .lean(),
+      Affiliate.find({})
+        .select('userId affiliateCode status')
+        .lean(),
+    ]);
+
+    const affiliateByUserId = new Map<string, { affiliateCode: string; status: string }>();
+    for (const aff of affiliates as any[]) {
+      if (aff.userId) {
+        affiliateByUserId.set(String(aff.userId).toLowerCase(), {
+          affiliateCode: aff.affiliateCode,
+          status: aff.status,
+        });
+      }
+    }
+
+    const formattedUsers = (users as any[]).map((u) => {
+      const affById = u.id ? affiliateByUserId.get(String(u.id).toLowerCase()) : undefined;
+      const affByEmail = u.email ? affiliateByUserId.get(String(u.email).toLowerCase()) : undefined;
+      const aff = affById || affByEmail;
+
+      return {
+        id: u.id,
+        name: u.name || u.email,
+        email: u.email,
+        phone: u.phone || '',
+        isAffiliate: !!aff,
+        affiliateStatus: aff?.status || null,
+        affiliateCode: aff?.affiliateCode || null,
+      };
+    });
+
+    return NextResponse.json({
+      success: true,
+      users: formattedUsers,
+    });
+  } catch (error) {
+    console.error('[Admin Affiliate Users List Error]:', error);
+    return NextResponse.json(
+      { success: false, error: 'Erro ao carregar utilizadores.' },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(request: NextRequest) {
   const adminAuth = await requireAdmin(request);
   if (adminAuth.error) return adminAuth.error;
