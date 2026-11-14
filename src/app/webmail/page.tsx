@@ -678,6 +678,42 @@ function WebmailContent() {
 
   // Collapse states
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [composeTypedText, setComposeTypedText] = useState('Escrever E-mail');
+
+  useEffect(() => {
+    const phrases = ['Escrever E-mail', 'Nova Mensagem', 'Enviar E-mail'];
+    let phraseIndex = 0;
+    let charIndex = phrases[0].length;
+    let isDeleting = false;
+    let timeoutId: ReturnType<typeof setTimeout>;
+
+    const tick = () => {
+      const current = phrases[phraseIndex];
+      if (!isDeleting) {
+        if (charIndex < current.length) {
+          charIndex++;
+          setComposeTypedText(current.slice(0, charIndex));
+          timeoutId = setTimeout(tick, 75);
+        } else {
+          isDeleting = true;
+          timeoutId = setTimeout(tick, 2200);
+        }
+      } else {
+        if (charIndex > 0) {
+          charIndex--;
+          setComposeTypedText(current.slice(0, charIndex));
+          timeoutId = setTimeout(tick, 40);
+        } else {
+          isDeleting = false;
+          phraseIndex = (phraseIndex + 1) % phrases.length;
+          timeoutId = setTimeout(tick, 250);
+        }
+      }
+    };
+
+    timeoutId = setTimeout(tick, 2200);
+    return () => clearTimeout(timeoutId);
+  }, []);
   const [isFiltersCollapsed, setIsFiltersCollapsed] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showInternalChat, setShowInternalChat] = useState(false);
@@ -4238,10 +4274,16 @@ function WebmailContent() {
           <button
             type="button"
             onClick={handleOpenCompose}
-            className={`w-full py-2 bg-primary-600 hover:bg-primary-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md transition-all duration-200 flex items-center justify-center space-x-2 cursor-pointer border border-primary-600 ${isSidebarCollapsed ? 'px-2' : ''}`}
+            className={`w-full min-h-[42px] py-2 bg-primary-600 hover:bg-primary-700 text-white font-black tracking-wide text-xs sm:text-sm rounded-xl shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center space-x-2 cursor-pointer border border-primary-600 ${isSidebarCollapsed ? 'px-2' : 'px-3'}`}
+            style={{ fontFamily: 'var(--font-poppins), Poppins, sans-serif' }}
           >
             <Edit3 className="h-4 w-4 shrink-0" />
-            {!isSidebarCollapsed && <span>Escrever E-mail</span>}
+            {!isSidebarCollapsed && (
+              <span className="inline-flex items-center">
+                <span>{composeTypedText}</span>
+                <span className="inline-block w-[2px] h-3.5 bg-white/90 ml-0.5 animate-pulse" />
+              </span>
+            )}
           </button>
 
           {/* Collapse Toggle Button */}
