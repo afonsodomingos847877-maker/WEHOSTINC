@@ -91,6 +91,16 @@ export default function AdminAffiliatesPage() {
   const [reportsData, setReportsData] = useState<any>(null);
   const [reportsPeriod, setReportsPeriod] = useState('30');
 
+  // Adicionar / Promover Afiliado diretamente pelo Admin
+  const [showAddAffiliateModal, setShowAddAffiliateModal] = useState(false);
+  const [addAffiliateEmail, setAddAffiliateEmail] = useState('');
+  const [addAffiliateCode, setAddAffiliateCode] = useState('');
+  const [addAffiliatePhone, setAddAffiliatePhone] = useState('');
+  const [addAffiliateSendEmail, setAddAffiliateSendEmail] = useState(true);
+  const [addingAffiliate, setAddingAffiliate] = useState(false);
+  const [addAffiliateError, setAddAffiliateError] = useState('');
+  const [addAffiliateSuccess, setAddAffiliateSuccess] = useState('');
+
   const [materialForm, setMaterialForm] = useState({
     title: '',
     description: '',
@@ -150,6 +160,48 @@ export default function AdminAffiliatesPage() {
       }
     } catch (error) {
       console.error('Erro ao atualizar afiliado:', error);
+    }
+  };
+
+  const handleCreateAffiliate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAddingAffiliate(true);
+    setAddAffiliateError('');
+    setAddAffiliateSuccess('');
+
+    try {
+      const res = await fetch('/api/admin/affiliates/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: addAffiliateEmail.trim(),
+          customCode: addAffiliateCode.trim() || undefined,
+          phone: addAffiliatePhone.trim() || undefined,
+          sendWelcomeEmail: addAffiliateSendEmail,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        setAddAffiliateError(data.error || 'Erro ao adicionar afiliado.');
+        return;
+      }
+
+      setAddAffiliateSuccess(data.message || 'Afiliado configurado com sucesso!');
+      setAddAffiliateEmail('');
+      setAddAffiliateCode('');
+      setAddAffiliatePhone('');
+      fetchData();
+
+      setTimeout(() => {
+        setShowAddAffiliateModal(false);
+        setAddAffiliateSuccess('');
+      }, 1500);
+    } catch (error) {
+      console.error('Erro ao criar afiliado:', error);
+      setAddAffiliateError('Erro de ligação ao servidor.');
+    } finally {
+      setAddingAffiliate(false);
     }
   };
 
@@ -569,17 +621,204 @@ export default function AdminAffiliatesPage() {
 
       {activeTab === 'affiliates' && (
         <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-xl border border-white/50">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-900">Afiliados</h2>
+          <div className="p-6 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Afiliados</h2>
+              <p className="text-xs text-gray-500 mt-0.5">Gerir parceiros ou ativar qualquer utilizador diretamente como afiliado.</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="px-3.5 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
+              >
+                <option value="">Todos os Status</option>
+                <option value="active">Ativos</option>
+                <option value="pending">Pendentes</option>
+                <option value="suspended">Suspensos</option>
+              </select>
+              <button
+                type="button"
+                onClick={() => {
+                  setAddAffiliateError('');
+                  setAddAffiliateSuccess('');
+                  setShowAddAffiliateModal(true);
+                }}
+                className="inline-flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-semibold text-sm shadow-md hover:shadow-lg transition-all cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Tornar Utilizador Afiliado</span>
+              </button>
+            </div>
           </div>
           <div className="p-6">
             {loading ? (
               <div className="flex items-center justify-center py-12">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
               </div>
+            ) : affiliates.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">Nenhum afiliado encontrado para este filtro.</p>
             ) : (
-              <p className="text-gray-500">Lista de afiliados será exibida aqui</p>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase">
+                      <th className="py-3 pr-4">Utilizador</th>
+                      <th className="py-3 pr-4">Código & Link</th>
+                      <th className="py-3 pr-4">Cliques / Conv.</th>
+                      <th className="py-3 pr-4">Ganhos / Saldo</th>
+                      <th className="py-3 pr-4">Status</th>
+                      <th className="py-3 text-right">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 text-sm">
+                    {affiliates.map((aff) => (
+                      <tr key={aff._id} className="hover:bg-gray-50/70 transition-colors">
+                        <td className="py-3.5 pr-4">
+                          <div className="font-semibold text-gray-900">{aff.userName}</div>
+                          <div className="text-xs text-gray-500">{aff.userEmail}</div>
+                        </td>
+                        <td className="py-3.5 pr-4">
+                          <span className="inline-block font-mono text-xs font-bold bg-blue-50 text-blue-700 px-2 py-0.5 rounded">
+                            {aff.affiliateCode}
+                          </span>
+                          <div className="text-[11px] text-gray-400 truncate max-w-[200px] mt-0.5">{aff.affiliateLink}</div>
+                        </td>
+                        <td className="py-3.5 pr-4 text-gray-700">
+                          {aff.totalClicks} cliques • {aff.totalConversions} conv.
+                        </td>
+                        <td className="py-3.5 pr-4">
+                          <div className="font-semibold text-emerald-700">{(aff.totalEarnings || 0).toLocaleString()} MT</div>
+                          <div className="text-xs text-gray-500">Disp: {(aff.availableBalance || 0).toLocaleString()} MT</div>
+                        </td>
+                        <td className="py-3.5 pr-4">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                            aff.status === 'active'
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : aff.status === 'pending'
+                              ? 'bg-amber-100 text-amber-800'
+                              : 'bg-red-100 text-red-800'
+                          }`}>
+                            {aff.status === 'active' ? 'Ativo' : aff.status === 'pending' ? 'Pendente' : 'Suspenso'}
+                          </span>
+                        </td>
+                        <td className="py-3.5 text-right space-x-2 whitespace-nowrap">
+                          {aff.status !== 'active' && (
+                            <button
+                              type="button"
+                              onClick={() => handleUpdateAffiliateStatus(aff._id, 'active')}
+                              className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-xs font-semibold transition cursor-pointer"
+                            >
+                              Ativar
+                            </button>
+                          )}
+                          {aff.status !== 'suspended' && (
+                            <button
+                              type="button"
+                              onClick={() => handleUpdateAffiliateStatus(aff._id, 'suspended')}
+                              className="px-2.5 py-1 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg text-xs font-semibold transition cursor-pointer"
+                            >
+                              Suspender
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Tornar Utilizador Afiliado */}
+      {showAddAffiliateModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-gray-100">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-gray-900">Tornar Utilizador Afiliado</h3>
+              <button
+                type="button"
+                onClick={() => setShowAddAffiliateModal(false)}
+                className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-xs text-gray-600 mb-4">
+              Insira o email de uma conta já registada para ativá-la imediatamente como afiliado ativo (sem necessidade de verificação).
+            </p>
+            <form onSubmit={handleCreateAffiliate} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">Email do Utilizador *</label>
+                <input
+                  type="email"
+                  required
+                  value={addAffiliateEmail}
+                  onChange={(e) => setAddAffiliateEmail(e.target.value)}
+                  placeholder="exemplo@dominio.com"
+                  className="w-full px-3.5 py-2 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">Código Personalizado (opcional)</label>
+                <input
+                  type="text"
+                  value={addAffiliateCode}
+                  onChange={(e) => setAddAffiliateCode(e.target.value)}
+                  placeholder="Ex: joaosilva (deixe vazio para gerar automático)"
+                  className="w-full px-3.5 py-2 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">Telefone M-Pesa (opcional)</label>
+                <input
+                  type="text"
+                  value={addAffiliatePhone}
+                  onChange={(e) => setAddAffiliatePhone(e.target.value)}
+                  placeholder="Ex: 841234567"
+                  className="w-full px-3.5 py-2 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              <label className="flex items-center space-x-2 text-xs text-gray-700 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={addAffiliateSendEmail}
+                  onChange={(e) => setAddAffiliateSendEmail(e.target.checked)}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span>Enviar email de boas-vindas com o link de afiliado</span>
+              </label>
+
+              {addAffiliateError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700">
+                  {addAffiliateError}
+                </div>
+              )}
+              {addAffiliateSuccess && (
+                <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-700 font-medium">
+                  {addAffiliateSuccess}
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAddAffiliateModal(false)}
+                  className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-xl transition cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={addingAffiliate}
+                  className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition disabled:opacity-50 cursor-pointer"
+                >
+                  {addingAffiliate ? 'A ativar...' : 'Ativar como Afiliado'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
