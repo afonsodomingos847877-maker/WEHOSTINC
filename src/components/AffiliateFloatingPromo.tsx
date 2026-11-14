@@ -17,6 +17,22 @@ export default function AffiliateFloatingPromo() {
   const [isVisible, setIsVisible] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  // Notificar outros componentes (ex: Assistente Virtual) para esconder o ícone lateral quando a barra estiver visível
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('wehost:affiliate-promo-state', { detail: { open: isVisible } })
+      );
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('wehost:affiliate-promo-state', { detail: { open: false } })
+        );
+      }
+    };
+  }, [isVisible]);
+
   useEffect(() => {
     // 1. Apenas na página inicial
     if (pathname !== '/') return;
@@ -72,9 +88,14 @@ export default function AffiliateFloatingPromo() {
     soundEffects.playClickSound();
     // Anima de volta para baixo
     setIsVisible(false);
-    try {
-      sessionStorage.setItem(SESSION_DISMISS_KEY, 'true');
-    } catch {}
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('wehost:affiliate-promo-state', { detail: { open: false } })
+      );
+      try {
+        sessionStorage.setItem(SESSION_DISMISS_KEY, 'true');
+      } catch {}
+    }
     setTimeout(() => {
       setIsRendered(false);
     }, 700);

@@ -165,6 +165,7 @@ export default function VirtualAssistant() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+  const [isAffiliatePromoOpen, setIsAffiliatePromoOpen] = useState(false);
 
   // Check if user is logged in and get plan info
   useEffect(() => {
@@ -191,10 +192,16 @@ export default function VirtualAssistant() {
 
     window.addEventListener('openVirtualAssistant', handleOpenAssistant);
     window.addEventListener('wehost:feedback-state', handleFeedbackState);
+    const handleAffiliatePromoState = (e: Event) => {
+      const customEvent = e as CustomEvent<{ open: boolean }>;
+      setIsAffiliatePromoOpen(!!customEvent.detail?.open);
+    };
+    window.addEventListener('wehost:affiliate-promo-state', handleAffiliatePromoState);
 
     return () => {
       window.removeEventListener('openVirtualAssistant', handleOpenAssistant);
       window.removeEventListener('wehost:feedback-state', handleFeedbackState);
+      window.removeEventListener('wehost:affiliate-promo-state', handleAffiliatePromoState);
     };
   }, []);
 
@@ -282,7 +289,7 @@ export default function VirtualAssistant() {
         }
       `}</style>
       {/* Floating Button com Avatar do Assistente */}
-      {!isOpen && !isFeedbackOpen && (
+      {!isOpen && !isFeedbackOpen && !isAffiliatePromoOpen && (
         <button
           onClick={() => handleToggleOpen(true)}
           className="fixed bottom-4 sm:bottom-5 left-4 sm:left-5 z-50 w-7 h-7 sm:w-8 sm:h-8 bg-white rounded-full shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 group flex items-center justify-center cursor-pointer overflow-hidden border-0 outline-none p-0"
