@@ -48,6 +48,7 @@ interface AffiliateData {
   totalConversions: number;
   conversionRate: number;
   payoutMethod?: string;
+  addedByAdmin?: boolean;
   payoutDetails?: {
     bankName?: string;
     accountNumber?: string;
@@ -142,6 +143,36 @@ export default function AffiliatesPage() {
   const [convertingCredit, setConvertingCredit] = useState(false);
   const [creditError, setCreditError] = useState('');
   const [creditSuccess, setCreditSuccess] = useState('');
+  const [freePhoneInput, setFreePhoneInput] = useState('');
+  const [savingFreePhone, setSavingFreePhone] = useState(false);
+  const [freePhoneError, setFreePhoneError] = useState('');
+  const [freePhoneSuccess, setFreePhoneSuccess] = useState('');
+
+  const handleSaveFreePhone = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingFreePhone(true);
+    setFreePhoneError('');
+    setFreePhoneSuccess('');
+    try {
+      const res = await fetch('/api/affiliates/save-phone', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: freePhoneInput.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        setFreePhoneError(data.error || 'Erro ao guardar número.');
+        return;
+      }
+      setFreePhoneSuccess(data.message || 'Número verificado com sucesso!');
+      setFreePhoneInput('');
+      fetchAffiliateData();
+    } catch {
+      setFreePhoneError('Erro de ligação ao servidor.');
+    } finally {
+      setSavingFreePhone(false);
+    }
+  };
 
   useEffect(() => {
     fetch('/api/admin/affiliates/settings')
@@ -749,6 +780,37 @@ export default function AffiliatesPage() {
                   )}
                 </div>
                 
+                {!affiliate.payoutDetails?.mpesaPhone && (affiliate.addedByAdmin || affiliate.status === 'active') && (
+                  <form onSubmit={handleSaveFreePhone} className="mt-4 pt-4 border-t border-emerald-200">
+                    <p className="text-xs font-semibold text-emerald-900 mb-2">
+                      A sua conta foi ativada pelo Administrador — insira o seu número M-Pesa para verificação gratuita (sem taxa):
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <input
+                        type="tel"
+                        required
+                        value={freePhoneInput}
+                        onChange={(e) => setFreePhoneInput(e.target.value)}
+                        placeholder="Ex: 841234567"
+                        className="flex-1 px-3.5 py-2 bg-white border border-emerald-300 rounded-xl text-sm text-gray-900 focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                      />
+                      <button
+                        type="submit"
+                        disabled={savingFreePhone}
+                        className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs sm:text-sm font-semibold transition disabled:opacity-50 cursor-pointer whitespace-nowrap"
+                      >
+                        {savingFreePhone ? 'A guardar...' : 'Verificar Número (Sem Taxa)'}
+                      </button>
+                    </div>
+                    {freePhoneError && (
+                      <p className="text-xs text-red-600 mt-2">{freePhoneError}</p>
+                    )}
+                    {freePhoneSuccess && (
+                      <p className="text-xs text-emerald-700 font-semibold mt-2">{freePhoneSuccess}</p>
+                    )}
+                  </form>
+                )}
+
                 {affiliate.payoutDetails?.mpesaPhone && (
                   <div className="mt-4 pt-4 border-t border-emerald-200">
                     <p className="text-xs text-emerald-700">

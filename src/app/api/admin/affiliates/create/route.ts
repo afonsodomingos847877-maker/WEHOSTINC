@@ -144,6 +144,7 @@ export async function POST(request: NextRequest) {
       }
 
       existingAffiliate.status = 'active';
+      existingAffiliate.addedByAdmin = true;
       if (phone) {
         existingAffiliate.payoutMethod = 'mpesa';
         existingAffiliate.payoutDetails = {
@@ -185,6 +186,7 @@ export async function POST(request: NextRequest) {
       affiliateCode,
       affiliateLink,
       status: 'active',
+      addedByAdmin: true,
       totalEarnings: 0,
       availableBalance: 0,
       totalClicks: 0,
