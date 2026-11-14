@@ -74,6 +74,45 @@ export default function ScrollUpCards() {
   const [scrollUpCount, setScrollUpCount] = useState(0);
   const [socialIndex, setSocialIndex] = useState(0);
   const [whatsappIndex, setWhatsappIndex] = useState(0);
+  const [isAffiliatePromoOpen, setIsAffiliatePromoOpen] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (document.body.hasAttribute('data-affiliate-promo-open')) {
+      setIsAffiliatePromoOpen(true);
+    }
+
+    const handlePromoState = (e: Event) => {
+      const open = !!(e as CustomEvent<{ open: boolean }>).detail?.open;
+      setIsAffiliatePromoOpen(open);
+      if (open) {
+        setIsVisible(false);
+      }
+    };
+
+    window.addEventListener('wehost:affiliate-promo-state', handlePromoState);
+    return () => {
+      window.removeEventListener('wehost:affiliate-promo-state', handlePromoState);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (isVisible) {
+      document.body.setAttribute('data-scroll-card-open', 'true');
+    } else {
+      document.body.removeAttribute('data-scroll-card-open');
+    }
+    window.dispatchEvent(
+      new CustomEvent('wehost:scroll-card-state', { detail: { open: isVisible } })
+    );
+    return () => {
+      document.body.removeAttribute('data-scroll-card-open');
+      window.dispatchEvent(
+        new CustomEvent('wehost:scroll-card-state', { detail: { open: false } })
+      );
+    };
+  }, [isVisible]);
   
   const { isInstallable, promptInstall } = usePWAInstall();
   const { subscription, permission, requestPermission, isSupported } = usePushNotifications();
@@ -232,6 +271,10 @@ export default function ScrollUpCards() {
     const SCROLL_UP_THRESHOLD = 100; // pixels de scroll para cima
 
     const handleScroll = () => {
+      if (isAffiliatePromoOpen || document.body.hasAttribute('data-affiliate-promo-open')) {
+        lastScroll = window.scrollY;
+        return;
+      }
       const currentScrollY = window.scrollY;
       const scrollDelta = lastScroll - currentScrollY;
 
@@ -271,7 +314,7 @@ export default function ScrollUpCards() {
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentCardIndex, isSupported, subscription, permission, user, CARDS]);
+  }, [currentCardIndex, isSupported, subscription, permission, user, CARDS, isAffiliatePromoOpen]);
 
   // Não mostrar incentivos se não estiver na página inicial
   if (pathname !== '/') return null;
@@ -516,7 +559,7 @@ export default function ScrollUpCards() {
     }
   };
 
-  if (!isVisible) return null;
+  if (!isVisible || isAffiliatePromoOpen) return null;
 
   const currentCard = CARDS[currentCardIndex];
   const isNewsletterCard = currentCard.actionType === 'newsletter';

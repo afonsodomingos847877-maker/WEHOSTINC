@@ -97,7 +97,8 @@ export default function AffiliateFloatingPromo() {
   const pathname = usePathname();
 
   const [isRendered, setIsRendered] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
+  const [wantsToShow, setWantsToShow] = useState(false);
+  const [isScrollCardOpen, setIsScrollCardOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAffiliate, setIsAffiliate] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -107,6 +108,24 @@ export default function AffiliateFloatingPromo() {
   const [typedDescription, setTypedDescription] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const transitionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const isVisible = wantsToShow && !isScrollCardOpen;
+
+  // Ouvir estado do ScrollUpCards para garantir exclusão mútua (nunca mostrar dois cards ao mesmo tempo)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (document.body.hasAttribute('data-scroll-card-open')) {
+      setIsScrollCardOpen(true);
+    }
+    const handleScrollCardState = (e: Event) => {
+      const open = !!(e as CustomEvent<{ open: boolean }>).detail?.open;
+      setIsScrollCardOpen(open);
+    };
+    window.addEventListener('wehost:scroll-card-state', handleScrollCardState);
+    return () => {
+      window.removeEventListener('wehost:scroll-card-state', handleScrollCardState);
+    };
+  }, []);
 
   const availableCampaigns = isAffiliate
     ? PROMO_CAMPAIGNS.filter((c) => c.id !== 'affiliate')
@@ -166,7 +185,7 @@ export default function AffiliateFloatingPromo() {
         // 4. Temporizador de 5 segundos para fazer a barra subir suavemente de baixo para cima
         timer = setTimeout(() => {
           if (isMounted) {
-            setIsVisible(true);
+            setWantsToShow(true);
           }
         }, DELAY_MS);
       })
@@ -175,7 +194,7 @@ export default function AffiliateFloatingPromo() {
         setIsRendered(true);
         timer = setTimeout(() => {
           if (isMounted) {
-            setIsVisible(true);
+            setWantsToShow(true);
           }
         }, DELAY_MS);
       });
@@ -255,7 +274,7 @@ export default function AffiliateFloatingPromo() {
   const handleDismiss = () => {
     soundEffects.playClickSound();
     // Anima de volta para baixo
-    setIsVisible(false);
+    setWantsToShow(false);
     if (typeof window !== 'undefined') {
       window.dispatchEvent(
         new CustomEvent('wehost:affiliate-promo-state', { detail: { open: false } })
