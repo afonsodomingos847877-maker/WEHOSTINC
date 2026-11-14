@@ -1248,9 +1248,25 @@ function CheckoutContent() {
           setIsPollingPayment(true);
         } catch (payErr: any) {
           console.error('[Checkout Push Error]:', payErr);
+          const rawMsg = String(payErr?.message || 'Erro ao comunicar com a operadora');
+          const lowerMsg = rawMsg.toLowerCase();
+          const isConfigErr =
+            lowerMsg.includes('api key') ||
+            lowerMsg.includes('invalid key') ||
+            lowerMsg.includes('unauthorized') ||
+            lowerMsg.includes('não configurad') ||
+            lowerMsg.includes('not configured') ||
+            lowerMsg.includes('public key') ||
+            lowerMsg.includes('bearer') ||
+            lowerMsg.includes('401') ||
+            lowerMsg.includes('403');
           setPushStatus('failed');
-          setPushFailureReason(payErr.message || 'Erro ao comunicar com a operadora');
-          setError(payErr.message || 'Erro ao comunicar com a operadora');
+          setPushFailureReason(rawMsg);
+          setError(
+            isConfigErr
+              ? 'O pagamento automático está em atualização temporária. Utilize o pagamento manual (Transferência / Comprovativo) para concluir agora.'
+              : rawMsg
+          );
         } finally {
           setLoading(false);
         }
@@ -1611,68 +1627,163 @@ function CheckoutContent() {
               </div>
             ) : (
               <>
-                <div className="w-12 h-12 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto mb-3 border border-red-100">
-                  {pushStatus === 'expired' ? (
-                    <Clock className="h-6 w-6 text-amber-600" />
-                  ) : (
-                    <XCircle className="h-6 w-6 text-red-600" />
-                  )}
-                </div>
+                {(() => {
+                  const lowerReason = (pushFailureReason || '').toLowerCase();
+                  const isGatewayMaintenance =
+                    lowerReason.includes('api key') ||
+                    lowerReason.includes('invalid key') ||
+                    lowerReason.includes('unauthorized') ||
+                    lowerReason.includes('não configurad') ||
+                    lowerReason.includes('not configured') ||
+                    lowerReason.includes('public key') ||
+                    lowerReason.includes('bearer') ||
+                    lowerReason.includes('401') ||
+                    lowerReason.includes('403');
 
-                <h3 className="text-base font-bold text-gray-900 mb-1">
-                  {pushStatus === 'expired' 
-                    ? 'Tempo Limite Excedido' 
-                    : pushStatus === 'cancelled' 
-                    ? 'Pagamento Cancelado' 
-                    : 'Pagamento Não Concluído'}
-                </h3>
-                
-                <p className="text-xs text-gray-500 mb-3">
-                  {pushStatus === 'expired'
-                    ? `Não recebemos a confirmação no ${ddi} ${phonePayment || whatsapp} a tempo.`
-                    : `A transação no ${ddi} ${phonePayment || whatsapp} não foi aprovada.`}
-                </p>
+                  if (isGatewayMaintenance) {
+                    return (
+                      <>
+                        <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 bg-amber-100">
+                          <RefreshCw className="h-6 w-6 text-amber-600" />
+                        </div>
 
-                {pushFailureReason && (
-                  <div className="bg-red-50 border border-red-100 rounded-lg py-1.5 px-3 mb-4 text-[11px] font-medium text-red-700">
-                    {pushFailureReason}
-                  </div>
-                )}
+                        <h3 className="text-base font-bold text-gray-900 mb-1">
+                          Método em Atualização Temporária
+                        </h3>
 
-                <div className="space-y-2 mt-2">
-                  <button
-                    type="button"
-                    onClick={handleRetryPush}
-                    className="w-full py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl text-xs sm:text-sm shadow-sm transition flex items-center justify-center gap-2 cursor-pointer"
-                  >
-                    <RefreshCw className="h-4 w-4" />
-                    <span>Tentar Novamente</span>
-                  </button>
+                        <p className="text-xs text-gray-600 mb-3 leading-relaxed">
+                          O pagamento automático via {paymentMethod === 'emola' ? 'e-Mola' : 'M-Pesa'} está a passar por uma atualização rápida para melhorar o serviço.
+                        </p>
 
-                  <a
-                    href={`https://wa.me/258848335618?text=${encodeURIComponent(
-                      `Olá WeHost! Tive dificuldades no pagamento M-Pesa/e-Mola (${ddi} ${phonePayment || whatsapp}) de ${grandTotal.toLocaleString('pt-MZ')} MT. Podem ajudar-me?`
-                    )}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200/60 font-semibold rounded-xl text-xs flex items-center justify-center gap-1.5 transition"
-                  >
-                    <MessageCircle className="h-3.5 w-3.5" />
-                    <span>Ajuda pelo WhatsApp</span>
-                  </a>
+                        <div className="bg-amber-50 border border-amber-200 rounded-xl py-2.5 px-3 mb-4 text-xs font-medium text-amber-900 leading-relaxed">
+                          Para não atrasar o seu pedido, pode concluir agora mesmo via <strong>Pagamento Manual / Transferência com Comprovativo</strong>.
+                        </div>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setPushModal(false);
-                      setIsPollingPayment(false);
-                      setLoading(false);
-                    }}
-                    className="w-full py-1.5 text-xs text-gray-400 hover:text-gray-700 transition"
-                  >
-                    Alterar número ou método
-                  </button>
-                </div>
+                        <div className="space-y-2 mt-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPaymentMethod('bank_transfer');
+                              setPushModal(false);
+                              setIsPollingPayment(false);
+                              setLoading(false);
+                              setError('');
+                            }}
+                            className="w-full py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs sm:text-sm shadow-sm transition flex items-center justify-center gap-2 cursor-pointer"
+                          >
+                            <span>Fazer Pagamento Manual</span>
+                            <ArrowRight className="h-4 w-4" />
+                          </button>
+
+                          <a
+                            href={`https://wa.me/258848335618?text=${encodeURIComponent(
+                              `Olá WeHost! Gostaria de concluir o pagamento de ${grandTotal.toLocaleString('pt-MZ')} MT manualmente.`
+                            )}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200/60 font-semibold rounded-xl text-xs flex items-center justify-center gap-1.5 transition"
+                          >
+                            <MessageCircle className="h-3.5 w-3.5" />
+                            <span>Ajuda pelo WhatsApp</span>
+                          </a>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPushModal(false);
+                              setIsPollingPayment(false);
+                              setLoading(false);
+                            }}
+                            className="w-full py-1.5 text-xs text-gray-400 hover:text-gray-700 transition cursor-pointer"
+                          >
+                            Escolher outro método
+                          </button>
+                        </div>
+                      </>
+                    );
+                  }
+
+                  return (
+                    <>
+                      <div className="w-12 h-12 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto mb-3 border border-red-100">
+                        {pushStatus === 'expired' ? (
+                          <Clock className="h-6 w-6 text-amber-600" />
+                        ) : (
+                          <XCircle className="h-6 w-6 text-red-600" />
+                        )}
+                      </div>
+
+                      <h3 className="text-base font-bold text-gray-900 mb-1">
+                        {pushStatus === 'expired'
+                          ? 'Tempo Limite Excedido'
+                          : pushStatus === 'cancelled'
+                          ? 'Pagamento Cancelado'
+                          : 'Pagamento Não Concluído'}
+                      </h3>
+
+                      <p className="text-xs text-gray-500 mb-3">
+                        {pushStatus === 'expired'
+                          ? `Não recebemos a confirmação no ${ddi} ${phonePayment || whatsapp} a tempo.`
+                          : `A transação no ${ddi} ${phonePayment || whatsapp} não foi aprovada.`}
+                      </p>
+
+                      {pushFailureReason && (
+                        <div className="bg-red-50 border border-red-100 rounded-lg py-1.5 px-3 mb-4 text-[11px] font-medium text-red-700">
+                          {pushFailureReason}
+                        </div>
+                      )}
+
+                      <div className="space-y-2 mt-2">
+                        <button
+                          type="button"
+                          onClick={handleRetryPush}
+                          className="w-full py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl text-xs sm:text-sm shadow-sm transition flex items-center justify-center gap-2 cursor-pointer"
+                        >
+                          <RefreshCw className="h-4 w-4" />
+                          <span>Tentar Novamente</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPaymentMethod('bank_transfer');
+                            setPushModal(false);
+                            setIsPollingPayment(false);
+                            setLoading(false);
+                            setError('');
+                          }}
+                          className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 font-semibold rounded-xl text-xs flex items-center justify-center gap-1.5 transition cursor-pointer"
+                        >
+                          <span>Pagar por Transferência / Comprovativo</span>
+                        </button>
+
+                        <a
+                          href={`https://wa.me/258848335618?text=${encodeURIComponent(
+                            `Olá WeHost! Tive dificuldades no pagamento M-Pesa/e-Mola (${ddi} ${phonePayment || whatsapp}) de ${grandTotal.toLocaleString('pt-MZ')} MT. Podem ajudar-me?`
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200/60 font-semibold rounded-xl text-xs flex items-center justify-center gap-1.5 transition"
+                        >
+                          <MessageCircle className="h-3.5 w-3.5" />
+                          <span>Ajuda pelo WhatsApp</span>
+                        </a>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPushModal(false);
+                            setIsPollingPayment(false);
+                            setLoading(false);
+                          }}
+                          className="w-full py-1.5 text-xs text-gray-400 hover:text-gray-700 transition"
+                        >
+                          Alterar número ou método
+                        </button>
+                      </div>
+                    </>
+                  );
+                })()}
               </>
             )}
           </div>
