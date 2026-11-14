@@ -2693,13 +2693,14 @@ function WebmailContent() {
         // Login bem-sucedido
         soundEffects.playLoginSuccessSound();
         setSelectedAccountEmail(targetLoginEmail);
-        setMailboxPassword(webmailLoginPassword);
+        const resolvedPassword = (data.isDemo || targetLoginEmail.toLowerCase() === DEMO_EMAIL) ? 'demo_session_active' : webmailLoginPassword;
+        setMailboxPassword(resolvedPassword);
         try {
           sessionStorage.setItem('wm_active_email', targetLoginEmail);
-          sessionStorage.setItem(`wm_pwd_${targetLoginEmail.toLowerCase()}`, webmailLoginPassword);
+          sessionStorage.setItem(`wm_pwd_${targetLoginEmail.toLowerCase()}`, resolvedPassword);
           localStorage.setItem('wm_active_email', targetLoginEmail);
-          localStorage.setItem(`wm_pwd_${targetLoginEmail.toLowerCase()}`, webmailLoginPassword);
-          localStorage.setItem(`webmail_auth_${targetLoginEmail}`, webmailLoginPassword);
+          localStorage.setItem(`wm_pwd_${targetLoginEmail.toLowerCase()}`, resolvedPassword);
+          localStorage.setItem(`webmail_auth_${targetLoginEmail}`, resolvedPassword);
         } catch {}
         setShowWebmailLogin(false);
         setWebmailLoginEmail('');
