@@ -284,4 +284,14 @@ select optgroup {
   font-style: normal !important;
 }
 
+/* Ocultar botão flutuante do Assistente Virtual quando a barra promocional de afiliados estiver visível */
+body[data-affiliate-promo-open="true"] button[title="Assistente Virtual WEHOSTHERE"],
+body:has(aside[aria-label="Barra Promocional do Programa de Afiliados"].translate-y-0) button[title="Assistente Virtual WEHOSTHERE"] {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+
 

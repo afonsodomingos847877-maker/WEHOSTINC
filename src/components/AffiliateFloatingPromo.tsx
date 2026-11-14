@@ -20,12 +20,18 @@ export default function AffiliateFloatingPromo() {
   // Notificar outros componentes (ex: Assistente Virtual) para esconder o ícone lateral quando a barra estiver visível
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      if (isVisible) {
+        document.body.setAttribute('data-affiliate-promo-open', 'true');
+      } else {
+        document.body.removeAttribute('data-affiliate-promo-open');
+      }
       window.dispatchEvent(
         new CustomEvent('wehost:affiliate-promo-state', { detail: { open: isVisible } })
       );
     }
     return () => {
       if (typeof window !== 'undefined') {
+        document.body.removeAttribute('data-affiliate-promo-open');
         window.dispatchEvent(
           new CustomEvent('wehost:affiliate-promo-state', { detail: { open: false } })
         );
@@ -122,12 +128,24 @@ export default function AffiliateFloatingPromo() {
   }
 
   return (
-    <aside
-      aria-label="Barra Promocional do Programa de Afiliados"
-      className={`fixed bottom-0 left-0 right-0 z-40 w-full bg-white border-t border-slate-200/95 shadow-[0_-10px_35px_-5px_rgba(0,0,0,0.12)] transition-transform duration-700 ease-out transform ${
-        isVisible ? 'translate-y-0' : 'translate-y-full pointer-events-none'
-      }`}
-    >
+    <>
+      {isVisible && (
+        <style>{`
+          button[title="Assistente Virtual WEHOSTHERE"],
+          [data-virtual-assistant-btn] {
+            display: none !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+          }
+        `}</style>
+      )}
+      <aside
+        aria-label="Barra Promocional do Programa de Afiliados"
+        className={`fixed bottom-0 left-0 right-0 z-[60] w-full bg-white border-t border-slate-200/95 shadow-[0_-10px_35px_-5px_rgba(0,0,0,0.12)] transition-transform duration-700 ease-out transform ${
+          isVisible ? 'translate-y-0' : 'translate-y-full pointer-events-none'
+        }`}
+      >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3 flex items-center justify-between gap-3 sm:gap-6">
         {/* Esquerda: Mascote Oficial + Textos */}
         <div className="flex items-center space-x-3 sm:space-x-4 min-w-0">
@@ -180,5 +198,6 @@ export default function AffiliateFloatingPromo() {
         </div>
       </div>
     </aside>
+    </>
   );
 }
