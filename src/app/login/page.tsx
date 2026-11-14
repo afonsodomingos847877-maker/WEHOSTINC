@@ -103,8 +103,18 @@ export default function LoginPage() {
         setShowReauthModal(true);
         return;
       }
-      console.log('[Login Normal] Redirecionando para dashboard');
-      window.location.href = '/dashboard';
+      const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+      const qRedirect = urlParams?.get('redirect');
+      const sRedirect = typeof window !== 'undefined' ? sessionStorage.getItem('wehost_auth_redirect') : null;
+      let targetPath = '/dashboard';
+      if (qRedirect && qRedirect.startsWith('/') && !qRedirect.startsWith('//')) {
+        targetPath = qRedirect;
+      } else if (sRedirect && sRedirect.startsWith('/') && !sRedirect.startsWith('//')) {
+        targetPath = sRedirect;
+        sessionStorage.removeItem('wehost_auth_redirect');
+      }
+      console.log('[Login Normal] Redirecionando para:', targetPath);
+      window.location.href = targetPath;
     } catch (err) {
       soundEffects.playErrorSound();
       console.error('[Login Normal] Erro de login:', err);
@@ -128,7 +138,11 @@ export default function LoginPage() {
       });
 
       // Redireciona o navegador diretamente para a página de autorização do Google
-      const result = await signIn('google', { callbackUrl: '/api/auth/redirect-role' });
+      const gUrlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+      const gRedirect = gUrlParams?.get('redirect') || (typeof window !== 'undefined' ? sessionStorage.getItem('wehost_auth_redirect') : null);
+      const safeGRedirect = gRedirect && gRedirect.startsWith('/') && !gRedirect.startsWith('//') ? gRedirect : '';
+      const googleCallback = safeGRedirect ? `/api/auth/redirect-role?redirect=${encodeURIComponent(safeGRedirect)}` : '/api/auth/redirect-role';
+      const result = await signIn('google', { callbackUrl: googleCallback });
       console.log('[Google Login] Result do signIn:', result);
     } catch (err) {
       console.error('[Google Login] Erro ao conectar com Google:', err);

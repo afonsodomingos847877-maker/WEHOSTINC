@@ -42,7 +42,6 @@ function resolvePublicBaseUrl(req: NextRequest): string {
 export async function GET(req: NextRequest) {
   const baseUrl = resolvePublicBaseUrl(req);
 
-
   try {
     const secret = process.env.NEXTAUTH_SECRET;
 
@@ -84,6 +83,11 @@ export async function GET(req: NextRequest) {
     console.error('[Auth Redirect Route] ❌ Erro:', error);
   }
 
-  console.log('[Auth Redirect Route] 👤 Redirecionando cliente para /dashboard');
-  return NextResponse.redirect(`${baseUrl}/dashboard`);
+  const customRedirect = req.nextUrl.searchParams.get('redirect');
+  const safeRedirect = customRedirect && customRedirect.startsWith('/') && !customRedirect.startsWith('//')
+    ? customRedirect
+    : '/dashboard';
+
+  console.log(`[Auth Redirect Route] 👤 Redirecionando cliente para ${safeRedirect}`);
+  return NextResponse.redirect(`${baseUrl}${safeRedirect}`);
 }

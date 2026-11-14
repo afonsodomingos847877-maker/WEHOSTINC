@@ -17,6 +17,7 @@ import NewsletterForm from '@/components/NewsletterForm';
 import NewsletterPopup from '@/components/NewsletterPopup';
 import ScrollRevealHeading from '@/components/ScrollRevealHeading';
 import BackToTopBar from '@/components/BackToTopBar';
+import AffiliateFloatingPromo from '@/components/AffiliateFloatingPromo';
 import { soundEffects } from '@/lib/soundEffects';
 
 export default function Home() {
@@ -1364,6 +1365,9 @@ export default function Home() {
 
       {/* Newsletter Popup */}
       <NewsletterPopup />
+
+      {/* Barra Promocional Flutuante do Programa de Afiliados */}
+      <AffiliateFloatingPromo />
     </div>
   );
 }

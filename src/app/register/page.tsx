@@ -173,7 +173,11 @@ export default function RegisterPage() {
       });
       
       // Redireciona o navegador diretamente para a página de autorização do Google
-      await signIn('google', { callbackUrl: '/dashboard' });
+      const gUrlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+      const gRedirect = gUrlParams?.get('redirect') || (typeof window !== 'undefined' ? sessionStorage.getItem('wehost_auth_redirect') : null);
+      const safeGRedirect = gRedirect && gRedirect.startsWith('/') && !gRedirect.startsWith('//') ? gRedirect : '';
+      const googleCallback = safeGRedirect ? `/api/auth/redirect-role?redirect=${encodeURIComponent(safeGRedirect)}` : '/api/auth/redirect-role';
+      await signIn('google', { callbackUrl: googleCallback });
     } catch (err) {
       setError('Erro ao conectar com Google. Verifique a sua ligação à internet.');
       setGoogleLoading(false);
