@@ -525,10 +525,10 @@ export default function InternalDomainChat({
           <button
             type="button"
             onClick={() => onToggleOpen(true)}
-            className="relative flex items-center justify-center w-10 h-10 bg-neutral-950 hover:bg-black text-white rounded-2xl shadow-[0_8px_24px_rgba(0,0,0,0.5)] border border-emerald-500/40 transition-all duration-200 cursor-pointer active:scale-95"
+            className="relative flex items-center justify-center w-10 h-10 bg-neutral-950 hover:bg-black text-white rounded-2xl shadow-[0_8px_24px_rgba(0,0,0,0.5)] border border-white/20 hover:border-white/40 transition-all duration-200 cursor-pointer active:scale-95"
             title={`Abrir Chat da Equipa @${domain}`}
           >
-            <MessageSquare className="w-4 h-4 text-emerald-400" />
+            <MessageSquare className="w-4 h-4 text-white" />
             {totalUnread > 0 && (
               <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] flex items-center justify-center px-1 bg-emerald-500 text-neutral-950 font-black text-[10px] rounded-full shadow animate-bounce">
                 {totalUnread}
