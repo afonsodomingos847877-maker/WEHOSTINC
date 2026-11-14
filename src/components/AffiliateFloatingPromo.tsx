@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
 import { X, ArrowRight } from 'lucide-react';
@@ -8,7 +8,7 @@ import { soundEffects } from '@/lib/soundEffects';
 
 const SESSION_DISMISS_KEY = 'wehost_affiliate_promo_dismissed';
 const DELAY_MS = 5000; // 5 segundos
-const ROTATE_INTERVAL_MS = 10000; // 10 segundos por campanha
+const ROTATE_INTERVAL_MS = 7000; // 7 segundos por campanha
 
 interface PromoCampaign {
   id: 'affiliate' | 'webmail' | 'academy' | 'ai-builder' | 'revista' | 'systems' | 'loja-online';
@@ -103,6 +103,10 @@ export default function AffiliateFloatingPromo() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [typedTitle, setTypedTitle] = useState('');
+  const [typedDescription, setTypedDescription] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const transitionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const availableCampaigns = isAffiliate
     ? PROMO_CAMPAIGNS.filter((c) => c.id !== 'affiliate')
@@ -182,20 +186,71 @@ export default function AffiliateFloatingPromo() {
     };
   }, [pathname]);
 
-  // Rotação suave entre Afiliados, Academia Web e Revista
+  // Rotação automática entre campanhas
   useEffect(() => {
     if (!isVisible || isPaused || availableCampaigns.length <= 1) return;
 
     const interval = setInterval(() => {
       setIsTransitioning(true);
-      setTimeout(() => {
+      if (transitionTimeoutRef.current) {
+        clearTimeout(transitionTimeoutRef.current);
+      }
+      transitionTimeoutRef.current = setTimeout(() => {
         setActiveIndex((prev) => (prev + 1) % availableCampaigns.length);
         setIsTransitioning(false);
-      }, 220);
+      }, 200);
     }, ROTATE_INTERVAL_MS);
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      if (transitionTimeoutRef.current) {
+        clearTimeout(transitionTimeoutRef.current);
+      }
+      setIsTransitioning(false);
+    };
   }, [isVisible, isPaused, availableCampaigns.length]);
+
+  // Efeito de escrita (typewriter) para o título e descrição da campanha atual
+  useEffect(() => {
+    if (!isVisible || !currentCampaign) return;
+
+    const prefersReducedMotion =
+      typeof window !== 'undefined' &&
+      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+    if (prefersReducedMotion) {
+      setTypedTitle(currentCampaign.title);
+      setTypedDescription(currentCampaign.description);
+      setIsTyping(false);
+      return;
+    }
+
+    const fullTitle = currentCampaign.title;
+    const fullDesc = currentCampaign.description;
+    let titlePos = 0;
+    let descPos = 0;
+
+    setTypedTitle('');
+    setTypedDescription('');
+    setIsTyping(true);
+
+    const typingTimer = setInterval(() => {
+      if (titlePos < fullTitle.length) {
+        titlePos += 1;
+        setTypedTitle(fullTitle.slice(0, titlePos));
+      } else if (descPos < fullDesc.length) {
+        descPos += 2;
+        setTypedDescription(fullDesc.slice(0, descPos));
+      } else {
+        setIsTyping(false);
+        clearInterval(typingTimer);
+      }
+    }, 24);
+
+    return () => {
+      clearInterval(typingTimer);
+    };
+  }, [isVisible, currentCampaign.id]);
 
   const handleDismiss = () => {
     soundEffects.playClickSound();
@@ -276,14 +331,20 @@ export default function AffiliateFloatingPromo() {
           <div className={`min-w-0 transition-opacity duration-200 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs sm:text-sm font-extrabold text-slate-900 tracking-tight leading-tight">
-                {currentCampaign.title}
+                {typedTitle}
+                {isTyping && typedTitle.length < currentCampaign.title.length && (
+                  <span className="inline-block w-[2px] h-3.5 bg-[#0284c7] ml-0.5 align-middle animate-pulse" />
+                )}
               </span>
               <span className={`hidden md:inline-flex text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${currentCampaign.badgeClass}`}>
                 {currentCampaign.badge}
               </span>
             </div>
-            <p className="text-[11px] sm:text-xs text-slate-600 line-clamp-1 sm:line-clamp-2 mt-0.5 leading-snug">
-              {currentCampaign.description}
+            <p className="text-[11px] sm:text-xs text-slate-600 line-clamp-1 sm:line-clamp-2 mt-0.5 leading-snug min-h-[1rem]">
+              {typedDescription}
+              {isTyping && typedTitle.length >= currentCampaign.title.length && (
+                <span className="inline-block w-[1.5px] h-3 bg-slate-400 ml-0.5 align-middle animate-pulse" />
+              )}
             </p>
           </div>
         </div>
