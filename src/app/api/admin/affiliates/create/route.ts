@@ -4,6 +4,7 @@ import { connectDB } from '@/lib/mongodb';
 import Affiliate from '@/lib/models/Affiliate';
 import User from '@/lib/models/User';
 import { dispatchMessage } from '@/lib/notifications';
+import { invalidateCacheOnChange } from '@/lib/affiliateCache';
 
 async function generateUniqueAffiliateCode(userName?: string): Promise<string> {
   let code: string;
@@ -151,6 +152,7 @@ export async function POST(request: NextRequest) {
         };
       }
       await existingAffiliate.save();
+      invalidateCacheOnChange(user.id);
 
       return NextResponse.json({
         success: true,
@@ -196,6 +198,7 @@ export async function POST(request: NextRequest) {
     }
 
     const affiliate = await Affiliate.create(affiliateData);
+    invalidateCacheOnChange(user.id);
 
     // Enviar email de boas-vindas se solicitado
     if (sendWelcomeEmail) {

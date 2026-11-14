@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
+import { getSessionUser } from '@/lib/serverAuth';
 import Affiliate from '@/lib/models/Affiliate';
 import Commission from '@/lib/models/Commission';
 import AffiliateClick from '@/lib/models/AffiliateClick';
@@ -12,6 +13,26 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     let userId = searchParams.get('userId');
     const bypassCache = searchParams.get('bypassCache') === 'true';
+
+    // Segurança: validar sessão e impedir acesso ao painel de outro afiliado
+    const internalAuthHeader = request.headers.get('x-internal-auth');
+    const sessionUser = await getSessionUser(request).catch(() => null);
+
+    if (!internalAuthHeader) {
+      if (!sessionUser) {
+        return NextResponse.json({ success: false, error: 'Não autenticado' }, { status: 401 });
+      }
+      const isAdmin = sessionUser.role === 'admin' || sessionUser.role === 'super_admin';
+      if (!userId) {
+        userId = sessionUser.id;
+      } else if (
+        !isAdmin &&
+        userId !== sessionUser.id &&
+        userId.toLowerCase() !== sessionUser.email.toLowerCase()
+      ) {
+        return NextResponse.json({ success: false, error: 'Acesso negado' }, { status: 403 });
+      }
+    }
 
     console.log('[Affiliate Dashboard] Request received with userId:', userId);
 

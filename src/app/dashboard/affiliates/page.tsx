@@ -191,7 +191,8 @@ export default function AffiliatesPage() {
         
         // Verificar se afiliado tem telefone configurado para pagamentos
         const affiliatePhone = dashboardData.affiliate.payoutDetails?.mpesaPhone;
-        if (!affiliatePhone) {
+        const isAlreadyActive = dashboardData.affiliate.status === 'active';
+        if (!isAlreadyActive && !affiliatePhone) {
           // Afiliado existe mas não tem telefone - precisa fazer verificação
           // Mas permite acesso se estiver em modo skipVerification
           const skipVerification = new URLSearchParams(window.location.search).get('skipVerification') === 'true';
