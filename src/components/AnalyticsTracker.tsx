@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react';
 import { auth } from '@/lib/auth';
 import { apiEndpoint } from '@/lib/siteConfig';
 import FacebookPixel from '@/lib/facebookPixel';
+import { hasAffiliateReferralCookie, trackAffiliateEvent } from '@/lib/affiliateEventsClient';
 
 // Gera ou reutiliza um sessionId persistido em sessionStorage
 function getSessionId(): string {
@@ -50,6 +51,37 @@ export default function AnalyticsTracker() {
         referrer: document.referrer || '',
       }),
     }).catch(() => {}); // silencioso
+
+    // Rastrear eventos de jornada de afiliado (apenas se o visitante tiver cookie de afiliado)
+    if (hasAffiliateReferralCookie() && pathname && !pathname.startsWith('/admin') && !pathname.startsWith('/dashboard/affiliates')) {
+      const isProductPage =
+        pathname.startsWith('/hosting') ||
+        pathname.startsWith('/domains') ||
+        pathname.startsWith('/vps') ||
+        pathname.startsWith('/websites') ||
+        pathname.startsWith('/services') ||
+        pathname.startsWith('/email') ||
+        pathname.startsWith('/ssl') ||
+        pathname.startsWith('/planos');
+
+      const isCheckoutPage = pathname.startsWith('/checkout');
+
+      if (isCheckoutPage) {
+        trackAffiliateEvent('checkout_start', {
+          page: pathname,
+          metadata: { source: 'navigation' },
+        });
+      } else if (isProductPage) {
+        trackAffiliateEvent('product_view', {
+          page: pathname,
+          productName: pathname.replace(/^\//, '').split('/')[0] || 'servico',
+        });
+      } else {
+        trackAffiliateEvent('page_view', {
+          page: pathname,
+        });
+      }
+    }
   }, [pathname, session]);
 
   // Actualizar presença do utilizador ou visitante (tempo real)

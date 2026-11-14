@@ -4,6 +4,7 @@ import AffiliateClick from '@/lib/models/AffiliateClick';
 import Affiliate from '@/lib/models/Affiliate';
 import Commission from '@/lib/models/Commission';
 import UserModel from '@/lib/models/User';
+import AffiliateEvent, { buildAnonymizedVisitorLabel } from '@/lib/models/AffiliateEvent';
 import { getAffiliateSettings } from '@/lib/models/AffiliateSettings';
 
 export async function POST(request: NextRequest) {
@@ -146,6 +147,27 @@ export async function POST(request: NextRequest) {
         totalConversions: 1,
       },
     });
+
+    // Registar evento de compra concluída na jornada do utilizador (anonimizado)
+    try {
+      const sid = request.cookies.get('wh_aff_sid')?.value || `order-${orderId}`;
+      await AffiliateEvent.create({
+        affiliateId: affiliate.userId,
+        affiliateCode: affiliate.affiliateCode,
+        sessionId: sid,
+        visitorLabel: buildAnonymizedVisitorLabel(sid),
+        eventType: 'purchase_completed',
+        page: '/checkout',
+        productName: serviceType ? String(serviceType) : 'Serviço WeHostHere',
+        metadata: {
+          amount: Number(amount),
+          commissionRate: ratePercent,
+          commissionAmount,
+          orderId: String(orderId),
+        },
+        createdAt: new Date().toISOString(),
+      });
+    } catch {}
 
     console.log(
       `[Affiliate] Conversion tracked for affiliate ${affiliateCode}, order: ${orderId}, commission: ${commissionAmount} (${ratePercent}%)`

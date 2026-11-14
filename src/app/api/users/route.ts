@@ -12,6 +12,8 @@ import { EmailDomain } from '@/models/EmailDomain';
 import { EmailMailbox } from '@/models/EmailMailbox';
 import EmailAccountModel from '@/lib/models/EmailAccount';
 import SiteModel from '@/lib/models/Site';
+import Affiliate from '@/lib/models/Affiliate';
+import AffiliateEvent, { buildAnonymizedVisitorLabel } from '@/lib/models/AffiliateEvent';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -925,6 +927,28 @@ export async function POST(req: Request) {
             userName: userData.name,
             link: '/admin?tab=users'
           });
+
+          // 🎯 Registar evento anonimizado de registo na jornada de afiliado
+          if (affiliateCode) {
+            try {
+              const affDoc = await Affiliate.findOne({ affiliateCode: String(affiliateCode).trim().toUpperCase() }).lean();
+              if (affDoc) {
+                const sidMatch = cookieHeader.match(/wh_aff_sid=([^;]+)/);
+                const affSessionId = sidMatch ? decodeURIComponent(sidMatch[1].trim()) : `reg_${Date.now().toString(36)}`;
+                await AffiliateEvent.create({
+                  affiliateId: (affDoc as any)._id,
+                  affiliateCode: (affDoc as any).affiliateCode,
+                  sessionId: affSessionId,
+                  visitorLabel: buildAnonymizedVisitorLabel(affSessionId),
+                  eventType: 'signup',
+                  page: '/register',
+                  metadata: { source: 'registration' },
+                });
+              }
+            } catch (affErr) {
+              console.warn('[Users API] Falha não impeditiva ao registar evento de afiliado:', affErr);
+            }
+          }
 
           // 🔔 Push imediato para o telemóvel dos administradores
           try {

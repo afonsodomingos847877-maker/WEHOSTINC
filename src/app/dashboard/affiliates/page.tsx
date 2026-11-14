@@ -9,7 +9,7 @@ import {
   Download, Share2, Calendar, Filter, RefreshCw, Wallet,
   ArrowUpRight, Eye, ShoppingCart, Home, BarChart3, Gift, HelpCircle,
   Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin, ArrowLeft, ArrowRight,
-  UserCheck, UserPlus, Sparkles, ShieldCheck, Rocket, Percent, CreditCard, AlertTriangle
+  UserCheck, UserPlus, Sparkles, ShieldCheck, Rocket, Percent, CreditCard, AlertTriangle, Activity
 } from 'lucide-react';
 import { auth, User } from '@/lib/auth';
 import ReauthenticationModal from '@/components/ReauthenticationModal';
@@ -118,7 +118,7 @@ export default function AffiliatesPage() {
   const [copied, setCopied] = useState(false);
   const [showPayoutModal, setShowPayoutModal] = useState(false);
   const [showReauthPayout, setShowReauthPayout] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'leads' | 'commissions' | 'materials' | 'performance'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'leads' | 'commissions' | 'materials' | 'performance' | 'events'>('overview');
   const [payoutMethod, setPayoutMethod] = useState<'bank_transfer' | 'paypal' | 'mpesa'>('bank_transfer');
   const [payoutDetails, setPayoutDetails] = useState({
     bankName: '',
@@ -147,6 +147,60 @@ export default function AffiliatesPage() {
   const [savingFreePhone, setSavingFreePhone] = useState(false);
   const [freePhoneError, setFreePhoneError] = useState('');
   const [freePhoneSuccess, setFreePhoneSuccess] = useState('');
+  const [eventsSummary, setEventsSummary] = useState<{
+    totalEvents: number;
+    uniqueSessions: number;
+    linkClicks: number;
+    productViews: number;
+    signups: number;
+    addToCarts: number;
+    checkoutStarts: number;
+    purchases: number;
+  } | null>(null);
+  const [eventJourneys, setEventJourneys] = useState<Array<{
+    sessionId: string;
+    visitorLabel: string;
+    currentStage: string;
+    stageKey: string;
+    eventsCount: number;
+    firstSeenAt: string;
+    lastActivityAt: string;
+    lastPage: string;
+    events: Array<{
+      _id: string;
+      eventType: string;
+      page: string;
+      productName?: string;
+      metadata?: Record<string, any>;
+      createdAt: string;
+    }>;
+  }>>([]);
+  const [eventsLoading, setEventsLoading] = useState(false);
+  const [eventFilter, setEventFilter] = useState<string>('all');
+  const [expandedSession, setExpandedSession] = useState<string | null>(null);
+
+  const fetchAffiliateEvents = async (filterType = eventFilter) => {
+    setEventsLoading(true);
+    try {
+      const qs = filterType && filterType !== 'all' ? `?eventType=${encodeURIComponent(filterType)}&limit=200` : '?limit=200';
+      const res = await fetch(`/api/affiliates/track-event${qs}`, { credentials: 'include' });
+      const data = await res.json();
+      if (data.success) {
+        setEventsSummary(data.summary || null);
+        setEventJourneys(data.journeys || []);
+      }
+    } catch (err) {
+      console.error('Erro ao carregar eventos de afiliados:', err);
+    } finally {
+      setEventsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'events' && affiliate) {
+      fetchAffiliateEvents(eventFilter);
+    }
+  }, [activeTab, eventFilter, affiliate]);
 
   const handleSaveFreePhone = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -549,7 +603,7 @@ export default function AffiliatesPage() {
         <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8 mb-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="flex items-center space-x-4">
-              <Link href="/dashboard" className="flex items-center space-x-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-xl transition font-medium">
+              <Link href="/dashboard" className="flex items-center space-x-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 rounded-xl transition font-semibold shadow-sm">
                 <ArrowLeft className="h-4 w-4" />
                 <span>Voltar</span>
               </Link>
@@ -578,7 +632,7 @@ export default function AffiliatesPage() {
             </div>
             <button
               onClick={fetchAffiliateData}
-              className="flex items-center space-x-2 px-6 py-3 bg-gray-100 hover:bg-gray-200 rounded-xl transition font-medium"
+              className="flex items-center space-x-2 px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 rounded-xl transition font-semibold shadow-sm"
             >
               <RefreshCw className="h-4 w-4" />
               <span>Atualizar</span>
@@ -591,7 +645,7 @@ export default function AffiliatesPage() {
 
         {/* Navigation Tabs */}
         <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-2 mb-6">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
             <button
               onClick={() => setActiveTab('overview')}
               className={`flex flex-col items-center justify-center space-y-1 px-3 py-2.5 sm:px-4 sm:py-3 rounded-xl transition font-medium cursor-pointer ${
@@ -1397,6 +1451,168 @@ export default function AffiliatesPage() {
               <div className="text-center py-12">
                 <TrendingUp className="h-16 w-16 text-gray-300 mx-auto mb-4" />
                 <p className="text-gray-500">Carregando dados de performance...</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'events' && (
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 md:p-8 space-y-6">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                  <Activity className="h-6 w-6 text-violet-600" />
+                  <span>Monitorização de Eventos e Jornada</span>
+                </h2>
+                <p className="text-sm text-gray-600 mt-1">
+                  Acompanhe em tempo real o percurso anonimizado dos visitantes que chegaram pelo seu link de afiliado.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <select
+                  value={eventFilter}
+                  onChange={(e) => setEventFilter(e.target.value)}
+                  className="px-3 py-2 rounded-xl border border-gray-300 bg-white text-sm text-gray-800 font-medium focus:ring-2 focus:ring-violet-500"
+                >
+                  <option value="all">Todos os Eventos</option>
+                  <option value="link_click">Clique no Link</option>
+                  <option value="page_view">Navegação</option>
+                  <option value="product_view">Visualização de Serviço</option>
+                  <option value="signup">Registo de Conta</option>
+                  <option value="add_to_cart">Adição ao Carrinho</option>
+                  <option value="checkout_start">Início de Checkout</option>
+                  <option value="purchase_completed">Compra Concluída</option>
+                </select>
+                <button
+                  onClick={() => fetchAffiliateEvents(eventFilter)}
+                  disabled={eventsLoading}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 text-sm font-semibold transition"
+                >
+                  <RefreshCw className={`h-4 w-4 ${eventsLoading ? 'animate-spin' : ''}`} />
+                  <span>Atualizar</span>
+                </button>
+              </div>
+            </div>
+
+            {eventsSummary && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3">
+                  <p className="text-xs text-slate-500 font-medium">Sessões Únicas</p>
+                  <p className="text-xl font-bold text-slate-900 mt-1">{eventsSummary.uniqueSessions}</p>
+                </div>
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
+                  <p className="text-xs text-blue-700 font-medium">Cliques no Link</p>
+                  <p className="text-xl font-bold text-blue-900 mt-1">{eventsSummary.linkClicks}</p>
+                </div>
+                <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-3">
+                  <p className="text-xs text-indigo-700 font-medium">Serviços Vistos</p>
+                  <p className="text-xl font-bold text-indigo-900 mt-1">{eventsSummary.productViews}</p>
+                </div>
+                <div className="bg-violet-50 border border-violet-200 rounded-xl p-3">
+                  <p className="text-xs text-violet-700 font-medium">Contas Criadas</p>
+                  <p className="text-xl font-bold text-violet-900 mt-1">{eventsSummary.signups}</p>
+                </div>
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
+                  <p className="text-xs text-amber-700 font-medium">Checkouts Iniciados</p>
+                  <p className="text-xl font-bold text-amber-900 mt-1">{eventsSummary.checkoutStarts}</p>
+                </div>
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3">
+                  <p className="text-xs text-emerald-700 font-medium">Compras Concluídas</p>
+                  <p className="text-xl font-bold text-emerald-900 mt-1">{eventsSummary.purchases}</p>
+                </div>
+              </div>
+            )}
+
+            <div className="flex items-center gap-2 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600">
+              <ShieldCheck className="h-4 w-4 text-emerald-600 shrink-0" />
+              <span>
+                Privacidade garantida: todos os visitantes são identificados apenas por códigos de sessão anonimizados (sem exposição de e-mails, telefones ou IPs).
+              </span>
+            </div>
+
+            {eventsLoading ? (
+              <div className="text-center py-12 text-gray-500">
+                <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-3 text-violet-500" />
+                <p>A carregar jornadas e eventos...</p>
+              </div>
+            ) : eventJourneys.length === 0 ? (
+              <div className="text-center py-12 bg-slate-50 rounded-2xl border border-dashed border-slate-300">
+                <Activity className="h-12 w-12 text-slate-300 mx-auto mb-3" />
+                <p className="text-slate-700 font-semibold">Nenhum evento registado ainda</p>
+                <p className="text-sm text-slate-500 mt-1">
+                  Assim que os visitantes clicarem no seu link de afiliado, verá aqui cada etapa da jornada em tempo real.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {eventJourneys.map((journey) => {
+                  const isExpanded = expandedSession === journey.sessionId;
+                  const eventLabels: Record<string, string> = {
+                    link_click: 'Clicou no link de afiliado',
+                    page_view: 'Navegou na plataforma',
+                    product_view: 'Visualizou produto/serviço',
+                    signup: 'Criou conta na plataforma',
+                    add_to_cart: 'Adicionou ao carrinho',
+                    checkout_start: 'Iniciou o checkout',
+                    purchase_completed: 'Concluiu uma compra',
+                    other: 'Outra ação relevante',
+                  };
+                  return (
+                    <div key={journey.sessionId} className="border border-gray-200 rounded-xl overflow-hidden bg-white hover:border-violet-300 transition">
+                      <button
+                        type="button"
+                        onClick={() => setExpandedSession(isExpanded ? null : journey.sessionId)}
+                        className="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 text-left hover:bg-slate-50 transition"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-violet-100 text-violet-700 flex items-center justify-center font-bold text-xs shrink-0">
+                            {journey.eventsCount}x
+                          </div>
+                          <div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="font-bold text-gray-900">{journey.visitorLabel}</span>
+                              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-violet-100 text-violet-800">
+                                Etapa atual: {journey.currentStage}
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-0.5">
+                              Última página: <span className="font-medium text-gray-700">{journey.lastPage || '/'}</span> • Última atividade: {new Date(journey.lastActivityAt).toLocaleString('pt-MZ')}
+                            </p>
+                          </div>
+                        </div>
+                        <span className="text-xs font-semibold text-violet-600 shrink-0">
+                          {isExpanded ? 'Ocultar jornada ▲' : 'Ver jornada ▼'}
+                        </span>
+                      </button>
+
+                      {isExpanded && (
+                        <div className="border-t border-gray-100 bg-slate-50/70 p-4">
+                          <div className="space-y-2.5">
+                            {journey.events.map((ev) => (
+                              <div key={ev._id} className="flex items-start gap-3 text-sm">
+                                <div className="w-2 h-2 rounded-full bg-violet-500 mt-2 shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <span className="font-semibold text-gray-900">
+                                      {eventLabels[ev.eventType] || ev.eventType}
+                                      {ev.productName ? ` — ${ev.productName}` : ''}
+                                    </span>
+                                    <span className="text-xs text-gray-500">
+                                      {new Date(ev.createdAt).toLocaleString('pt-MZ')}
+                                    </span>
+                                  </div>
+                                  <p className="text-xs text-gray-600 truncate">
+                                    Página: {ev.page || '/'}
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>

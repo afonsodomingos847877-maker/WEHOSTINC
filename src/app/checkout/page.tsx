@@ -18,6 +18,7 @@ import ReceiptModal, { ReceiptData } from '@/components/ReceiptModal';
 import { apiEndpoint } from '@/lib/siteConfig';
 import { soundEffects } from '@/lib/soundEffects';
 import FacebookPixel from '@/lib/facebookPixel';
+import { trackAffiliateEvent } from '@/lib/affiliateEventsClient';
 import { useTranslation, getLanguage, setLanguage, Language } from '@/lib/i18n';
 import { useAnalytics } from '@/lib/analytics';
 
@@ -335,6 +336,12 @@ function CheckoutContent() {
         value: grandTotal,
         currency: 'MZN'
       });
+
+      trackAffiliateEvent('add_to_cart', {
+        page: '/checkout',
+        productName: serviceName,
+        metadata: { productId: selectedPlan.id, value: grandTotal, currency: 'MZN', durationMonths },
+      });
     }
   }, [analytics, domainParam, grandTotal, isAffiliateVerification, isCoursePayment, selectedPlan, siteTypeName, durationMonths]);
 
@@ -385,6 +392,12 @@ function CheckoutContent() {
         content_category: 'Hospedagem e Serviços Web',
         value: grandTotal,
         currency: 'MZN'
+      });
+
+      trackAffiliateEvent('add_to_cart', {
+        page: '/checkout',
+        productName: serviceName,
+        metadata: { productId: selectedPlan.id, value: grandTotal, currency: 'MZN', durationMonths },
       });
     }
   }, [analytics, domainParam, grandTotal, isAffiliateVerification, isCoursePayment, selectedPlan, siteTypeName]);
