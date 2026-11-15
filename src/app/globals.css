@@ -293,58 +293,49 @@ body:has(aside[aria-label="Barra Promocional do Programa de Afiliados"].translat
   pointer-events: none !important;
 }
 
-/* ─── Efeito de brilho + respiração para botões CTA clicáveis ─── */
-@keyframes cta-shine {
-  0% {
-    transform: translateX(-140%) skewX(-20deg);
-  }
-  45%, 100% {
-    transform: translateX(240%) skewX(-20deg);
+/* ─── Efeito de luz circulando na borda (estilo Google) para botões CTA ─── */
+@property --cta-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes cta-border-spin {
+  to {
+    --cta-angle: 360deg;
   }
 }
 
-@keyframes cta-breathe {
-  0%, 100% {
-    transform: scale(1);
-    box-shadow: 0 10px 22px -6px rgba(5, 150, 105, 0.35), 0 0 0 0 rgba(16, 185, 129, 0.35);
-  }
-  50% {
-    transform: scale(1.018);
-    box-shadow: 0 14px 28px -6px rgba(5, 150, 105, 0.5), 0 0 0 6px rgba(16, 185, 129, 0);
-  }
-}
-
-.btn-cta-shine {
+.btn-cta-orbit {
   position: relative;
-  overflow: hidden;
-  animation: cta-breathe 2.4s ease-in-out infinite;
 }
 
-.btn-cta-shine:hover,
-.btn-cta-shine:active,
-.btn-cta-shine:disabled {
-  animation: none;
-}
-
-.btn-cta-shine::after {
+.btn-cta-orbit::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 45%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.28) 50%,
-    transparent 100%
+  inset: -2px;
+  border-radius: inherit;
+  padding: 2px;
+  background: conic-gradient(
+    from var(--cta-angle),
+    transparent 0deg,
+    transparent 235deg,
+    #34d399 280deg,
+    #a7f3d0 315deg,
+    #ffffff 335deg,
+    #38bdf8 350deg,
+    transparent 360deg
   );
-  transform: translateX(-140%) skewX(-20deg);
-  animation: cta-shine 3.2s ease-in-out infinite;
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: cta-border-spin 2.6s linear infinite;
   pointer-events: none;
 }
 
-.btn-cta-shine:disabled::after {
+.btn-cta-orbit:disabled::before {
   animation: none;
   opacity: 0;
 }

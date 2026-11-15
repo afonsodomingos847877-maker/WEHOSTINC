@@ -561,22 +561,26 @@ export default function AffiliatesPage() {
 
   if (!affiliate) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex flex-col justify-center items-center px-4 py-3">
-        <div className="w-full max-w-sm sm:max-w-md mx-auto">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-amber-50/30 to-indigo-50/40 py-6 sm:py-10 px-4">
+        <div className="w-full max-w-5xl mx-auto space-y-6">
           {/* Top navigation */}
-          <div className="mb-2">
+          <div className="flex items-center justify-between">
             <Link
               href="/dashboard"
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-gray-900 transition"
+              className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-600 hover:text-slate-900 bg-white px-3.5 py-2 rounded-xl border border-slate-200/80 shadow-xs transition"
             >
-              <ArrowLeft className="h-3.5 w-3.5" />
+              <ArrowLeft className="h-4 w-4" />
               <span>Voltar ao Dashboard</span>
             </Link>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-200/80">
+              <Sparkles className="h-3.5 w-3.5 text-amber-600" />
+              <span>Programa de Afiliados</span>
+            </span>
           </div>
 
           {/* Genuine auth/network alert only */}
           {errorMessage && (errorType === 'auth' || errorType === 'network') && (
-            <div className={`mb-2 p-2.5 rounded-xl border text-xs flex items-center justify-between ${
+            <div className={`p-3.5 rounded-2xl border text-xs sm:text-sm flex items-center justify-between shadow-xs ${
               errorType === 'auth' ? 'bg-red-50 border-red-200 text-red-700' : 'bg-amber-50 border-amber-200 text-amber-800'
             }`}>
               <span>{errorMessage}</span>
@@ -588,70 +592,141 @@ export default function AffiliatesPage() {
             </div>
           )}
 
-          {/* Compact Card */}
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-            {/* Header */}
-            <div className="bg-gradient-to-r from-primary-600 via-primary-700 to-indigo-700 px-4 py-3.5 text-center text-white relative">
-              <div className="w-9 h-9 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center mx-auto mb-1.5 shadow-inner">
-                <Users className="h-5 w-5 text-white" />
-              </div>
-              <h2 className="text-base sm:text-lg font-bold tracking-tight text-white leading-tight">
-                Programa de Afiliados
-              </h2>
-              <p className="text-[11px] sm:text-xs text-white/90 mt-0.5">
-                Ganhe <span className="font-bold text-emerald-300">30% de comissão</span> por cada venda indicada
-              </p>
-            </div>
+          {/* Hero Split Card */}
+          <div className="bg-white rounded-3xl shadow-xl border border-slate-200/80 overflow-hidden grid lg:grid-cols-12">
+            {/* Left Content */}
+            <div className="lg:col-span-7 p-6 sm:p-8 lg:p-10 flex flex-col justify-between space-y-6">
+              <div className="space-y-4">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold">
+                  <Rocket className="h-3.5 w-3.5" />
+                  <span>Ganhe 30% de comissão por cada indicação</span>
+                </div>
 
-            {/* Content */}
-            <div className="p-3.5 sm:p-4 space-y-2.5">
-              {/* Verification Notice */}
-              <div className="flex items-center gap-2 p-2 bg-amber-50 border border-amber-200/80 rounded-xl text-amber-900">
-                <AlertTriangle className="h-4 w-4 text-amber-600 flex-shrink-0" />
-                <p className="leading-tight text-[11px]">
-                  {errorMessage.includes('já é afiliado')
-                    ? 'Verificação de 2 MZN para vincular seu telemóvel ao recebimento de comissões.'
-                    : 'Verificação única de 2 MZN para vincular seu número aos pagamentos.'}
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight leading-tight">
+                  Transforme suas indicações em{' '}
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-indigo-600">
+                    renda recorrente
+                  </span>
+                </h1>
+
+                <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
+                  Compartilhe o seu link exclusivo da WEHOSTHERE e receba comissões reais sempre que um cliente contratar hospedagem, domínio ou criação de site.
                 </p>
-              </div>
 
-              {/* 3 Mini Benefits */}
-              <div className="grid grid-cols-3 gap-1.5 text-center">
-                <div className="bg-slate-50 rounded-xl p-2 border border-slate-100">
-                  <Percent className="h-3.5 w-3.5 mx-auto text-primary-600 mb-0.5" />
-                  <span className="block text-xs font-bold text-gray-900 leading-tight">30%</span>
-                  <span className="block text-[10px] text-gray-500">Comissão</span>
+                {/* 3 Benefit Cards */}
+                <div className="grid grid-cols-3 gap-2.5 sm:gap-3 pt-1">
+                  <div className="bg-slate-50 rounded-2xl p-3 sm:p-3.5 border border-slate-200/70 text-center">
+                    <Percent className="h-4 w-4 sm:h-5 sm:w-5 mx-auto text-primary-600 mb-1" />
+                    <span className="block text-sm sm:text-base font-black text-slate-900 leading-tight">30%</span>
+                    <span className="block text-[11px] text-slate-500 mt-0.5">Comissão</span>
+                  </div>
+                  <div className="bg-slate-50 rounded-2xl p-3 sm:p-3.5 border border-slate-200/70 text-center">
+                    <Share2 className="h-4 w-4 sm:h-5 sm:w-5 mx-auto text-blue-600 mb-1" />
+                    <span className="block text-sm sm:text-base font-black text-slate-900 leading-tight">Link Próprio</span>
+                    <span className="block text-[11px] text-slate-500 mt-0.5">Instantâneo</span>
+                  </div>
+                  <div className="bg-slate-50 rounded-2xl p-3 sm:p-3.5 border border-slate-200/70 text-center">
+                    <Wallet className="h-4 w-4 sm:h-5 sm:w-5 mx-auto text-emerald-600 mb-1" />
+                    <span className="block text-sm sm:text-base font-black text-slate-900 leading-tight">1.000 MT</span>
+                    <span className="block text-[11px] text-slate-500 mt-0.5">Saque M-Pesa</span>
+                  </div>
                 </div>
-                <div className="bg-slate-50 rounded-xl p-2 border border-slate-100">
-                  <Share2 className="h-3.5 w-3.5 mx-auto text-blue-600 mb-0.5" />
-                  <span className="block text-xs font-bold text-gray-900 leading-tight">Link Próprio</span>
-                  <span className="block text-[10px] text-gray-500">Instantâneo</span>
-                </div>
-                <div className="bg-slate-50 rounded-xl p-2 border border-slate-100">
-                  <Wallet className="h-3.5 w-3.5 mx-auto text-emerald-600 mb-0.5" />
-                  <span className="block text-xs font-bold text-gray-900 leading-tight">1.000 MT</span>
-                  <span className="block text-[10px] text-gray-500">Saque M-Pesa</span>
+
+                {/* Verification Notice */}
+                <div className="flex items-center gap-2.5 p-3 bg-amber-50/90 border border-amber-200/90 rounded-2xl text-amber-900">
+                  <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600 flex-shrink-0" />
+                  <p className="leading-snug text-xs sm:text-[13px] font-medium">
+                    {errorMessage.includes('já é afiliado')
+                      ? 'Verificação de 2 MZN para vincular seu telemóvel ao recebimento de comissões.'
+                      : 'Verificação única de 2 MZN para vincular seu número M-Pesa aos pagamentos.'}
+                  </p>
                 </div>
               </div>
 
               {/* Actions */}
-              <div className="pt-1 text-center space-y-1.5">
+              <div className="space-y-2.5 pt-1">
                 <Link
                   href={`/checkout?service=affiliate_verification&amount=2&duration=1&domain=affiliate&userId=${encodeURIComponent(session?.user?.id || '')}`}
-                  className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-gradient-to-r from-primary-600 via-primary-700 to-indigo-700 hover:from-primary-700 hover:via-primary-800 hover:to-indigo-800 text-white font-bold rounded-xl text-xs sm:text-sm shadow-md hover:shadow-lg transition-all"
+                  className="btn-cta-orbit group w-full flex items-center justify-center gap-2.5 py-3.5 px-6 bg-gradient-to-r from-primary-600 via-primary-700 to-indigo-700 hover:from-primary-700 hover:via-primary-800 hover:to-indigo-800 text-white font-extrabold rounded-2xl text-sm sm:text-base shadow-lg hover:shadow-xl transition-all"
                 >
-                  <Users className="h-4 w-4" />
+                  <Users className="h-5 w-5" />
                   <span>{errorMessage.includes('já é afiliado') ? 'Verificar Telefone — 2 MZN' : 'Tornar-se Afiliado — 2 MZN'}</span>
-                  <ArrowRight className="h-3.5 w-3.5" />
+                  <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
                 </Link>
 
-                <div>
+                <div className="text-center">
                   <button
                     onClick={() => router.push('/dashboard/affiliates?skipVerification=true')}
-                    className="text-[11px] text-gray-400 hover:text-gray-600 transition underline"
+                    className="text-xs text-slate-400 hover:text-slate-600 transition underline cursor-pointer"
                   >
                     Pagar depois
                   </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Visual Showcase (afiliadobanner0) */}
+            <div className="lg:col-span-5 relative min-h-[260px] lg:min-h-full bg-amber-400 overflow-hidden">
+              <img
+                src="/afiliadobanner0.jpg"
+                alt="Programa de Afiliados WEHOSTHERE"
+                className="w-full h-full object-cover object-center"
+              />
+              <div className="absolute inset-x-4 bottom-4 bg-white/90 backdrop-blur-md rounded-2xl p-3.5 border border-white/80 shadow-lg flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
+                  <ShieldCheck className="h-5 w-5 text-amber-700" />
+                </div>
+                <div>
+                  <p className="text-xs font-extrabold text-slate-900">Pagamentos Diretos via M-Pesa</p>
+                  <p className="text-[11px] text-slate-600">Acompanhe cliques, vendas e saldo em tempo real</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Section: Coin Banner + How It Works */}
+          <div className="grid lg:grid-cols-12 gap-6 items-stretch">
+            <div className="lg:col-span-5 relative rounded-3xl overflow-hidden shadow-lg border border-amber-200/70 min-h-[220px]">
+              <img
+                src="/afiliadobanner1.jpg"
+                alt="Comissões em Meticais"
+                className="w-full h-full object-cover object-center"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent flex flex-col justify-end p-6 text-white">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-amber-300 mb-1">
+                  Renda Extra em Moçambique
+                </span>
+                <h2 className="text-lg sm:text-xl font-black leading-snug">
+                  Saque rápido a partir de 1.000 MT
+                </h2>
+              </div>
+            </div>
+
+            <div className="lg:col-span-7 bg-white rounded-3xl shadow-sm border border-slate-200/80 p-6 sm:p-7 flex flex-col justify-center">
+              <h2 className="text-base sm:text-lg font-extrabold text-slate-900 mb-4">
+                Como funciona em 3 passos simples
+              </h2>
+              <div className="grid sm:grid-cols-3 gap-3.5">
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                  <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-primary-600 text-white text-xs font-black mb-2.5">1</span>
+                  <h3 className="text-xs sm:text-sm font-bold text-slate-900 mb-1">Ative sua conta</h3>
+                  <p className="text-[11px] sm:text-xs text-slate-600 leading-relaxed">
+                    Faça a verificação única de 2 MZN para validar o seu número M-Pesa.
+                  </p>
+                </div>
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                  <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-primary-600 text-white text-xs font-black mb-2.5">2</span>
+                  <h3 className="text-xs sm:text-sm font-bold text-slate-900 mb-1">Divulgue seu link</h3>
+                  <p className="text-[11px] sm:text-xs text-slate-600 leading-relaxed">
+                    Partilhe no WhatsApp, redes sociais ou com clientes que precisam de site.
+                  </p>
+                </div>
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                  <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-emerald-600 text-white text-xs font-black mb-2.5">3</span>
+                  <h3 className="text-xs sm:text-sm font-bold text-slate-900 mb-1">Receba 30%</h3>
+                  <p className="text-[11px] sm:text-xs text-slate-600 leading-relaxed">
+                    Cada venda confirmada gera comissão no seu painel pronta para saque.
+                  </p>
                 </div>
               </div>
             </div>

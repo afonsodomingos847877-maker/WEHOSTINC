@@ -1,16 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import { 
   Server, Mail, LayoutDashboard, Settings, LogOut, 
   Plus, Globe, Database, TrendingUp, Users, CheckCircle, Sparkles, ArrowRight, Link2, Loader2, ShoppingBag,
-  Activity, Cpu, HardDrive, Wifi, ShieldCheck, Zap, Star, Bell, X, Download, Layers
+  Activity, Cpu, HardDrive, Wifi, ShieldCheck, Zap, Star, Bell, X, Download, Layers, ChevronDown
 } from 'lucide-react';
 import { auth, User } from '@/lib/auth';
-import { dataManager } from '@/lib/data';
+import { dataManager, hostingPlans } from '@/lib/data';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 
@@ -64,6 +64,25 @@ export default function DashboardPage() {
   const { t } = useLanguage();
   const { data: session, status } = useSession();
   const [user, setUser] = useState<User | null>(null);
+  const [showPlanSelector, setShowPlanSelector] = useState(false);
+  const planSelectorRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (planSelectorRef.current && !planSelectorRef.current.contains(event.target as Node)) {
+        setShowPlanSelector(false);
+      }
+    };
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setShowPlanSelector(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, []);
   const [loading, setLoading] = useState(true);
   const [isSyncingCounts, setIsSyncingCounts] = useState(true);
   const [siteCount, setSiteCount] = useState(0);
@@ -554,24 +573,96 @@ export default function DashboardPage() {
             )}
 
             {/* Welcome Card com Gradiente Banner */}
-            <div className="relative overflow-hidden bg-white rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 text-slate-900 border border-slate-200/80">
-              <div
-                className="absolute inset-0 bg-cover bg-center bg-no-repeat banner-bg-zoom"
-                style={{ backgroundImage: `url(${gradientBannerBg.src})` }}
-              />
+            <div className="relative bg-white rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 text-slate-900 border border-slate-200/80">
+              <div className="absolute inset-0 overflow-hidden rounded-xl sm:rounded-2xl pointer-events-none">
+                <div
+                  className="absolute inset-0 bg-cover bg-center bg-no-repeat banner-bg-zoom"
+                  style={{ backgroundImage: `url(${gradientBannerBg.src})` }}
+                />
+              </div>
 
               <div className="relative z-10">
                 <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
                   <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900">{t('dash.welcome_title')}, {user.name}!</h1>
-                  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] sm:text-xs font-extrabold uppercase tracking-wider ${
-                    user.plan === 'enterprise' ? 'bg-purple-100/90 text-purple-800 border border-purple-200 shadow-sm backdrop-blur-sm' :
-                    user.plan === 'pro' ? 'bg-blue-100/90 text-blue-800 border border-blue-200 shadow-sm backdrop-blur-sm' :
-                    user.plan === 'basic' ? 'bg-emerald-100/90 text-emerald-800 border border-emerald-200 shadow-sm backdrop-blur-sm' :
-                    'bg-slate-100/90 text-slate-700 border border-slate-200 backdrop-blur-sm'
-                  }`}>
-                    <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
-                    <span>Plano {planInfo.name}</span>
-                  </span>
+                  <div className="relative" ref={planSelectorRef}>
+                    <button
+                      type="button"
+                      onClick={() => setShowPlanSelector((prev) => !prev)}
+                      aria-expanded={showPlanSelector}
+                      aria-haspopup="listbox"
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] sm:text-xs font-extrabold uppercase tracking-wider bg-white hover:bg-slate-50 text-slate-800 border border-slate-200/90 shadow-sm hover:shadow transition cursor-pointer select-none"
+                    >
+                      <span>Plano {planInfo.name}</span>
+                      <ChevronDown className={`w-3.5 h-3.5 text-slate-500 transition-transform duration-200 ${showPlanSelector ? 'rotate-180' : ''}`} />
+                    </button>
+
+                    {showPlanSelector && (
+                      <div
+                        role="listbox"
+                        className="absolute left-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 z-30"
+                      >
+                        <div className="px-3 py-1.5 border-b border-slate-100">
+                          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                            Escolher / Fazer Upgrade
+                          </p>
+                        </div>
+                        <div className="py-1">
+                          {hostingPlans
+                            .filter((p) => ['basic', 'pro', 'enterprise'].includes(p.id))
+                            .map((plan) => {
+                              const currentPlanId = user.plan === 'none' || !user.plan ? 'basic' : user.plan;
+                              const isCurrent = plan.id === currentPlanId;
+                              return (
+                                <button
+                                  key={plan.id}
+                                  type="button"
+                                  disabled={isCurrent}
+                                  onClick={() => {
+                                    setShowPlanSelector(false);
+                                    router.push(`/checkout?plan=${plan.id}`);
+                                  }}
+                                  className={`w-full px-3 py-2 text-left flex items-center justify-between gap-2 transition ${
+                                    isCurrent
+                                      ? 'bg-slate-50 text-slate-500 cursor-default'
+                                      : 'hover:bg-primary-50 text-slate-800 cursor-pointer'
+                                  }`}
+                                >
+                                  <div>
+                                    <span className="block text-xs font-bold text-slate-900">
+                                      Plano {plan.name}
+                                    </span>
+                                    <span className="block text-[11px] text-slate-500">
+                                      {plan.price.toLocaleString('pt-MZ')} MT/mês
+                                    </span>
+                                  </div>
+                                  {isCurrent ? (
+                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+                                      <CheckCircle className="w-3 h-3" />
+                                      Atual
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center gap-0.5 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-primary-100 text-primary-700">
+                                      Upgrade
+                                      <ArrowRight className="w-3 h-3" />
+                                    </span>
+                                  )}
+                                </button>
+                              );
+                            })}
+                        </div>
+                        <div className="border-t border-slate-100 pt-1 px-2">
+                          <Link
+                            href="/dashboard/billing"
+                            onClick={() => setShowPlanSelector(false)}
+                            className="w-full px-2 py-1.5 text-[11px] font-semibold text-primary-600 hover:text-primary-700 hover:bg-primary-50/60 rounded-lg flex items-center justify-between transition"
+                          >
+                            <span>Comparar todos os planos</span>
+                            <ArrowRight className="w-3 h-3" />
+                          </Link>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-3">
                 <Link
