@@ -68,7 +68,7 @@ import { sendDomainSearchAlertEmail } from '@/lib/sendgrid';
 import { addAdminNotification } from '@/lib/notifications';
 
 /**
- * Persiste o log de pesquisa no MongoDB — SEMPRE aguardado antes de responder.
+ * Persiste o log de pesquisa no MongoDB - SEMPRE aguardado antes de responder.
  * Retorna o searchCount actualizado.
  */
 async function saveSearchLogToDB(
@@ -149,7 +149,7 @@ async function fireNotificationsAsync(
           const { sendPushToAdmins } = await import('@/lib/pushService');
           await sendPushToAdmins({
             title: `🔍 Domínio Pesquisado: ${fullDomain}`,
-            message: `${userEmail ? userEmail : `Visitante (${ip})`} pesquisou "${fullDomain}" — DOMÍNIO DISPONÍVEL por ${price ? `${price.toLocaleString('pt-MZ')} MT/ano` : 'preço a definir'}.`,
+            message: `${userEmail ? userEmail : `Visitante (${ip})`} pesquisou "${fullDomain}" - DOMÍNIO DISPONÍVEL por ${price ? `${price.toLocaleString('pt-MZ')} MT/ano` : 'preço a definir'}.`,
             url: '/admin/domain-search-logs',
             tag: `domain-search-${fullDomain}`
           });
@@ -250,7 +250,7 @@ export async function GET(req: NextRequest) {
   );
 
   // 1. Aguardar gravação no MongoDB + consulta de alternativas em PARALELO
-  // saveSearchLogToDB é awaited — garante persistência mesmo em serverless/Vercel
+  // saveSearchLogToDB é awaited - garante persistência mesmo em serverless/Vercel
   let searchCount = 1;
   const [savedCount, alternatives] = await Promise.all([
     saveSearchLogToDB(fullDomain, cleanSld, extension, isAvailable, ip, userAgent, userId, userEmail).catch((err) => {

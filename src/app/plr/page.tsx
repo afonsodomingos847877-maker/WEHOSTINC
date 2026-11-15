@@ -20,7 +20,7 @@ export const metadata: Metadata = {
         width: 1200,
         height: 630,
         type: 'image/png',
-        alt: 'WEHOSTHERE — PLR - Produtos com Direitos de Revenda',
+        alt: 'WEHOSTHERE - PLR - Produtos com Direitos de Revenda',
       },
     ],
   },

@@ -29,7 +29,7 @@ export default function DashboardAcademyPage() {
   const [selectedCertificate, setSelectedCertificate] = useState<Certificate | null>(null);
   const [progressList, setProgressList] = useState<CourseProgress[]>([]);
   
-  // Se ja ha dados em cache, nao mostra loader — evita spinner ao navegar entre abas
+  // Se ja ha dados em cache, nao mostra loader - evita spinner ao navegar entre abas
   const [loading, setLoading] = useState(() => !getCached('academy:courses'));
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'error' | 'info' | 'warning' }>({ show: false, message: '', type: 'success' });

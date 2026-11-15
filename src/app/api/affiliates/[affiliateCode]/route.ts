@@ -57,7 +57,7 @@ export async function GET(
     // Milestone notifications
     const newClicks = updatedAffiliate?.totalClicks || (affiliate.totalClicks + 1);
 
-    // 🎯 1º Clique — e-mail especial de boas-vindas ao programa
+    // 🎯 1º Clique - e-mail especial de boas-vindas ao programa
     if (newClicks === 1) {
       try {
         const UserModel = (await import('@/lib/models/User')).default;

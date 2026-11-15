@@ -91,6 +91,6 @@ export default async function ReferralPage({
     console.error('[Ref] Erro ao processar referral:', err);
   }
 
-  // Redirect único direto para o destino — sem cadeia intermédia
+  // Redirect único direto para o destino - sem cadeia intermédia
   redirect(targetPath);
 }

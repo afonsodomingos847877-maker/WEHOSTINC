@@ -311,7 +311,7 @@ export async function requireAdmin(
 export function requireCronSecret(req: Request | NextRequest): NextResponse | null {
   const cronSecret = process.env.CRON_SECRET?.trim();
   if (!cronSecret) {
-    console.error('[CronAuth] CRON_SECRET não configurado — bloqueando execução (fail-closed).');
+    console.error('[CronAuth] CRON_SECRET não configurado - bloqueando execução (fail-closed).');
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

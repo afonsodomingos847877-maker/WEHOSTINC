@@ -688,7 +688,7 @@ export const dataManager = {
             const localMatch = localSiteMap.get(key);
             if (localMatch) {
               if (currentUserEmail) {
-                // CLIENT: servidor tem prioridade — aprovações do admin propagam-se instantaneamente
+                // CLIENT: servidor tem prioridade - aprovações do admin propagam-se instantaneamente
                 return {
                   ...localMatch,
                   ...serverSite,
@@ -696,7 +696,7 @@ export const dataManager = {
                   userEmail: serverSite.userEmail || localMatch.userEmail || currentUserEmail
                 };
               } else {
-                // ADMIN: localStorage local tem prioridade — mudanças manuais do admin persistem mesmo após restart do servidor
+                // ADMIN: localStorage local tem prioridade - mudanças manuais do admin persistem mesmo após restart do servidor
                 const effectiveStatus = localMatch.status || serverSite.status || 'pending';
                 // Ressincronizar com o servidor se houver discordância
                 if (serverSite.status !== effectiveStatus) {
@@ -1011,7 +1011,7 @@ export const dataManager = {
             return updated;
           }
 
-          // Admin use: merge server emails with local — local status has priority (admin decisions persist)
+          // Admin use: merge server emails with local - local status has priority (admin decisions persist)
           if (typeof window !== 'undefined') {
             const localAdminEmails: EmailAccount[] = JSON.parse(localStorage.getItem(EMAILS_KEY) || '[]');
             const localAdminMap = new Map<string, EmailAccount>();
@@ -2923,6 +2923,6 @@ export interface SupportTicket {
   messages: TicketMessage[];
 }
 
-// Sem dados padrão — todos os dados são carregados do MongoDB Atlas
+// Sem dados padrão - todos os dados são carregados do MongoDB Atlas
 const DEFAULT_ORDERS: ServiceOrder[] = [];
 export const DEFAULT_TICKETS: SupportTicket[] = [];

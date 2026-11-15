@@ -699,7 +699,7 @@ export default function AdminCommunicationPage() {
                     <option value="">-- Escolha um Cliente da Lista --</option>
                     {clients.map(c => (
                       <option key={c.id || c.email} value={c.email}>
-                        👤 {c.name || 'Sem Nome'} — ({c.email})
+                        👤 {c.name || 'Sem Nome'} - ({c.email})
                       </option>
                     ))}
                   </select>
@@ -826,7 +826,7 @@ export default function AdminCommunicationPage() {
                   <div className="border-b border-gray-200/80 pb-3 mb-3">
                     <span className="text-[11px] font-bold text-gray-400 block uppercase tracking-wider">Assunto:</span>
                     <span className="text-sm font-bold text-gray-900">
-                      {previewManualSubject || '— Sem Assunto —'}
+                      {previewManualSubject || '- Sem Assunto -'}
                     </span>
                   </div>
 

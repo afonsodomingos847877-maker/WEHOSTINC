@@ -20,7 +20,7 @@ export const metadata: Metadata = {
         width: 1200,
         height: 630,
         type: 'image/png',
-        alt: 'WEHOSTHERE — Registo de Domínio .co.mz Nacional de Moçambique',
+        alt: 'WEHOSTHERE - Registo de Domínio .co.mz Nacional de Moçambique',
       },
     ],
   },

@@ -901,7 +901,7 @@ function WebmailContent() {
   const [voiceError, setVoiceError] = useState('');
   const speechRecognitionRef = useRef<any>(null);
 
-  // 24. Text-to-Speech (Ouvir E-mail em Áudio — Recebidos, Rascunhos e Respostas)
+  // 24. Text-to-Speech (Ouvir E-mail em Áudio - Recebidos, Rascunhos e Respostas)
   const [isSpeakingEmail, setIsSpeakingEmail] = useState(false);
   const [isPausedSpeech, setIsPausedSpeech] = useState(false);
   const [speakingSource, setSpeakingSource] = useState<'email' | 'compose' | 'quick_reply' | null>(null);
@@ -1724,7 +1724,7 @@ function WebmailContent() {
     setShowWebmailLogin(true);
   };
 
-  // Helper to open compose — asks for login first if not authenticated
+  // Helper to open compose - asks for login first if not authenticated
   const handleOpenCompose = () => {
     if (!mailboxPassword) {
       openLoginModal();
@@ -2180,10 +2180,10 @@ function WebmailContent() {
 
     try {
       if (isAlreadyInTrash) {
-        // Etapa 2: Eliminação permanente — a mensagem já está na Lixeira
+        // Etapa 2: Eliminação permanente - a mensagem já está na Lixeira
         await webmailManager.deletePermanently(msgId, selectedAccountEmail, mailboxPassword, msg.uid, imapFolder);
       } else {
-        // Etapa 1: Mover para a Lixeira — a mensagem pode ser recuperada
+        // Etapa 1: Mover para a Lixeira - a mensagem pode ser recuperada
         await webmailManager.moveFolder(msgId, 'trash', selectedAccountEmail, mailboxPassword, msg.uid, imapFolder);
       }
     } catch (err) {
@@ -2943,7 +2943,7 @@ function WebmailContent() {
   // Auto-inject signature into compose body when compose opens and signature is ready
   useEffect(() => {
     if (!showCompose) return;
-    // Only inject if compose body is blank (new email) — not reply/forward
+    // Only inject if compose body is blank (new email) - not reply/forward
     const isBlankBody = !composeBody || composeBody === '<p><br></p>' || composeBody === '';
     if (!isBlankBody) return;
     const sig = getSignatureHtml();
@@ -2956,7 +2956,7 @@ function WebmailContent() {
   // AI Assistant Handlers
   const cleanAiText = (raw: string) =>
     decodeHtmlEntities(raw)
-      .replace(/&mdash;/gi, '—')
+      .replace(/&mdash;/gi, '-')
       .replace(/&ndash;/gi, '–')
       .replace(/\*\*([^*]+)\*\*/g, '$1')
       .replace(/\*\*+/g, '')
@@ -3053,7 +3053,7 @@ function WebmailContent() {
     }
   };
 
-  // 23. Voice to Email — Captura de Voz em Tempo Real + Transformação em E-mail Corporativo Profissional
+  // 23. Voice to Email - Captura de Voz em Tempo Real + Transformação em E-mail Corporativo Profissional
   const stopVoiceRecording = () => {
     if (speechRecognitionRef.current) {
       try {
@@ -3937,7 +3937,7 @@ function WebmailContent() {
           <div className="flex items-center space-x-2.5">
             <WifiOff className="h-4 w-4 text-white animate-bounce shrink-0" />
             <span>
-              Sem Conexão à Internet. O Webmail está a funcionar em modo offline — novas mensagens serão sincronizadas assim que a rede for restabelecida.
+              Sem Conexão à Internet. O Webmail está a funcionar em modo offline - novas mensagens serão sincronizadas assim que a rede for restabelecida.
             </span>
           </div>
           <span className="bg-rose-800/90 text-rose-100 text-[10px] px-2.5 py-0.5 rounded-full font-black uppercase shrink-0">
@@ -3978,7 +3978,7 @@ function WebmailContent() {
               <Clock className="h-4 w-4 text-amber-700 animate-pulse" />
             </div>
             <div>
-              <p className="text-xs font-extrabold text-amber-950">Conta em Processo de Aprovação — Envio de E-mails Bloqueado</p>
+              <p className="text-xs font-extrabold text-amber-950">Conta em Processo de Aprovação - Envio de E-mails Bloqueado</p>
               <p className="text-[11px] text-amber-800 mt-0.5 leading-relaxed">
                 A conta <strong className="font-mono">{selectedAccountEmail}</strong> está a aguardar aprovação do administrador.
                 Pode visualizar a caixa de entrada, mas <strong>não é possível enviar e-mails</strong> até a conta ser ativada.
@@ -5091,7 +5091,7 @@ function WebmailContent() {
                             <p className="text-xs text-neutral-300 truncate max-w-xs sm:max-w-md mt-0.5">
                               <span className="text-neutral-400">Mais recente: </span>
                               <strong className="text-white font-medium">{floatingBriefing.latestSender}</strong>
-                              {floatingBriefing.latestSubject ? ` — ${floatingBriefing.latestSubject}` : ''}
+                              {floatingBriefing.latestSubject ? ` - ${floatingBriefing.latestSubject}` : ''}
                             </p>
                           ) : !hasPendingItems ? (
                             <p className="text-xs text-emerald-400/90 mt-0.5">Caixa de entrada 100% em dia!</p>
@@ -5635,7 +5635,7 @@ function WebmailContent() {
                           </span>
                         </div>
                         <p className="text-[11px] text-neutral-300 truncate">
-                          {selectedMessage.subject || '(Sem assunto)'} — {selectedMessage.fromName || selectedMessage.fromEmail}
+                          {selectedMessage.subject || '(Sem assunto)'} - {selectedMessage.fromName || selectedMessage.fromEmail}
                         </p>
                       </div>
                     </div>
@@ -5963,7 +5963,7 @@ function WebmailContent() {
                       <div className="flex items-center gap-2">
                         <span className={`w-2.5 h-2.5 rounded-full ${isRecordingVoice ? 'bg-rose-500 animate-ping' : 'bg-emerald-400'}`} />
                         <span className="text-[11px] font-extrabold uppercase tracking-wider text-emerald-400">
-                          {isRecordingVoice ? 'A ouvir a sua voz em tempo real...' : 'Voz captada — Pronta para transformar'}
+                          {isRecordingVoice ? 'A ouvir a sua voz em tempo real...' : 'Voz captada - Pronta para transformar'}
                         </span>
                       </div>
                       <button
@@ -6462,7 +6462,7 @@ function WebmailContent() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     <div>
                       <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-700 mb-0.5">
-                        CC (Cópia) <span className="normal-case font-medium text-gray-400">— vários e-mails</span>
+                        CC (Cópia) <span className="normal-case font-medium text-gray-400">- vários e-mails</span>
                       </label>
                       <RecipientInput
                         value={composeCc}
@@ -6475,7 +6475,7 @@ function WebmailContent() {
 
                     <div>
                       <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-700 mb-0.5">
-                        BCC (Cópia Oculta) <span className="normal-case font-medium text-gray-400">— vários e-mails</span>
+                        BCC (Cópia Oculta) <span className="normal-case font-medium text-gray-400">- vários e-mails</span>
                       </label>
                       <RecipientInput
                         value={composeBcc}

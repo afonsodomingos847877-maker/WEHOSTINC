@@ -69,16 +69,16 @@ Tinha 23 anos, um portátil velho e uma ideia que não saia da cabeça. Não tin
 
 ## A Ideia
 
-Comecei por identificar um problema real: pequenas empresas em Moçambique não tinham uma forma simples de gerir as suas facturas digitalmente. A solução parecia óbvia — uma aplicação web simples, rápida, bonita e em português.
+Comecei por identificar um problema real: pequenas empresas em Moçambique não tinham uma forma simples de gerir as suas facturas digitalmente. A solução parecia óbvia - uma aplicação web simples, rápida, bonita e em português.
 
 ## A Stack Escolhida
 
 Escolhi tecnologias modernas e eficientes:
 
-* **Next.js** — para o frontend e rotas de API com alta performance
-* **MongoDB** — base de dados flexível e gratuita no Atlas
-* **Tailwind CSS** — estilização ultra rápida e consistente
-* **Vercel** — deploy contínuo, escalável e instantâneo
+* **Next.js** - para o frontend e rotas de API com alta performance
+* **MongoDB** - base de dados flexível e gratuita no Atlas
+* **Tailwind CSS** - estilização ultra rápida e consistente
+* **Vercel** - deploy contínuo, escalável e instantâneo
 
 ## Os Primeiros 10 Dias
 
@@ -94,7 +94,7 @@ No dia 18, partilhei o produto num grupo de WhatsApp de empreendedores e criador
 
 * Lança cedo, mesmo que sintas que ainda faltam detalhes
 * O feedback dos primeiros clientes vale mais que 100 horas a desenhar no Figma
-* A tecnologia é apenas 20% do trabalho — os outros 80% são distribuição, produto e atendimento
+* A tecnologia é apenas 20% do trabalho - os outros 80% são distribuição, produto e atendimento
 
 ## O Resultado
 
@@ -137,7 +137,7 @@ No dia 18, partilhei o produto num grupo de WhatsApp de empreendedores e criador
 
 Quando começas um novo projecto, uma das primeiras decisões de arquitectura é: vamos usar REST clássico ou adoptar GraphQL? É uma decisão que impacta tanto o backend quanto o consumo no cliente móvel ou web.
 
-> "A melhor tecnologia não é a mais moderna — é a que resolve o teu problema com menor atrito."
+> "A melhor tecnologia não é a mais moderna - é a que resolve o teu problema com menor atrito."
 
 ## REST: O Clássico Que Funciona
 

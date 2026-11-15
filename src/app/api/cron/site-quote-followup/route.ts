@@ -81,7 +81,7 @@ export async function GET(req: Request) {
                 </div>
               </div>
               <div style="background:#f8fafc;padding:16px 28px;text-align:center;font-size:11px;color:#94a3b8;border-top:1px solid #e2e8f0;">
-                WEHOSTHERE — Follow-up automático de leads de criação de sites
+                WEHOSTHERE - Follow-up automático de leads de criação de sites
               </div>
             </div>
           `

@@ -627,7 +627,7 @@ export default function AdminAiTopBar({ isGlobalRoot = false }: AdminAiTopBarPro
         {/* Linha Fina Brilhante no Topo */}
         <div className="absolute top-0 inset-x-4 h-[1px] bg-gradient-to-r from-transparent via-sky-200 via-cyan-200 to-transparent opacity-90 rounded-full" />
 
-        {/* Estrutura da Cápsula — Muda para Branco ao Clicar / Focar */}
+        {/* Estrutura da Cápsula - Muda para Branco ao Clicar / Focar */}
         <div 
           onClick={() => {
             setIsFocused(true);

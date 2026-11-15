@@ -185,7 +185,7 @@ function VerifyCertificateContent() {
                     <Award className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
                     <div>
                       <span className="text-xs text-gray-500 uppercase font-semibold block">Entidade Emissora:</span>
-                      <strong className="text-sm text-gray-900">WEHOSTHERE — Tecnologia & Hospedagem Profissional</strong>
+                      <strong className="text-sm text-gray-900">WEHOSTHERE - Tecnologia & Hospedagem Profissional</strong>
                     </div>
                   </div>
                 </div>

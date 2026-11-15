@@ -2,13 +2,13 @@ import type { Metadata } from 'next';
 import { SITE_URL } from '@/lib/siteConfig';
 
 export const metadata: Metadata = {
-  title: 'WEHOSTHERE — Hospedagem de Sites & Domínios em Moçambique',
+  title: 'WEHOSTHERE - Hospedagem de Sites & Domínios em Moçambique',
   description: 'Hospedagem rápida e segura, email corporativo e registo de domínios em Moçambique. Crie a sua presença online com a WEHOSTHERE.',
   openGraph: {
     type: 'website',
     locale: 'pt_MZ',
     url: SITE_URL,
-    title: 'WEHOSTHERE — Hospedagem de Sites & Domínios em Moçambique',
+    title: 'WEHOSTHERE - Hospedagem de Sites & Domínios em Moçambique',
     description: 'Hospedagem rápida e segura, email corporativo e registo de domínios em Moçambique.',
     images: [
       {
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'WEHOSTHERE — Hospedagem de Sites & Domínios em Moçambique',
+    title: 'WEHOSTHERE - Hospedagem de Sites & Domínios em Moçambique',
     description: 'Hospedagem rápida e segura, email corporativo e registo de domínios em Moçambique.',
     images: [`${SITE_URL}/servidores-banner.png`],
   },

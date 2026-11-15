@@ -250,7 +250,7 @@ function TypedExcerpt({
   );
 }
 
-/** Render content — suporta markdown básico + pull quotes */
+/** Render content - suporta markdown básico + pull quotes */
 function renderContent(content: string) {
   const lines = content.split('\n');
   const elements: React.ReactNode[] = [];
@@ -2487,7 +2487,7 @@ export default function RevistaStoryClient({ initialStory }: { initialStory?: St
             storyAuthorEmail={story.author?.email}
           />
 
-          {/* AdSense — Fim do Artigo */}
+          {/* AdSense - Fim do Artigo */}
           <div className="story-bottom-ad my-8 p-4 rounded-2xl bg-slate-50/80 border border-dashed border-slate-200/80 text-center">
             <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400 block mb-2 select-none">
               Publicidade

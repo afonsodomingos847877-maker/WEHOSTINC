@@ -485,7 +485,7 @@ ${getWehosthereKnowledgeContext()}`;
           userPrompt = `Resuma o seguinte e-mail em 3 tópicos curtos e diretos iniciados por "• ", sem usar asteriscos (**), e termine com "💡 Ação recomendada: ...":\n\nAssunto: ${subject}\n${cleanText}`;
         } else if (action === 'reply') {
           const altNote = Number(variation) > 0
-            ? `\n\nIMPORTANTE: Esta é a versão alternativa #${Number(variation) + 1} — use outra abordagem, saudação e organização de frases diferente da anterior.`
+            ? `\n\nIMPORTANTE: Esta é a versão alternativa #${Number(variation) + 1} - use outra abordagem, saudação e organização de frases diferente da anterior.`
             : '';
           userPrompt = `Responda ao e-mail abaixo em nome da WEHOSTHERE com tom ${tone} (sem usar **), respondendo diretamente a todas as perguntas com base nos dados oficiais:\n\n${getWehosthereKnowledgeContext()}${altNote}\n\nAssunto: ${subject}\nDe: ${fromName || from}\nMensagem:\n${cleanText}`;
         } else if (action === 'improve') {

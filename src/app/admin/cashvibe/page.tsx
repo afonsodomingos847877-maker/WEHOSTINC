@@ -376,7 +376,7 @@ export default function CashvibeAdminPage() {
     const origin = typeof window !== 'undefined' ? window.location.origin : 'https://wehosthere.com';
     const pdfUrl = `${origin}/api/admin/cashvibe/payments/${receipt.receiptNumber}/pdf`;
     
-    const msg = `🧾 *Recibo Oficial de Pagamento — Cashvibe*\n\n` +
+    const msg = `🧾 *Recibo Oficial de Pagamento - Cashvibe*\n\n` +
       `Olá *${receipt.clientName}*, confirmamos a recepção do seu pagamento com sucesso!\n\n` +
       `• *Valor Amortizado:* ${Number(receipt.amount).toLocaleString('pt-MZ')} MT\n` +
       `• *Empréstimo:* ${receipt.loanId}\n` +
@@ -396,7 +396,7 @@ export default function CashvibeAdminPage() {
     const origin = typeof window !== 'undefined' ? window.location.origin : 'https://wehosthere.com';
     const pdfUrl = `${origin}/api/admin/cashvibe/loans/${loan.id}/pdf`;
     
-    const msg = `📄 *Contrato de Mútuo Oficial — Cashvibe Microcrédito*\n\n` +
+    const msg = `📄 *Contrato de Mútuo Oficial - Cashvibe Microcrédito*\n\n` +
       `Olá *${loan.clientName}*, o seu microcrédito foi concedido e ativado com sucesso!\n\n` +
       `• *Capital Concedido:* ${loan.principalAmount.toLocaleString('pt-MZ')} MT\n` +
       `• *Total a Reembolsar:* ${loan.totalAmount.toLocaleString('pt-MZ')} MT\n` +
@@ -424,19 +424,19 @@ export default function CashvibeAdminPage() {
     let msg = '';
     switch (templateType) {
       case 'preventive':
-        msg = `🔔 *Lembrete Preventivo — Cashvibe*\n\nOlá ${clientName}, tudo bem? Lembramos cordialmente que a sua parcela no valor de *${amount.toLocaleString('pt-MZ')} MT* vence em 2 dias (*${dueDate}*).\n\nPode efetuar o pagamento via M-Pesa para a nossa conta oficial. Agradecemos a pontualidade! ✨`;
+        msg = `🔔 *Lembrete Preventivo - Cashvibe*\n\nOlá ${clientName}, tudo bem? Lembramos cordialmente que a sua parcela no valor de *${amount.toLocaleString('pt-MZ')} MT* vence em 2 dias (*${dueDate}*).\n\nPode efetuar o pagamento via M-Pesa para a nossa conta oficial. Agradecemos a pontualidade! ✨`;
         break;
       case 'due_today':
-        msg = `⏰ *Vencimento Hoje — Cashvibe*\n\nBom dia ${clientName}! Lembramos que a sua parcela de *${amount.toLocaleString('pt-MZ')} MT* vence hoje (*${dueDate}*).\n\nPor favor, envie o comprovativo M-Pesa assim que efetuar o pagamento para emissão do seu recibo oficial. Obrigado!`;
+        msg = `⏰ *Vencimento Hoje - Cashvibe*\n\nBom dia ${clientName}! Lembramos que a sua parcela de *${amount.toLocaleString('pt-MZ')} MT* vence hoje (*${dueDate}*).\n\nPor favor, envie o comprovativo M-Pesa assim que efetuar o pagamento para emissão do seu recibo oficial. Obrigado!`;
         break;
       case 'overdue_mild':
-        msg = `⚠️ *Aviso de Vencimento — Cashvibe*\n\nOlá ${clientName}, registamos que a sua parcela no valor de *${amount.toLocaleString('pt-MZ')} MT* venceu em *${dueDate}* (${days || 1} dias em aberto).\n\nSolicitamos a regularização hoje via M-Pesa para evitar taxas adicionais de mora. Contamos com a sua colaboração!`;
+        msg = `⚠️ *Aviso de Vencimento - Cashvibe*\n\nOlá ${clientName}, registamos que a sua parcela no valor de *${amount.toLocaleString('pt-MZ')} MT* venceu em *${dueDate}* (${days || 1} dias em aberto).\n\nSolicitamos a regularização hoje via M-Pesa para evitar taxas adicionais de mora. Contamos com a sua colaboração!`;
         break;
       case 'overdue_severe':
-        msg = `🚨 *Aviso Formal de Cobrança — Cashvibe*\n\nPrezado(a) ${clientName}, o seu microcrédito encontra-se em atraso há *${days} dias* (Total atualizado com mora: *${amount.toLocaleString('pt-MZ')} MT*).\n\nSolicitamos a regularização imediata ou contacto urgente com a gerência para evitar a execução da garantia/penhor e medidas legais cabíveis. Aguardamos o seu retorno.`;
+        msg = `🚨 *Aviso Formal de Cobrança - Cashvibe*\n\nPrezado(a) ${clientName}, o seu microcrédito encontra-se em atraso há *${days} dias* (Total atualizado com mora: *${amount.toLocaleString('pt-MZ')} MT*).\n\nSolicitamos a regularização imediata ou contacto urgente com a gerência para evitar a execução da garantia/penhor e medidas legais cabíveis. Aguardamos o seu retorno.`;
         break;
       case 'rollover':
-        msg = `🤝 *Renovação de Crédito — Cashvibe*\n\nOlá ${clientName}, se não for possível liquidar o capital integral na data de vencimento, informamos que pode optar pela *Renovação de Prazo por mais 30 dias* mediante o pagamento exclusivo da taxa de juro acordada (300 MT).\n\nResponda a esta mensagem caso pretenda solicitar a prorrogação imediata.`;
+        msg = `🤝 *Renovação de Crédito - Cashvibe*\n\nOlá ${clientName}, se não for possível liquidar o capital integral na data de vencimento, informamos que pode optar pela *Renovação de Prazo por mais 30 dias* mediante o pagamento exclusivo da taxa de juro acordada (300 MT).\n\nResponda a esta mensagem caso pretenda solicitar a prorrogação imediata.`;
         break;
     }
 
@@ -2298,7 +2298,7 @@ export default function CashvibeAdminPage() {
                   <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-300 text-rose-900 text-xs space-y-2">
                     <div className="flex items-center gap-2 font-bold text-rose-800">
                       <AlertTriangle className="w-4 h-4 text-rose-600 flex-shrink-0" />
-                      <span>Alerta de Risco — Score {scoreInfo.score} pts (Nota {scoreInfo.rating} • Risco {scoreInfo.riskLevel})</span>
+                      <span>Alerta de Risco - Score {scoreInfo.score} pts (Nota {scoreInfo.rating} • Risco {scoreInfo.riskLevel})</span>
                     </div>
                     <p className="text-[11px] leading-relaxed text-rose-700">
                       {selectedClient.status === 'blacklisted'

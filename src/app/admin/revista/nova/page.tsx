@@ -481,7 +481,7 @@ export default function NovaHistoriaPage() {
                         <p style={{ fontSize: '0.85rem', color: '#475569', fontWeight: 600 }}>
                           Clica para fazer upload da imagem de capa
                         </p>
-                        <p style={{ fontSize: '0.75rem', color: '#94a3b8' }}>PNG, JPG, WEBP — Recomendado 1200×800px</p>
+                        <p style={{ fontSize: '0.75rem', color: '#94a3b8' }}>PNG, JPG, WEBP - Recomendado 1200×800px</p>
                       </>
                     )}
                   </label>

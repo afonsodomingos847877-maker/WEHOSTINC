@@ -36,7 +36,7 @@ const PROMO_CAMPAIGNS: PromoCampaign[] = [
     badge: 'Teste Grátis',
     badgeClass: 'bg-blue-100 text-blue-800',
     description:
-      'Experimente o nosso Webmail Corporativo grátis agora mesmo — sem precisar criar conta.',
+      'Experimente o nosso Webmail Corporativo grátis agora mesmo - sem precisar criar conta.',
     ctaLabel: 'Testar Webmail',
     href: '/webmail',
   },

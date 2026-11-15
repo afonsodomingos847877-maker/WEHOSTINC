@@ -65,20 +65,20 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
         const authorName = updatedStory?.author?.name || body.author?.name || 'Codando Histórias';
         const storyUrl = `${SITE_URL}/revista/${storySlug}`;
 
-        // Fire-and-forget — não bloqueia a resposta (Push)
+        // Fire-and-forget - não bloqueia a resposta (Push)
         fetch(`${SITE_URL}/api/push/broadcast`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             title: `📖 Nova história: ${storyTitle}`,
-            message: `${authorName} publicou uma nova história — ${storyExcerpt.slice(0, 100)}${storyExcerpt.length > 100 ? '…' : ''}`,
+            message: `${authorName} publicou uma nova história - ${storyExcerpt.slice(0, 100)}${storyExcerpt.length > 100 ? '…' : ''}`,
             url: storyUrl,
             icon: '/mascote-transparent.png',
             tag: `revista-story-${params.id}`,
           }),
         }).catch((e) => console.error('[Revista] Erro ao enviar push broadcast:', e));
 
-        // Fire-and-forget — Email broadcast para utilizadores + subscritores newsletter
+        // Fire-and-forget - Email broadcast para utilizadores + subscritores newsletter
         fetch(`${SITE_URL}/api/revista/broadcast-story`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -95,7 +95,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
         })
           .then(async (res) => {
             const data = await res.json().catch(() => ({}));
-            console.log(`[Revista] Email broadcast concluído — enviados: ${data.sent ?? '?'}, falhados: ${data.failed ?? '?'}`);
+            console.log(`[Revista] Email broadcast concluído - enviados: ${data.sent ?? '?'}, falhados: ${data.failed ?? '?'}`);
           })
           .catch((e) => console.error('[Revista] Erro ao iniciar email broadcast:', e));
 

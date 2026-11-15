@@ -18,7 +18,7 @@ export const metadata: Metadata = {
         width: 1200,
         height: 630,
         type: 'image/png',
-        alt: 'WEHOSTHERE Academy — Verificação de Certificados',
+        alt: 'WEHOSTHERE Academy - Verificação de Certificados',
       },
     ],
   },

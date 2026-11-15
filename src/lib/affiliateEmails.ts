@@ -47,7 +47,7 @@ export async function sendAffiliateNewLeadEmail(
           </div>
 
           <p style="color:#94a3b8;font-size:12px;margin:24px 0 0;text-align:center;">
-            WEHOSTHERE — Programa de Parcerias &amp; Afiliados | info@wehosthere.com
+            WEHOSTHERE - Programa de Parcerias &amp; Afiliados | info@wehosthere.com
           </p>
         </div>
       </div>`,
@@ -97,7 +97,7 @@ export async function sendAffiliateFirstClickEmail(
           </div>
 
           <p style="color:#94a3b8;font-size:12px;margin:24px 0 0;text-align:center;">
-            Equipa WEHOSTHERE — Programa de Afiliados
+            Equipa WEHOSTHERE - Programa de Afiliados
           </p>
         </div>
       </div>`,
@@ -151,7 +151,7 @@ export async function sendAffiliateCommissionEmail(
           </div>
 
           <p style="color:#94a3b8;font-size:12px;margin:24px 0 0;text-align:center;">
-            WEHOSTHERE — info@wehosthere.com | +258 84 833 5618
+            WEHOSTHERE - info@wehosthere.com | +258 84 833 5618
           </p>
         </div>
       </div>`,
@@ -196,7 +196,7 @@ export async function sendAffiliateMilestoneEmail(
           </div>
 
           <p style="color:#94a3b8;font-size:12px;margin:24px 0 0;text-align:center;">
-            Equipa WEHOSTHERE — Programa de Afiliados
+            Equipa WEHOSTHERE - Programa de Afiliados
           </p>
         </div>
       </div>`,
@@ -249,7 +249,7 @@ export async function sendAffiliatePayoutProcessedEmail(
           </div>
 
           <p style="color:#94a3b8;font-size:12px;margin:24px 0 0;text-align:center;">
-            WEHOSTHERE — info@wehosthere.com
+            WEHOSTHERE - info@wehosthere.com
           </p>
         </div>
       </div>`,

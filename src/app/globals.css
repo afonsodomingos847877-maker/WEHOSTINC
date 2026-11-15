@@ -21,7 +21,7 @@ html {
   scroll-padding-top: 5rem;
 }
 
-/* ─── Google Translate Overrides — Removido por performance ───────────────── */
+/* ─── Google Translate Overrides - Removido por performance ───────────────── */
 /* O Google Translate foi removido do sistema por causar lentidão excessiva */
 /* Agora usamos apenas tradução local via dicionário */
 body {
@@ -38,7 +38,7 @@ body {
 
 /* ─── Animações de Scroll (IntersectionObserver) ─────────────────────── */
 
-/* Estado inicial — elementos invisíveis */
+/* Estado inicial - elementos invisíveis */
 .anim-fade-up {
   opacity: 0;
   transform: translateY(40px);
@@ -76,7 +76,7 @@ body {
               letter-spacing 0.8s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* Estado visível — após entrar na viewport */
+/* Estado visível - após entrar na viewport */
 .is-visible.anim-fade-up,
 .is-visible.anim-fade-down,
 .is-visible.anim-fade-left,

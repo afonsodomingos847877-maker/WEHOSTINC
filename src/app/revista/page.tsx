@@ -1845,7 +1845,7 @@ export default function RevistaPage() {
                 </div>
                 <div className="sidebar-pdf-info">
                   <span className="sidebar-pdf-tag">Edição Digital</span>
-                  <h4 className="sidebar-pdf-title">Última edição da revista — Edição 01</h4>
+                  <h4 className="sidebar-pdf-title">Última edição da revista - Edição 01</h4>
                   <span className="sidebar-pdf-desc">Descarregue gratuitamente o PDF completo para ler offline.</span>
                 </div>
               </div>

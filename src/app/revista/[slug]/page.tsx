@@ -59,7 +59,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   } catch (e) {
     return {
-      title: 'Codando Histórias — Revista Digital WEHOSTHERE',
+      title: 'Codando Histórias - Revista Digital WEHOSTHERE',
     };
   }
 }
@@ -91,7 +91,7 @@ export default async function RevistaStoryPage({ params }: Props) {
     publisher: {
       '@type': 'Organization',
       '@id': 'https://www.wehosthere.com/#organization',
-      name: 'WEHOSTHERE — Codando Histórias',
+      name: 'WEHOSTHERE - Codando Histórias',
       logo: {
         '@type': 'ImageObject',
         url: 'https://www.wehosthere.com/logo.png',
@@ -109,7 +109,7 @@ export default async function RevistaStoryPage({ params }: Props) {
     },
   };
 
-  // GEO: BreadcrumbList — hierarquia de conteúdo para LLMs e Google
+  // GEO: BreadcrumbList - hierarquia de conteúdo para LLMs e Google
   const breadcrumbLd = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',

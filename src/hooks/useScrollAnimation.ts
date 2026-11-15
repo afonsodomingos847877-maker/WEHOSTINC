@@ -38,7 +38,7 @@ export function useScrollAnimation<T extends HTMLElement>(
     return () => observer.disconnect();
   }, [threshold, resetOnLeave]);
 
-  // Callback ref — compatível com React sem problema de null
+  // Callback ref - compatível com React sem problema de null
   const setRef = (node: T | null) => {
     elRef.current = node;
   };

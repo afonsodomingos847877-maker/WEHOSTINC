@@ -10,7 +10,7 @@ import { hasValidInternalAuth, requireAdmin, timingSafeCompare } from '@/lib/ser
 function verifyKivoraSignature(rawBody: string, req: Request): { valid: boolean; reason?: string } {
   const secret = process.env.KIVORA_WEBHOOK_SECRET?.trim();
   if (!secret) {
-    console.error('[KIVORA WEBHOOK] KIVORA_WEBHOOK_SECRET não configurado — rejeitando webhook (fail-closed).');
+    console.error('[KIVORA WEBHOOK] KIVORA_WEBHOOK_SECRET não configurado - rejeitando webhook (fail-closed).');
     return { valid: false, reason: 'Segredo de webhook não configurado no servidor' };
   }
 

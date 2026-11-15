@@ -67,7 +67,7 @@ export async function GET(req: Request) {
 
     await sendEmail({
       to: adminEmail,
-      subject: `📊 Relatório Semanal WEHOSTHERE — ${weekLabel}`,
+      subject: `📊 Relatório Semanal WEHOSTHERE - ${weekLabel}`,
       html: `
         <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:680px;margin:0 auto;color:#111;background:#fff;border-radius:16px;overflow:hidden;border:1px solid #e2e8f0;">
           <!-- Header -->
@@ -148,7 +148,7 @@ export async function GET(req: Request) {
           </div>
 
           <div style="background:#f8fafc;padding:16px 28px;text-align:center;font-size:11px;color:#94a3b8;border-top:1px solid #e2e8f0;">
-            WEHOSTHERE — Relatório automático gerado toda segunda-feira às 8h
+            WEHOSTHERE - Relatório automático gerado toda segunda-feira às 8h
           </div>
         </div>
       `

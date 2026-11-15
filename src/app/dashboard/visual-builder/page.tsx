@@ -1,6 +1,6 @@
 'use client';
 // ============================================================================
-// 🎨 WEHOSTHERE VISUAL BUILDER v2 — EDITOR VISUAL PRINCIPAL (Elementor-like)
+// 🎨 WEHOSTHERE VISUAL BUILDER v2 - EDITOR VISUAL PRINCIPAL (Elementor-like)
 // Editor completo com 3 painéis: LeftSidebar | VisualCanvas | RightSidebar
 // ============================================================================
 
@@ -133,7 +133,7 @@ export default function VisualBuilderPage() {
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
   const aiInputRef = useRef<HTMLTextAreaElement>(null);
-  // IA Cirúrgica — componente alvo
+  // IA Cirúrgica - componente alvo
   const [surgicalTargetId, setSurgicalTargetId] = useState<string | null>(null);
 
   // Modais de Edição Interativa
@@ -585,7 +585,7 @@ export default function VisualBuilderPage() {
           onOpenAiForComponent={handleOpenAiForComponent}
         />
 
-        {/* Barra Lateral Direita — Inspector */}
+        {/* Barra Lateral Direita - Inspector */}
         <RightSidebar
           siteDocument={siteDocument}
           selectedComponentId={selectedComponentId}
@@ -639,7 +639,7 @@ export default function VisualBuilderPage() {
                 </div>
                 <div>
                   <p className="text-[13px] font-bold text-slate-200">
-                    {surgicalTargetId ? '✦ Edição Cirúrgica — IA' : 'IA Assistente de Edição'}
+                    {surgicalTargetId ? '✦ Edição Cirúrgica - IA' : 'IA Assistente de Edição'}
                   </p>
                   <p className="text-[10px] text-slate-500">
                     {surgicalTargetId

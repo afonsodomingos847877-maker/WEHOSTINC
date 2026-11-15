@@ -375,7 +375,7 @@ function CheckoutContent() {
     // Rastrear InitiateCheckout quando o usuário entra na página de checkout
     if (selectedPlan) {
       const isWebsite = selectedPlan.id === 'website_creation';
-      const siteLabel = isWebsite && siteTypeName ? ` — ${siteTypeName}` : '';
+      const siteLabel = isWebsite && siteTypeName ? ` - ${siteTypeName}` : '';
       const cycleLabel = isWebsite ? '' : ` (${durationMonths} ${durationMonths === 1 ? 'Mês' : 'Meses'})`;
       const serviceName = selectedPlan
         ? (domainParam 
@@ -540,7 +540,7 @@ function CheckoutContent() {
             analytics.trackPaymentCompleted(paymentMethod, grandTotal, currentReference || '');
             analytics.trackConversion(serviceType, grandTotal);
 
-            // 📊 Evento GTM — compra concluída (ecommerce)
+            // 📊 Evento GTM - compra concluída (ecommerce)
             if (typeof window !== 'undefined' && Array.isArray((window as any).dataLayer)) {
               (window as any).dataLayer.push({
                 event: 'purchase',
@@ -618,7 +618,7 @@ function CheckoutContent() {
         }
       };
       
-      // Iniciar polling — primeira verificação imediata, depois de 5s em diante
+      // Iniciar polling - primeira verificação imediata, depois de 5s em diante
       pollWithRetry().then(() => {
         // Só inicia o intervalo se o primeiro poll não resolveu o pagamento
         if (!stopped) {
@@ -656,7 +656,7 @@ function CheckoutContent() {
       : (phonePayment || whatsapp);
     
     const isWebsite = selectedPlan?.id === 'website_creation';
-    const siteLabel = isWebsite && siteTypeName ? ` — ${siteTypeName}` : '';
+    const siteLabel = isWebsite && siteTypeName ? ` - ${siteTypeName}` : '';
     const cycleLabel = isWebsite ? '' : ` (${durationMonths} ${durationMonths === 1 ? 'Mês' : 'Meses'})`;
     const retryServiceName = isCoursePayment
       ? `Curso: ${courseNameParam || 'Curso WEHOSTHERE'}`
@@ -803,7 +803,7 @@ function CheckoutContent() {
       setCheckoutAccountStatus(accountStatus);
 
       const isWebsite = selectedPlan?.id === 'website_creation';
-      const siteLabel = isWebsite && siteTypeName ? ` — ${siteTypeName}` : '';
+      const siteLabel = isWebsite && siteTypeName ? ` - ${siteTypeName}` : '';
       const cycleLabel = isWebsite ? '' : ` (${durationMonths} ${durationMonths === 1 ? 'Mês' : 'Meses'})`;
       const courseInstallmentSuffix = installmentNumberParam === 2
         ? ' (2ª Parcela Final)'
@@ -1254,7 +1254,7 @@ function CheckoutContent() {
         
         // Calcular serviceName para metadados
         const isWebsite = selectedPlan?.id === 'website_creation';
-        const siteLabel = isWebsite && siteTypeName ? ` — ${siteTypeName}` : '';
+        const siteLabel = isWebsite && siteTypeName ? ` - ${siteTypeName}` : '';
         const cycleLabel = isWebsite ? '' : ` (${durationMonths} ${durationMonths === 1 ? 'Mês' : 'Meses'})`;
         const serviceName = isCoursePayment
           ? `Curso: ${courseNameParam || 'Curso WEHOSTHERE'}`
@@ -1858,7 +1858,7 @@ function CheckoutContent() {
         </div>
       </header>
 
-      {/* Main Container — fills remaining height, no page scroll */}
+      {/* Main Container - fills remaining height, no page scroll */}
       <main className="max-w-2xl mx-auto px-4 pt-3 pb-4 flex flex-col" style={{height: 'calc(100dvh - 56px)', overflow: 'hidden'}}>
         <div className="mb-2 flex items-center justify-between">
           {checkoutStep === 2 ? (
@@ -2050,7 +2050,7 @@ function CheckoutContent() {
                     )}
                   </div>
 
-                  {/* Número de WhatsApp — apenas em checkouts normais */}
+                  {/* Número de WhatsApp - apenas em checkouts normais */}
                   {!isAffiliateVerification && !isCoursePayment && (
                     <div>
                       <label htmlFor="whatsapp" className={`block text-xs sm:text-sm font-semibold mb-1 flex items-center space-x-1.5 ${fieldErrors.whatsapp ? 'text-red-600' : 'text-gray-800'}`}>

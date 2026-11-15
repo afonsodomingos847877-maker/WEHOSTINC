@@ -1,5 +1,5 @@
 // ============================================================================
-// 🎨 WEHOSTHERE VISUAL BUILDER — MUTADORES & OPERAÇÕES IMUTÁVEIS DE DOCUMENTO
+// 🎨 WEHOSTHERE VISUAL BUILDER - MUTADORES & OPERAÇÕES IMUTÁVEIS DE DOCUMENTO
 // ============================================================================
 
 import { SiteDocument, VisualComponent, PageDocument } from './types';

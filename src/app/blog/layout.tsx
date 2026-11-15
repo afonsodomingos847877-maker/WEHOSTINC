@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: {
-    default: 'Blog — WEHOSTHERE | Dicas de Hospedagem, Domínios e Tecnologia',
+    default: 'Blog - WEHOSTHERE | Dicas de Hospedagem, Domínios e Tecnologia',
     template: '%s | WEHOSTHERE Blog',
   },
   description: 'Artigos, tutoriais e notícias sobre hospedagem de sites, registo de domínios, email corporativo, IA e tecnologia web.',
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     locale: 'pt_MZ',
     url: 'https://www.wehosthere.com/blog',
     siteName: 'WEHOSTHERE',
-    title: 'Blog — WEHOSTHERE | Hospedagem & Tecnologia',
+    title: 'Blog - WEHOSTHERE | Hospedagem & Tecnologia',
     description: 'Artigos e tutoriais sobre hospedagem de sites, domínios e tecnologia web.',
     images: [
       {
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Blog — WEHOSTHERE',
+    title: 'Blog - WEHOSTHERE',
     description: 'Artigos e tutoriais sobre hospedagem e tecnologia web.',
     images: ['https://www.wehosthere.com/servidores-banner.png'],
   },

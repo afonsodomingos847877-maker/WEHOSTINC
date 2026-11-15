@@ -1,5 +1,5 @@
 // ============================================================================
-// 🎨 WEHOSTHERE VISUAL BUILDER — SISTEMA DE TIPOS & SCHEMA DE COMPONENTES
+// 🎨 WEHOSTHERE VISUAL BUILDER - SISTEMA DE TIPOS & SCHEMA DE COMPONENTES
 // ============================================================================
 
 export type ComponentType =

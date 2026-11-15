@@ -121,7 +121,7 @@ export default function ApprovalCelebration({ show, type, name, onDone }: Approv
         onClick={onDone}
       />
 
-      {/* Card Tema Branco — Centralizado na Tela com Animação Rápida */}
+      {/* Card Tema Branco - Centralizado na Tela com Animação Rápida */}
       <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[10002] w-full max-w-sm px-4">
         <div
           className="relative bg-white rounded-2xl p-6 shadow-2xl border border-gray-100 text-slate-900 overflow-hidden"

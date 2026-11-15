@@ -1,5 +1,5 @@
 // ============================================================================
-// 🔄 WEHOSTHERE VISUAL BUILDER — PARSER BIDIRECIONAL (HTML -> JSON Document)
+// 🔄 WEHOSTHERE VISUAL BUILDER - PARSER BIDIRECIONAL (HTML -> JSON Document)
 // ============================================================================
 
 import { 

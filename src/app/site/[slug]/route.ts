@@ -35,7 +35,7 @@ export async function GET(request: NextRequest, { params }: Props) {
 <html lang="pt">
 <head>
   <meta charset="UTF-8">
-  <title>Site Não Encontrado — WEHOSTHERE</title>
+  <title>Site Não Encontrado - WEHOSTHERE</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-950 text-white min-h-screen flex items-center justify-center p-6 text-center font-sans">

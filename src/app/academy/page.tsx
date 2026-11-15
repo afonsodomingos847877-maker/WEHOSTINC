@@ -89,45 +89,47 @@ export default function PublicAcademyPage() {
       <AcademyNavbar />
 
       {/* HERO SECTION */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-primary-950 text-white pt-16 pb-20 sm:pt-24 sm:pb-28">
-        {/* Glow ambient background circles */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-primary-600/20 blur-[130px] rounded-full pointer-events-none"></div>
-        <div className="absolute top-10 right-10 w-[350px] h-[350px] bg-emerald-500/15 blur-[120px] rounded-full pointer-events-none"></div>
+      <section className="relative overflow-hidden bg-white text-slate-900 pt-16 pb-20 sm:pt-24 sm:pb-28 border-b border-slate-200/70">
+        {/* Bannergrad background */}
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat banner-bg-zoom"
+          style={{ backgroundImage: "url('/bannergrad.jpg')" }}
+        />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
           {/* Micro pill */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold mb-6 animate-in fade-in duration-300">
-            <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50/90 border border-emerald-200 text-emerald-700 text-xs font-semibold mb-6 shadow-xs animate-in fade-in duration-300">
+            <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
             <span>Formação Prática para o Mercado Real</span>
           </div>
 
           <TypewriterHeroTitle
             prefix="Aprende a Criar, Escalar e Monetizar na "
             highlight="Era Digital"
-            className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white max-w-4xl mx-auto leading-[1.15]"
-            highlightClassName="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400"
+            className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-slate-900 max-w-4xl mx-auto leading-[1.15]"
+            highlightClassName="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-teal-600 to-primary-600"
           />
 
-          <p className="mt-4 text-sm sm:text-base text-slate-300 max-w-xl mx-auto leading-relaxed">
+          <p className="mt-4 text-sm sm:text-base text-slate-600 max-w-xl mx-auto leading-relaxed">
             Cursos diretos ao ponto com especialistas.
           </p>
 
           {/* Quick Trust Highlights */}
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-xs sm:text-sm text-slate-300">
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-xs sm:text-sm text-slate-700 font-medium">
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
               <span>Acesso Vitalício Imediato</span>
             </div>
             <div className="flex items-center gap-2">
-              <Smartphone className="w-4 h-4 text-emerald-400 shrink-0" />
+              <Smartphone className="w-4 h-4 text-emerald-600 shrink-0" />
               <span>Pagamento M-Pesa & e-Mola</span>
             </div>
             <div className="flex items-center gap-2">
-              <Award className="w-4 h-4 text-emerald-400 shrink-0" />
+              <Award className="w-4 h-4 text-emerald-600 shrink-0" />
               <span>Certificado Oficial com QR Code</span>
             </div>
             <div className="flex items-center gap-2">
-              <Play className="w-4 h-4 text-emerald-400 shrink-0" />
+              <Play className="w-4 h-4 text-emerald-600 shrink-0" />
               <span>1ª Aula Grátis em Todos os Cursos</span>
             </div>
           </div>
@@ -141,7 +143,7 @@ export default function PublicAcademyPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Pesquisar curso ou tecnologia..."
-                className="w-full pl-12 pr-4 py-3.5 bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 transition"
+                className="w-full pl-12 pr-4 py-3.5 bg-white/90 backdrop-blur-md border border-slate-200/90 rounded-2xl text-slate-900 placeholder-slate-400 text-sm shadow-md focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
               />
             </div>
           </div>
@@ -414,7 +416,7 @@ export default function PublicAcademyPage() {
         </div>
       </section>
 
-      {/* CERTIFICATION PREVIEW — Azul Oficial Branding WEHOSTHERE */}
+      {/* CERTIFICATION PREVIEW - Azul Oficial Branding WEHOSTHERE */}
       <section id="certificacao" className="py-16 sm:py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-gradient-to-br from-[#075985] via-[#0369a1] to-[#0c4a6e] text-white rounded-3xl p-8 sm:p-12 border border-sky-400/30 shadow-[0_20px_60px_-15px_rgba(2,132,199,0.35)] flex flex-col lg:flex-row items-center gap-10 relative overflow-hidden">
           {/* Subtle glow effect */}
@@ -526,7 +528,7 @@ export default function PublicAcademyPage() {
         </div>
       </section>
 
-      {/* BOTTOM CTA BANNER — Azul Oficial Branding WEHOSTHERE */}
+      {/* BOTTOM CTA BANNER - Azul Oficial Branding WEHOSTHERE */}
       <section className="bg-gradient-to-r from-[#0284c7] via-[#0369a1] to-[#075985] text-white py-14 px-4 sm:px-6 lg:px-8 text-center mt-auto relative overflow-hidden">
         {/* Subtle decorative glow */}
         <div className="absolute -top-24 -left-24 w-72 h-72 bg-white/10 rounded-full blur-3xl pointer-events-none" />

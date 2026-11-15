@@ -12,7 +12,7 @@ async function tryMongo() {
   catch { return false; }
 }
 
-// GET /api/analytics/presence — lista quem está online agora em tempo real com fotos dos utilizadores registados
+// GET /api/analytics/presence - lista quem está online agora em tempo real com fotos dos utilizadores registados
 export async function GET() {
   const cutoff = new Date(Date.now() - ONLINE_THRESHOLD_MS).toISOString();
 
@@ -147,7 +147,7 @@ export async function GET() {
   });
 }
 
-// POST /api/analytics/presence — actualizar presença de utilizador ou visitante
+// POST /api/analytics/presence - actualizar presença de utilizador ou visitante
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();

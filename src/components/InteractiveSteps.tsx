@@ -245,7 +245,7 @@ export default function InteractiveSteps() {
                   {t('steps.step_badge')} {currentStepObj.step} de 4
                 </span>
                 <h5 className={`text-sm sm:text-base font-bold ${currentStepObj.color.text}`}>
-                  {t(currentStepObj.titleKey)} — {t(currentStepObj.descKey)}
+                  {t(currentStepObj.titleKey)} - {t(currentStepObj.descKey)}
                 </h5>
                 <p className="text-xs sm:text-sm text-gray-600 mt-1 leading-relaxed">
                   {t(currentStepObj.detailKey)}

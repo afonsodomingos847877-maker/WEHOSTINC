@@ -96,7 +96,7 @@ export default function InternalDomainChat({
   const [showAddColleague, setShowAddColleague] = useState<boolean>(false);
   const [customColleagueLocal, setCustomColleagueLocal] = useState<string>('');
 
-  // Visibilidade do pill flutuante — pode ser escondido pelo utilizador
+  // Visibilidade do pill flutuante - pode ser escondido pelo utilizador
   const [isPillVisible, setIsPillVisible] = useState<boolean>(() => {
     if (typeof window === 'undefined') return true;
     try { return localStorage.getItem('wehost_chat_pill_visible') !== 'false'; } catch { return true; }
@@ -521,7 +521,7 @@ export default function InternalDomainChat({
       {/* Botão Flutuante Mini do Chat Interno da Equipa */}
       {!isOpen && isPillVisible && (
         <div className="fixed bottom-5 right-5 z-[9980] flex items-center space-x-1">
-          {/* Mini pill — apenas ícone + badge */}
+          {/* Mini pill - apenas ícone + badge */}
           <button
             type="button"
             onClick={() => onToggleOpen(true)}

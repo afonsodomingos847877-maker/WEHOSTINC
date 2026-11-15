@@ -266,7 +266,7 @@ export default function RegisterPage() {
             </div>
           )}
 
-          {/* ───── PASSO 1 — Identificação ───── */}
+          {/* ───── PASSO 1 - Identificação ───── */}
           {step === 1 && (
             <div className="space-y-3 sm:space-y-4">
               {/* Google Register Button */}
@@ -361,7 +361,7 @@ export default function RegisterPage() {
             </div>
           )}
 
-          {/* ───── PASSO 2 — Senha ───── */}
+          {/* ───── PASSO 2 - Senha ───── */}
           {step === 2 && (
             <div className="space-y-3 sm:space-y-4">
               <div>
@@ -421,7 +421,7 @@ export default function RegisterPage() {
             </div>
           )}
 
-          {/* ───── PASSO 3 — Confirmação ───── */}
+          {/* ───── PASSO 3 - Confirmação ───── */}
           {step === 3 && (
             <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
               {/* Resumo */}

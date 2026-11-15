@@ -85,7 +85,7 @@ export default function ScrollRevealHeading({
       ref={containerRef}
       className={`${isLeft ? 'text-left items-start' : 'text-center items-center'} flex flex-col select-none ${className}`}
     >
-      {/* Badge decorativo animado — transição mais lenta e suave */}
+      {/* Badge decorativo animado - transição mais lenta e suave */}
       {badge && (
         <div
           className={`inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-widest mb-3 shadow-xs ${

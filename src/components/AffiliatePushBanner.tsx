@@ -90,7 +90,7 @@ export default function AffiliatePushBanner() {
     }
   };
 
-  // Já ativo — barra compacta com botão de teste
+  // Já ativo - barra compacta com botão de teste
   if (permission === 'granted' || subscription) {
     return (
       <div className="bg-emerald-950/40 border border-emerald-500/30 rounded-xl px-4 py-2.5 mb-6 text-emerald-200 text-xs flex flex-wrap items-center justify-between gap-3 backdrop-blur-md">

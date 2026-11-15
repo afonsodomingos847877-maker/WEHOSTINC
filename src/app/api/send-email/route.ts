@@ -65,7 +65,7 @@ export async function POST(req: Request) {
     if (result.success) {
       return NextResponse.json({ success: true, message: 'E-mail enviado com sucesso via Resend.' });
     } else {
-      // Fallback gracioso — regista o erro mas não quebra a UI
+      // Fallback gracioso - regista o erro mas não quebra a UI
       console.warn('[API/send-email] Resend falhou:', result.error);
       return NextResponse.json({
         success: false,

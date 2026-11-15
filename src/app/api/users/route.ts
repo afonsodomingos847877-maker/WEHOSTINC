@@ -246,7 +246,7 @@ export async function POST(req: Request) {
           );
         }
 
-        // 🔒 Comparar com bcrypt — com migração automática apenas para hashes antigos em plaintext
+        // 🔒 Comparar com bcrypt - com migração automática apenas para hashes antigos em plaintext
         let passwordMatch = false;
         if (userDoc.password.startsWith('$2')) {
           passwordMatch = await bcrypt.compare(targetPassword, userDoc.password);
@@ -638,7 +638,7 @@ export async function POST(req: Request) {
           }, { status: 404 });
         }
 
-        // Não permitir alterar outro super_admin — exceto pelo Super Admin root
+        // Não permitir alterar outro super_admin - exceto pelo Super Admin root
         if (existingTarget.role === 'super_admin' && !isRootSuperAdmin && newRole !== 'super_admin') {
           return NextResponse.json({ error: 'Apenas o Super Administrador principal pode despromover outro Super Administrador.' }, { status: 403 });
         }

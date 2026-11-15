@@ -82,11 +82,11 @@ function DeviceIcon({ userAgent }: { userAgent?: string | null }) {
 }
 
 function timeAgo(dateStr?: string | Date | null) {
-  if (!dateStr) return '—';
+  if (!dateStr) return '-';
   try {
     const date = typeof dateStr === 'string' ? new Date(dateStr) : dateStr;
     const time = date.getTime();
-    if (isNaN(time)) return '—';
+    if (isNaN(time)) return '-';
     const diff = Date.now() - time;
     const mins = Math.floor(diff / 60000);
     if (mins < 1) return 'agora mesmo';
@@ -96,7 +96,7 @@ function timeAgo(dateStr?: string | Date | null) {
     const days = Math.floor(hrs / 24);
     return `há ${days}d`;
   } catch {
-    return '—';
+    return '-';
   }
 }
 
@@ -326,7 +326,7 @@ export default function DomainSearchLogsPage() {
               <p className="text-xs text-slate-500 mt-0.5">
                 {stats.totalSearches > 0
                   ? `${Math.round((stats.totalAvailable / stats.totalSearches) * 100)}% do total`
-                  : '—'}
+                  : '-'}
               </p>
             </div>
             <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
@@ -364,7 +364,7 @@ export default function DomainSearchLogsPage() {
                   <p className="text-xs text-slate-500 mt-0.5">{stats.topSearched[0].searchCount}× pesquisas</p>
                 </>
               ) : (
-                <p className="text-slate-500 text-sm">—</p>
+                <p className="text-slate-500 text-sm">-</p>
               )}
             </div>
           </div>

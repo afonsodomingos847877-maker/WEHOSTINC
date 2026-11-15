@@ -47,7 +47,7 @@ export function getDemoMessages(folder: string = 'inbox'): WebmailMessage[] {
             
             <p style="margin-top: 24px;">Com os melhores cumprimentos,<br>
             <strong>Afonso Domingos</strong><br>
-            <span style="color: #6b7280; font-size: 13px;">Equipa de Suporte & Engenharia — WEHOSTHERE</span></p>
+            <span style="color: #6b7280; font-size: 13px;">Equipa de Suporte & Engenharia - WEHOSTHERE</span></p>
           </div>
         `,
         textPreview: 'Seja muito bem-vindo ao Webmail Corporativo da WEHOSTHERE! Este é o Modo de Demonstração Interativo...',
@@ -110,7 +110,7 @@ export function getDemoMessages(folder: string = 'inbox'): WebmailMessage[] {
         fromName: 'Faturação WEHOSTHERE',
         fromEmail: 'faturas@wehosthere.com',
         toEmail: DEMO_EMAIL,
-        subject: 'Fatura Pro-forma #2026-1048 — Alojamento NVMe & E-mail Ilimitado',
+        subject: 'Fatura Pro-forma #2026-1048 - Alojamento NVMe & E-mail Ilimitado',
         body: `
           <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #1f2937;">
             <p>Prezada equipa,</p>
@@ -165,7 +165,7 @@ export function getDemoMessages(folder: string = 'inbox'): WebmailMessage[] {
             <p>Agradecemos se nos puderem enviar uma estimativa de prazos e valores.</p>
             <p>Melhores cumprimentos,<br>
             <strong>Carlos Mondlane</strong><br>
-            <span style="color: #6b7280; font-size: 13px;">Diretor Comercial — TechMoz Soluções Lda</span><br>
+            <span style="color: #6b7280; font-size: 13px;">Diretor Comercial - TechMoz Soluções Lda</span><br>
             <span style="color: #6b7280; font-size: 13px;">Maputo, Moçambique</span></p>
           </div>
         `,

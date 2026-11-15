@@ -70,7 +70,7 @@ export async function GET(
 
       for (const mb of providerMailboxes) {
         try {
-          // Safely extract localPart — strip @domain if Migadu returns full address
+          // Safely extract localPart - strip @domain if Migadu returns full address
           let rawLocal = mb.localPart || (mb.email ? mb.email.split('@')[0] : 'user');
           // If localPart contains '@', only take what's before it
           if (rawLocal.includes('@')) rawLocal = rawLocal.split('@')[0];

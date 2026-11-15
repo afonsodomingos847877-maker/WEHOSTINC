@@ -21,7 +21,7 @@ export const metadata: Metadata = {
         width: 1200,
         height: 630,
         type: 'image/png',
-        alt: 'WEHOSTHERE — Painel de Gestão de Hospedagem',
+        alt: 'WEHOSTHERE - Painel de Gestão de Hospedagem',
       },
     ],
   },

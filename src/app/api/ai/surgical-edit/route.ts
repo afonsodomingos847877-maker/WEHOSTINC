@@ -22,7 +22,7 @@ function applyHeuristicComponentEdit(
     } else if (updated.type === 'text') {
       updated.content.text = 'Mais de 1.500 empresas confiam na nossa infraestrutura para escalar vendas, acelerar processos e garantir disponibilidade 24/7.';
     } else if (updated.type === 'button') {
-      updated.content.buttonText = 'Começar Agora — Teste Grátis';
+      updated.content.buttonText = 'Começar Agora - Teste Grátis';
     } else if (updated.type === 'badge') {
       updated.content.badgeText = '⚡ Oferta Exclusiva por Tempo Limitado';
     }
@@ -46,7 +46,7 @@ function applyHeuristicComponentEdit(
       updated.content.whatsappMessage = 'Olá! Gostaria de falar sobre os vossos serviços em Moçambique e opções de pagamento via M-Pesa.';
     }
     if (updated.type === 'heading') {
-      updated.content.text = `${updated.content.text || 'Líder em Moçambique'} — Soluções para Empresas em Moçambique`;
+      updated.content.text = `${updated.content.text || 'Líder em Moçambique'} - Soluções para Empresas em Moçambique`;
     }
   }
 

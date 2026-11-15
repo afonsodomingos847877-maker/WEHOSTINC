@@ -20,7 +20,7 @@ export const metadata: Metadata = {
         width: 1200,
         height: 630,
         type: 'image/png',
-        alt: 'WEHOSTHERE — Hospedagem de Sites Profissional em Moçambique',
+        alt: 'WEHOSTHERE - Hospedagem de Sites Profissional em Moçambique',
       },
     ],
   },

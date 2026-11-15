@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'pt_MZ',
-    title: 'Criar Conta Gratuita — WEHOSTHERE',
+    title: 'Criar Conta Gratuita - WEHOSTHERE',
     description: 'Registe-se gratuitamente e comece a hospedar o seu site em Moçambique.',
     url: `${SITE_URL}/register`,
     siteName: 'WEHOSTHERE',
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
         width: 1200,
         height: 630,
         type: 'image/png',
-        alt: 'WEHOSTHERE — Criar Conta de Hospedagem em Moçambique',
+        alt: 'WEHOSTHERE - Criar Conta de Hospedagem em Moçambique',
       },
     ],
   },

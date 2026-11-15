@@ -143,7 +143,7 @@ export default function Home() {
       {/* Navbar Responsivo */}
       <Navbar />
 
-      {/* Hero + Banner — two-column on desktop, stacked on mobile */}
+      {/* Hero + Banner - two-column on desktop, stacked on mobile */}
       <section id="infraestrutura" className="relative min-h-[600px] sm:min-h-[700px] px-4 bg-slate-950 text-white overflow-hidden shadow-2xl w-full flex items-center justify-center pb-0">
         {/* Imagem de Fundo estática */}
         <div 
@@ -165,10 +165,10 @@ export default function Home() {
           .mascote-glow { filter: drop-shadow(0 20px 40px rgba(37, 99, 235, 0.35)); }
         `}</style>
 
-        {/* Layout principal — flex para transição suave entre 2-col e 1-col */}
+        {/* Layout principal - flex para transição suave entre 2-col e 1-col */}
         <div className="relative z-10 w-full max-w-7xl mx-auto flex flex-col lg:flex-row gap-0 lg:gap-8 items-center pt-16 sm:pt-20 pb-8 sm:pb-10">
 
-          {/* Coluna Esquerda — expande para 100% quando mascote sai */}
+          {/* Coluna Esquerda - expande para 100% quando mascote sai */}
           <div
             className={`w-full flex flex-col transition-all duration-500 ${
               isSearchFocused
@@ -198,7 +198,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Coluna Direita — Mascote desktop: desliza para fora quando pesquisa */}
+          {/* Coluna Direita - Mascote desktop: desliza para fora quando pesquisa */}
           <div
             className="hidden lg:flex items-end justify-center relative"
             style={{
@@ -230,7 +230,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Mascote mini no mobile — some quando foca */}
+          {/* Mascote mini no mobile - some quando foca */}
           <div
             className="lg:hidden flex justify-center mt-2 overflow-hidden"
             style={{
@@ -295,12 +295,12 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 🚀 AI Builder Promo Section — Meta Style */}
+      {/* 🚀 AI Builder Promo Section - Meta Style */}
       <section id="construtor-ia" ref={builderPromoRef} className="anim-fade-up py-10 sm:py-20 px-3 sm:px-6 lg:px-8 bg-gradient-to-b from-white via-slate-50 to-blue-50/40 overflow-hidden">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-center">
             
-            {/* Left Column — Immersive Visual Showcase (Meta Style with bulder ai.jpg) */}
+            {/* Left Column - Immersive Visual Showcase (Meta Style with bulder ai.jpg) */}
             <div className="lg:col-span-7 relative">
               {/* Outer Glow / Ambient Lighting */}
               <div className="absolute -inset-3 bg-gradient-to-r from-blue-600/20 via-sky-500/20 to-indigo-600/20 rounded-[36px] blur-2xl opacity-75 group-hover:opacity-100 transition duration-1000 -z-10" />
@@ -323,7 +323,7 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Right Column — Clean Bold Typography & Call to Action (Meta Style) */}
+            {/* Right Column - Clean Bold Typography & Call to Action (Meta Style) */}
             <div className="lg:col-span-5 flex flex-col items-start text-left">
               
               {/* Headline & Description com efeito animado no scroll */}
@@ -352,7 +352,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 🕶️ Dual Card Showcase — Meta Style (bulderai2.jpg & bulderai03.jpg) */}
+      {/* 🕶️ Dual Card Showcase - Meta Style (bulderai2.jpg & bulderai03.jpg) */}
       <section className="py-4 sm:py-8 px-3 sm:px-6 lg:px-8 bg-transparent overflow-hidden">
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-5">
@@ -875,12 +875,12 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 🎓 Academia WeHostHere Section — Formação Prática com Certificação */}
+      {/* 🎓 Academia WeHostHere Section - Formação Prática com Certificação */}
       <section id="academia" ref={academyPromoRef} className="anim-fade-up py-12 sm:py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-purple-50/40 via-white to-blue-50/30 overflow-hidden">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-center">
             
-            {/* Coluna da Imagem — Foto limpa sem sobreposições */}
+            {/* Coluna da Imagem - Foto limpa sem sobreposições */}
             <div className="lg:col-span-7 relative order-2 lg:order-1">
               <div className="absolute -inset-3 bg-gradient-to-tr from-primary-600/20 via-sky-500/20 to-indigo-600/20 rounded-[36px] blur-2xl opacity-75 group-hover:opacity-100 transition duration-1000 -z-10" />
 
@@ -888,7 +888,7 @@ export default function Home() {
                 <div className="relative w-full h-[320px] sm:h-[420px] lg:h-[480px] overflow-hidden">
                   <Image
                     src="/academiaweb.jpeg"
-                    alt="Academia WEHOSTHERE — Cursos de Tecnologia e Programação em Moçambique"
+                    alt="Academia WEHOSTHERE - Cursos de Tecnologia e Programação em Moçambique"
                     fill
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 60vw, 720px"
                     className="object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"

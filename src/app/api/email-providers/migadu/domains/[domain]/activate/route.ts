@@ -41,7 +41,7 @@ export async function POST(
           activatedSuccessfully = true;
         }
       } catch (provErr: any) {
-        // Migadu rejected activation because DNS isn't ready yet — that's OK
+        // Migadu rejected activation because DNS isn't ready yet - that's OK
         providerError = provErr?.message || 'DNS not yet propagated on Migadu';
         console.warn('[Activate] Migadu activation deferred (DNS pending):', providerError);
       }
@@ -53,7 +53,7 @@ export async function POST(
       domain.canReceive = true;
       domain.activatedAt = domain.activatedAt || new Date();
     } else {
-      // Keep as pending — don't force active when DNS isn't verified
+      // Keep as pending - don't force active when DNS isn't verified
       domain.status = 'pending_dns';
     }
 

@@ -8,7 +8,7 @@ import {
 import Navbar from '@/components/Navbar';
 
 export const metadata: Metadata = {
-  title: 'AI Website Builder — Crie Sites Profissionais com Inteligência Artificial | WEHOSTHERE',
+  title: 'AI Website Builder - Crie Sites Profissionais com Inteligência Artificial | WEHOSTHERE',
   description: 'Crie e publique sites modernos em segundos com o Construtor de Sites IA da WEHOSTHERE. Hospedagem ultra-rápida inclusa, design responsivo, domínio personalizado e SEO automático.',
   keywords: [
     'AI website builder',
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'pt_MZ',
     url: 'https://www.wehosthere.com/ai-website-builder',
-    title: 'AI Website Builder — Crie Sites com Inteligência Artificial | WEHOSTHERE',
+    title: 'AI Website Builder - Crie Sites com Inteligência Artificial | WEHOSTHERE',
     description: 'Transforme as suas ideias num website profissional em minutos. Alimentado por IA de ponta com infraestrutura cloud de alta velocidade.',
     images: [
       {

@@ -132,7 +132,7 @@ export default function ScrollToTop() {
       {/* Cápsula Vertical Flutuante de Scroll */}
       <div className="relative group bg-white/95 backdrop-blur-xl border border-gray-200/90 shadow-[0_10px_30px_-5px_rgba(0,0,0,0.12),0_0_0_1px_rgba(255,255,255,0.8)_inset] rounded-full p-1.5 flex flex-col items-center gap-1 w-11 sm:w-12 transition-all duration-300 hover:shadow-primary-500/15 hover:border-primary-300">
         
-        {/* Botão Superior — Subir: 1º clique vai a 50%, 2º clique vai ao topo */}
+        {/* Botão Superior - Subir: 1º clique vai a 50%, 2º clique vai ao topo */}
         <button
           type="button"
           onClick={scrollToTop}
@@ -150,7 +150,7 @@ export default function ScrollToTop() {
           </span>
         </div>
 
-        {/* Botão Inferior — Descer: 1º clique vai a 50%, 2º clique vai ao fundo */}
+        {/* Botão Inferior - Descer: 1º clique vai a 50%, 2º clique vai ao fundo */}
         <button
           type="button"
           onClick={scrollToBottom}

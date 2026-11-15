@@ -1,6 +1,6 @@
 'use client';
 // ============================================================================
-// 🎨 WEHOSTHERE VISUAL BUILDER — BARRA LATERAL DIREITA (Inspector de Estilos)
+// 🎨 WEHOSTHERE VISUAL BUILDER - BARRA LATERAL DIREITA (Inspector de Estilos)
 // ============================================================================
 
 import { useState } from 'react';

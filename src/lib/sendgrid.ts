@@ -70,9 +70,9 @@ export async function sendEmail(opts: SendEmailOptions): Promise<{ success: bool
   }
 }
 
-// ——————————————————————————————————————
+// --------------------------------------
 // Templates de E-mails Transacionais
-// ——————————————————————————————————————
+// --------------------------------------
 
 /** E-mail de boas-vindas enviado após registo */
 export async function sendWelcomeEmail(toEmail: string, userName: string, plan: string, confirmationCode?: string) {
@@ -111,7 +111,7 @@ export async function sendWelcomeEmail(toEmail: string, userName: string, plan: 
           <div style="text-align:center;margin:24px 0;">
             <a href="${confirmPageLink}" style="background:#2563eb;color:white;font-weight:700;padding:14px 32px;border-radius:10px;text-decoration:none;font-size:15px;display:inline-block;">Ir para página de confirmação →</a>
           </div>
-          <p style="color:#94a3b8;font-size:12px;margin:0;">Este código expira em 24 horas. Equipa WEHOSTHERE — Hospedagem Profissional em Moçambique</p>
+          <p style="color:#94a3b8;font-size:12px;margin:0;">Este código expira em 24 horas. Equipa WEHOSTHERE - Hospedagem Profissional em Moçambique</p>
         </div>
       </div>`,
   });
@@ -121,7 +121,7 @@ export async function sendWelcomeEmail(toEmail: string, userName: string, plan: 
 export async function sendInvoiceEmail(toEmail: string, userName: string, invoiceRef: string, amount: string, plan: string) {
   return sendEmail({
     to: toEmail,
-    subject: `🧾 Pagamento Confirmado — Fatura ${invoiceRef} | WEHOSTHERE`,
+    subject: `🧾 Pagamento Confirmado - Fatura ${invoiceRef} | WEHOSTHERE`,
     html: `
       <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;color:#111;">
         <div style="background:linear-gradient(135deg,#059669,#10b981);padding:40px 32px;border-radius:16px 16px 0 0;text-align:center;">
@@ -138,7 +138,7 @@ export async function sendInvoiceEmail(toEmail: string, userName: string, invoic
           <div style="text-align:center;margin:24px 0;">
             <a href="${SITE_URL}/dashboard/billing" style="background:#2563eb;color:white;font-weight:700;padding:14px 32px;border-radius:10px;text-decoration:none;font-size:15px;">Ver Faturamento →</a>
           </div>
-          <p style="color:#94a3b8;font-size:12px;margin:0;">WEHOSTHERE — info@wehosthere.com</p>
+          <p style="color:#94a3b8;font-size:12px;margin:0;">WEHOSTHERE - info@wehosthere.com</p>
         </div>
       </div>`,
   });
@@ -191,7 +191,7 @@ export async function sendInvoiceIssuedEmail(opts: SendInvoiceIssuedEmailOptions
   }[opts.paymentMethod?.toLowerCase() || ''] || opts.paymentMethod || 'M-Pesa / eMola / Transferência';
 
   const formatDate = (val?: string) => {
-    if (!val) return '—';
+    if (!val) return '-';
     try {
       return new Date(val).toLocaleDateString('pt-MZ', { day: '2-digit', month: '2-digit', year: 'numeric' });
     } catch {
@@ -207,8 +207,8 @@ export async function sendInvoiceIssuedEmail(opts: SendInvoiceIssuedEmailOptions
     : null;
 
   const subject = isPaid
-    ? `✅ Fatura Liquidada: ${opts.invoiceNumber} (${opts.total.toLocaleString('pt-MZ')} MT) — WEHOSTHERE`
-    : `📄 Nova Fatura Emitida: ${opts.invoiceNumber} (${opts.total.toLocaleString('pt-MZ')} MT) — WEHOSTHERE`;
+    ? `✅ Fatura Liquidada: ${opts.invoiceNumber} (${opts.total.toLocaleString('pt-MZ')} MT) - WEHOSTHERE`
+    : `📄 Nova Fatura Emitida: ${opts.invoiceNumber} (${opts.total.toLocaleString('pt-MZ')} MT) - WEHOSTHERE`;
 
   const itemsHtml = opts.items && opts.items.length > 0
     ? opts.items.map((it, idx) => `
@@ -413,7 +413,7 @@ export async function sendWebmailMessage(fromEmail: string, toEmail: string, sub
           <div style="white-space:pre-line;line-height:1.8;color:#1e293b;font-size:15px;">${body}</div>
         </div>
         <div style="background:#f1f5f9;padding:14px 24px;font-size:11px;color:#94a3b8;">
-          Enviado via WEHOSTHERE Webmail Corporativo — ${SITE_URL.replace('https://', '')}
+          Enviado via WEHOSTHERE Webmail Corporativo - ${SITE_URL.replace('https://', '')}
         </div>
       </div>`,
   });
@@ -423,7 +423,7 @@ export async function sendWebmailMessage(fromEmail: string, toEmail: string, sub
 export async function sendSupportTicketEmail(toEmail: string, userName: string, ticketId: string, subject: string) {
   return sendEmail({
     to: toEmail,
-    subject: `🎫 Ticket de Suporte Aberto — #${ticketId} | WEHOSTHERE`,
+    subject: `🎫 Ticket de Suporte Aberto - #${ticketId} | WEHOSTHERE`,
     html: `
       <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;">
         <div style="background:linear-gradient(135deg,#7c3aed,#6d28d9);padding:40px 32px;border-radius:16px 16px 0 0;text-align:center;">
@@ -438,7 +438,7 @@ export async function sendSupportTicketEmail(toEmail: string, userName: string, 
           <div style="text-align:center;margin:24px 0;">
             <a href="${SITE_URL}/dashboard/tickets" style="background:#7c3aed;color:white;font-weight:700;padding:14px 32px;border-radius:10px;text-decoration:none;font-size:15px;">Ver Ticket →</a>
           </div>
-          <p style="color:#94a3b8;font-size:12px;margin:0;">WEHOSTHERE — info@wehosthere.com</p>
+          <p style="color:#94a3b8;font-size:12px;margin:0;">WEHOSTHERE - info@wehosthere.com</p>
         </div>
       </div>`,
   });
@@ -450,7 +450,7 @@ export async function sendPasswordResetEmail(toEmail: string, userName: string, 
   
   return sendEmail({
     to: toEmail,
-    subject: '🔐 Recuperação de Senha — WEHOSTHERE',
+    subject: '🔐 Recuperação de Senha - WEHOSTHERE',
     html: `
       <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;color:#111;">
         <div style="background:linear-gradient(135deg,#f59e0b,#d97706);padding:40px 32px;border-radius:16px 16px 0 0;text-align:center;">
@@ -464,7 +464,7 @@ export async function sendPasswordResetEmail(toEmail: string, userName: string, 
             <a href="${resetUrl}" style="background:#f59e0b;color:white;font-weight:700;padding:16px 40px;border-radius:10px;text-decoration:none;font-size:16px;display:inline-block;">Redefinir Senha →</a>
           </div>
           <p style="color:#94a3b8;font-size:12px;margin:0;">Este link expira em 1 hora por segurança.</p>
-          <p style="color:#94a3b8;font-size:12px;margin:16px 0 0;">Equipa WEHOSTHERE — Hospedagem Profissional em Moçambique</p>
+          <p style="color:#94a3b8;font-size:12px;margin:16px 0 0;">Equipa WEHOSTHERE - Hospedagem Profissional em Moçambique</p>
         </div>
       </div>`,
   });
@@ -500,7 +500,7 @@ export async function sendAccountDeletionEmail(toEmail: string, userName: string
             <p style="margin:8px 0 0;color:#1e3a8a;font-weight:700;">Telefone Secundário:</p>
             <p style="margin:4px 0 0;color:#475569;">+258 84 833 5618</p>
           </div>
-          <p style="color:#94a3b8;font-size:12px;margin:16px 0 0;">Equipa WEHOSTHERE — Hospedagem Profissional em Moçambique</p>
+          <p style="color:#94a3b8;font-size:12px;margin:16px 0 0;">Equipa WEHOSTHERE - Hospedagem Profissional em Moçambique</p>
         </div>
       </div>`,
   });
@@ -535,7 +535,7 @@ export async function sendAccountActivatedEmail(toEmail: string, userName: strin
             <a href="${loginUrl}" style="background:#10b981;color:white;font-weight:700;padding:16px 40px;border-radius:10px;text-decoration:none;font-size:16px;display:inline-block;">Fazer Login Agora →</a>
           </div>
           <p style="color:#94a3b8;font-size:12px;margin:0;">Se tiver alguma dúvida, entre em contacto com o nosso suporte.</p>
-          <p style="color:#94a3b8;font-size:12px;margin:16px 0 0;">Equipa WEHOSTHERE — Hospedagem Profissional em Moçambique</p>
+          <p style="color:#94a3b8;font-size:12px;margin:16px 0 0;">Equipa WEHOSTHERE - Hospedagem Profissional em Moçambique</p>
         </div>
       </div>`,
   });
@@ -574,7 +574,7 @@ export async function sendLoginNotificationEmail(toEmail: string, userName: stri
             <a href="${dashboardUrl}" style="background:#3b82f6;color:white;font-weight:700;padding:16px 40px;border-radius:10px;text-decoration:none;font-size:16px;display:inline-block;">Acessar Painel →</a>
           </div>
           <p style="color:#94a3b8;font-size:12px;margin:0;">Se tiver alguma dúvida, entre em contacto com o nosso suporte.</p>
-          <p style="color:#94a3b8;font-size:12px;margin:16px 0 0;">Equipa WEHOSTHERE — Hospedagem Profissional em Moçambique</p>
+          <p style="color:#94a3b8;font-size:12px;margin:16px 0 0;">Equipa WEHOSTHERE - Hospedagem Profissional em Moçambique</p>
         </div>
       </div>`,
   });
@@ -602,7 +602,7 @@ export async function sendNewsletterEmail(toEmail: string, subject: string, cont
               Cancelar subscrição
             </a>
           </div>
-          <p style="color:#94a3b8;font-size:12px;margin:16px 0 0;">Equipa WEHOSTHERE — Hospedagem Profissional em Moçambique</p>
+          <p style="color:#94a3b8;font-size:12px;margin:16px 0 0;">Equipa WEHOSTHERE - Hospedagem Profissional em Moçambique</p>
         </div>
       </div>`,
   });
@@ -640,7 +640,7 @@ export async function sendCourseEnrollmentEmail(toEmail: string, userName: strin
             <a href="${academyUrl}" style="background:linear-gradient(135deg,#2563eb,#4f46e5);color:white;font-weight:700;padding:16px 36px;border-radius:10px;text-decoration:none;font-size:15px;display:inline-block;box-shadow:0 4px 12px rgba(37,99,235,0.25);">Começar a Assistir Agora →</a>
           </div>
           
-          <p style="color:#94a3b8;font-size:12px;margin:24px 0 0;text-align:center;">Equipa WEHOSTHERE — Academia de Desenvolvimento Web</p>
+          <p style="color:#94a3b8;font-size:12px;margin:24px 0 0;text-align:center;">Equipa WEHOSTHERE - Academia de Desenvolvimento Web</p>
         </div>
       </div>`,
   });
@@ -678,7 +678,7 @@ export async function sendCoursePurchaseEmail(toEmail: string, userName: string,
             <a href="${academyUrl}" style="background:linear-gradient(135deg,#059669,#10b981);color:white;font-weight:700;padding:16px 36px;border-radius:10px;text-decoration:none;font-size:15px;display:inline-block;box-shadow:0 4px 12px rgba(16,185,129,0.25);">${claimToken ? 'Ativar Acesso & Assistir Aulas →' : 'Acessar Todas as Aulas →'}</a>
           </div>
           
-          <p style="color:#94a3b8;font-size:12px;margin:24px 0 0;text-align:center;">Equipa WEHOSTHERE — Academia de Desenvolvimento Web</p>
+          <p style="color:#94a3b8;font-size:12px;margin:24px 0 0;text-align:center;">Equipa WEHOSTHERE - Academia de Desenvolvimento Web</p>
         </div>
       </div>`,
   });
@@ -713,7 +713,7 @@ export async function sendCourseCompletionEmail(toEmail: string, userName: strin
           <p style="color:#64748b;font-size:13px;line-height:1.6;margin:16px 0 0;">
             Pode adicionar este certificado ao seu currículo e perfil do LinkedIn através do link oficial de validação.
           </p>
-          <p style="color:#94a3b8;font-size:12px;margin:24px 0 0;text-align:center;">Equipa WEHOSTHERE — Academia de Desenvolvimento Web</p>
+          <p style="color:#94a3b8;font-size:12px;margin:24px 0 0;text-align:center;">Equipa WEHOSTHERE - Academia de Desenvolvimento Web</p>
         </div>
       </div>`,
   });
@@ -967,7 +967,7 @@ export async function sendDomainLeadAlertEmail(toEmail: string, data: DomainLead
         <div style="background:linear-gradient(135deg,#7c2d12,#ea580c);padding:32px 28px;text-align:center;">
           <img src="${SITE_URL}/logo.png" alt="WEHOSTHERE Logo" style="width:160px;height:auto;margin:0 auto 12px;display:block;" />
           <div style="display:inline-block;background:rgba(255,255,255,0.18);backdrop-filter:blur(8px);padding:6px 16px;border-radius:20px;margin-top:6px;">
-            <span style="color:#ffffff;font-size:12px;font-weight:800;letter-spacing:0.8px;text-transform:uppercase;">🔥 NOVO LEAD QUENTE — TENTATIVA DE COMPRA</span>
+            <span style="color:#ffffff;font-size:12px;font-weight:800;letter-spacing:0.8px;text-transform:uppercase;">🔥 NOVO LEAD QUENTE - TENTATIVA DE COMPRA</span>
           </div>
         </div>
 
@@ -1297,9 +1297,9 @@ export async function sendAnalyticsMilestoneEmail(data: AnalyticsMilestoneEmailD
   });
 }
 
-// ——————————————————————————————————————
-// Revista "Codando Histórias" — Story Broadcast
-// ——————————————————————————————————————
+// --------------------------------------
+// Revista "Codando Histórias" - Story Broadcast
+// --------------------------------------
 
 export interface StoryBroadcastOptions {
   toEmail: string;
@@ -1369,7 +1369,7 @@ export async function sendStoryBroadcastEmail(opts: StoryBroadcastOptions): Prom
           <!-- Greeting -->
           <p style="color:#475569;font-size:14px;margin:0 0 8px;">Olá, <strong>${recipientLabel}</strong>!</p>
           <p style="color:#475569;font-size:14px;line-height:1.6;margin:0 0 20px;">
-            Uma nova história foi publicada na <strong>Revista Codando Histórias</strong> — leituras sobre tech, empreendedorismo e inovação em Moçambique.
+            Uma nova história foi publicada na <strong>Revista Codando Histórias</strong> - leituras sobre tech, empreendedorismo e inovação em Moçambique.
           </p>
 
           <!-- Story card -->
@@ -1406,9 +1406,9 @@ export async function sendStoryBroadcastEmail(opts: StoryBroadcastOptions): Prom
   });
 }
 
-// ——————————————————————————————————————
+// --------------------------------------
 // Felicitações de Aniversário (Birthday Greetings)
-// ——————————————————————————————————————
+// --------------------------------------
 
 export interface BirthdayEmailOptions {
   toEmail: string;
@@ -1501,9 +1501,9 @@ export async function sendBirthdayEmail(opts: BirthdayEmailOptions): Promise<{ s
   });
 }
 
-// ——————————————————————————————————————
-// Revista "Codando Histórias" — Submissões da Comunidade
-// ——————————————————————————————————————
+// --------------------------------------
+// Revista "Codando Histórias" - Submissões da Comunidade
+// --------------------------------------
 
 export interface StorySubmissionNotificationOpts {
   toEmail: string;

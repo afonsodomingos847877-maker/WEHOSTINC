@@ -1,6 +1,6 @@
 'use client';
 // ============================================================================
-// 🎨 WEHOSTHERE VISUAL BUILDER — BARRA DE TOPO DO EDITOR VISUAL
+// 🎨 WEHOSTHERE VISUAL BUILDER - BARRA DE TOPO DO EDITOR VISUAL
 // ============================================================================
 
 import { useState } from 'react';
@@ -140,7 +140,7 @@ export default function BuilderTopbar({
         </div>
       </div>
 
-      {/* ─── Lado Central — Seletor de Dispositivo & Undo / Redo ────────── */}
+      {/* ─── Lado Central - Seletor de Dispositivo & Undo / Redo ────────── */}
       <div className="flex items-center gap-2 flex-shrink-0">
         {/* Seletor de Dispositivo (Desktop | Tablet | Mobile) */}
         <div className="flex items-center gap-0.5 bg-slate-900/90 rounded-xl p-0.5 border border-slate-800">
@@ -205,7 +205,7 @@ export default function BuilderTopbar({
         </div>
       </div>
 
-      {/* ─── Lado Direito — IA, Guardar & Publicar ───────────────────────────── */}
+      {/* ─── Lado Direito - IA, Guardar & Publicar ───────────────────────────── */}
       <div className="flex items-center gap-2 flex-shrink-0">
         {/* Botão de Assistente IA */}
         <button

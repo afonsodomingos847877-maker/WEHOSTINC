@@ -3,7 +3,7 @@ import { hostingPlans, websiteTypes } from '@/lib/data';
 
 export function decodeHtmlEntitiesServer(text: string): string {
   return text
-    .replace(/&mdash;/gi, '—')
+    .replace(/&mdash;/gi, '-')
     .replace(/&ndash;/gi, '–')
     .replace(/&nbsp;/gi, ' ')
     .replace(/&amp;/gi, '&')
@@ -47,7 +47,7 @@ export function cleanEmailHtmlToLines(raw: string): string[] {
   const withLineBreaks = withoutStyleAndScript
     .replace(/<\/(p|div|tr|li|h[1-6]|section|article|header|footer|table)>/gi, '\n')
     .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/td>/gi, ' — ')
+    .replace(/<\/td>/gi, ' - ')
     .replace(/<[^>]+>/g, ' ');
 
   const decoded = decodeHtmlEntitiesServer(withLineBreaks)
@@ -56,7 +56,7 @@ export function cleanEmailHtmlToLines(raw: string): string[] {
 
   const rawLines = decoded
     .split(/\n+/)
-    .map(l => l.replace(/^[\s•\-\*—–]+/, '').trim())
+    .map(l => l.replace(/^[\s•\-\*-–]+/, '').trim())
     .filter(l => l.length > 10);
 
   const uniqueLines: string[] = [];
@@ -66,7 +66,7 @@ export function cleanEmailHtmlToLines(raw: string): string[] {
       lower.includes('notificação gerada automaticamente') ||
       lower.includes('todos os direitos reservados') ||
       lower.includes('abrir painel de visitantes em tempo real') ||
-      lower.startsWith('wehosthere —')
+      lower.startsWith('wehosthere -')
     ) {
       continue;
     }
@@ -144,17 +144,17 @@ export function getWehosthereKnowledgeContext(): string {
     .filter((p) => p.id !== 'website_creation')
     .map(
       (p) =>
-        `  • Plano ${p.name}: ${p.price.toLocaleString('pt-MZ')} MT/mês (${p.priceAnnual.toLocaleString('pt-MZ')} MT/ano) — ${p.features.sites === -1 ? 'Sites ilimitados' : `${p.features.sites} site(s)`}, ${p.features.emails === -1 ? 'E-mails ilimitados' : `${p.features.emails} contas de e-mail`}, ${p.features.storage}GB SSD, Tráfego ${p.features.bandwidth}${p.features.ssl ? ', SSL Gratuito' : ''}`
+        `  • Plano ${p.name}: ${p.price.toLocaleString('pt-MZ')} MT/mês (${p.priceAnnual.toLocaleString('pt-MZ')} MT/ano) - ${p.features.sites === -1 ? 'Sites ilimitados' : `${p.features.sites} site(s)`}, ${p.features.emails === -1 ? 'E-mails ilimitados' : `${p.features.emails} contas de e-mail`}, ${p.features.storage}GB SSD, Tráfego ${p.features.bandwidth}${p.features.ssl ? ', SSL Gratuito' : ''}`
     )
     .join('\n');
   const websiteLines = websiteTypes
     .map(
       (w) =>
-        `  • ${w.name}: ${w.basePrice.toLocaleString('pt-MZ')} MT (${w.priceNote}) — prazo estimado: ${w.deliveryDays} dias úteis`
+        `  • ${w.name}: ${w.basePrice.toLocaleString('pt-MZ')} MT (${w.priceNote}) - prazo estimado: ${w.deliveryDays} dias úteis`
     )
     .join('\n');
 
-  return `WEHOSTHERE (Moçambique) — Base de Conhecimento Completa Oficial:
+  return `WEHOSTHERE (Moçambique) - Base de Conhecimento Completa Oficial:
 
 1. DOMÍNIOS & .CO.MZ (https://www.wehosthere.com/dominios | https://www.wehosthere.com/dominio-co-mz):
 ${domainLines}
@@ -202,7 +202,7 @@ ${websiteLines}
 
 11. SCALEPAY, CASHVIBE & PAGAMENTOS ONLINE (https://www.wehosthere.com/scalepay | https://www.wehosthere.com/pagamentos-online | https://www.wehosthere.com/cashvibe/meu-credito):
   • ScalePay: Gateway/solução de pagamentos digitais para lojas e empresas em Moçambique (M-Pesa, Visa/Mastercard, API REST).
-  • Cashvibe: Portal de microcrédito — consulta de empréstimos por telefone ou BI em https://www.wehosthere.com/cashvibe/meu-credito e envio de comprovativos para WhatsApp +258 84 567 8901.
+  • Cashvibe: Portal de microcrédito - consulta de empréstimos por telefone ou BI em https://www.wehosthere.com/cashvibe/meu-credito e envio de comprovativos para WhatsApp +258 84 567 8901.
   • Métodos aceites na WEHOSTHERE: M-Pesa (Vodacom), e-Mola (Movitel), Cartões Visa/Mastercard e Transferência Bancária.
 
 12. GUIAS DE NEGÓCIO DIGITAL & BLOG (https://www.wehosthere.com/dropshipping | https://www.wehosthere.com/produtos-digitais | https://www.wehosthere.com/plr | https://www.wehosthere.com/blog):
@@ -496,7 +496,7 @@ export function buildContextualEmailReply(params: {
   if (asksRevista) {
     sections.push(
       isEn
-        ? `Codando Histórias Digital Magazine:\n• Mozambique's tech, dev, startups, AI, and career magazine — read online, download as PDF, or submit your own article at https://www.wehosthere.com/revista (submissions: https://www.wehosthere.com/revista/submeter).`
+        ? `Codando Histórias Digital Magazine:\n• Mozambique's tech, dev, startups, AI, and career magazine - read online, download as PDF, or submit your own article at https://www.wehosthere.com/revista (submissions: https://www.wehosthere.com/revista/submeter).`
         : `Revista Digital "Codando Histórias":\n• A nossa revista tech de Moçambique (Código, Startups, IA, Design e Carreira), com leitura gratuita e download em PDF.\n• Leia em: https://www.wehosthere.com/revista | Submeta o seu artigo em: https://www.wehosthere.com/revista/submeter`
     );
   }
@@ -572,7 +572,7 @@ export function buildContextualEmailReply(params: {
         ? `Thanks for reaching out! Here is a quick summary of what you need:`
         : `Obrigado pela mensagem! Segue o resumo objetivo com todas as informações:`;
       const shortOutro = isEn
-        ? `Let us know when you're ready to proceed — we can activate everything quickly.\n\nBest,\n${signatureLabel}`
+        ? `Let us know when you're ready to proceed - we can activate everything quickly.\n\nBest,\n${signatureLabel}`
         : `Assim que quiser avançar, responda por aqui ou pelo WhatsApp (+258 84 833 5618) que tratamos de imediato.\n\nCumprimentos,\n${signatureLabel}`;
       return `${greeting}\n\n${shortIntro}\n\n${conciseSections}\n\n${shortOutro}`;
     }
@@ -606,7 +606,7 @@ export function buildContextualEmailReply(params: {
         return `${greeting}\n\nThank you for confirming! Everything is aligned on our side and we are ready to move forward with the next steps.\n\nBest,\n${signatureLabel}`;
       }
       if (variant === 2) {
-        return `${greeting}\n\nGreat news — thank you for your confirmation regarding "${subject || 'our agreement'}". We will proceed immediately and keep you updated.\n\nWarm regards,\n${signatureLabel}`;
+        return `${greeting}\n\nGreat news - thank you for your confirmation regarding "${subject || 'our agreement'}". We will proceed immediately and keep you updated.\n\nWarm regards,\n${signatureLabel}`;
       }
       return `${greeting}\n\nThank you for your confirmation and agreement. We are all set to advance with the next steps as discussed.\n\nBest regards,\n${signatureLabel}`;
     }

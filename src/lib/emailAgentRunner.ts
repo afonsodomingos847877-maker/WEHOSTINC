@@ -246,7 +246,7 @@ export async function runEmailAgentForMailbox(
 
     // Verificar se é uma resposta numa conversa ativa (thread Reply)
     // Se o assunto começa com Re: e o cliente está a continuar a conversa,
-    // o cooldown não deve bloquear — permitir resposta imediata ao thread.
+    // o cooldown não deve bloquear - permitir resposta imediata ao thread.
     const isThreadReply = /^re:/i.test(msg.subject || '') || (msg.references && msg.references.length > 0);
 
     if (!isThreadReply) {
@@ -309,14 +309,14 @@ export async function runEmailAgentForMailbox(
       const hasSignatureAlready = /Afonso Domingos/i.test(rawReplyText);
       const corporateSignatureText = hasSignatureAlready
         ? ''
-        : `\n\n--\nAfonso Domingos\nWEHOSTHERE — Hospedagem & Soluções Web\nWhatsApp / Tel: +258 84 833 5618\nEmail: ${agentEmail} | Web: https://www.wehosthere.com`;
+        : `\n\n--\nAfonso Domingos\nWEHOSTHERE - Hospedagem & Soluções Web\nWhatsApp / Tel: +258 84 833 5618\nEmail: ${agentEmail} | Web: https://www.wehosthere.com`;
 
       const replyText = `${rawReplyText}${corporateSignatureText}`;
 
       const corporateSignatureHtml = `
 <div style="margin-top:20px;padding-top:16px;border-top:1px solid #e2e8f0;font-family:'Segoe UI',Arial,sans-serif;color:#334155;font-size:13px;line-height:1.6;">
   <div style="font-size:14px;font-weight:700;color:#0f172a;">Afonso Domingos</div>
-  <div style="color:#2563eb;font-weight:600;font-size:12px;margin-bottom:6px;">WEHOSTHERE — Hospedagem &amp; Soluções Web</div>
+  <div style="color:#2563eb;font-weight:600;font-size:12px;margin-bottom:6px;">WEHOSTHERE - Hospedagem &amp; Soluções Web</div>
   <div style="color:#475569;font-size:12px;">📱 WhatsApp / Tel: <strong>+258 84 833 5618</strong></div>
   <div style="color:#475569;font-size:12px;">📧 Email: <a href="mailto:${agentEmail}" style="color:#2563eb;text-decoration:none;">${agentEmail}</a></div>
   <div style="color:#475569;font-size:12px;">🌐 Website: <a href="https://www.wehosthere.com" style="color:#2563eb;text-decoration:none;">www.wehosthere.com</a></div>
@@ -395,11 +395,11 @@ export async function runEmailAgentForMailbox(
         provider: generated.provider,
       });
 
-      // Notificação push ao administrador — aparece no telemóvel imediatamente
+      // Notificação push ao administrador - aparece no telemóvel imediatamente
       const senderLabel = msg.from.name ? `${msg.from.name} <${replyTarget}>` : replyTarget;
       sendPushToAdmins({
         title: `📧 Agente respondeu a ${msg.from.name || replyTarget}`,
-        message: `"${(msg.subject || '(Sem assunto)').slice(0, 80)}" — Resposta automática enviada com sucesso.`,
+        message: `"${(msg.subject || '(Sem assunto)').slice(0, 80)}" - Resposta automática enviada com sucesso.`,
         url: '/webmail',
         tag: `agent-reply-${messageId.slice(0, 20)}`,
         data: { fromEmail: replyTarget, fromName: msg.from.name || '', subject: msg.subject },

@@ -372,7 +372,7 @@ export default function AdminRevistaPage() {
               <span className="ar-brand-text">
                 codando <span>histórias</span>
               </span>
-              <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 500 }}>— gestão da revista</span>
+              <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 500 }}>- gestão da revista</span>
             </div>
           </div>
           <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>

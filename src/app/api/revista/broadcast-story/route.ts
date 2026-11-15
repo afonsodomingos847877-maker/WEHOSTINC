@@ -161,7 +161,7 @@ export async function POST(req: Request) {
       }
     }
 
-    console.log(`[StoryBroadcast] ✅ Concluído — enviados: ${sent}, falhados: ${failed}, total: ${recipients.length}`);
+    console.log(`[StoryBroadcast] ✅ Concluído - enviados: ${sent}, falhados: ${failed}, total: ${recipients.length}`);
 
     return NextResponse.json({
       success: true,

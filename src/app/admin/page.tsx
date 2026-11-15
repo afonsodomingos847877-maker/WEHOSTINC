@@ -743,7 +743,7 @@ export default function AdminPage() {
     const localIsAdmin = auth.isAdminUser(currentUser);
 
     if (!localIsAdmin) {
-      // 🔄 Sessão local pode estar desatualizada — verificar no servidor
+      // 🔄 Sessão local pode estar desatualizada - verificar no servidor
       fetch('/api/users?action=me&email=' + encodeURIComponent(currentUser.email))
         .then(r => r.json())
         .then(data => {
@@ -1719,7 +1719,7 @@ export default function AdminPage() {
         </div>
       </header>
 
-      {/* 🔮 AI Copilot Top Bar — Posicionado imediatamente APÓS a barra de navegação sobre fundo branco */}
+      {/* 🔮 AI Copilot Top Bar - Posicionado imediatamente APÓS a barra de navegação sobre fundo branco */}
       <div className="bg-white border-b border-gray-100 py-2.5 shadow-xs">
         <AdminAiTopBar />
       </div>
@@ -1745,7 +1745,7 @@ export default function AdminPage() {
             {/* Banner de Incentivo Push para Admin (Ativação e Teste no Telemóvel) */}
             <AdminPushBanner />
 
-        {/* ───── ANALYTICS — Quem está Online & Visitantes ───── */}
+        {/* ───── ANALYTICS - Quem está Online & Visitantes ───── */}
         <div id="sec-online-analytics" className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8 scroll-mt-28">
 
           {/* Painel: Utilizadores Online Agora */}
@@ -2948,12 +2948,12 @@ export default function AdminPage() {
                       {/* Coluna Função / Role */}
                       <td className="py-2.5 sm:py-3.5 px-2 sm:px-4">
                         {isSuperAdmin && !perms.canManageRoles ? (
-                          // Root super admin que não tem canManageRoles — mostrar badge estático
+                          // Root super admin que não tem canManageRoles - mostrar badge estático
                           <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[9px] sm:text-xs font-extrabold bg-purple-100 text-purple-800 border border-purple-200">
                             <span>👑 Super Admin</span>
                           </span>
                         ) : perms.canManageRoles ? (() => {
-                          // O utilizador atual é Super Admin — pode gerir todos os cargos
+                          // O utilizador atual é Super Admin - pode gerir todos os cargos
                           const isRootTarget = user.email.toLowerCase() === 'admin@wehosthere.com' || user.id === 'admin_root';
                           const isSelf = adminUser?.email?.toLowerCase() === user.email.toLowerCase();
                           const currentRole = user.role || 'user';
@@ -3215,13 +3215,13 @@ export default function AdminPage() {
           )}
         </div>
 
-        {/* ===== ACADEMIA — GESTÃO ADMIN ===== */}
+        {/* ===== ACADEMIA - GESTÃO ADMIN ===== */}
         <div className="bg-white border border-gray-200 rounded-xl p-4 sm:p-6 shadow-sm mb-6 sm:mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 sm:mb-6">
             <div>
               <h2 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center space-x-2">
                 <BookOpen className="h-5 w-5 sm:h-6 sm:w-6 text-indigo-600" />
-                <span>Academia Web — Gestão de Cursos</span>
+                <span>Academia Web - Gestão de Cursos</span>
               </h2>
               <p className="text-[10px] sm:text-sm text-gray-500 mt-1">Pagamentos de cursos, alunos inscritos e certificados emitidos</p>
             </div>

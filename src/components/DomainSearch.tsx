@@ -203,7 +203,7 @@ export default function DomainSearch({ onFocusChange }: DomainSearchProps = {}) 
       const searchResult = await checkDomainRealAsync(fullQuery);
       console.log(`[DomainSearch] Resultado:`, searchResult);
       setResult(searchResult);
-      // 📊 Evento GTM / GA4 — pesquisa de domínio
+      // 📊 Evento GTM / GA4 - pesquisa de domínio
       if (typeof window !== 'undefined' && Array.isArray((window as any).dataLayer)) {
         (window as any).dataLayer.push({
           event: 'domain_search',
@@ -239,7 +239,7 @@ export default function DomainSearch({ onFocusChange }: DomainSearchProps = {}) 
 
   const handleRegisterOnly = (domain: string, price: number) => {
     soundEffects.playDomainRegisteredSound();
-    // 📊 Evento GTM — início de checkout
+    // 📊 Evento GTM - início de checkout
     if (typeof window !== 'undefined' && Array.isArray((window as any).dataLayer)) {
       (window as any).dataLayer.push({
         event: 'begin_checkout',
@@ -254,7 +254,7 @@ export default function DomainSearch({ onFocusChange }: DomainSearchProps = {}) 
 
   const handleRegisterWithHosting = (domain: string, price: number, planId: string = selectedHostingPlan, cycle: string = hostingCycle) => {
     soundEffects.playDomainRegisteredSound();
-    // 📊 Evento GTM — início de checkout com hospedagem
+    // 📊 Evento GTM - início de checkout com hospedagem
     if (typeof window !== 'undefined' && Array.isArray((window as any).dataLayer)) {
       (window as any).dataLayer.push({
         event: 'begin_checkout',

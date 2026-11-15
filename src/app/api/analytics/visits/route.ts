@@ -12,7 +12,7 @@ async function tryMongo() {
   catch { return false; }
 }
 
-// GET /api/analytics/visits — para o admin ver estatísticas
+// GET /api/analytics/visits - para o admin ver estatísticas
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const period = searchParams.get('period') || 'month'; // today | week | month | all
@@ -85,7 +85,7 @@ export async function GET(req: NextRequest) {
   });
 }
 
-// POST /api/analytics/visits — registar uma visita
+// POST /api/analytics/visits - registar uma visita
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();

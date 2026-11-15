@@ -46,7 +46,7 @@ export default function robots(): MetadataRoute.Robots {
           '/pagamentos-online',
           '/scalepay',
         ],
-        // SEO FIX: Adicionado /ref/ ao disallow — são links de afiliados que apenas
+        // SEO FIX: Adicionado /ref/ ao disallow - são links de afiliados que apenas
         // redirecionam e não têm conteúdo indexável. Mantê-los no crawl do Google
         // gerava cadeias de redirecionamento no Search Console.
         disallow: ['/dashboard/', '/admin/', '/api/', '/ref/'],

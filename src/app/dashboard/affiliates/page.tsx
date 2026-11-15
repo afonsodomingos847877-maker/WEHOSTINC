@@ -346,7 +346,7 @@ export default function AffiliatesPage() {
 
   const fetchAffiliateData = useCallback(async () => {
     // Aguardar o NextAuth resolver a sessão antes de qualquer verificação.
-    // Enquanto status === 'loading', session.user ainda é undefined — chamar
+    // Enquanto status === 'loading', session.user ainda é undefined - chamar
     // agora causaria um falso "Erro de Autenticação" transitório.
     if (status === 'loading') return;
 
@@ -448,7 +448,7 @@ export default function AffiliatesPage() {
   }, [session, performancePeriod, status]);
 
   useEffect(() => {
-    // Não disparar enquanto a sessão ainda está a carregar — aguardar resolução.
+    // Não disparar enquanto a sessão ainda está a carregar - aguardar resolução.
     if (status === 'loading') return;
     fetchAffiliateData();
   }, [fetchAffiliateData, status]);
@@ -703,7 +703,7 @@ export default function AffiliatesPage() {
                   }`}
                 >
                   <Users className="h-5 w-5" />
-                  <span>{errorMessage.includes('já é afiliado') ? 'Verificar Telefone — 2 MZN' : 'Tornar-se Afiliado — 2 MZN'}</span>
+                  <span>{errorMessage.includes('já é afiliado') ? 'Verificar Telefone - 2 MZN' : 'Tornar-se Afiliado - 2 MZN'}</span>
                   <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
                 </Link>
 
@@ -1155,7 +1155,7 @@ export default function AffiliatesPage() {
                 {!affiliate.payoutDetails?.mpesaPhone && (affiliate.addedByAdmin || affiliate.status === 'active') && (
                   <form onSubmit={handleSaveFreePhone} className="mt-4 pt-4 border-t border-emerald-200">
                     <p className="text-xs font-semibold text-emerald-900 mb-2">
-                      A sua conta foi ativada pelo Administrador — insira o seu número M-Pesa para verificação gratuita (sem taxa):
+                      A sua conta foi ativada pelo Administrador - insira o seu número M-Pesa para verificação gratuita (sem taxa):
                     </p>
                     <div className="flex flex-col sm:flex-row gap-2">
                       <input
@@ -1355,7 +1355,7 @@ export default function AffiliatesPage() {
                     className="inline-flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl hover:from-primary-700 hover:to-primary-800 transition font-semibold"
                   >
                     <Users className="h-4 w-4" />
-                    <span>Verificar Telefone — 2 MZN</span>
+                    <span>Verificar Telefone - 2 MZN</span>
                   </Link>
                 </div>
               )}
@@ -2000,7 +2000,7 @@ export default function AffiliatesPage() {
                                   <div className="flex flex-wrap items-center justify-between gap-2">
                                     <span className="font-semibold text-gray-900">
                                       {eventLabels[ev.eventType] || ev.eventType}
-                                      {ev.productName ? ` — ${ev.productName}` : ''}
+                                      {ev.productName ? ` - ${ev.productName}` : ''}
                                     </span>
                                     <span className="text-xs text-gray-500">
                                       {new Date(ev.createdAt).toLocaleString('pt-MZ')}

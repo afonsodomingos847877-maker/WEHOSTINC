@@ -109,7 +109,7 @@ const getClientLocation = async (): Promise<{ ipAddress: string; country: string
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
 
-    // ipapi.co é um serviço de terceiros — apenas o IP público é enviado (necessidade legítima: segurança)
+    // ipapi.co é um serviço de terceiros - apenas o IP público é enviado (necessidade legítima: segurança)
     const res = await fetch('https://ipapi.co/json/', {
       signal: controller.signal,
       cache: 'no-cache'
@@ -340,7 +340,7 @@ export const auth = {
       const session = { user: serverUserSafe };
       if (typeof window !== 'undefined') {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-        // 🔒 Atualizar cache local com dados do servidor — SEM password
+        // 🔒 Atualizar cache local com dados do servidor - SEM password
         localStorage.setItem(`user_${serverUser.id}`, JSON.stringify(serverUserSafe));
       }
       

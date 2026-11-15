@@ -25,7 +25,7 @@ const OG_IMAGE_URL = `${BASE_URL}/servidores-banner.png`;
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
   title: {
-    default: 'WEHOSTHERE — Hospedagem de Sites & Email Profissional em Moçambique',
+    default: 'WEHOSTHERE - Hospedagem de Sites & Email Profissional em Moçambique',
     template: '%s | WEHOSTHERE',
   },
   description:
@@ -61,7 +61,7 @@ export const metadata: Metadata = {
     locale: 'pt_MZ',
     url: BASE_URL,
     siteName: 'WEHOSTHERE',
-    title: 'WEHOSTHERE — Hospedagem de Sites & Email Profissional em Moçambique',
+    title: 'WEHOSTHERE - Hospedagem de Sites & Email Profissional em Moçambique',
     description:
       'Hospedagem de sites rápida e segura, email corporativo, registo de domínios e criação de sites profissionais em Moçambique. A partir de 550 MT/mês.',
     images: [
@@ -71,13 +71,13 @@ export const metadata: Metadata = {
         width: 1200,
         height: 630,
         type: 'image/png',
-        alt: 'WEHOSTHERE — Hospedagem Profissional em Moçambique',
+        alt: 'WEHOSTHERE - Hospedagem Profissional em Moçambique',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'WEHOSTHERE — Hospedagem de Sites & Email em Moçambique',
+    title: 'WEHOSTHERE - Hospedagem de Sites & Email em Moçambique',
     description:
       'Hospedagem de sites, email corporativo e registo de domínios em Moçambique. A partir de 550 MT/mês.',
     images: [OG_IMAGE_URL],
@@ -132,19 +132,19 @@ export default function RootLayout({
   return (
     <html lang="pt-MZ">
       <head>
-        {/* Google Site Verification — Múltiplas Contas Search Console */}
+        {/* Google Site Verification - Múltiplas Contas Search Console */}
         <meta name="google-site-verification" content="-WIDb6-E1CZzvXz2qkam2i118tdjPuEsgdnpbTpA7_0" />
         <meta name="google-site-verification" content="qv9KkmeWVR-rCTkCP4KxWRkN0E1IJKDkrjsv40nDZ1w" />
         {/* Bing Webmaster Tools Verification */}
         <meta name="msvalidate.01" content="D4BB59AFE8DE80471DF0E7FC4E0A9B87" />
-        {/* Google AdSense — lido pelo Mediapartners-Google como script estático no <head> */}
+        {/* Google AdSense - lido pelo Mediapartners-Google como script estático no <head> */}
         <meta name="google-adsense-account" content="ca-pub-5452584470581302" />
         <script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5452584470581302"
           crossOrigin="anonymous"
         />
-        {/* GEO: Organization — identidade de entidade rica para LLMs */}
+        {/* GEO: Organization - identidade de entidade rica para LLMs */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -234,7 +234,7 @@ export default function RootLayout({
                       "@type": "Service",
                       "name": "Registo de Domínio .co.mz",
                       "url": "https://www.wehosthere.com/dominio-co-mz",
-                      "description": "Registo oficial de domínios .co.mz — o TLD nacional de Moçambique"
+                      "description": "Registo oficial de domínios .co.mz - o TLD nacional de Moçambique"
                     }
                   },
                   {
@@ -252,7 +252,7 @@ export default function RootLayout({
                       "@type": "SoftwareApplication",
                       "name": "AI Website Builder",
                       "url": "https://www.wehosthere.com/ai-website-builder",
-                      "description": "Construtor de sites com inteligência artificial — cria um site profissional em minutos",
+                      "description": "Construtor de sites com inteligência artificial - cria um site profissional em minutos",
                       "applicationCategory": "WebApplication"
                     }
                   },
@@ -297,7 +297,7 @@ export default function RootLayout({
             })
           }}
         />
-        {/* GEO: WebSite + SearchAction — habilita Sitelinks Search Box e sinais para AI search */}
+        {/* GEO: WebSite + SearchAction - habilita Sitelinks Search Box e sinais para AI search */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -323,7 +323,7 @@ export default function RootLayout({
             })
           }}
         />
-        {/* GEO: FAQPage — respostas directas a perguntas comuns para AI Overviews e LLMs */}
+        {/* GEO: FAQPage - respostas directas a perguntas comuns para AI Overviews e LLMs */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

@@ -24,7 +24,7 @@ export const metadata: Metadata = {
         width: 1200,
         height: 630,
         type: 'image/png',
-        alt: 'WEHOSTHERE — Webmail Corporativo',
+        alt: 'WEHOSTHERE - Webmail Corporativo',
       },
     ],
   },

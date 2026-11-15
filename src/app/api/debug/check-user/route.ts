@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// ⛔ ENDPOINT DE DEBUG — BLOQUEADO EM PRODUÇÃO
+// ⛔ ENDPOINT DE DEBUG - BLOQUEADO EM PRODUÇÃO
 // Este endpoint existia para depuração e expunha dados sensíveis de utilizadores.
 // Foi bloqueado por razões de segurança. Apenas disponível em ambiente de desenvolvimento.
 export async function GET(request: NextRequest) {

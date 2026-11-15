@@ -25,7 +25,7 @@ export const metadata: Metadata = {
         width: 1200,
         height: 630,
         type: 'image/png',
-        alt: 'WEHOSTHERE — Checkout de Serviços de Hospedagem',
+        alt: 'WEHOSTHERE - Checkout de Serviços de Hospedagem',
       },
     ],
   },

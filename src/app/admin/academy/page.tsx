@@ -1764,7 +1764,7 @@ export default function AdminAcademyPage() {
                             {course.accessType === 'paid' ? (
                               <span className="font-medium">{course.price?.toLocaleString('pt-MZ')} {course.currency}</span>
                             ) : (
-                              <span className="text-gray-400">—</span>
+                              <span className="text-gray-400">-</span>
                             )}
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-600">
@@ -1782,7 +1782,7 @@ export default function AdminAcademyPage() {
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-600">
                             {course.accessType === 'free' ? (
-                              <span className="text-gray-400">—</span>
+                              <span className="text-gray-400">-</span>
                             ) : (
                               <span className="font-medium text-emerald-600">{course.freeLessonsCount || 1}</span>
                             )}
@@ -1918,14 +1918,14 @@ export default function AdminAcademyPage() {
                             <td className="px-4 py-3.5">
                               <div className="min-w-[180px]">
                                 <span className="font-semibold text-gray-800 text-xs line-clamp-2 leading-relaxed" title={course?.title}>
-                                  {course?.title || '—'}
+                                  {course?.title || '-'}
                                 </span>
                               </div>
                             </td>
                             <td className="px-4 py-3.5">
                               <div className="min-w-[180px]">
                                 <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed" title={module.objective}>
-                                  {module.objective || '—'}
+                                  {module.objective || '-'}
                                 </p>
                               </div>
                             </td>
@@ -2050,7 +2050,7 @@ export default function AdminAcademyPage() {
                             </td>
                             <td className="px-4 py-3.5">
                               <div className="min-w-[180px]">
-                                <span className="font-semibold text-gray-800 text-xs block">{parentModule?.title || '—'}</span>
+                                <span className="font-semibold text-gray-800 text-xs block">{parentModule?.title || '-'}</span>
                                 {course && (
                                   <span className="text-[11px] text-indigo-600 font-medium line-clamp-1 block mt-0.5" title={course.title}>
                                     {course.title}
@@ -2794,7 +2794,7 @@ export default function AdminAcademyPage() {
                                   </td>
                                   <td className="p-3 text-gray-600">
                                     <div className="font-semibold text-[11px] text-gray-800">
-                                      {s.lastAccessedAt ? new Date(s.lastAccessedAt).toLocaleDateString('pt-MZ', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                                      {s.lastAccessedAt ? new Date(s.lastAccessedAt).toLocaleDateString('pt-MZ', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'}
                                     </div>
                                     <div className="text-[10px] text-gray-400">
                                       {s.lastAccessedAt ? new Date(s.lastAccessedAt).toLocaleTimeString('pt-MZ', { hour: '2-digit', minute: '2-digit' }) : ''}

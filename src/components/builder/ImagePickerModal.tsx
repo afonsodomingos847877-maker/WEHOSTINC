@@ -1,6 +1,6 @@
 'use client';
 // ============================================================================
-// 🖼️ WEHOSTHERE VISUAL BUILDER — MODAL SELETOR DE IMAGENS (Image Picker)
+// 🖼️ WEHOSTHERE VISUAL BUILDER - MODAL SELETOR DE IMAGENS (Image Picker)
 // Permite escolher imagens de stock profissionais, inserir URL ou carregar ficheiro
 // ============================================================================
 

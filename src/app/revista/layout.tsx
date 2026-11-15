@@ -4,7 +4,7 @@ import { Instagram, Linkedin, Twitter, Code2 } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: {
-    default: 'Codando Histórias — Revista Digital WEHOSTHERE',
+    default: 'Codando Histórias - Revista Digital WEHOSTHERE',
     template: '%s | Codando Histórias',
   },
   description:
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'pt_MZ',
     url: 'https://www.wehosthere.com/revista',
-    siteName: 'WEHOSTHERE — Codando Histórias',
+    siteName: 'WEHOSTHERE - Codando Histórias',
     title: 'Codando Histórias | Revista Digital WEHOSTHERE',
     description: 'Histórias reais de código, startups, design e carreira tech em Moçambique.',
     images: [
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
         url: 'https://www.wehosthere.com/servidores-banner.png',
         width: 1200,
         height: 630,
-        alt: 'Codando Histórias — WEHOSTHERE',
+        alt: 'Codando Histórias - WEHOSTHERE',
       },
     ],
   },
@@ -205,7 +205,7 @@ function RevistaFooter() {
           </div>
         </div>
         <p className="footer-copy">
-          wehosthere.com/revista © {new Date().getFullYear()} — Todos os direitos reservados
+          wehosthere.com/revista © {new Date().getFullYear()} - Todos os direitos reservados
         </p>
       </div>
     </footer>

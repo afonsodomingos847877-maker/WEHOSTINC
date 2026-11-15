@@ -154,7 +154,7 @@ function fireLeadNotificationsAsync(data: DomainLeadAlertData) {
 }
 
 /**
- * POST — Registrar ou atualizar tentativa de checkout para um domínio pesquisado
+ * POST - Registrar ou atualizar tentativa de checkout para um domínio pesquisado
  */
 export async function POST(req: NextRequest) {
   try {
@@ -222,7 +222,7 @@ export async function POST(req: NextRequest) {
 }
 
 /**
- * DELETE — Limpar logs (por id, por domain ou todos)
+ * DELETE - Limpar logs (por id, por domain ou todos)
  */
 export async function DELETE(req: NextRequest) {
   const auth = await requireAdmin(req);

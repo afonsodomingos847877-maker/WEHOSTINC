@@ -273,7 +273,7 @@ export async function generateAndSendAffiliateReports(
 
       await sendEmail({
         to: recipient.email,
-        subject: `📊 ${metrics.periodLabel} de Afiliado WEHOSTHERE — ${metrics.rangeLabel}`,
+        subject: `📊 ${metrics.periodLabel} de Afiliado WEHOSTHERE - ${metrics.rangeLabel}`,
         html,
       });
       sent++;

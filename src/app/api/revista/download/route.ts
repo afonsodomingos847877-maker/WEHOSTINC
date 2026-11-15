@@ -33,7 +33,7 @@ function sanitizeText(str: string): string {
   return str
     .replace(/[“”]/g, '"')
     .replace(/[‘’]/g, "'")
-    .replace(/[—–]/g, '-')
+    .replace(/[-–]/g, '-')
     .replace(/[•]/g, '-')
     .replace(/[…]/g, '...')
     .replace(/[^\x00-\xFF]/g, ' '); // Mantém Latin-1 / acentuação portuguesa válida

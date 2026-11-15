@@ -148,7 +148,7 @@ export const GET = NextAuth({
           return false;
         }
 
-        // Utilizador novo — criar conta com status pending (requer confirmação)
+        // Utilizador novo - criar conta com status pending (requer confirmação)
         console.log('[Google OAuth] Criando novo utilizador Google:', user.email);
 
         const confirmationCode = generateNumericCode(6);
@@ -276,7 +276,7 @@ export const GET = NextAuth({
           return url;
         }
       } catch {
-        // URL inválida — usar baseUrl
+        // URL inválida - usar baseUrl
       }
       return baseUrl;
     },

@@ -1,6 +1,6 @@
 'use client';
 // ============================================================================
-// 🎨 WEHOSTHERE VISUAL BUILDER — BARRA LATERAL ESQUERDA (Elementor-like)
+// 🎨 WEHOSTHERE VISUAL BUILDER - BARRA LATERAL ESQUERDA (Elementor-like)
 // ============================================================================
 
 import { useState, useCallback } from 'react';
@@ -100,7 +100,7 @@ function LayerItem({
           {component.name}
         </span>
 
-        {/* Ações rápidas — aparecem no hover */}
+        {/* Ações rápidas - aparecem no hover */}
         <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity ml-auto flex-shrink-0">
           <button
             title="Mover acima"
@@ -533,7 +533,7 @@ export default function LeftSidebar({
         <div className="px-3 py-1.5">
           {activeTab === 'layers' && (
             <p className="text-[10px] text-slate-600 truncate">
-              Página: <span className="text-slate-500">{activePage?.title || '—'}</span>
+              Página: <span className="text-slate-500">{activePage?.title || '-'}</span>
               <span className="font-mono ml-1 text-slate-600">{activePage?.slug || ''}</span>
             </p>
           )}

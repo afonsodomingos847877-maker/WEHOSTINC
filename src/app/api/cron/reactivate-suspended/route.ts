@@ -6,7 +6,7 @@ import { SITE_URL } from '@/lib/siteConfig';
 import { requireCronSecret } from '@/lib/serverAuth';
 
 /**
- * Cron: Reativação de clientes suspensos — sequência de 3 emails em 7 dias
+ * Cron: Reativação de clientes suspensos - sequência de 3 emails em 7 dias
  * Schedule: 0 9 * * * (diário às 9h)
  */
 export async function GET(req: Request) {
@@ -94,7 +94,7 @@ export async function GET(req: Request) {
             <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;color:#111;background:#fff;border-radius:16px;overflow:hidden;border:1px solid #e2e8f0;">
               <div style="background:${urgencyGradient};padding:32px 28px;text-align:center;">
                 <img src="${SITE_URL}/logo.png" alt="WEHOSTHERE" style="width:150px;height:auto;display:block;margin:0 auto 10px;" />
-                <span style="background:rgba(255,255,255,0.2);color:#fff;font-size:11px;font-weight:800;letter-spacing:1px;padding:4px 12px;border-radius:20px;">${sequenceLabel} — Dia ${daysSuspended}</span>
+                <span style="background:rgba(255,255,255,0.2);color:#fff;font-size:11px;font-weight:800;letter-spacing:1px;padding:4px 12px;border-radius:20px;">${sequenceLabel} - Dia ${daysSuspended}</span>
               </div>
               <div style="padding:28px;">
                 <h2 style="color:#0f172a;margin:0 0 12px;">Olá, ${userName}! A sua conta está suspensa.</h2>
@@ -107,7 +107,7 @@ export async function GET(req: Request) {
                 <div style="background:#fff7ed;border:2px solid ${urgencyColor};border-radius:12px;padding:18px;margin:20px 0;text-align:center;">
                   <p style="margin:0 0 4px;font-size:12px;font-weight:700;color:${urgencyColor};text-transform:uppercase;letter-spacing:1px;">Valor em Falta</p>
                   <p style="margin:0;font-size:28px;font-weight:900;color:#0f172a;">${valorPlano}</p>
-                  <p style="margin:4px 0 0;font-size:12px;color:#64748b;">Plano ${user.plan?.charAt(0).toUpperCase()}${user.plan?.slice(1)} — Renovação Mensal</p>
+                  <p style="margin:4px 0 0;font-size:12px;color:#64748b;">Plano ${user.plan?.charAt(0).toUpperCase()}${user.plan?.slice(1)} - Renovação Mensal</p>
                 </div>
                 <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:12px;padding:16px;margin:16px 0;">
                   <p style="margin:0 0 8px;font-weight:700;color:#0369a1;font-size:13px;">✅ Ao regularizar o pagamento:</p>
@@ -125,7 +125,7 @@ export async function GET(req: Request) {
                 <p style="color:#94a3b8;font-size:12px;text-align:center;margin:0;">Precisa de ajuda? Contacte-nos: info@wehosthere.com | +258 84 833 5618</p>
               </div>
               <div style="background:#f8fafc;padding:16px 28px;text-align:center;font-size:11px;color:#94a3b8;border-top:1px solid #e2e8f0;">
-                WEHOSTHERE — Notificação automática de reativação de conta
+                WEHOSTHERE - Notificação automática de reativação de conta
               </div>
             </div>
           `

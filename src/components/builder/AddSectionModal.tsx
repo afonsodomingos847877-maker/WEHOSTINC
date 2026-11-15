@@ -1,6 +1,6 @@
 'use client';
 // ============================================================================
-// ➕ WEHOSTHERE VISUAL BUILDER — MODAL DE ADICIONAR NOVA SECÇÃO
+// ➕ WEHOSTHERE VISUAL BUILDER - MODAL DE ADICIONAR NOVA SECÇÃO
 // Permite escolher uma secção pronta para inserir diretamente na posição pretendida
 // ============================================================================
 

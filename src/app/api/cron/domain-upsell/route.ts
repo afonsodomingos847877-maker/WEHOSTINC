@@ -5,7 +5,7 @@ import { SITE_URL } from '@/lib/siteConfig';
 import { requireCronSecret } from '@/lib/serverAuth';
 
 /**
- * Cron: Upsell automático pós-compra de domínio — sugerir hospedagem 24h depois
+ * Cron: Upsell automático pós-compra de domínio - sugerir hospedagem 24h depois
  * Schedule: 0 11 * * * (diário às 11h)
  */
 export async function GET(req: Request) {
@@ -74,15 +74,15 @@ export async function GET(req: Request) {
                   <div style="display:grid;gap:10px;">
                     <div style="display:flex;align-items:center;gap:10px;">
                       <span style="background:#4f46e5;color:#fff;border-radius:50%;width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">1</span>
-                      <span style="color:#475569;font-size:14px;"><strong>Site Profissional</strong> desenvolvido à medida — Landing Page, E-commerce ou Portal</span>
+                      <span style="color:#475569;font-size:14px;"><strong>Site Profissional</strong> desenvolvido à medida - Landing Page, E-commerce ou Portal</span>
                     </div>
                     <div style="display:flex;align-items:center;gap:10px;">
                       <span style="background:#4f46e5;color:#fff;border-radius:50%;width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">2</span>
-                      <span style="color:#475569;font-size:14px;"><strong>Hospedagem Incluída</strong> — O seu site no ar com o domínio ${domain} já ligado</span>
+                      <span style="color:#475569;font-size:14px;"><strong>Hospedagem Incluída</strong> - O seu site no ar com o domínio ${domain} já ligado</span>
                     </div>
                     <div style="display:flex;align-items:center;gap:10px;">
                       <span style="background:#4f46e5;color:#fff;border-radius:50%;width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">3</span>
-                      <span style="color:#475569;font-size:14px;"><strong>Email Profissional</strong> — contacto@${domain} para a sua empresa</span>
+                      <span style="color:#475569;font-size:14px;"><strong>Email Profissional</strong> - contacto@${domain} para a sua empresa</span>
                     </div>
                   </div>
                 </div>
@@ -111,7 +111,7 @@ export async function GET(req: Request) {
                 <p style="color:#94a3b8;font-size:12px;text-align:center;margin:0;">Fale connosco: info@wehosthere.com | +258 84 833 5618</p>
               </div>
               <div style="background:#f8fafc;padding:16px 28px;text-align:center;font-size:11px;color:#94a3b8;border-top:1px solid #e2e8f0;">
-                WEHOSTHERE — Email automático enviado 24h após registo de domínio
+                WEHOSTHERE - Email automático enviado 24h após registo de domínio
               </div>
             </div>
           `

@@ -194,7 +194,7 @@ export default async function BlogPostPage({ params }: Props) {
     },
   };
 
-  // GEO: BreadcrumbList — sinaliza hierarquia de conteúdo a LLMs e Google
+  // GEO: BreadcrumbList - sinaliza hierarquia de conteúdo a LLMs e Google
   const breadcrumbLd = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',

@@ -367,7 +367,7 @@ function generateAdminLocalResponse(query: string, data: any): string {
   if (lower.includes('último') || lower.includes('ultimo') || lower.includes('recent') || lower.includes('utilizador') || lower.includes('cliente')) {
     if (data.users?.recent && data.users.recent.length > 0) {
       const list = data.users.recent.map((u: any, idx: number) => 
-        `${idx + 1}. ${u.name || 'Sem nome'} (${u.email}) — Plano: ${u.plan || 'Nenhum'} | Estado: ${u.status === 'active' ? 'Ativo' : 'Pendente'}`
+        `${idx + 1}. ${u.name || 'Sem nome'} (${u.email}) - Plano: ${u.plan || 'Nenhum'} | Estado: ${u.status === 'active' ? 'Ativo' : 'Pendente'}`
       ).join('\n');
       return `Utilizadores Registados Recentemente:\n\n${list}\n\n• Total de Contas: ${data.users.total} (${data.users.active} ativas, ${data.users.pending} pendentes)\n\nGerir utilizadores em: [/admin](/admin)`;
     }
@@ -378,7 +378,7 @@ function generateAdminLocalResponse(query: string, data: any): string {
   if (lower.includes('pedido') || lower.includes('venda') || lower.includes('compra')) {
     if (data.orders?.recent && data.orders.recent.length > 0) {
       const list = data.orders.recent.map((o: any, idx: number) =>
-        `${idx + 1}. ${o.clientName || o.clientEmail} — ${o.serviceName} | ${o.amount?.toLocaleString('pt-MZ')} MZN (${o.paymentMethod}) — Estado: ${o.status}`
+        `${idx + 1}. ${o.clientName || o.clientEmail} - ${o.serviceName} | ${o.amount?.toLocaleString('pt-MZ')} MZN (${o.paymentMethod}) - Estado: ${o.status}`
       ).join('\n');
       return `Relatório de Pedidos & Vendas:\n\n• Total de Pedidos: ${data.orders.total}\n• Concluídos: ${data.orders.completed} | Pendentes: ${data.orders.pending}\n\nÚltimos Pedidos:\n${list}\n\nAcompanhar vendas em [/admin/notifications](/admin/notifications)`;
     }
@@ -389,7 +389,7 @@ function generateAdminLocalResponse(query: string, data: any): string {
   if (lower.includes('fatura') || lower.includes('devedor') || lower.includes('atras') || lower.includes('cobrança') || lower.includes('cobranca')) {
     if (data.payments?.overdueList && data.payments.overdueList.length > 0) {
       const list = data.payments.overdueList.map((p: any, idx: number) =>
-        `${idx + 1}. ${p.clientName || p.clientEmail} — ${p.remainingAmount || p.amount} MZN (Mês ${p.month}/${p.year}) — Estado: ${p.status}`
+        `${idx + 1}. ${p.clientName || p.clientEmail} - ${p.remainingAmount || p.amount} MZN (Mês ${p.month}/${p.year}) - Estado: ${p.status}`
       ).join('\n');
       return `Faturas com Ação Pendente (${data.payments.pendingCount}):\n\n${list}\n\nGerir cobranças e lançar pagamentos em: [/admin/pagamentos-mensais](/admin/pagamentos-mensais)`;
     }
@@ -410,7 +410,7 @@ function generateAdminLocalResponse(query: string, data: any): string {
   if (lower.includes('ticket') || lower.includes('suporte') || lower.includes('chamado')) {
     if (data.tickets?.recent && data.tickets.recent.length > 0) {
       const list = data.tickets.recent.map((t: any, idx: number) =>
-        `${idx + 1}. [${t.priority?.toUpperCase() || 'MÉDIA'}] ${t.subject} — ${t.userName} (${t.userEmail})`
+        `${idx + 1}. [${t.priority?.toUpperCase() || 'MÉDIA'}] ${t.subject} - ${t.userName} (${t.userEmail})`
       ).join('\n');
       return `Tickets de Suporte em Aberto (${data.tickets.open}):\n\n${list}\n\nResponder aos clientes no painel de tickets.`;
     }
@@ -426,14 +426,14 @@ function generateAdminLocalResponse(query: string, data: any): string {
   if (lower.includes('plano') || lower.includes('hospedagem') || lower.includes('alojamento') || lower.includes('preço') || lower.includes('preco') || lower.includes('custo') || lower.includes('quanto custa')) {
     return `Planos de Hospedagem de Sites WEHOSTHERE:\n\n` +
       `• Plano Básico (550 MT/mês):\n  - 10GB SSD de alta velocidade\n  - 100GB de Tráfego mensal\n  - 5 Contas de Email Profissional\n  - Certificado SSL Gratuito\n\n` +
-      `• Plano Profissional (1.200 MT/mês) — Mais Popular:\n  - 30GB SSD NVMe ultrarrápido\n  - Tráfego Ilimitado\n  - Contas de Email Ilimitadas\n  - Backups Automáticos\n\n` +
+      `• Plano Profissional (1.200 MT/mês) - Mais Popular:\n  - 30GB SSD NVMe ultrarrápido\n  - Tráfego Ilimitado\n  - Contas de Email Ilimitadas\n  - Backups Automáticos\n\n` +
       `• Plano Enterprise / VPS (3.500 MT/mês):\n  - 100GB SSD NVMe com recursos dedicados\n  - IP Dedicado e Suporte VIP 24/7\n\n` +
       `Gerir ou consultar serviços em: [/hospedagem](/hospedagem)`;
   }
 
   // 13. Revista Codando Histórias & Publicações
   if (lower.includes('revista') || lower.includes('história') || lower.includes('historia') || lower.includes('codando')) {
-    return `Revista Codando Histórias — Gestão Editorial:\n\n` +
+    return `Revista Codando Histórias - Gestão Editorial:\n\n` +
       `A revista é o espaço editorial da WEHOSTHERE dedicado a cobrir carreira tech, desenvolvimento de software e ecossistema de startups em Moçambique.\n\n` +
       `• Aceder à revista pública: [/revista](/revista)\n` +
       `• Gerir, criar e editar histórias: [/admin/revista](/admin/revista)\n` +
@@ -441,7 +441,7 @@ function generateAdminLocalResponse(query: string, data: any): string {
   }
 
   // 13. Visão Geral Executiva (Status Geral / Métricas)
-  return `WEHOSTHERE AI Copilot — Painel Executivo:\n\n` +
+  return `WEHOSTHERE AI Copilot - Painel Executivo:\n\n` +
     `• Utilizadores: ${data.users?.total || 0} (${data.users?.active || 0} ativos)\n` +
     `• Pedidos: ${data.orders?.total || 0} (${data.orders?.completed || 0} concluídos)\n` +
     `• Faturas Pendentes: ${data.payments?.pendingCount || 0}\n` +
@@ -580,7 +580,7 @@ function generateClientLocalResponse(query: string, clientData: any): string {
   if (lower.includes('ticket') || lower.includes('suporte') || lower.includes('chamado') || lower.includes('ajuda') || lower.includes('contacto') || lower.includes('contato') || lower.includes('whatsapp') || lower.includes('atendimento')) {
     if (clientData && clientData.tickets && clientData.tickets.length > 0) {
       const ticketsText = clientData.tickets.map((t: any, idx: number) =>
-        `${idx + 1}. [${t.priority?.toUpperCase() || 'NORMAL'}] ${t.subject} — Estado: ${t.status}`
+        `${idx + 1}. [${t.priority?.toUpperCase() || 'NORMAL'}] ${t.subject} - Estado: ${t.status}`
       ).join('\n');
       return `Os Seus Chamados de Suporte Técnico:\n\n${ticketsText}\n\nAceda e responda no painel: [/dashboard/tickets](/dashboard/tickets)`;
     }
@@ -596,7 +596,7 @@ function generateClientLocalResponse(query: string, clientData: any): string {
   // 7. Meus Serviços / Meus Pedidos (se o cliente tiver dados)
   if (clientData && (lower.includes('meu pedido') || lower.includes('meu serviço') || lower.includes('meu servico') || lower.includes('minha conta'))) {
     const ordersText = clientData.orders?.length > 0 
-      ? clientData.orders.map((o: any, idx: number) => `${idx + 1}. ${o.serviceName} (${o.amount?.toLocaleString('pt-MZ')} MZN) — Estado: ${o.status}`).join('\n')
+      ? clientData.orders.map((o: any, idx: number) => `${idx + 1}. ${o.serviceName} (${o.amount?.toLocaleString('pt-MZ')} MZN) - Estado: ${o.status}`).join('\n')
       : 'Nenhum pedido recente registado.';
     
     return `Os Seus Serviços na WEHOSTHERE:\n\nÚltimos Pedidos:\n${ordersText}\n\nAceda ao painel completo em: [/dashboard](/dashboard) ou abra um ticket de suporte em [/dashboard/tickets](/dashboard/tickets)`;
@@ -630,7 +630,7 @@ function generateClientLocalResponse(query: string, clientData: any): string {
     lower.includes('edição') || 
     lower.includes('edicao')
   ) {
-    return `Revista Codando Histórias — WEHOSTHERE:\n\n` +
+    return `Revista Codando Histórias - WEHOSTHERE:\n\n` +
       `A revista "Codando Histórias" é o espaço editorial oficial da WEHOSTHERE dedicado a destacar histórias reais de quem constrói e lidera a tecnologia em Moçambique.\n\n` +
       `Destaques e Conteúdos:\n` +
       `• Histórias de Carreira: Trajetórias inspiradoras de devs, programadoras e engenheiros de software\n` +
@@ -656,7 +656,7 @@ function generateClientLocalResponse(query: string, clientData: any): string {
   ) {
     return `Planos de Hospedagem de Sites WEHOSTHERE:\n\n` +
       `• Plano Básico (550 MT/mês):\n  - 10GB SSD de alta velocidade\n  - 100GB de Tráfego mensal\n  - 5 Contas de Email Profissional\n  - Certificado SSL Gratuito\n\n` +
-      `• Plano Profissional (1.200 MT/mês) — Mais Popular:\n  - 30GB SSD NVMe ultrarrápido\n  - Tráfego Ilimitado\n  - Contas de Email Ilimitadas\n  - Backups Automáticos\n\n` +
+      `• Plano Profissional (1.200 MT/mês) - Mais Popular:\n  - 30GB SSD NVMe ultrarrápido\n  - Tráfego Ilimitado\n  - Contas de Email Ilimitadas\n  - Backups Automáticos\n\n` +
       `• Plano Enterprise / VPS (3.500 MT/mês):\n  - 100GB SSD NVMe com recursos dedicados\n  - IP Dedicado e Suporte VIP 24/7\n\n` +
       `Pode contratar ou saber mais detalhes em: [/hospedagem](/hospedagem)`;
   }

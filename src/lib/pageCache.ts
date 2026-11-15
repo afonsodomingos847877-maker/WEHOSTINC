@@ -1,5 +1,5 @@
 /**
- * useCachedFetch — hook que evita mostrar o loader de ecrã completo
+ * useCachedFetch - hook que evita mostrar o loader de ecrã completo
  * ao navegar entre abas do dashboard.
  *
  * Comportamento:

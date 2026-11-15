@@ -1,6 +1,6 @@
 'use client';
 // ============================================================================
-// 🖥️ WEHOSTHERE VISUAL BUILDER — CANVAS VISUAL (iframe com bridge postMessage)
+// 🖥️ WEHOSTHERE VISUAL BUILDER - CANVAS VISUAL (iframe com bridge postMessage)
 // ============================================================================
 
 import { useEffect, useRef, useCallback, useState } from 'react';
@@ -248,7 +248,7 @@ export default function VisualCanvas({
           {deviceMode !== 'desktop' && (
             <div className="absolute -top-7 left-0 right-0 flex items-center justify-center">
               <span className="text-[10px] text-slate-600 bg-[#080c14] px-2 py-0.5 rounded-full border border-slate-800">
-                {DEVICE_LABELS[deviceMode]} — {iframeWidth}
+                {DEVICE_LABELS[deviceMode]} - {iframeWidth}
               </span>
             </div>
           )}
@@ -282,7 +282,7 @@ export default function VisualCanvas({
           {selectedComponentId && (
             <div
               className="absolute inset-0 pointer-events-none"
-              // transparent overlay — a seleção vem de dentro do iframe
+              // transparent overlay - a seleção vem de dentro do iframe
             />
           )}
         </div>

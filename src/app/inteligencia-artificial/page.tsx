@@ -20,7 +20,7 @@ export const metadata: Metadata = {
         width: 1200,
         height: 630,
         type: 'image/png',
-        alt: 'WEHOSTHERE — Inteligência Artificial para Negócios em Moçambique',
+        alt: 'WEHOSTHERE - Inteligência Artificial para Negócios em Moçambique',
       },
     ],
   },

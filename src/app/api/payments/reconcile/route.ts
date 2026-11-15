@@ -42,7 +42,7 @@ export async function POST(req: Request) {
         console.log(`[PAYMENT RECONCILIATION] Status Kivora para ${paymentId}:`, paymentStatus.status);
 
         if (paymentStatus.status === 'paid' && order.status !== 'completed') {
-          console.log(`[PAYMENT RECONCILIATION] Reconciliando pedido ${order.id} — pagamento confirmado na Kivora`);
+          console.log(`[PAYMENT RECONCILIATION] Reconciliando pedido ${order.id} - pagamento confirmado na Kivora`);
 
           await OrderModel.findOneAndUpdate({ id: order.id }, { status: 'completed' });
 
@@ -66,7 +66,7 @@ export async function POST(req: Request) {
           });
 
         } else if (paymentStatus.status === 'failed' && order.status !== 'cancelled') {
-          console.log(`[PAYMENT RECONCILIATION] Cancelando pedido ${order.id} — pagamento falhou na Kivora`);
+          console.log(`[PAYMENT RECONCILIATION] Cancelando pedido ${order.id} - pagamento falhou na Kivora`);
 
           await OrderModel.findOneAndUpdate({ id: order.id }, { status: 'cancelled' });
 
@@ -80,7 +80,7 @@ export async function POST(req: Request) {
           });
 
         } else {
-          console.log(`[PAYMENT RECONCILIATION] Pedido ${order.id} sem alteração — Kivora: ${paymentStatus.status}, local: ${order.status}`);
+          console.log(`[PAYMENT RECONCILIATION] Pedido ${order.id} sem alteração - Kivora: ${paymentStatus.status}, local: ${order.status}`);
           results.push({
             orderId: order.id,
             kivoraPaymentId: paymentId,

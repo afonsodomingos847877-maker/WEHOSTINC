@@ -580,7 +580,7 @@ export default function EditarHistoriaPage() {
                   <p style={{ fontSize: '0.82rem', color: '#475569', fontWeight: 600 }}>
                     {uploadingImage ? 'A fazer upload...' : 'Clica para upload'}
                   </p>
-                  <p style={{ fontSize: '0.72rem', color: '#94a3b8' }}>PNG, JPG, WEBP — 1200×800px recomendado</p>
+                  <p style={{ fontSize: '0.72rem', color: '#94a3b8' }}>PNG, JPG, WEBP - 1200×800px recomendado</p>
                 </label>
               )}
               <div className="edit-field" style={{ marginTop: '0.75rem' }}>

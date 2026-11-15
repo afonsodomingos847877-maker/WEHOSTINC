@@ -1614,7 +1614,7 @@ export default function SubmeterHistoriaPage() {
                     {/* Redes Sociais */}
                     <div style={{ marginTop: '0.5rem', paddingTop: '1rem', borderTop: '1px solid #f1f5f9' }}>
                       <label className="form-label" style={{ marginBottom: '0.75rem', color: '#64748b' }}>
-                        Redes Sociais (Opcional — exibidas no teu card de autor)
+                        Redes Sociais (Opcional - exibidas no teu card de autor)
                       </label>
                       <div className="form-grid-2">
                         <input
