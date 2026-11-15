@@ -152,6 +152,12 @@ export default function Navbar() {
               Revista
             </Link>
             <Link 
+              href="/webmail" 
+              className="text-[11.5px] lg:text-[12px] font-normal text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white tracking-tight transition-colors whitespace-nowrap shrink-0"
+            >
+              Webmail
+            </Link>
+            <Link 
               href="/#recursos" 
               className="text-[11.5px] lg:text-[12px] font-normal text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white tracking-tight transition-colors whitespace-nowrap shrink-0"
             >
@@ -307,6 +313,13 @@ export default function Navbar() {
               className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium text-gray-800 dark:text-gray-200 hover:bg-primary-50 dark:hover:bg-white/10 hover:text-primary-600 transition"
             >
               Revista
+            </Link>
+            <Link
+              href="/webmail"
+              onClick={closeMobileMenu}
+              className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium text-gray-800 dark:text-gray-200 hover:bg-primary-50 dark:hover:bg-white/10 hover:text-primary-600 transition"
+            >
+              Webmail
             </Link>
             <Link
               href="#recursos"
