@@ -13,6 +13,8 @@ export async function GET(request: NextRequest) {
     const email = (searchParams.get('email') || '').trim();
     let password = searchParams.get('password') || '';
     const folder = searchParams.get('folder') || 'INBOX';
+    const uidParam = searchParams.get('uid');
+    const mode = searchParams.get('mode') || 'summary';
     const rawLimit = Number(searchParams.get('limit'));
     const limit = Number.isFinite(rawLimit) && rawLimit > 0 ? Math.min(Math.floor(rawLimit), 200) : 100;
 
@@ -60,7 +62,48 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const imapMessages = await migaduImapSmtp.listMessages(email, password, folder, limit);
+    // If uid is provided, fetch full body and attachments for that single message
+    if (uidParam) {
+      const uidNum = Number(uidParam);
+      if (!Number.isFinite(uidNum) || uidNum <= 0) {
+        return NextResponse.json({ error: 'UID inválido' }, { status: 400 });
+      }
+      const msg = await migaduImapSmtp.getMessage(email, password, uidNum, folder);
+      if (!msg) {
+        return NextResponse.json({ error: 'Mensagem não encontrada' }, { status: 404 });
+      }
+      return NextResponse.json({
+        success: true,
+        message: {
+          id: msg.id,
+          uid: msg.uid,
+          accountEmail: email,
+          fromName: msg.from.name || msg.from.address.split('@')[0],
+          fromEmail: msg.from.address,
+          toEmail: msg.to[0]?.address || '',
+          subject: msg.subject || '(Sem assunto)',
+          body: msg.body,
+          textPreview: msg.textPreview,
+          date: msg.date.toISOString(),
+          isRead: msg.isRead,
+          starred: msg.starred,
+          folder: folder.toLowerCase(),
+          bodyLoaded: true,
+          avatarColor: 'bg-primary-600',
+          attachments: msg.attachments?.map(att => ({
+            url: att.url || '',
+            name: att.filename,
+            size: att.size,
+            type: att.contentType,
+            cid: att.cid,
+            related: att.related
+          }))
+        }
+      });
+    }
+
+    const headersOnly = mode !== 'full';
+    const imapMessages = await migaduImapSmtp.listMessages(email, password, folder, limit, undefined, headersOnly);
     
     // Convert to WebmailMessage format
     const messages = imapMessages.map(msg => ({
@@ -77,6 +120,7 @@ export async function GET(request: NextRequest) {
       isRead: msg.isRead,
       starred: msg.starred,
       folder: folder.toLowerCase(),
+      bodyLoaded: !headersOnly || Boolean(msg.body),
       avatarColor: 'bg-primary-600',
       attachments: msg.attachments?.map(att => ({
         url: att.url || '',

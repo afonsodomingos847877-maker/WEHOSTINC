@@ -20,6 +20,7 @@ export interface WebmailMessage {
   bccEmail?: string;
   subject: string;
   body: string;
+  bodyLoaded?: boolean;
   textPreview?: string;
   date: string;
   scheduledFor?: string;
@@ -312,6 +313,42 @@ export const webmailManager = {
     }
 
     return [];
+  },
+
+  getMessageBody: async (
+    accountEmail: string,
+    password: string,
+    folder: string,
+    uid: number
+  ): Promise<Partial<WebmailMessage> | null> => {
+    if (!accountEmail || !password || !uid) return null;
+    const params = new URLSearchParams({
+      email: accountEmail,
+      password,
+      folder,
+      uid: String(uid),
+    });
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 35000);
+    try {
+      const res = await fetch(apiEndpoint(`/api/webmail/messages?${params.toString()}`), {
+        method: 'GET',
+        signal: controller.signal,
+      });
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (!data?.success || !data?.message) return null;
+      return {
+        body: data.message.body || '(Mensagem vazia)',
+        textPreview: data.message.textPreview || '',
+        attachments: data.message.attachments,
+        bodyLoaded: true,
+      };
+    } catch {
+      return null;
+    } finally {
+      clearTimeout(timer);
+    }
   },
 
   sendMessage: async (

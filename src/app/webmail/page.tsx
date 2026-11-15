@@ -541,6 +541,7 @@ function WebmailContent() {
   const [isLoadingMoreMessages, setIsLoadingMoreMessages] = useState<boolean>(false);
   const [messagesLoadError, setMessagesLoadError] = useState<string>('');
   const [selectedMessage, setSelectedMessage] = useState<WebmailMessage | null>(null);
+  const [isLoadingMessageBody, setIsLoadingMessageBody] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [deleteConfirmModal, setDeleteConfirmModal] = useState<{ isOpen: boolean; msgId: string; msgIds?: string[]; subject: string; isPermanent: boolean } | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -2193,19 +2194,45 @@ function WebmailContent() {
 
   const handleSelectMessage = async (msg: WebmailMessage) => {
     setSelectedMessage(msg);
+    const imapFolder = msg.folder === 'sent' ? 'Sent' : msg.folder === 'trash' ? 'Trash' : msg.folder === 'drafts' ? 'Drafts' : 'INBOX';
+
     if (!msg.isRead) {
-      const imapFolder = msg.folder === 'sent' ? 'Sent' : msg.folder === 'trash' ? 'Trash' : 'INBOX';
       await webmailManager.markAsRead(msg.id, true, selectedAccountEmail, mailboxPassword, msg.uid, imapFolder);
       setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, isRead: true } : m));
     }
+
+    // Carregar corpo completo sob demanda se a listagem veio apenas com cabeçalhos
+    let activeMsg = msg;
+    if (
+      !msg.body &&
+      msg.uid &&
+      selectedAccountEmail &&
+      mailboxPassword &&
+      selectedAccountEmail.toLowerCase() !== 'teste@wehosthere.com'
+    ) {
+      setIsLoadingMessageBody(true);
+      try {
+        const loaded = await webmailManager.getMessageBody(selectedAccountEmail, mailboxPassword, imapFolder, msg.uid);
+        if (loaded) {
+          activeMsg = { ...msg, ...loaded, isRead: true };
+          setMessages(prev => prev.map(m => (m.id === msg.id ? { ...m, ...loaded } : m)));
+          setSelectedMessage(prev => (prev?.id === msg.id ? { ...prev, ...loaded } : prev));
+        } else {
+          const fallbackBody = '<p class="text-sm text-neutral-500">Não foi possível carregar o conteúdo desta mensagem. Tente novamente.</p>';
+          setSelectedMessage(prev => (prev?.id === msg.id && !prev.body ? { ...prev, body: fallbackBody } : prev));
+        }
+      } finally {
+        setIsLoadingMessageBody(false);
+      }
+    }
     
     // Se for um rascunho, abrir no compose modal
-    if (msg.folder === 'drafts') {
-      setComposeTo(msg.toEmail);
-      setComposeSubject(msg.subject);
-      setComposeBody(msg.body);
-      setComposeAttachments(msg.attachments || []);
-      setEditingDraftId(msg.id);
+    if (activeMsg.folder === 'drafts') {
+      setComposeTo(activeMsg.toEmail);
+      setComposeSubject(activeMsg.subject);
+      setComposeBody(activeMsg.body);
+      setComposeAttachments(activeMsg.attachments || []);
+      setEditingDraftId(activeMsg.id);
       setShowCompose(true);
     }
   };
@@ -5948,6 +5975,11 @@ function WebmailContent() {
                     <div className="whitespace-pre-line text-sm text-neutral-900 leading-relaxed font-sans font-normal">
                       {translatedEmail.body}
                     </div>
+                  </div>
+                ) : isLoadingMessageBody && !selectedMessage.body ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-neutral-500">
+                    <Loader2 className="w-6 h-6 animate-spin text-primary-600 mb-2" />
+                    <span className="text-sm">A carregar conteúdo do e-mail...</span>
                   </div>
                 ) : (() => {
                   let cleanBody = stripRawHeaders(selectedMessage.body);

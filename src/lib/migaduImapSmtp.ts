@@ -359,6 +359,37 @@ export class MigaduImapSmtpService {
     return null;
   }
 
+  private extractAttachmentHintsFromBodyStructure(
+    node: any,
+    email: string,
+    folder: string,
+    uid: number
+  ): Array<{ filename: string; size: number; contentType: string; url?: string; related?: boolean }> {
+    const results: Array<{ filename: string; size: number; contentType: string; url?: string; related?: boolean }> = [];
+    if (!node) return results;
+    if (Array.isArray(node.childNodes)) {
+      for (const child of node.childNodes) {
+        results.push(...this.extractAttachmentHintsFromBodyStructure(child, email, folder, uid));
+      }
+      return results;
+    }
+    const disposition = (node.disposition || '').toLowerCase();
+    const filename = node.dispositionParameters?.filename || node.parameters?.name || '';
+    const isAttachment = disposition === 'attachment' || (!!filename && disposition !== 'inline');
+    if (isAttachment) {
+      const partIdx = results.length;
+      const safeName = filename || 'anexo';
+      results.push({
+        filename: safeName,
+        size: Number(node.size) || 0,
+        contentType: node.type || 'application/octet-stream',
+        related: false,
+        url: `/api/webmail/attachment?email=${encodeURIComponent(email)}&folder=${encodeURIComponent(folder)}&uid=${uid}&part=${partIdx}&filename=${encodeURIComponent(safeName)}`,
+      });
+    }
+    return results;
+  }
+
   /**
    * List messages from a folder (INBOX, Sent, etc.)
    */
@@ -367,7 +398,8 @@ export class MigaduImapSmtpService {
     password: string,
     folder: string = 'INBOX',
     limit: number = 100,
-    customConfig?: ExternalServerConfig
+    customConfig?: ExternalServerConfig,
+    headersOnly: boolean = false
   ): Promise<IMAPMessage[]> {
     const config = await this.resolveServerConfig(email, customConfig);
     const client = this.createImapClient(email, password, config);
@@ -387,10 +419,11 @@ export class MigaduImapSmtpService {
       // Fetch all messages in the folder (or up to limit)
       const range = mailbox.exists > limit ? `${mailbox.exists - limit + 1}:*` : '1:*';
 
-      for await (const msg of client.fetch(range, { envelope: true, source: true, flags: true, uid: true })) {
+      const fetchOptions = headersOnly ? { envelope: true, flags: true, uid: true, bodyStructure: true } : { envelope: true, source: true, flags: true, uid: true };
+      for await (const msg of client.fetch(range, fetchOptions)) {
         let cleanBody = '';
         let cleanText = '';
-        const parsedAttachments: Array<{
+        let parsedAttachments: Array<{
           filename: string;
           size: number;
           contentType: string;
@@ -403,7 +436,9 @@ export class MigaduImapSmtpService {
         let cleanFromName = '';
         let cleanFromEmail = '';
 
-        if (msg.source) {
+        if (headersOnly) {
+          parsedAttachments = this.extractAttachmentHintsFromBodyStructure(msg.bodyStructure, email, folder, msg.uid);
+        } else if (msg.source) {
           try {
             const parsed = await simpleParser(msg.source);
             cleanBody = (parsed.html as string) || parsed.textAsHtml || parsed.text || '';
@@ -493,7 +528,7 @@ export class MigaduImapSmtpService {
             })) || [],
           subject: subject,
           date: envelope?.date || new Date(),
-          body: cleanBody || '(Mensagem vazia)',
+          body: headersOnly ? '' : (cleanBody || '(Mensagem vazia)'),
           textPreview: cleanText,
           isRead: msg.flags?.has('\\Seen') || false,
           starred: msg.flags?.has('\\Flagged') || false,
