@@ -4,9 +4,9 @@ import Link from 'next/link';
 import { Globe, FileText, CheckCircle2, ArrowRight, MapPin, Clock, AlertCircle } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Domínio .co.mz - Registrar Domínio Nacional de Moçambique | WEHOSTHERE',
-  description: 'Registre o seu domínio .co.mz em Moçambique com a WEHOSTHERE. Facilitamos todo o processo de registro nacional. Documentação necessária e suporte local.',
-  keywords: ['domínio .co.mz', 'comprar domínio .co.mz', 'registrar domínio .co.mz', 'domínio Moçambique', 'domínio nacional Moçambique', 'registro domínio co.mz'],
+  title: 'Registo de Domínio .co.mz em Moçambique - Rápido e Oficial | WEHOSTHERE',
+  description: 'Registo de domínio .co.mz em Moçambique com a WEHOSTHERE. Facilitamos todo o processo oficial junto do CIUEM com suporte local, ativação rápida e pagamento via M-Pesa.',
+  keywords: ['registo de domínio .co.mz', 'domínio .co.mz', 'comprar domínio .co.mz', 'registrar domínio .co.mz', 'domínio Moçambique', 'domínio nacional Moçambique', 'registo domínio co.mz'],
   openGraph: {
     type: 'website',
     locale: 'pt_MZ',
@@ -38,8 +38,8 @@ export const metadata: Metadata = {
 export default function DominioCoMzPage() {
   return (
     <SeoPageLayout
-      title="Domínio .co.mz - Identidade Digital de Moçambique"
-      description="Solução completa para registro de domínios .co.mz, a extensão nacional oficial de Moçambique para empresas e projetos comerciais."
+      title="Registo de Domínio .co.mz em Moçambique"
+      description="Solução completa para registo de domínio .co.mz, a extensão nacional oficial de Moçambique para empresas e projetos comerciais."
       breadcrumbs={[
         { label: 'Domínios', href: '/dominios' },
         { label: 'Domínio .co.mz', href: '/dominio-co-mz' }

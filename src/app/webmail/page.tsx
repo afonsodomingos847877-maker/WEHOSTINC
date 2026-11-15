@@ -5290,10 +5290,10 @@ function WebmailContent() {
               })() : null}
 
               {/* Cartão Unificado do E-mail (Cabeçalho + Barra IA + Corpo + Resposta Rápida) */}
-              <div className="bg-white/95 backdrop-blur-md rounded-3xl shadow-sm border border-slate-200/90 overflow-hidden divide-y divide-slate-100 flex-1 flex flex-col animate-in fade-in duration-300">
+              <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-sm border border-slate-200/90 overflow-hidden divide-y divide-slate-100 flex-1 flex flex-col animate-in fade-in duration-300">
               {!(floatingBriefing && floatingBriefing.isOpen && mailboxPassword) && (
-              <div className="p-4 sm:p-6 space-y-4 bg-white">
-                <div className="flex items-start justify-between gap-3">
+              <div className="p-3 sm:p-4 space-y-2.5 bg-white">
+                <div className="flex items-start justify-between gap-2.5">
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2 mb-1.5">
                       {selectedMessage.pinned && (
@@ -5315,7 +5315,7 @@ function WebmailContent() {
                         </span>
                       )}
                     </div>
-                    <h2 className="text-lg sm:text-2xl font-extrabold text-gray-900 leading-tight break-words">
+                    <h2 className="text-base sm:text-lg font-bold text-gray-900 leading-snug break-words">
                       {translatedEmail && translatedEmail.msgId === selectedMessage.id
                         ? translatedEmail.subject
                         : selectedMessage.subject}
@@ -5326,51 +5326,51 @@ function WebmailContent() {
                       </p>
                     )}
                   </div>
-                  <div className="hidden sm:flex items-center space-x-2 shrink-0">
+                  <div className="hidden sm:flex items-center space-x-1 shrink-0">
                     <button
                       onClick={(e) => handleTogglePin(selectedMessage.id, e)}
-                      className={`p-2.5 rounded-2xl transition cursor-pointer border ${selectedMessage.pinned ? 'bg-purple-100 text-purple-700 border-purple-300' : 'hover:bg-purple-50 text-gray-400 hover:text-purple-600 border-transparent'}`}
+                      className={`p-1.5 rounded-xl transition cursor-pointer border ${selectedMessage.pinned ? 'bg-purple-100 text-purple-700 border-purple-300' : 'hover:bg-purple-50 text-gray-400 hover:text-purple-600 border-transparent'}`}
                       title={selectedMessage.pinned ? "Desafixar mensagem" : "Fixar mensagem no topo"}
                     >
                       <Pin className={`h-4 w-4 ${selectedMessage.pinned ? 'fill-purple-600' : ''}`} />
                     </button>
                     <button
                       onClick={() => window.print()}
-                      className="p-2.5 hover:bg-gray-100 text-gray-500 rounded-2xl transition cursor-pointer"
+                      className="p-1.5 hover:bg-gray-100 text-gray-500 rounded-xl transition cursor-pointer"
                       title="Imprimir e-mail"
                     >
                       <Printer className="h-4 w-4" />
                     </button>
                     <button
                       onClick={() => handleReplyMessage()}
-                      className="p-2.5 hover:bg-neutral-100 text-neutral-500 hover:text-neutral-900 rounded-2xl transition cursor-pointer"
+                      className="p-1.5 hover:bg-neutral-100 text-neutral-500 hover:text-neutral-900 rounded-xl transition cursor-pointer"
                       title="Responder"
                     >
                       <Reply className="h-4 w-4" />
                     </button>
                     <button
                       onClick={() => handleReplyAllMessage()}
-                      className="p-2.5 hover:bg-neutral-100 text-neutral-500 hover:text-neutral-900 rounded-2xl transition cursor-pointer"
+                      className="p-1.5 hover:bg-neutral-100 text-neutral-500 hover:text-neutral-900 rounded-xl transition cursor-pointer"
                       title="Responder a Todos"
                     >
                       <Reply className="h-4 w-4" style={{ transform: 'scaleX(-1)' }} />
                     </button>
                     <button
                       onClick={() => handleForwardMessage()}
-                      className="p-2.5 hover:bg-neutral-100 text-neutral-500 hover:text-neutral-900 rounded-2xl transition cursor-pointer"
+                      className="p-1.5 hover:bg-neutral-100 text-neutral-500 hover:text-neutral-900 rounded-xl transition cursor-pointer"
                       title="Encaminhar"
                     >
                       <Forward className="h-4 w-4" />
                     </button>
                     <button
                       onClick={(e) => handleToggleStar(selectedMessage.id, e)}
-                      className="p-2.5 hover:bg-neutral-100 rounded-2xl transition cursor-pointer"
+                      className="p-1.5 hover:bg-neutral-100 rounded-xl transition cursor-pointer"
                     >
                       <Star className={`h-4 w-4 ${selectedMessage.starred ? 'fill-neutral-900 text-neutral-900' : 'text-neutral-400'}`} />
                     </button>
                     <button
                       onClick={() => handleDeleteMessage(selectedMessage.id)}
-                      className="p-2.5 hover:bg-neutral-100 text-neutral-400 hover:text-neutral-900 rounded-2xl transition cursor-pointer"
+                      className="p-1.5 hover:bg-neutral-100 text-neutral-400 hover:text-neutral-900 rounded-xl transition cursor-pointer"
                       title="Excluir"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -5379,12 +5379,12 @@ function WebmailContent() {
                 </div>
 
                 <div className="flex flex-wrap items-center justify-between text-xs pt-2 border-t border-neutral-100 gap-2">
-                  <div className="flex items-center space-x-2.5">
-                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-neutral-900 text-white flex items-center justify-center font-bold text-sm shadow-xs shrink-0">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 rounded-full bg-neutral-900 text-white flex items-center justify-center font-bold text-xs shadow-xs shrink-0">
                       {selectedMessage.fromName.charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <span className="font-bold text-neutral-900 text-sm block">{selectedMessage.fromName}</span>
+                      <span className="font-bold text-neutral-900 text-xs sm:text-sm block leading-tight">{selectedMessage.fromName}</span>
                       <span className="text-neutral-500 font-mono text-[11px] truncate max-w-[180px] sm:max-w-none block">&lt;{selectedMessage.fromEmail}&gt;</span>
                     </div>
                   </div>

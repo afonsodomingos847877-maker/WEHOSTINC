@@ -8,16 +8,16 @@ import {
 import Navbar from '@/components/Navbar';
 
 export const metadata: Metadata = {
-  title: 'AI Website Builder - Crie Sites Profissionais com Inteligência Artificial | WEHOSTHERE',
-  description: 'Crie e publique sites modernos em segundos com o Construtor de Sites IA da WEHOSTHERE. Hospedagem ultra-rápida inclusa, design responsivo, domínio personalizado e SEO automático.',
+  title: 'Construtor de Site com Inteligência Artificial em Moçambique | WEHOSTHERE',
+  description: 'Crie e publique sites modernos em segundos com o Construtor de Site com Inteligência Artificial da WEHOSTHERE. Hospedagem rápida inclusa, design responsivo, domínio .co.mz e SEO automático.',
   keywords: [
-    'AI website builder',
-    'construtor de sites IA',
+    'construtor de site com inteligência artificial',
     'criar site com inteligência artificial',
+    'construtor de sites IA Moçambique',
+    'AI website builder',
     'gerador de sites IA',
-    'desenvolvimento web com IA',
-    'criar site rápido',
-    'website builder Africa',
+    'criar site rápido Moçambique',
+    'website builder Moçambique',
     'hospedagem com IA',
     'WEHOSTHERE AI'
   ],
@@ -28,8 +28,8 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'pt_MZ',
     url: 'https://www.wehosthere.com/ai-website-builder',
-    title: 'AI Website Builder - Crie Sites com Inteligência Artificial | WEHOSTHERE',
-    description: 'Transforme as suas ideias num website profissional em minutos. Alimentado por IA de ponta com infraestrutura cloud de alta velocidade.',
+    title: 'Construtor de Site com Inteligência Artificial | WEHOSTHERE',
+    description: 'Transforme as suas ideias num website profissional em minutos com o nosso construtor de site com inteligência artificial.',
     images: [
       {
         url: 'https://www.wehosthere.com/bulderai2.jpg',
@@ -88,7 +88,7 @@ export default function AiWebsiteBuilderPage() {
           </div>
 
           <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.1] mb-6 text-white max-w-4xl mx-auto">
-            Crie Websites Profissionais em <span className="bg-gradient-to-r from-primary-400 via-sky-300 to-indigo-400 bg-clip-text text-transparent">Segundos</span> com IA
+            Construtor de Site com <span className="bg-gradient-to-r from-primary-400 via-sky-300 to-indigo-400 bg-clip-text text-transparent">Inteligência Artificial</span>
           </h1>
 
           <p className="text-base sm:text-lg md:text-xl text-slate-300 max-w-2xl mx-auto mb-10 leading-relaxed font-normal">

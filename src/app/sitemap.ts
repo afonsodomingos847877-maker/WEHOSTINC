@@ -37,6 +37,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'weekly',
       priority: 0.8,
     },
+    {
+      url: `${BASE_URL}/sistema-erp`,
+      lastModified: now,
+      changeFrequency: 'weekly',
+      priority: 0.9,
+    },
     // NOTA SEO: /login, /forgot-password, /confirm-email, /checkout e /webmail
     // foram removidos do sitemap propositadamente:
     //  - /login tem noindex explícito no layout

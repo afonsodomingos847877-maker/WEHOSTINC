@@ -4,9 +4,9 @@ import Link from 'next/link';
 import { Code, Layout, Smartphone, Zap, ArrowRight, CheckCircle2 } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Criar Site em Moçambique - Desenvolvimento Web Profissional | WEHOSTHERE',
-  description: 'Crie seu site profissional em Moçambique com a WEHOSTHERE. Desenvolvimento web customizado, responsivo e otimizado para SEO. Orçamento personalizado.',
-  keywords: ['criar site', 'desenvolvimento web', 'criar website', 'desenvolver site', 'criação de sites Maputo', 'criar site profissional', 'web design Moçambique'],
+  title: 'Criar Site Profissional em Moçambique - Rápido e Otimizado | WEHOSTHERE',
+  description: 'Criar site profissional em Moçambique com a WEHOSTHERE. Desenvolvimento web moderno, responsivo, otimizado para Google (SEO) e integrado com M-Pesa.',
+  keywords: ['criar site profissional em Moçambique', 'criar site Moçambique', 'criar site', 'desenvolvimento web Moçambique', 'criar website', 'criação de sites Maputo', 'criar site profissional', 'web design Moçambique'],
   openGraph: {
     type: 'website',
     locale: 'pt_MZ',

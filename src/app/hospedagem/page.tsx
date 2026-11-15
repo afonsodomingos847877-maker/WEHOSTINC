@@ -4,9 +4,9 @@ import Link from 'next/link';
 import { Server, Shield, Zap, Globe, Clock, HeadphonesIcon, Database, Cpu } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Hospedagem de Sites em Moçambique - Servidor Rápido e Seguro | WEHOSTHERE',
-  description: 'Hospedagem de sites profissional em Moçambique com a WEHOSTHERE. Servidores rápidos, seguros e suporte local 24/7. Planos a partir de 550 MT/mês.',
-  keywords: ['hospedagem de sites', 'hospedagem web', 'alojamento web', 'hospedagem Moçambique', 'hospedagem de sites Moçambique', 'servidor para site', 'VPS', 'hospedagem barata', 'hospedagem profissional'],
+  title: 'Melhor Hospedagem de Sites em Moçambique - Rápida e Segura | WEHOSTHERE',
+  description: 'A melhor hospedagem de sites em Moçambique com a WEHOSTHERE. Saiba o que é hospedagem de sites, compare planos NVMe SSD com suporte local 24/7 e pague via M-Pesa a partir de 550 MT/mês.',
+  keywords: ['hospedagem de sites em Moçambique', 'melhor hospedagem de sites Moçambique', 'o que é hospedagem de sites', 'hospedagem de sites', 'hospedagem web', 'alojamento web Moçambique', 'hospedagem Moçambique', 'hospedagem de sites Moçambique', 'servidor para site', 'VPS', 'hospedagem barata'],
   openGraph: {
     type: 'website',
     locale: 'pt_MZ',
@@ -43,10 +43,20 @@ export default function HospedagemPage() {
       breadcrumbs={[{ label: 'Hospedagem', href: '/hospedagem' }]}
     >
       <div className="space-y-16">
+        {/* Featured Snippet Target: O que é hospedagem de sites */}
+        <section className="bg-primary-50/60 border border-primary-100 rounded-xl p-6 md:p-8">
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
+            O Que é Hospedagem de Sites?
+          </h2>
+          <p className="text-gray-700 text-lg leading-relaxed">
+            <strong>Hospedagem de sites</strong> (ou alojamento web) é o serviço que armazena os ficheiros, imagens, base de dados e emails do seu website num servidor ligado à internet 24 horas por dia, permitindo que qualquer pessoa no mundo aceda ao seu site ao digitar o seu domínio (ex: <code>suaempresa.co.mz</code>).
+          </p>
+        </section>
+
         {/* Introduction */}
         <section>
           <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6">
-            Por Que Escolher a Nossa Hospedagem?
+            Por Que Escolher a Melhor Hospedagem de Sites em Moçambique?
           </h2>
           <p className="text-gray-600 text-lg mb-6">
             A WEHOSTHERE oferece serviços de hospedagem de sites de alta qualidade em Moçambique, com servidores otimizados para performance, segurança e confiabilidade. Nossa infraestrutura garante que o seu site esteja sempre online e rápido.

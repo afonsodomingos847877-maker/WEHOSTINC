@@ -3065,8 +3065,8 @@ function CheckoutContent() {
               </div>
             )}
 
-            {/* Suporte WhatsApp no Checkout (visível apenas em caso de erro/falha) */}
-            {(Boolean(error) || pushStatus === 'expired' || pushStatus === 'failed') && (
+            {/* Suporte WhatsApp no Checkout (visível apenas no Passo 2 em caso de erro/falha) */}
+            {checkoutStep === 2 && (Boolean(error) || pushStatus === 'expired' || pushStatus === 'failed') && (
               <div className="pt-1 text-center">
                 <a
                   href={`https://wa.me/258848335618?text=${encodeURIComponent(
