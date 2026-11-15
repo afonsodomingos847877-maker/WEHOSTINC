@@ -5063,7 +5063,7 @@ function WebmailContent() {
           <AnimatedMeshGradient />
           <div className="relative z-10 flex-1 min-h-0 overflow-y-auto flex flex-col">
           {selectedMessage ? (
-            <div className="p-4 sm:p-6 max-w-4xl mx-auto w-full flex-1 flex flex-col space-y-4 sm:space-y-6">
+            <div className="p-4 sm:p-6 max-w-4xl mx-auto w-full flex-1 flex flex-col space-y-3">
               
               {/* Mobile Back Button */}
               <div className="md:hidden flex items-center justify-between">
@@ -5287,8 +5287,12 @@ function WebmailContent() {
                     `}</style>
                   </div>
                 );
-              })() : (
-              <div className="bg-white rounded-3xl p-4 sm:p-6 shadow-sm border border-gray-200 space-y-4 animate-in fade-in duration-300">
+              })() : null}
+
+              {/* Cartão Unificado do E-mail (Cabeçalho + Barra IA + Corpo + Resposta Rápida) */}
+              <div className="bg-white/95 backdrop-blur-md rounded-3xl shadow-sm border border-slate-200/90 overflow-hidden divide-y divide-slate-100 flex-1 flex flex-col animate-in fade-in duration-300">
+              {!(floatingBriefing && floatingBriefing.isOpen && mailboxPassword) && (
+              <div className="p-4 sm:p-6 space-y-4 bg-white">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2 mb-1.5">
@@ -5574,8 +5578,8 @@ function WebmailContent() {
                 );
               })()}
 
-              {/* AI Assistant Smart Bar (Clean Minimalist) */}
-              <div className="bg-neutral-900 rounded-2xl px-3 py-2 text-white shadow-sm border border-neutral-800 space-y-2.5">
+              {/* AI Assistant Smart Bar (Clean Minimalist, integrado no cartão) */}
+              <div className="bg-slate-900 px-4 sm:px-6 py-2.5 text-white space-y-2.5">
                 <div className="flex flex-wrap items-center justify-between gap-1.5">
                   <div className="flex flex-wrap items-center gap-1.5">
                     {/* Tradução compacta (PT / EN) */}
@@ -5785,8 +5789,8 @@ function WebmailContent() {
                 })()}
               </div>
 
-              {/* Body card */}
-              <div className="bg-white rounded-3xl p-4 sm:p-6 shadow-2xs border border-neutral-200 flex-1 space-y-4">
+              {/* Body section */}
+              <div className="p-4 sm:p-6 bg-white flex-1 space-y-4">
                 {translatedEmail && translatedEmail.msgId === selectedMessage.id ? (
                   <div className="space-y-3">
                     <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 bg-emerald-50/90 border border-emerald-200 rounded-2xl text-xs">
@@ -5890,7 +5894,7 @@ function WebmailContent() {
               </div>
 
               {/* Quick Reply Form */}
-              <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-2xs border border-neutral-200 space-y-3">
+              <div className="bg-slate-50/75 p-4 sm:p-5 space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="text-xs font-bold text-neutral-700 flex items-center space-x-1.5">
                     <Reply className="h-4 w-4 text-neutral-600" />
@@ -6097,6 +6101,7 @@ function WebmailContent() {
                   </button>
                 </div>
               </div>
+              </div>
             </div>
           ) : isAccountPending ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center p-8 text-amber-950">
@@ -6143,7 +6148,10 @@ function WebmailContent() {
                   className="mt-2 flex items-center gap-2 px-5 py-2.5 bg-white/15 hover:bg-white/25 backdrop-blur-md border border-white/30 text-white text-sm font-medium rounded-full shadow-lg transition-all duration-200 active:scale-95"
                 >
                   <Edit3 className="h-4 w-4" />
-                  Escrever E-mail
+                  <span className="inline-flex items-center">
+                    <span>{composeTypedText}</span>
+                    <span className="inline-block w-[1.5px] h-3.5 bg-white/85 ml-0.5 animate-pulse" aria-hidden="true" />
+                  </span>
                 </button>
               </div>
             </div>

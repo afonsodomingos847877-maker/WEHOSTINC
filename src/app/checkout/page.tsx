@@ -614,6 +614,20 @@ function CheckoutContent() {
             setPushStatus('expired');
             setRetryCount(0);
             setError('Erro de conexão. Verifique sua internet e tente novamente.');
+            fetch(apiEndpoint('/api/payments/notify-failure'), {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                clientName: name,
+                clientEmail: email,
+                clientPhone: phonePayment || whatsapp,
+                serviceName: selectedPlan?.name || domainParam || 'Serviço',
+                paymentMethod,
+                amount: grandTotal,
+                reference: currentReference || undefined,
+                reason: 'Falha de conexão ao verificar estado do pagamento (polling)'
+              })
+            }).catch(() => {});
           }
         }
       };
@@ -1275,6 +1289,7 @@ function CheckoutContent() {
         setPushModal(true);
         setLoading(true);
 
+        let serverNotified = false;
         try {
           const payResponse = await fetch(apiEndpoint(apiUrl), {
             method: 'POST',
@@ -1291,6 +1306,7 @@ function CheckoutContent() {
           });
 
           const payData = await payResponse.json().catch(() => ({}));
+          serverNotified = Boolean(payData?.adminNotified);
           if (!payResponse.ok) {
             throw new Error(payData.error || 'Falha ao iniciar cobrança junto da operadora');
           }
@@ -1303,6 +1319,22 @@ function CheckoutContent() {
         } catch (payErr: any) {
           console.error('[Checkout Push Error]:', payErr);
           const rawMsg = String(payErr?.message || 'Erro ao comunicar com a operadora');
+          if (!serverNotified) {
+            fetch(apiEndpoint('/api/payments/notify-failure'), {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                clientName: name,
+                clientEmail: email,
+                clientPhone: phone,
+                serviceName,
+                paymentMethod,
+                amount: grandTotal,
+                reference: paymentReference,
+                reason: rawMsg
+              })
+            }).catch(() => {});
+          }
           const lowerMsg = rawMsg.toLowerCase();
           const isConfigErr =
             lowerMsg.includes('api key') ||
@@ -1355,6 +1387,20 @@ function CheckoutContent() {
       
       // Tratamento de erros específicos
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
+      fetch(apiEndpoint('/api/payments/notify-failure'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientName: name,
+          clientEmail: email,
+          clientPhone: phonePayment || whatsapp,
+          serviceName: selectedPlan?.name || domainParam || 'Serviço',
+          paymentMethod,
+          amount: grandTotal,
+          reference: currentReference || undefined,
+          reason: errorMessage
+        })
+      }).catch(() => {});
       
       if (errorMessage.includes('network') || errorMessage.includes('fetch') || errorMessage.includes('timeout')) {
         setError(t.connectionError);
@@ -2155,16 +2201,6 @@ function CheckoutContent() {
                   <span>Continuar para Pagamento</span>
                   <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
                 </button>
-
-                <div className="text-center pt-0.5">
-                  <Link
-                    href="/"
-                    className="inline-flex items-center text-xs font-semibold text-gray-500 hover:text-gray-800 transition"
-                  >
-                    <ArrowLeft className="w-3.5 h-3.5 mr-1" />
-                    <span>Voltar à página inicial</span>
-                  </Link>
-                </div>
               </div>
             )}
 
@@ -3029,22 +3065,24 @@ function CheckoutContent() {
               </div>
             )}
 
-            {/* Suporte WhatsApp no Checkout */}
-            <div className="pt-1 text-center">
-              <a
-                href={`https://wa.me/258848335618?text=${encodeURIComponent(
-                  `Olá WeHost! Estou no checkout a finalizar o pedido para ${
-                    domainParam ? `o domínio ${domainParam}` : selectedPlan?.name || 'serviço'
-                  } (Valor: ${(isCoursePayment ? courseAmountParam : (isAffiliateVerification ? verificationAmount : grandTotal)).toLocaleString('pt-MZ')} MT) e gostaria de apoio.`
-                )}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-1.5 w-full py-2.5 px-3 bg-emerald-50 hover:bg-emerald-100/80 text-emerald-800 font-semibold text-xs rounded-xl border border-emerald-200 transition-all hover:scale-[1.01] cursor-pointer"
-              >
-                <MessageCircle className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                <span>Dúvidas ou dificuldades no pagamento? Fale no WhatsApp</span>
-              </a>
-            </div>
+            {/* Suporte WhatsApp no Checkout (visível apenas em caso de erro/falha) */}
+            {(Boolean(error) || pushStatus === 'expired' || pushStatus === 'failed') && (
+              <div className="pt-1 text-center">
+                <a
+                  href={`https://wa.me/258848335618?text=${encodeURIComponent(
+                    `Olá WeHost! Estou no checkout a finalizar o pedido para ${
+                      domainParam ? `o domínio ${domainParam}` : selectedPlan?.name || 'serviço'
+                    } (Valor: ${(isCoursePayment ? courseAmountParam : (isAffiliateVerification ? verificationAmount : grandTotal)).toLocaleString('pt-MZ')} MT) e gostaria de apoio.`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-1.5 w-full py-2.5 px-3 bg-emerald-50 hover:bg-emerald-100/80 text-emerald-800 font-semibold text-xs rounded-xl border border-emerald-200 transition-all hover:scale-[1.01] cursor-pointer"
+                >
+                  <MessageCircle className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <span>Dúvidas ou dificuldades no pagamento? Fale no WhatsApp</span>
+                </a>
+              </div>
+            )}
 
           </form>
         </div>

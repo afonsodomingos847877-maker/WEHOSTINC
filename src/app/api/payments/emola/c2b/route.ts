@@ -1,15 +1,35 @@
 import { NextResponse } from 'next/server';
 import { kivora } from '@/lib/kivora';
+import { notifyAdminPaymentError } from '@/lib/notifications';
 
 export async function POST(req: Request) {
+  let parsedBody: any = {};
   try {
     const body = await req.json();
+    parsedBody = body;
     const { msisdn, amount, reference, thirdPartyReference, clientName, clientEmail, serviceName } = body;
+
+    const devErrorMsg = 'O pagamento automático via e-Mola encontra-se temporariamente em desenvolvimento. Por favor, utilize M-Pesa ou Transferência / Comprovativo.';
+    try {
+      await notifyAdminPaymentError({
+        clientName,
+        clientEmail,
+        clientPhone: msisdn,
+        serviceName,
+        paymentMethod: 'emola',
+        amount: typeof amount === 'number' ? amount : Number(amount),
+        reference: reference || thirdPartyReference,
+        reason: 'Tentativa de pagamento e-Mola (método em desenvolvimento)'
+      });
+    } catch (notifyErr) {
+      console.error('[EMOLA C2B] Falha ao notificar admin:', notifyErr);
+    }
 
     return NextResponse.json(
       {
-        error: 'O pagamento automático via e-Mola encontra-se temporariamente em desenvolvimento. Por favor, utilize M-Pesa ou Transferência / Comprovativo.',
-        status: 'in_development'
+        error: devErrorMsg,
+        status: 'in_development',
+        adminNotified: true
       },
       { status: 400 }
     );
@@ -103,8 +123,22 @@ export async function POST(req: Request) {
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : 'Falha ao processar pagamento via eMola';
     console.error('Erro na rota API eMola C2B (via Kivora):', error);
+    try {
+      await notifyAdminPaymentError({
+        clientName: parsedBody?.clientName,
+        clientEmail: parsedBody?.clientEmail,
+        clientPhone: parsedBody?.msisdn,
+        serviceName: parsedBody?.serviceName,
+        paymentMethod: 'emola',
+        amount: typeof parsedBody?.amount === 'number' ? parsedBody.amount : Number(parsedBody?.amount),
+        reference: parsedBody?.reference || parsedBody?.thirdPartyReference,
+        reason: errorMsg
+      });
+    } catch (notifyErr) {
+      console.error('[EMOLA C2B] Falha ao notificar admin sobre erro:', notifyErr);
+    }
     return NextResponse.json(
-      { error: errorMsg },
+      { error: errorMsg, adminNotified: true },
       { status: 500 }
     );
   }

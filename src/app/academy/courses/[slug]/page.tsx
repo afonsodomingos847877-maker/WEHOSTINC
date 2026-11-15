@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import AcademyNavbar from '@/components/academy/AcademyNavbar';
 import AcademyFooter from '@/components/academy/AcademyFooter';
+import AnimatedMeshGradient from '@/components/AnimatedMeshGradient';
 
 interface Course {
   id: string;
@@ -299,30 +300,31 @@ export default function CourseDetailsPage() {
       <AcademyNavbar />
 
       {/* BREADCRUMB */}
-      <div className="bg-slate-900 text-slate-300 border-b border-slate-800 text-xs py-3 px-4 sm:px-8">
+      <div className="bg-white/80 backdrop-blur-sm text-slate-600 border-b border-slate-200/70 text-xs py-3 px-4 sm:px-8">
         <div className="max-w-7xl mx-auto flex items-center gap-2">
-          <Link href="/academy" className="hover:text-emerald-400 transition">
+          <Link href="/academy" className="hover:text-emerald-700 transition font-medium">
             Academia
           </Link>
-          <span>/</span>
-          <span className="text-slate-400">{course.category || 'Cursos'}</span>
-          <span>/</span>
-          <span className="text-white font-medium truncate max-w-xs sm:max-w-none">{course.title}</span>
+          <span className="text-slate-400">/</span>
+          <span className="text-slate-500">{course.category || 'Cursos'}</span>
+          <span className="text-slate-400">/</span>
+          <span className="text-slate-900 font-semibold truncate max-w-xs sm:max-w-none">{course.title}</span>
         </div>
       </div>
 
       {/* COURSE HERO */}
-      <section className="bg-gradient-to-b from-slate-900 to-slate-950 text-white pt-10 pb-16 sm:pb-20 border-b border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="relative overflow-hidden bg-[#fcfdf9] text-slate-900 pt-10 pb-16 sm:pb-20 border-b border-slate-200/70">
+        <AnimatedMeshGradient />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 items-start">
             
             {/* Left 2 Cols: Content info */}
             <div className="lg:col-span-2 space-y-5">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-bold border border-emerald-500/30">
+                <span className="px-3 py-1 rounded-full bg-emerald-100/90 text-emerald-800 text-xs font-bold border border-emerald-300/80 shadow-xs">
                   {course.category || 'Desenvolvimento Web'}
                 </span>
-                <span className="px-3 py-1 rounded-full bg-slate-800 text-slate-300 text-xs font-semibold">
+                <span className="px-3 py-1 rounded-full bg-white/85 text-slate-700 border border-slate-200 text-xs font-semibold shadow-xs">
                   {course.level || 'Todos os Níveis'}
                 </span>
                 {freeLessonWithVideo ? (
@@ -338,47 +340,47 @@ export default function CourseDetailsPage() {
                         });
                       }
                     }}
-                    className="px-3 py-1 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 text-xs font-bold border border-emerald-500/30 flex items-center gap-1.5 transition cursor-pointer shadow-xs"
+                    className="px-3 py-1 rounded-full bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-800 text-xs font-bold border border-emerald-400/50 flex items-center gap-1.5 transition cursor-pointer shadow-xs"
                     title="Clique para assistir à aula gratuita agora"
                   >
-                    <Play className="w-3 h-3 fill-current text-emerald-400" />
+                    <Play className="w-3 h-3 fill-current text-emerald-700" />
                     <span>Aula Grátis Disponível • Assistir</span>
                   </button>
                 ) : (
-                  <span className="px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-300 text-xs font-semibold">
+                  <span className="px-3 py-1 rounded-full bg-cyan-100 text-cyan-800 border border-cyan-200 text-xs font-semibold">
                     100% Prático
                   </span>
                 )}
               </div>
 
-              <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white leading-tight">
+              <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black text-slate-900 leading-tight">
                 {course.title}
               </h1>
 
-              <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
+              <p className="text-sm sm:text-base text-slate-700 leading-relaxed">
                 {course.description}
               </p>
 
               {/* Stats badges */}
-              <div className="flex flex-wrap items-center gap-4 sm:gap-6 pt-2 text-xs sm:text-sm text-slate-300">
-                <div className="flex items-center gap-1.5 text-amber-400 font-bold">
+              <div className="flex flex-wrap items-center gap-4 sm:gap-6 pt-2 text-xs sm:text-sm text-slate-700">
+                <div className="flex items-center gap-1.5 text-amber-600 font-bold">
                   <Star className="w-4 h-4 fill-current" />
                   <span>{course.rating || 4.9}</span>
-                  <span className="text-slate-400 font-normal">({course.studentsCount || 184} alunos)</span>
+                  <span className="text-slate-500 font-normal">({course.studentsCount || 184} alunos)</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <Clock className="w-4 h-4 text-emerald-400" />
+                  <Clock className="w-4 h-4 text-emerald-600" />
                   <span>{course.duration} de conteúdo</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <Award className="w-4 h-4 text-emerald-400" />
+                  <Award className="w-4 h-4 text-emerald-600" />
                   <span>Certificado Oficial</span>
                 </div>
               </div>
 
               {/* Instructor snippet */}
-              <div className="pt-4 border-t border-slate-800/80 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 p-1 overflow-hidden flex items-center justify-center shrink-0 shadow-sm backdrop-blur-xs">
+              <div className="pt-4 border-t border-slate-200/80 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 p-1 overflow-hidden flex items-center justify-center shrink-0 shadow-sm">
                   <img
                     src={course.instructorAvatar || "/icon-192.png"}
                     alt={course.instructorName || "WEHOSTHERE"}
@@ -386,8 +388,8 @@ export default function CourseDetailsPage() {
                   />
                 </div>
                 <div>
-                  <p className="text-xs text-slate-400">Criado e lecionado por:</p>
-                  <p className="text-sm font-bold text-white">{course.instructorName || 'Equipa WEHOSTHERE'}</p>
+                  <p className="text-xs text-slate-500">Criado e lecionado por:</p>
+                  <p className="text-sm font-bold text-slate-900">{course.instructorName || 'Equipa WEHOSTHERE'}</p>
                 </div>
               </div>
             </div>

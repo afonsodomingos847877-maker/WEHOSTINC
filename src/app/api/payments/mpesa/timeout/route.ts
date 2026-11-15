@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { addAdminNotification, dispatchMessage } from '@/lib/notifications';
+import { dispatchMessage, notifyAdminPaymentError } from '@/lib/notifications';
 import { connectDB } from '@/lib/mongodb';
 import OrderModel from '@/lib/models/Order';
 import { rateLimit, getRateLimitIdentifier } from '@/lib/rateLimiter';
@@ -37,14 +37,16 @@ export async function POST(req: Request) {
     const verifiedEmail = String(matchingOrder.clientEmail || cleanEmail).trim().toLowerCase();
     const verifiedName = String(matchingOrder.clientName || clientName || 'Cliente');
 
-    // 🔴 Notificar Administrador sobre tempo limite de pagamento M-Pesa
-    addAdminNotification({
-      title: `⏳ M-Pesa: Tempo Expirado / PIN Não Digitado`,
-      message: `O cliente ${verifiedName} não introduziu o PIN a tempo ou cancelou no telemóvel. Ref: ${cleanRef}.`,
-      type: 'payment_failed',
-      userEmail: verifiedEmail,
-      userName: verifiedName,
-      link: '/admin?tab=orders'
+    // 🔴 Notificar Administrador (painel, e-mail e push) sobre tempo limite de pagamento M-Pesa
+    await notifyAdminPaymentError({
+      clientName: verifiedName,
+      clientEmail: verifiedEmail,
+      clientPhone: matchingOrder.clientPhone,
+      serviceName: matchingOrder.serviceName,
+      paymentMethod: matchingOrder.paymentMethod || 'mpesa',
+      amount: typeof amount === 'number' ? amount : matchingOrder.amount,
+      reference: cleanRef,
+      reason: 'Tempo expirado / PIN não digitado a tempo no telemóvel'
     });
 
     // ✉️ Enviar e-mail automático ao cliente sobre o tempo expirado / falha no PIN

@@ -2,8 +2,10 @@ import { NextResponse } from 'next/server';
 import { kivora } from '@/lib/kivora';
 
 export async function POST(req: Request) {
+  let parsedBody: any = {};
   try {
     const body = await req.json();
+    parsedBody = body;
     const { msisdn, amount, reference, thirdPartyReference, clientName, clientEmail, serviceName } = body;
 
     if (!msisdn || !amount) {
@@ -106,8 +108,23 @@ export async function POST(req: Request) {
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : 'Falha ao processar pagamento via M-Pesa';
     console.error('Erro na rota API M-Pesa C2B (via Kivora):', error);
+    try {
+      const { notifyAdminPaymentError } = await import('@/lib/notifications');
+      await notifyAdminPaymentError({
+        clientName: parsedBody?.clientName,
+        clientEmail: parsedBody?.clientEmail,
+        clientPhone: parsedBody?.msisdn,
+        serviceName: parsedBody?.serviceName,
+        paymentMethod: 'mpesa',
+        amount: typeof parsedBody?.amount === 'number' ? parsedBody.amount : Number(parsedBody?.amount),
+        reference: parsedBody?.reference || parsedBody?.thirdPartyReference,
+        reason: errorMsg
+      });
+    } catch (notifyErr) {
+      console.error('[M-PESA C2B] Falha ao notificar admin sobre erro:', notifyErr);
+    }
     return NextResponse.json(
-      { error: errorMsg },
+      { error: errorMsg, adminNotified: true },
       { status: 500 }
     );
   }
