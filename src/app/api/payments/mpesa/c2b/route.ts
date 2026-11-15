@@ -109,7 +109,7 @@ export async function POST(req: Request) {
     const errorMsg = error instanceof Error ? error.message : 'Falha ao processar pagamento via M-Pesa';
     console.error('Erro na rota API M-Pesa C2B (via Kivora):', error);
     try {
-      const { notifyAdminPaymentError } = await import('@/lib/notifications');
+      const { notifyAdminPaymentError } = await import('@/lib/paymentAlerts');
       await notifyAdminPaymentError({
         clientName: parsedBody?.clientName,
         clientEmail: parsedBody?.clientEmail,

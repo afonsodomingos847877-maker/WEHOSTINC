@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { dispatchMessage, notifyAdminPaymentError } from '@/lib/notifications';
+import { dispatchMessage } from '@/lib/notifications';
+import { notifyAdminPaymentError } from '@/lib/paymentAlerts';
 import { connectDB } from '@/lib/mongodb';
 import OrderModel from '@/lib/models/Order';
 import { rateLimit, getRateLimitIdentifier } from '@/lib/rateLimiter';

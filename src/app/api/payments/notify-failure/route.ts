@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { notifyAdminPaymentError } from '@/lib/notifications';
+import { notifyAdminPaymentError } from '@/lib/paymentAlerts';
 import { rateLimit, getRateLimitIdentifier } from '@/lib/rateLimiter';
 
 export async function POST(req: Request) {

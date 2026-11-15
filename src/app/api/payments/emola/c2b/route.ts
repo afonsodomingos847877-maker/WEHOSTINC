@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { kivora } from '@/lib/kivora';
-import { notifyAdminPaymentError } from '@/lib/notifications';
+import { notifyAdminPaymentError } from '@/lib/paymentAlerts';
 
 export async function POST(req: Request) {
   let parsedBody: any = {};
