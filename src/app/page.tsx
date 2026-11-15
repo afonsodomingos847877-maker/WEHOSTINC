@@ -144,16 +144,60 @@ export default function Home() {
       <Navbar />
 
       {/* Hero + Banner - two-column on desktop, stacked on mobile */}
-      <section id="infraestrutura" className="relative min-h-[600px] sm:min-h-[700px] px-4 bg-slate-950 text-white overflow-hidden shadow-2xl w-full flex items-center justify-center pb-0">
-        {/* Imagem de Fundo estática */}
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-70"
-          style={{ backgroundImage: "url('/datacenter-bg.jpg')" }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/65 via-slate-950/70 to-slate-950" />
+      <section id="infraestrutura" className="relative min-h-[600px] sm:min-h-[700px] px-4 bg-[#fcfdf9] text-slate-900 overflow-hidden w-full flex items-center justify-center pb-0 border-b border-slate-100">
+        {/* Gradiente vivo animado inspirado no bannergrad */}
+        <div aria-hidden="true" className="absolute inset-0 overflow-hidden pointer-events-none">
+          {/* Onda Violeta / Índigo (inferior esquerda) */}
+          <div
+            className="absolute -bottom-32 -left-24 w-[78%] sm:w-[62%] h-[78%] rounded-[48%_52%_60%_40%] blur-[70px] sm:blur-[95px] opacity-85 will-change-transform"
+            style={{
+              background: 'radial-gradient(ellipse at 38% 58%, #4f46e5 0%, #6d5dfc 42%, #a594ff 72%, transparent 100%)',
+              animation: 'meshWaveViolet 13s ease-in-out infinite',
+            }}
+          />
+          {/* Onda Esmeralda / Teal (superior direita) */}
+          <div
+            className="absolute -top-24 -right-24 w-[82%] sm:w-[68%] h-[82%] rounded-[40%_60%_45%_55%] blur-[70px] sm:blur-[95px] opacity-85 will-change-transform"
+            style={{
+              background: 'radial-gradient(ellipse at 58% 44%, #009e7f 0%, #00bfa5 45%, #2dd4bf 74%, transparent 100%)',
+              animation: 'meshWaveTeal 15s ease-in-out infinite',
+            }}
+          />
+          {/* Ponte suave central (fusão entre violeta e teal) */}
+          <div
+            className="absolute top-[22%] left-[22%] w-[55%] h-[58%] rounded-full blur-[85px] opacity-55 will-change-transform"
+            style={{
+              background: 'radial-gradient(circle at 50% 50%, rgba(56, 189, 248, 0.45) 0%, rgba(129, 140, 248, 0.3) 48%, transparent 78%)',
+              animation: 'meshBridge 17s ease-in-out infinite',
+            }}
+          />
+          {/* Curva inferior suave */}
+          <div
+            className="absolute -bottom-24 left-[26%] w-[52%] h-[52%] rounded-full blur-[80px] opacity-60 will-change-transform"
+            style={{
+              background: 'radial-gradient(circle at 50% 50%, rgba(109, 93, 252, 0.55) 0%, rgba(45, 212, 191, 0.25) 60%, transparent 82%)',
+              animation: 'meshWaveViolet 16s ease-in-out infinite reverse',
+            }}
+          />
+        </div>
+        <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-b from-white/10 via-transparent to-white/65 pointer-events-none" />
 
-        {/* Keyframes globais do mascote */}
+        {/* Keyframes globais do mascote e do gradiente vivo */}
         <style>{`
+          @keyframes meshWaveViolet {
+            0%, 100% { transform: translate3d(0%, 0%, 0) scale(1) rotate(0deg); }
+            33% { transform: translate3d(6%, -7%, 0) scale(1.08) rotate(5deg); }
+            66% { transform: translate3d(-4%, 4%, 0) scale(0.96) rotate(-4deg); }
+          }
+          @keyframes meshWaveTeal {
+            0%, 100% { transform: translate3d(0%, 0%, 0) scale(1) rotate(0deg); }
+            35% { transform: translate3d(-7%, 6%, 0) scale(1.07) rotate(-5deg); }
+            70% { transform: translate3d(4%, -5%, 0) scale(0.95) rotate(4deg); }
+          }
+          @keyframes meshBridge {
+            0%, 100% { transform: translate3d(0%, 0%, 0) scale(1); }
+            50% { transform: translate3d(8%, -6%, 0) scale(1.14); }
+          }
           @keyframes mascoteFloat {
             0%, 100% { transform: translateY(0px) rotate(-1deg); }
             50% { transform: translateY(-18px) rotate(1deg); }
@@ -183,7 +227,7 @@ export default function Home() {
 
             {/* Título principal */}
             <h1
-              className={`text-2xl sm:text-4xl lg:text-5xl xl:text-6xl font-extrabold text-white mb-3 sm:mb-4 tracking-tight leading-tight drop-shadow-lg transition-all duration-500 ${
+              className={`text-2xl sm:text-4xl lg:text-5xl xl:text-6xl font-extrabold text-slate-900 mb-3 sm:mb-4 tracking-tight leading-tight transition-all duration-500 ${
                 isSearchFocused ? 'text-center mx-auto max-w-4xl' : ''
               }`}
             >
