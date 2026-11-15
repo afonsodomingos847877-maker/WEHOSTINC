@@ -349,5 +349,20 @@ body:has(aside[aria-label="Barra Promocional do Programa de Afiliados"].translat
   opacity: 0;
 }
 
+/* ─── Efeito suave de zoom in / zoom out contínuo para o banner ─── */
+@keyframes banner-zoom {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+.banner-bg-zoom {
+  animation: banner-zoom 14s ease-in-out infinite;
+  will-change: transform;
+}
+
 
 

@@ -556,7 +556,7 @@ export default function DashboardPage() {
             {/* Welcome Card com Gradiente Banner */}
             <div className="relative overflow-hidden bg-white rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 text-slate-900 border border-slate-200/80">
               <div
-                className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                className="absolute inset-0 bg-cover bg-center bg-no-repeat banner-bg-zoom"
                 style={{ backgroundImage: `url(${gradientBannerBg.src})` }}
               />
 
