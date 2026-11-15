@@ -22,6 +22,58 @@ import { trackAffiliateEvent } from '@/lib/affiliateEventsClient';
 import { useTranslation, getLanguage, setLanguage, Language } from '@/lib/i18n';
 import { useAnalytics } from '@/lib/analytics';
 
+const WHATSAPP_PLACEHOLDERS = [
+  'Número sem DDI (ex: 84 123 4567)',
+  'Digite o seu WhatsApp (ex: 84 123 4567)',
+  'Ex: 84 123 4567 ou 86 123 4567',
+];
+
+const AFFILIATE_PHONE_PLACEHOLDERS = [
+  '84 123 4567 ou 86 123 4567',
+  'Número M-Pesa ou eMola para comissões',
+  'Ex: 84 123 4567 ou 87 123 4567',
+];
+
+function useTypewriterPlaceholder(phrases: string[]) {
+  const [typed, setTyped] = useState(phrases[0] || '');
+
+  useEffect(() => {
+    let phraseIndex = 0;
+    let charIndex = 0;
+    let isDeleting = false;
+    let timeoutId: ReturnType<typeof setTimeout>;
+
+    const tick = () => {
+      const current = phrases[phraseIndex];
+      if (!isDeleting) {
+        if (charIndex < current.length) {
+          charIndex++;
+          setTyped(current.slice(0, charIndex));
+          timeoutId = setTimeout(tick, 45);
+        } else {
+          isDeleting = true;
+          timeoutId = setTimeout(tick, 2400);
+        }
+      } else {
+        if (charIndex > 0) {
+          charIndex--;
+          setTyped(current.slice(0, charIndex));
+          timeoutId = setTimeout(tick, 22);
+        } else {
+          isDeleting = false;
+          phraseIndex = (phraseIndex + 1) % phrases.length;
+          timeoutId = setTimeout(tick, 220);
+        }
+      }
+    };
+
+    timeoutId = setTimeout(tick, 300);
+    return () => clearTimeout(timeoutId);
+  }, [phrases]);
+
+  return typed;
+}
+
 function CheckoutContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -71,46 +123,8 @@ function CheckoutContent() {
   const [email, setEmail] = useState('');
   const [ddi, setDdi] = useState('+258');
   const [whatsapp, setWhatsapp] = useState('');
-  const [whatsappPlaceholderTyped, setWhatsappPlaceholderTyped] = useState('Número sem DDI (ex: 84 123 4567)');
-
-  useEffect(() => {
-    const phrases = [
-      'Número sem DDI (ex: 84 123 4567)',
-      'Digite o seu WhatsApp (ex: 84 123 4567)',
-      'Ex: 84 123 4567 ou 86 123 4567'
-    ];
-    let phraseIndex = 0;
-    let charIndex = 0;
-    let isDeleting = false;
-    let timeoutId: ReturnType<typeof setTimeout>;
-
-    const tick = () => {
-      const current = phrases[phraseIndex];
-      if (!isDeleting) {
-        if (charIndex < current.length) {
-          charIndex++;
-          setWhatsappPlaceholderTyped(current.slice(0, charIndex));
-          timeoutId = setTimeout(tick, 45);
-        } else {
-          isDeleting = true;
-          timeoutId = setTimeout(tick, 2400);
-        }
-      } else {
-        if (charIndex > 0) {
-          charIndex--;
-          setWhatsappPlaceholderTyped(current.slice(0, charIndex));
-          timeoutId = setTimeout(tick, 22);
-        } else {
-          isDeleting = false;
-          phraseIndex = (phraseIndex + 1) % phrases.length;
-          timeoutId = setTimeout(tick, 220);
-        }
-      }
-    };
-
-    timeoutId = setTimeout(tick, 300);
-    return () => clearTimeout(timeoutId);
-  }, []);
+  const whatsappPlaceholderTyped = useTypewriterPlaceholder(WHATSAPP_PLACEHOLDERS);
+  const affiliatePhonePlaceholderTyped = useTypewriterPlaceholder(AFFILIATE_PHONE_PLACEHOLDERS);
   const [paymentMethod, setPaymentMethod] = useState<'mpesa' | 'emola' | 'card' | 'bank_transfer'>('mpesa');
   
   // Phone for M-Pesa / eMola push payment
@@ -2095,7 +2109,7 @@ function CheckoutContent() {
                         type="tel"
                         value={affiliatePhone}
                         onChange={(e) => { setAffiliatePhone(e.target.value); if (fieldErrors.affiliatePhone) setFieldErrors(prev => ({ ...prev, affiliatePhone: '' })); }}
-                        placeholder="84 123 4567 ou 86 123 4567"
+                        placeholder={`${affiliatePhonePlaceholderTyped}|`}
                         required
                         className={`w-full px-3 py-2 border rounded-xl outline-none transition text-gray-900 placeholder-gray-400 text-sm shadow-xs ${
                           fieldErrors.affiliatePhone
@@ -2242,26 +2256,24 @@ function CheckoutContent() {
                   </div>
                 )}
 
-                {/* Bank Transfer Option - NÃO mostrar para verificação de afiliado */}
-                {!isAffiliateVerification && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      console.log('[Checkout] Método de pagamento selecionado: Transferência / Comprovativo');
-                      setPaymentMethod('bank_transfer');
-                    }}
-                    className={`p-2 sm:p-2.5 border-2 rounded-xl text-center flex flex-col items-center justify-center transition cursor-pointer ${
-                    paymentMethod === 'bank_transfer'
-                      ? 'border-emerald-600 bg-emerald-50/50 shadow-sm ring-2 ring-emerald-500/20'
-                      : 'border-gray-200 bg-white hover:border-gray-300'
-                  }`}
-                  >
-                    <div className="flex items-center space-x-1 mb-0.5 text-emerald-600">
-                      <Landmark className="h-5 sm:h-5.5 w-5 sm:w-5.5" />
-                    </div>
-                    <span className="text-[10px] sm:text-[11px] font-bold text-gray-800 leading-tight">Transferência / Comprovativo</span>
-                  </button>
-                )}
+                {/* Bank Transfer Option */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    console.log('[Checkout] Método de pagamento selecionado: Transferência / Comprovativo');
+                    setPaymentMethod('bank_transfer');
+                  }}
+                  className={`p-2 sm:p-2.5 border-2 rounded-xl text-center flex flex-col items-center justify-center transition cursor-pointer ${
+                  paymentMethod === 'bank_transfer'
+                    ? 'border-emerald-600 bg-emerald-50/50 shadow-sm ring-2 ring-emerald-500/20'
+                    : 'border-gray-200 bg-white hover:border-gray-300'
+                }`}
+                >
+                  <div className="flex items-center space-x-1 mb-0.5 text-emerald-600">
+                    <Landmark className="h-5 sm:h-5.5 w-5 sm:w-5.5" />
+                  </div>
+                  <span className="text-[10px] sm:text-[11px] font-bold text-gray-800 leading-tight">Transferência / Comprovativo</span>
+                </button>
               </div>
 
               {/* Dynamic Payment Details Input */}
@@ -2374,7 +2386,7 @@ function CheckoutContent() {
                 </div>
               )}
 
-              {!isAffiliateVerification && paymentMethod === 'bank_transfer' && (
+              {paymentMethod === 'bank_transfer' && (
                 <div className="mt-4 p-4 bg-emerald-50/60 rounded-xl border border-emerald-200 space-y-4">
                   <div className="space-y-2 text-xs text-emerald-900">
                     <span className="font-bold block text-sm text-emerald-950">🏦 Contas Bancárias Oficiais para Transferência:</span>
