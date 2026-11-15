@@ -561,18 +561,18 @@ export default function AffiliatesPage() {
 
   if (!affiliate) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-amber-50/30 to-indigo-50/40 py-6 sm:py-10 px-4">
-        <div className="w-full max-w-5xl mx-auto space-y-6">
+      <div className="min-h-screen lg:h-screen lg:overflow-hidden bg-gradient-to-br from-slate-50 via-amber-50/30 to-indigo-50/40 flex flex-col px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
+        <div className="w-full max-w-7xl mx-auto flex-1 flex flex-col justify-between gap-3 sm:gap-4 min-h-0">
           {/* Top navigation */}
-          <div className="flex items-center justify-between">
+          <div className="shrink-0 flex items-center justify-between">
             <Link
               href="/dashboard"
-              className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-600 hover:text-slate-900 bg-white px-3.5 py-2 rounded-xl border border-slate-200/80 shadow-xs transition"
+              className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-600 hover:text-slate-900 bg-white px-3.5 py-1.5 rounded-xl border border-slate-200/80 shadow-xs transition"
             >
               <ArrowLeft className="h-4 w-4" />
               <span>Voltar ao Dashboard</span>
             </Link>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-200/80">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-200/80">
               <Sparkles className="h-3.5 w-3.5 text-amber-600" />
               <span>Programa de Afiliados</span>
             </span>
@@ -580,7 +580,7 @@ export default function AffiliatesPage() {
 
           {/* Genuine auth/network alert only */}
           {errorMessage && (errorType === 'auth' || errorType === 'network') && (
-            <div className={`p-3.5 rounded-2xl border text-xs sm:text-sm flex items-center justify-between shadow-xs ${
+            <div className={`shrink-0 p-2.5 sm:p-3 rounded-2xl border text-xs sm:text-sm flex items-center justify-between shadow-xs ${
               errorType === 'auth' ? 'bg-red-50 border-red-200 text-red-700' : 'bg-amber-50 border-amber-200 text-amber-800'
             }`}>
               <span>{errorMessage}</span>
@@ -593,49 +593,49 @@ export default function AffiliatesPage() {
           )}
 
           {/* Hero Split Card */}
-          <div className="bg-white rounded-3xl shadow-xl border border-slate-200/80 overflow-hidden grid lg:grid-cols-12">
+          <div className="flex-1 min-h-0 bg-white rounded-3xl shadow-xl border border-slate-200/80 overflow-hidden grid lg:grid-cols-12">
             {/* Left Content */}
-            <div className="lg:col-span-7 p-6 sm:p-8 lg:p-10 flex flex-col justify-between space-y-6">
-              <div className="space-y-4">
+            <div className="lg:col-span-7 p-5 sm:p-6 lg:p-8 flex flex-col justify-center gap-3.5 sm:gap-4 min-h-0">
+              <div className="space-y-2.5 sm:space-y-3">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold">
                   <Rocket className="h-3.5 w-3.5" />
                   <span>Ganhe 30% de comissão por cada indicação</span>
                 </div>
 
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight leading-tight">
+                <h1 className="text-2xl sm:text-3xl lg:text-[2rem] font-black text-slate-900 tracking-tight leading-tight">
                   Transforme suas indicações em{' '}
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-indigo-600">
                     renda recorrente
                   </span>
                 </h1>
 
-                <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
+                <p className="text-xs sm:text-sm lg:text-[15px] text-slate-600 leading-relaxed max-w-xl">
                   Compartilhe o seu link exclusivo da WEHOSTHERE e receba comissões reais sempre que um cliente contratar hospedagem, domínio ou criação de site.
                 </p>
 
                 {/* 3 Benefit Cards */}
-                <div className="grid grid-cols-3 gap-2.5 sm:gap-3 pt-1">
-                  <div className="bg-slate-50 rounded-2xl p-3 sm:p-3.5 border border-slate-200/70 text-center">
-                    <Percent className="h-4 w-4 sm:h-5 sm:w-5 mx-auto text-primary-600 mb-1" />
+                <div className="grid grid-cols-3 gap-2.5 pt-0.5">
+                  <div className="bg-slate-50 rounded-2xl p-2.5 sm:p-3 border border-slate-200/70 text-center">
+                    <Percent className="h-4 w-4 mx-auto text-primary-600 mb-1" />
                     <span className="block text-sm sm:text-base font-black text-slate-900 leading-tight">30%</span>
-                    <span className="block text-[11px] text-slate-500 mt-0.5">Comissão</span>
+                    <span className="block text-[11px] text-slate-500">Comissão</span>
                   </div>
-                  <div className="bg-slate-50 rounded-2xl p-3 sm:p-3.5 border border-slate-200/70 text-center">
-                    <Share2 className="h-4 w-4 sm:h-5 sm:w-5 mx-auto text-blue-600 mb-1" />
+                  <div className="bg-slate-50 rounded-2xl p-2.5 sm:p-3 border border-slate-200/70 text-center">
+                    <Share2 className="h-4 w-4 mx-auto text-blue-600 mb-1" />
                     <span className="block text-sm sm:text-base font-black text-slate-900 leading-tight">Link Próprio</span>
-                    <span className="block text-[11px] text-slate-500 mt-0.5">Instantâneo</span>
+                    <span className="block text-[11px] text-slate-500">Instantâneo</span>
                   </div>
-                  <div className="bg-slate-50 rounded-2xl p-3 sm:p-3.5 border border-slate-200/70 text-center">
-                    <Wallet className="h-4 w-4 sm:h-5 sm:w-5 mx-auto text-emerald-600 mb-1" />
+                  <div className="bg-slate-50 rounded-2xl p-2.5 sm:p-3 border border-slate-200/70 text-center">
+                    <Wallet className="h-4 w-4 mx-auto text-emerald-600 mb-1" />
                     <span className="block text-sm sm:text-base font-black text-slate-900 leading-tight">1.000 MT</span>
-                    <span className="block text-[11px] text-slate-500 mt-0.5">Saque M-Pesa</span>
+                    <span className="block text-[11px] text-slate-500">Saque M-Pesa</span>
                   </div>
                 </div>
 
                 {/* Verification Notice */}
-                <div className="flex items-center gap-2.5 p-3 bg-amber-50/90 border border-amber-200/90 rounded-2xl text-amber-900">
-                  <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600 flex-shrink-0" />
-                  <p className="leading-snug text-xs sm:text-[13px] font-medium">
+                <div className="flex items-center gap-2.5 p-2.5 sm:p-3 bg-amber-50/90 border border-amber-200/90 rounded-2xl text-amber-900">
+                  <AlertTriangle className="h-4 w-4 text-amber-600 flex-shrink-0" />
+                  <p className="leading-snug text-xs font-medium">
                     {errorMessage.includes('já é afiliado')
                       ? 'Verificação de 2 MZN para vincular seu telemóvel ao recebimento de comissões.'
                       : 'Verificação única de 2 MZN para vincular seu número M-Pesa aos pagamentos.'}
@@ -644,10 +644,10 @@ export default function AffiliatesPage() {
               </div>
 
               {/* Actions */}
-              <div className="space-y-2.5 pt-1">
+              <div className="space-y-1.5 pt-0.5">
                 <Link
                   href={`/checkout?service=affiliate_verification&amount=2&duration=1&domain=affiliate&userId=${encodeURIComponent(session?.user?.id || '')}`}
-                  className="btn-cta-orbit group w-full flex items-center justify-center gap-2.5 py-3.5 px-6 bg-gradient-to-r from-primary-600 via-primary-700 to-indigo-700 hover:from-primary-700 hover:via-primary-800 hover:to-indigo-800 text-white font-extrabold rounded-2xl text-sm sm:text-base shadow-lg hover:shadow-xl transition-all"
+                  className="btn-cta-orbit group w-full flex items-center justify-center gap-2.5 py-3 px-6 bg-gradient-to-r from-primary-600 via-primary-700 to-indigo-700 hover:from-primary-700 hover:via-primary-800 hover:to-indigo-800 text-white font-extrabold rounded-2xl text-sm sm:text-base shadow-lg hover:shadow-xl transition-all"
                 >
                   <Users className="h-5 w-5" />
                   <span>{errorMessage.includes('já é afiliado') ? 'Verificar Telefone — 2 MZN' : 'Tornar-se Afiliado — 2 MZN'}</span>
@@ -666,15 +666,15 @@ export default function AffiliatesPage() {
             </div>
 
             {/* Right Visual Showcase (afiliadobanner0) */}
-            <div className="lg:col-span-5 relative min-h-[260px] lg:min-h-full bg-amber-400 overflow-hidden">
+            <div className="lg:col-span-5 relative min-h-[220px] lg:min-h-0 h-full bg-amber-400 overflow-hidden">
               <img
                 src="/afiliadobanner0.jpg"
                 alt="Programa de Afiliados WEHOSTHERE"
                 className="w-full h-full object-cover object-center"
               />
-              <div className="absolute inset-x-4 bottom-4 bg-white/90 backdrop-blur-md rounded-2xl p-3.5 border border-white/80 shadow-lg flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
-                  <ShieldCheck className="h-5 w-5 text-amber-700" />
+              <div className="absolute inset-x-4 bottom-4 bg-white/90 backdrop-blur-md rounded-2xl p-3 border border-white/80 shadow-lg flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
+                  <ShieldCheck className="h-4 w-4 text-amber-700" />
                 </div>
                 <div>
                   <p className="text-xs font-extrabold text-slate-900">Pagamentos Diretos via M-Pesa</p>
@@ -684,49 +684,44 @@ export default function AffiliatesPage() {
             </div>
           </div>
 
-          {/* Bottom Section: Coin Banner + How It Works */}
-          <div className="grid lg:grid-cols-12 gap-6 items-stretch">
-            <div className="lg:col-span-5 relative rounded-3xl overflow-hidden shadow-lg border border-amber-200/70 min-h-[220px]">
+          {/* Compact Bottom Strip: Coin Banner + 3 Steps */}
+          <div className="shrink-0 grid lg:grid-cols-12 gap-3 sm:gap-4 items-stretch">
+            <div className="lg:col-span-4 relative rounded-2xl overflow-hidden shadow-md border border-amber-200/70 h-24 lg:h-[92px]">
               <img
                 src="/afiliadobanner1.jpg"
                 alt="Comissões em Meticais"
                 className="w-full h-full object-cover object-center"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent flex flex-col justify-end p-6 text-white">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-amber-300 mb-1">
+              <div className="absolute inset-0 bg-gradient-to-r from-slate-950/80 via-slate-950/40 to-transparent flex flex-col justify-center px-4 text-white">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300">
                   Renda Extra em Moçambique
                 </span>
-                <h2 className="text-lg sm:text-xl font-black leading-snug">
+                <p className="text-sm font-black leading-tight">
                   Saque rápido a partir de 1.000 MT
-                </h2>
+                </p>
               </div>
             </div>
 
-            <div className="lg:col-span-7 bg-white rounded-3xl shadow-sm border border-slate-200/80 p-6 sm:p-7 flex flex-col justify-center">
-              <h2 className="text-base sm:text-lg font-extrabold text-slate-900 mb-4">
-                Como funciona em 3 passos simples
-              </h2>
-              <div className="grid sm:grid-cols-3 gap-3.5">
-                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
-                  <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-primary-600 text-white text-xs font-black mb-2.5">1</span>
-                  <h3 className="text-xs sm:text-sm font-bold text-slate-900 mb-1">Ative sua conta</h3>
-                  <p className="text-[11px] sm:text-xs text-slate-600 leading-relaxed">
-                    Faça a verificação única de 2 MZN para validar o seu número M-Pesa.
-                  </p>
+            <div className="lg:col-span-8 bg-white rounded-2xl shadow-xs border border-slate-200/80 p-3 grid sm:grid-cols-3 gap-2.5 items-center">
+              <div className="flex items-center gap-2.5 p-2 rounded-xl bg-slate-50 border border-slate-100">
+                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary-600 text-white text-[11px] font-black shrink-0">1</span>
+                <div className="min-w-0">
+                  <h3 className="text-xs font-bold text-slate-900 leading-tight">Ative sua conta</h3>
+                  <p className="text-[11px] text-slate-500 truncate">Verificação única de 2 MZN</p>
                 </div>
-                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
-                  <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-primary-600 text-white text-xs font-black mb-2.5">2</span>
-                  <h3 className="text-xs sm:text-sm font-bold text-slate-900 mb-1">Divulgue seu link</h3>
-                  <p className="text-[11px] sm:text-xs text-slate-600 leading-relaxed">
-                    Partilhe no WhatsApp, redes sociais ou com clientes que precisam de site.
-                  </p>
+              </div>
+              <div className="flex items-center gap-2.5 p-2 rounded-xl bg-slate-50 border border-slate-100">
+                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary-600 text-white text-[11px] font-black shrink-0">2</span>
+                <div className="min-w-0">
+                  <h3 className="text-xs font-bold text-slate-900 leading-tight">Divulgue seu link</h3>
+                  <p className="text-[11px] text-slate-500 truncate">WhatsApp e redes sociais</p>
                 </div>
-                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
-                  <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-emerald-600 text-white text-xs font-black mb-2.5">3</span>
-                  <h3 className="text-xs sm:text-sm font-bold text-slate-900 mb-1">Receba 30%</h3>
-                  <p className="text-[11px] sm:text-xs text-slate-600 leading-relaxed">
-                    Cada venda confirmada gera comissão no seu painel pronta para saque.
-                  </p>
+              </div>
+              <div className="flex items-center gap-2.5 p-2 rounded-xl bg-slate-50 border border-slate-100">
+                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-600 text-white text-[11px] font-black shrink-0">3</span>
+                <div className="min-w-0">
+                  <h3 className="text-xs font-bold text-slate-900 leading-tight">Receba 30%</h3>
+                  <p className="text-[11px] text-slate-500 truncate">Comissão pronta para saque</p>
                 </div>
               </div>
             </div>
