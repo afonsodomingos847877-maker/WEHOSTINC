@@ -12,6 +12,23 @@ export default function NewsletterPopup() {
   const [message, setMessage] = useState('');
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [isAffiliatePromoOpen, setIsAffiliatePromoOpen] = useState(false);
+
+  // Nunca exibir a Newsletter quando a barra promocional principal estiver visível
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (document.body.hasAttribute('data-affiliate-promo-open')) {
+      setIsAffiliatePromoOpen(true);
+    }
+    const handleAffiliatePromoState = (e: Event) => {
+      const open = !!(e as CustomEvent<{ open: boolean }>).detail?.open;
+      setIsAffiliatePromoOpen(open);
+    };
+    window.addEventListener('wehost:affiliate-promo-state', handleAffiliatePromoState);
+    return () => {
+      window.removeEventListener('wehost:affiliate-promo-state', handleAffiliatePromoState);
+    };
+  }, []);
 
   useEffect(() => {
     // Verificar se o usuário já fechou o popup anteriormente
@@ -72,7 +89,7 @@ export default function NewsletterPopup() {
     }
   };
 
-  if (!isVisible || isSubscribed) return null;
+  if (!isVisible || isSubscribed || isAffiliatePromoOpen) return null;
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-2xl animate-in slide-in-from-bottom-10 duration-500">
