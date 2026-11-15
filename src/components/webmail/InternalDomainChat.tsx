@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   MessageSquare,
   Users,
@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { soundEffects } from '@/lib/soundEffects';
 import { apiEndpoint } from '@/lib/siteConfig';
+import { useTypewriterText } from '@/hooks/useTypewriterText';
 
 export interface ColleagueInfo {
   email: string;
@@ -507,6 +508,28 @@ export default function InternalDomainChat({
     (c) => c.email.toLowerCase() === selectedPeer.toLowerCase()
   );
 
+  const chatInputPhrases = useMemo(() => {
+    if (selectedPeer === 'general') {
+      return [
+        'Escreve para a equipa...',
+        'Partilha uma atualização...',
+        'Envia um aviso ou ficheiro...',
+      ];
+    }
+    const peerName = activeColleagueObj?.name || selectedPeer.split('@')[0];
+    return [
+      `Mensagem para ${peerName}...`,
+      'Escreve algo rápido...',
+      'Partilha um ficheiro...',
+    ];
+  }, [selectedPeer, activeColleagueObj?.name]);
+
+  const typedChatPlaceholder = useTypewriterText(
+    chatInputPhrases,
+    isOpen && !messageText,
+    { typingSpeed: 50, deletingSpeed: 28, pauseMs: 2200 }
+  );
+
   const getStatusDotColor = (status: string, isOnline: boolean) => {
     if (!isOnline) return 'bg-neutral-400';
     if (status === 'busy') return 'bg-rose-500';
@@ -530,7 +553,7 @@ export default function InternalDomainChat({
           >
             <MessageSquare className="w-4 h-4 text-white" />
             {totalUnread > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] flex items-center justify-center px-1 bg-emerald-500 text-neutral-950 font-black text-[10px] rounded-full shadow animate-bounce">
+              <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] flex items-center justify-center px-1 bg-white text-primary-700 font-black text-[10px] rounded-full shadow animate-bounce">
                 {totalUnread}
               </span>
             )}
@@ -564,13 +587,13 @@ export default function InternalDomainChat({
           }`}
         >
           {/* Cabeçalho Escuro Corporativo */}
-          <div className="bg-neutral-950 text-white px-4 py-3 border-b border-neutral-800 flex items-center justify-between gap-2 shrink-0">
+          <div className="bg-slate-900 text-white px-4 py-3 border-b border-slate-800 flex items-center justify-between gap-2 shrink-0">
             <div className="flex items-center space-x-3 min-w-0">
               {/* Avatar do Utilizador Atual (Clicável para alterar Foto de Perfil) */}
               <button
                 type="button"
                 onClick={() => setShowProfileEditor(!showProfileEditor)}
-                className="relative w-9 h-9 rounded-full bg-emerald-500/20 border-2 border-emerald-400/60 flex items-center justify-center text-emerald-300 shrink-0 overflow-hidden group cursor-pointer"
+                className="relative w-9 h-9 rounded-full bg-primary-500/20 border-2 border-primary-400/60 flex items-center justify-center text-primary-200 shrink-0 overflow-hidden group cursor-pointer"
                 title="Clique para colocar ou alterar a sua Foto de Perfil"
               >
                 {selfAvatarUrl ? (
@@ -581,7 +604,7 @@ export default function InternalDomainChat({
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <span className="text-xs font-extrabold text-emerald-300">
+                  <span className="text-xs font-extrabold text-primary-200">
                     {(selfDisplayName || safeEmail).charAt(0).toUpperCase()}
                   </span>
                 )}
@@ -592,23 +615,20 @@ export default function InternalDomainChat({
               <div className="min-w-0">
                 <div className="flex items-center space-x-2">
                   <h3 className="text-xs sm:text-sm font-extrabold tracking-tight truncate">
-                    Chat Corporativo Interno
+                    Chat Interno
                   </h3>
                   <a
                     href={`https://${domain}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 hover:bg-emerald-500/35 text-emerald-300 border border-emerald-500/30 shrink-0 inline-flex items-center space-x-1 transition cursor-pointer"
+                    className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-primary-500/20 hover:bg-primary-500/35 text-primary-200 border border-primary-400/30 shrink-0 inline-flex items-center space-x-1 transition cursor-pointer"
                     title={`Visitar o site oficial https://${domain}`}
                   >
-                    <Globe className="w-3 h-3 text-emerald-400" />
+                    <Globe className="w-3 h-3 text-primary-300" />
                     <span>{domain}</span>
-                    <ExternalLink className="w-2.5 h-2.5 text-emerald-400" />
+                    <ExternalLink className="w-2.5 h-2.5 text-primary-300" />
                   </a>
                 </div>
-                <p className="text-[10px] text-neutral-400 truncate">
-                  Comunicação instantânea sem enviar e-mail · Exclusivo para membros de @{domain}
-                </p>
               </div>
             </div>
 
@@ -619,7 +639,7 @@ export default function InternalDomainChat({
                 onClick={() => setShowProfileEditor(!showProfileEditor)}
                 className={`px-2.5 py-1 rounded-xl text-[11px] font-bold transition cursor-pointer flex items-center space-x-1.5 border ${
                   showProfileEditor
-                    ? 'bg-emerald-500 text-neutral-950 border-emerald-400'
+                    ? 'bg-primary-600 text-white border-primary-500'
                     : 'bg-white/10 hover:bg-white/15 text-white border-white/15'
                 }`}
                 title="Colocar ou alterar foto de perfil e nome"
@@ -751,12 +771,12 @@ export default function InternalDomainChat({
             <div className="w-full sm:w-60 bg-neutral-50 border-b sm:border-b-0 sm:border-r border-neutral-200 flex flex-col shrink-0 max-h-44 sm:max-h-none">
               <div className="p-2.5 border-b border-neutral-200/80 flex items-center justify-between">
                 <span className="text-[10px] font-extrabold uppercase tracking-wider text-neutral-500">
-                  Canais & Colegas ({colleagues.length + 1})
+                  Equipa ({colleagues.length + 1})
                 </span>
                 <button
                   type="button"
                   onClick={() => setShowAddColleague(!showAddColleague)}
-                  className="text-[10px] font-bold text-emerald-700 hover:text-emerald-900 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded-lg transition cursor-pointer flex items-center space-x-1"
+                  className="text-[10px] font-bold text-primary-700 hover:text-primary-900 bg-primary-50 hover:bg-primary-100 border border-primary-200 px-2 py-0.5 rounded-lg transition cursor-pointer flex items-center space-x-1"
                   title="Iniciar conversa com outro endereço deste domínio"
                 >
                   <Plus className="w-3 h-3" />
@@ -797,7 +817,7 @@ export default function InternalDomainChat({
                   onClick={() => setSelectedPeer('general')}
                   className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs transition cursor-pointer ${
                     selectedPeer === 'general'
-                      ? 'bg-neutral-900 text-white font-bold shadow-xs'
+                      ? 'bg-primary-600 text-white font-bold shadow-xs'
                       : 'text-neutral-700 hover:bg-neutral-200/70 font-medium'
                   }`}
                 >
@@ -805,25 +825,25 @@ export default function InternalDomainChat({
                     <div
                       className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
                         selectedPeer === 'general'
-                          ? 'bg-emerald-500 text-neutral-950'
+                          ? 'bg-white/20 text-white'
                           : 'bg-neutral-200 text-neutral-700'
                       }`}
                     >
                       <Hash className="w-3.5 h-3.5" />
                     </div>
                     <div className="text-left truncate">
-                      <span className="block truncate">Geral da Equipa</span>
+                      <span className="block truncate">Geral</span>
                       <span
                         className={`text-[10px] block truncate ${
-                          selectedPeer === 'general' ? 'text-neutral-300' : 'text-neutral-400'
+                          selectedPeer === 'general' ? 'text-primary-100' : 'text-slate-400'
                         }`}
                       >
-                        Todos @{domain}
+                        Todos
                       </span>
                     </div>
                   </div>
                   {generalUnread > 0 && (
-                    <span className="px-1.5 py-0.2 bg-emerald-500 text-neutral-950 font-black text-[10px] rounded-full">
+                    <span className="px-1.5 py-0.2 bg-white text-primary-700 font-black text-[10px] rounded-full">
                       {generalUnread}
                     </span>
                   )}
@@ -845,7 +865,7 @@ export default function InternalDomainChat({
                         onClick={() => setSelectedPeer(col.email)}
                         className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs transition cursor-pointer ${
                           isSelected
-                            ? 'bg-neutral-900 text-white font-bold shadow-xs'
+                            ? 'bg-primary-600 text-white font-bold shadow-xs'
                             : 'text-neutral-700 hover:bg-neutral-200/70 font-medium'
                         }`}
                       >
@@ -880,7 +900,7 @@ export default function InternalDomainChat({
                             <span className="block truncate">{col.name}</span>
                             <span
                               className={`text-[10px] font-mono block truncate ${
-                                isSelected ? 'text-neutral-300' : 'text-neutral-400'
+                                isSelected ? 'text-primary-100' : 'text-slate-400'
                               }`}
                             >
                               {col.email.split('@')[0]}
@@ -889,7 +909,7 @@ export default function InternalDomainChat({
                         </div>
 
                         {col.unreadCount > 0 && (
-                          <span className="px-1.5 py-0.2 bg-emerald-500 text-neutral-950 font-black text-[10px] rounded-full">
+                          <span className="px-1.5 py-0.2 bg-white text-primary-700 font-black text-[10px] rounded-full">
                             {col.unreadCount}
                           </span>
                         )}
@@ -901,19 +921,16 @@ export default function InternalDomainChat({
             </div>
 
             {/* Coluna Direita: Mensagens em Tempo Real */}
-            <div className="flex-1 flex flex-col min-h-0 bg-white">
+            <div className="flex-1 flex flex-col min-h-0 bg-slate-50/40">
               {/* Sub-cabeçalho da Conversa Ativa */}
               <div className="px-4 py-2.5 border-b border-neutral-100 flex items-center justify-between bg-white shrink-0">
                 {selectedPeer === 'general' ? (
                   <div className="flex items-center space-x-2">
-                    <Hash className="w-4 h-4 text-emerald-600" />
+                    <Hash className="w-4 h-4 text-primary-600" />
                     <div>
-                      <h4 className="text-xs font-extrabold text-neutral-900">
-                        Canal Geral da Equipa (@{domain})
+                      <h4 className="text-xs font-extrabold text-slate-900">
+                        Geral
                       </h4>
-                      <p className="text-[10px] text-neutral-500">
-                        Visível para todas as contas corporativas de @{domain}
-                      </p>
                     </div>
                   </div>
                 ) : (
@@ -1146,14 +1163,8 @@ export default function InternalDomainChat({
                   type="text"
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
-                  placeholder={
-                    selectedPeer === 'general'
-                      ? `Mensagem rápida para toda a equipa @${domain}...`
-                      : `Mensagem direta para ${
-                          activeColleagueObj?.name || selectedPeer.split('@')[0]
-                        }...`
-                  }
-                  className="flex-1 px-3.5 py-2.5 bg-neutral-100 border border-neutral-200 rounded-xl text-xs text-neutral-900 font-medium outline-none focus:bg-white focus:border-neutral-900 transition"
+                  placeholder={typedChatPlaceholder}
+                  className="flex-1 px-3.5 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-xs text-slate-900 font-medium outline-none focus:bg-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 placeholder:text-slate-400 transition"
                 />
 
                 <button

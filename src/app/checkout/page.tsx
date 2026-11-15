@@ -1723,7 +1723,7 @@ function CheckoutContent() {
                               setLoading(false);
                               setError('');
                             }}
-                            className="btn-cta-orbit group w-full py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold rounded-xl text-xs sm:text-sm shadow-sm hover:shadow-md transition flex items-center justify-center gap-2 cursor-pointer"
+                            className="btn-cta-orbit group w-full py-2.5 px-4 bg-neutral-950 hover:bg-neutral-800 active:bg-black text-white font-bold rounded-full text-xs sm:text-sm shadow-sm hover:shadow-md transition flex items-center justify-center gap-2 cursor-pointer"
                           >
                             <span>Fazer Pagamento Manual</span>
                             <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
@@ -2147,7 +2147,7 @@ function CheckoutContent() {
                 <button
                   type="button"
                   onClick={handleProceedToPayment}
-                  className={`btn-cta-orbit group w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-extrabold text-sm rounded-xl shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer flex items-center justify-center space-x-2 hover:scale-[1.01] ${
+                  className={`btn-cta-orbit group w-full py-3 px-6 bg-neutral-950 hover:bg-neutral-800 active:bg-black text-white font-extrabold text-sm rounded-full shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer flex items-center justify-center space-x-2 hover:scale-[1.01] ${
                     shakeBtn ? 'animate-[shake_0.5s_ease]' : ''
                   }`}
                   style={shakeBtn ? { animation: 'shake 0.5s ease' } : {}}
@@ -2969,7 +2969,7 @@ function CheckoutContent() {
                   type="submit"
                   disabled={loading || paymentMethod === 'emola'}
                   onClick={() => console.log('[Checkout] Botão de compra clicado')}
-                  className="btn-cta-orbit group w-full py-3 sm:py-3.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-extrabold text-sm sm:text-base rounded-xl shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 hover:scale-[1.01] disabled:hover:scale-100"
+                  className="btn-cta-orbit group w-full py-3 sm:py-3.5 px-6 bg-neutral-950 hover:bg-neutral-800 active:bg-black text-white font-extrabold text-sm sm:text-base rounded-full shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 hover:scale-[1.01] disabled:hover:scale-100"
                 >
                   {loading ? (
                     <>

@@ -18,6 +18,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import PageLoader from '@/components/PageLoader';
 import { soundEffects } from '@/lib/soundEffects';
 import AffiliatePushBanner from '@/components/AffiliatePushBanner';
+import AnimatedMeshGradient from '@/components/AnimatedMeshGradient';
 
 // Extender tipos do NextAuth para incluir campos customizados
 declare module 'next-auth' {
@@ -565,11 +566,9 @@ export default function AffiliatesPage() {
 
   if (!affiliate) {
     return (
-      <div
-        className="min-h-screen lg:h-screen lg:overflow-hidden bg-cover bg-center bg-no-repeat flex flex-col px-4 sm:px-6 lg:px-8 py-3 sm:py-4"
-        style={{ backgroundImage: "url('/fundoafiliado.jpg')" }}
-      >
-        <div className="w-full max-w-7xl mx-auto flex-1 flex flex-col justify-between gap-3 sm:gap-4 min-h-0">
+      <div className="relative overflow-hidden min-h-screen lg:h-screen bg-[#fcfdf9] flex flex-col px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
+        <AnimatedMeshGradient />
+        <div className="relative z-10 w-full max-w-7xl mx-auto flex-1 flex flex-col justify-between gap-3 sm:gap-4 min-h-0">
           {/* Top navigation */}
           <div className="shrink-0 flex items-center justify-between">
             <Link

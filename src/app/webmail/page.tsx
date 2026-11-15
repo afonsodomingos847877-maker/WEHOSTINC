@@ -19,6 +19,7 @@ import { emailTemplates, templateCategories, templateCategoriesEN, EmailTemplate
 import { soundEffects } from '@/lib/soundEffects';
 import BrandLogo from '@/components/BrandLogo';
 import PageLoader from '@/components/PageLoader';
+import AnimatedMeshGradient from '@/components/AnimatedMeshGradient';
 import InternalDomainChat from '@/components/webmail/InternalDomainChat';
 import WebmailAnalyticsDashboard from '@/components/webmail/WebmailAnalyticsDashboard';
 import ExternalAccountsModal from '@/components/webmail/ExternalAccountsModal';
@@ -28,6 +29,18 @@ import dynamic from 'next/dynamic';
 import ContactPicker from '@/components/webmail/ContactPicker';
 import RecipientInput, { normalizeRecipients, findInvalidRecipients, splitRecipients } from '@/components/webmail/RecipientInput';
 import { isDemoAccount, DEMO_EMAIL } from '@/lib/demoWebmailData';
+import { useTypewriterText } from '@/hooks/useTypewriterText';
+
+const COMPOSE_TITLE_PHRASES = ['Novo E-mail'];
+const COMPOSE_TO_PHRASES = ['email@exemplo.com', 'cliente@empresa.co.mz', 'contacto@dominio.com'];
+const COMPOSE_SUBJECT_PHRASES = ['Assunto da mensagem', 'Proposta comercial...', 'Confirmação de serviço...'];
+const COMPOSE_BODY_PHRASES = ['Escreva a sua mensagem aqui...', 'Olá, gostaria de apresentar...', 'Caro cliente, segue em anexo...'];
+const EMAIL_SEARCH_PHRASES = [
+  'Pesquisar e-mails...',
+  'Procurar por remetente...',
+  'Procurar por assunto...',
+  'Pesquisar faturas ou anexos...',
+];
 
 const templateCategoryIcons: Record<string, React.ElementType> = {
   'Boas-vindas': Sparkles,
@@ -628,6 +641,40 @@ function WebmailContent() {
   const [editingDraftId, setEditingDraftId] = useState<string | null>(null);
   const [editingScheduledId, setEditingScheduledId] = useState<string | null>(null);
   const [showSchedulePicker, setShowSchedulePicker] = useState(false);
+
+  const typedComposeTitle = useTypewriterText(COMPOSE_TITLE_PHRASES, showCompose, {
+    typingSpeed: 75,
+    deletingSpeed: 40,
+    pauseMs: 3200,
+  });
+  const typedComposeToPlaceholder = useTypewriterText(COMPOSE_TO_PHRASES, showCompose && !composeTo, {
+    typingSpeed: 55,
+    deletingSpeed: 30,
+    pauseMs: 2200,
+  });
+  const typedComposeSubjectPlaceholder = useTypewriterText(COMPOSE_SUBJECT_PHRASES, showCompose && !composeSubject, {
+    typingSpeed: 55,
+    deletingSpeed: 30,
+    pauseMs: 2400,
+  });
+  const typedComposeBodyPlaceholder = useTypewriterText(
+    COMPOSE_BODY_PHRASES,
+    showCompose && (!composeBody || composeBody === '<p><br></p>'),
+    { typingSpeed: 45, deletingSpeed: 25, pauseMs: 2600 }
+  );
+  const typedSearchPlaceholder = useTypewriterText(EMAIL_SEARCH_PHRASES, !searchQuery, {
+    typingSpeed: 55,
+    deletingSpeed: 30,
+    pauseMs: 2200,
+  });
+
+  useEffect(() => {
+    if (!showCompose || typeof document === 'undefined') return;
+    const editor = document.querySelector('.webmail-quill-editor .ql-editor');
+    if (editor) {
+      editor.setAttribute('data-placeholder', typedComposeBodyPlaceholder);
+    }
+  }, [showCompose, typedComposeBodyPlaceholder]);
   const [composeScheduledFor, setComposeScheduledFor] = useState<string>('');
   const scheduledDispatchingRef = useRef<Set<string>>(new Set());
 
@@ -4584,7 +4631,7 @@ function WebmailContent() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-400" />
                 <input
                   type="text"
-                  placeholder="Pesquisar e-mails..."
+                  placeholder={typedSearchPlaceholder}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-9 pr-3 py-2 bg-neutral-100 border border-neutral-200 rounded-xl text-xs text-neutral-900 outline-none focus:bg-white focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 font-medium placeholder:text-neutral-400 transition"
@@ -5012,7 +5059,9 @@ function WebmailContent() {
         </section>
 
         {/* Message Viewer Pane - Mobile First */}
-        <main className={`w-full flex-1 min-h-0 bg-gray-50 flex flex-col overflow-y-auto ${selectedMessage ? 'flex' : 'hidden md:flex'}`}>
+        <main className={`relative overflow-hidden w-full flex-1 min-h-0 bg-[#fcfdf9] flex flex-col ${selectedMessage ? 'flex' : 'hidden md:flex'}`}>
+          <AnimatedMeshGradient />
+          <div className="relative z-10 flex-1 min-h-0 overflow-y-auto flex flex-col">
           {selectedMessage ? (
             <div className="p-4 sm:p-6 max-w-4xl mx-auto w-full flex-1 flex flex-col space-y-4 sm:space-y-6">
               
@@ -5056,10 +5105,10 @@ function WebmailContent() {
                 const GreetingIcon = period === 'morning' ? Sun : period === 'afternoon' ? Sunset : Moon;
                 const greetingIconColor =
                   period === 'morning'
-                    ? 'text-amber-400'
+                    ? 'text-amber-500'
                     : period === 'afternoon'
-                    ? 'text-orange-400'
-                    : 'text-indigo-300';
+                    ? 'text-orange-500'
+                    : 'text-indigo-600';
                 const hasPendingItems =
                   floatingBriefing.unreadCount > 0 ||
                   floatingBriefing.overdueCount > 0 ||
@@ -5067,34 +5116,34 @@ function WebmailContent() {
 
                 return (
                   <div
-                    className={`relative w-full bg-neutral-950 text-white rounded-3xl border border-emerald-500/35 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.45),0_0_35px_-10px_rgba(16,185,129,0.28)] overflow-hidden ${
+                    className={`relative w-full bg-[#fcfdf9] text-slate-900 rounded-3xl border border-slate-200/90 shadow-[0_16px_40px_-12px_rgba(15,23,42,0.18)] overflow-hidden ${
                       floatingBriefing.isClosing ? 'cinematic-card-exit' : 'cinematic-card-enter'
                     }`}
                   >
+                    <AnimatedMeshGradient />
                     {/* Feixe de Luz Cinematográfico (Light Sweep Glint) */}
                     <div className="cinematic-light-sweep pointer-events-none absolute inset-0 z-10" />
-                    <div className="pointer-events-none absolute -top-12 -right-12 w-40 h-40 rounded-full bg-emerald-500/15 blur-2xl" />
 
                     <div className="relative z-20 px-4 py-3 sm:px-5 sm:py-3.5 flex flex-wrap items-center justify-between gap-3">
                       <div className="flex items-center space-x-3 min-w-0">
-                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500/30 to-teal-600/20 border border-emerald-400/40 flex items-center justify-center text-emerald-300 shrink-0 shadow-[0_0_20px_rgba(16,185,129,0.25)]">
+                        <div className="w-9 h-9 rounded-xl bg-white/85 backdrop-blur-sm border border-primary-200 flex items-center justify-center text-primary-600 shrink-0 shadow-xs">
                           <Bell className="w-4 h-4 animate-bounce" />
                         </div>
                         <div className="min-w-0">
-                          <h3 className="text-sm sm:text-base font-extrabold text-white flex items-center gap-1.5 truncate">
+                          <h3 className="text-sm sm:text-base font-extrabold text-slate-900 flex items-center gap-1.5 truncate">
                             <GreetingIcon className={`w-4 h-4 shrink-0 ${greetingIconColor}`} />
                             <span>
                               {`${greeting}, ${userName}!`}
                             </span>
                           </h3>
                           {floatingBriefing.latestSender ? (
-                            <p className="text-xs text-neutral-300 truncate max-w-xs sm:max-w-md mt-0.5">
-                              <span className="text-neutral-400">Mais recente: </span>
-                              <strong className="text-white font-medium">{floatingBriefing.latestSender}</strong>
+                            <p className="text-xs text-slate-700 truncate max-w-xs sm:max-w-md mt-0.5">
+                              <span className="text-slate-600">Mais recente: </span>
+                              <strong className="text-slate-900 font-semibold">{floatingBriefing.latestSender}</strong>
                               {floatingBriefing.latestSubject ? ` - ${floatingBriefing.latestSubject}` : ''}
                             </p>
                           ) : !hasPendingItems ? (
-                            <p className="text-xs text-emerald-400/90 mt-0.5">Caixa de entrada 100% em dia!</p>
+                            <p className="text-xs text-emerald-700 font-medium mt-0.5">Caixa de entrada 100% em dia!</p>
                           ) : null}
                         </div>
                       </div>
@@ -5110,7 +5159,7 @@ function WebmailContent() {
                               if (firstUnread) handleSelectMessage(firstUnread);
                               dismissFloatingBriefing();
                             }}
-                            className="py-1.5 px-3 bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-extrabold text-xs rounded-xl transition cursor-pointer flex items-center gap-1.5 shadow-xs active:scale-95"
+                            className="py-1.5 px-3.5 bg-neutral-950 hover:bg-neutral-800 text-white font-bold text-xs rounded-full transition cursor-pointer flex items-center gap-1.5 shadow-xs active:scale-95"
                           >
                             <Mail className="w-3.5 h-3.5" />
                             <span>Ver Novos ({floatingBriefing.unreadCount})</span>
@@ -5126,16 +5175,16 @@ function WebmailContent() {
                               if (firstOverdue) handleSelectMessage(firstOverdue);
                               dismissFloatingBriefing();
                             }}
-                            className="py-1.5 px-3 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-bold text-xs rounded-xl transition cursor-pointer flex items-center gap-1.5 active:scale-95"
+                            className="py-1.5 px-3.5 bg-white/85 hover:bg-white text-amber-800 border border-amber-300 font-bold text-xs rounded-full transition cursor-pointer flex items-center gap-1.5 shadow-xs active:scale-95"
                           >
-                            <Clock className="w-3.5 h-3.5" />
+                            <Clock className="w-3.5 h-3.5 text-amber-600" />
                             <span>Em Atraso ({floatingBriefing.overdueCount})</span>
                           </button>
                         )}
                         <button
                           type="button"
                           onClick={dismissFloatingBriefing}
-                          className="text-neutral-400 hover:text-white p-1.5 rounded-xl hover:bg-white/10 transition cursor-pointer"
+                          className="text-slate-600 hover:text-slate-900 p-1.5 rounded-full hover:bg-black/5 transition cursor-pointer"
                           title="Fechar notificação"
                         >
                           <X className="w-4 h-4" />
@@ -5144,9 +5193,9 @@ function WebmailContent() {
                     </div>
 
                     {/* Barra de progresso visual de retorno automático ao cabeçalho normal */}
-                    <div className="h-1 w-full bg-neutral-800 overflow-hidden">
+                    <div className="relative z-20 h-1 w-full bg-slate-200/70 overflow-hidden">
                       <div
-                        className="h-full bg-gradient-to-r from-emerald-400 via-teal-300 to-emerald-500 transition-all"
+                        className="h-full bg-gradient-to-r from-indigo-500 via-primary-500 to-teal-400 transition-all"
                         style={{
                           animation: 'shrinkWidth 8.5s linear forwards',
                         }}
@@ -6099,6 +6148,7 @@ function WebmailContent() {
               </div>
             </div>
           )}
+          </div>
         </main>
         </>
         )}
@@ -6219,7 +6269,10 @@ function WebmailContent() {
                 <div className="flex items-center justify-between pb-2.5 border-b border-neutral-100 mb-3">
                   <div className="flex items-center space-x-2">
                     <Edit3 className="h-5 w-5 text-neutral-900" />
-                    <h2 className="text-lg font-bold text-neutral-900">Novo E-mail</h2>
+                    <h2 className="text-lg font-bold text-neutral-900 flex items-center">
+                      <span>{typedComposeTitle}</span>
+                      <span className="inline-block w-[2px] h-5 bg-primary-600 ml-0.5 animate-pulse" aria-hidden="true" />
+                    </h2>
                   </div>
                   <div className="flex items-center space-x-1.5">
                     <button
@@ -6440,7 +6493,7 @@ function WebmailContent() {
                         onChange={setComposeTo}
                         contacts={knownContacts}
                         excludeEmails={[selectedAccountEmail]}
-                        placeholder="email@exemplo.com"
+                        placeholder={typedComposeToPlaceholder}
                       />
 
                       {/* Dropdown de selecção rápida de contactos (adiciona ao invés de substituir) */}
@@ -6496,7 +6549,7 @@ function WebmailContent() {
                     type="text"
                     value={composeSubject}
                     onChange={(e) => setComposeSubject(e.target.value)}
-                    placeholder="Assunto da mensagem"
+                    placeholder={typedComposeSubjectPlaceholder}
                     className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-900 outline-none focus:ring-2 focus:ring-primary-500 font-sans"
                   />
                 </div>
