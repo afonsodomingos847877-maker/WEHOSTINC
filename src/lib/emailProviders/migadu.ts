@@ -125,7 +125,8 @@ export class MigaduEmailProvider extends EmailProvider {
           (typeof errorData.error === 'object' ? JSON.stringify(errorData.error) : null) ||
           `API request failed with status ${response.status}: ${rawText}`;
 
-        console.error(`[Migadu API Request] API error (${response.status}):`, errorMessage, errorData);
+        const logFn = response.status === 404 ? console.warn : console.error;
+        logFn(`[Migadu API Request] API error (${response.status}):`, errorMessage, errorData);
         throw new EmailProviderError(
           errorMessage,
           `API_ERROR_${response.status}`,

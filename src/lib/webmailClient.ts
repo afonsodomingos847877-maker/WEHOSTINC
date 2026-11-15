@@ -142,12 +142,36 @@ export const webmailManager = {
 
   /**
    * Busca mensagens de uma pasta especifica via IMAP (Migadu) com sincronização em tempo real.
+   * Suporta limite em lotes (padrão: 20) e retry automático para ligações lentas.
    */
   getMessages: async (
     accountEmail?: string,
     password?: string,
-    folder: 'inbox' | 'sent' | 'drafts' | 'trash' | 'scheduled' = 'inbox'
+    folder: 'inbox' | 'sent' | 'drafts' | 'trash' | 'scheduled' = 'inbox',
+    limit: number = 20
   ): Promise<WebmailMessage[]> => {
+    const fetchWithRetry = async (url: string, retries = 2, timeoutMs = 25000): Promise<Response> => {
+      let lastErr: unknown;
+      for (let attempt = 0; attempt <= retries; attempt++) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+          const res = await fetch(url, { method: 'GET', signal: controller.signal });
+          clearTimeout(timer);
+          if (res.ok || (res.status >= 400 && res.status < 500)) {
+            return res;
+          }
+          lastErr = new Error(`HTTP ${res.status}`);
+        } catch (err) {
+          clearTimeout(timer);
+          lastErr = err;
+        }
+        if (attempt < retries) {
+          await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+        }
+      }
+      throw lastErr instanceof Error ? lastErr : new Error('Falha de ligação ao servidor de e-mail');
+    };
     const pinnedSet = webmailManager.getPinnedSet(accountEmail);
     const priorityMap = webmailManager.getPriorityMap(accountEmail);
 
@@ -230,21 +254,21 @@ export const webmailManager = {
           email: accountEmail,
           password,
           folder: imapFolder,
+          limit: String(limit),
         });
 
-        const res = await fetch(apiEndpoint(`/api/webmail/messages?${params.toString()}`), {
-          method: 'GET',
-        });
+        const res = await fetchWithRetry(apiEndpoint(`/api/webmail/messages?${params.toString()}`));
 
-        let imapMsgs: WebmailMessage[] = [];
-        if (res.ok) {
-          const data = await res.json();
-          imapMsgs = (data.messages || []).map((msg: WebmailMessage) => ({
-            ...msg,
-            folder,
-            accountEmail,
-          }));
+        if (!res.ok) {
+          throw new Error(`Erro ao carregar mensagens (HTTP ${res.status})`);
         }
+
+        const data = await res.json();
+        const imapMsgs: WebmailMessage[] = (data.messages || []).map((msg: WebmailMessage) => ({
+          ...msg,
+          folder,
+          accountEmail,
+        }));
 
         // Para pasta "Enviados" (sent), mesclar com cache local para exibição instantânea
         if (folder === 'sent') {
@@ -272,9 +296,11 @@ export const webmailManager = {
         if (folder === 'sent') {
           const localSent = typeof window !== 'undefined' ? localStorage.getItem(`${WEBMAIL_SENT_KEY}_${accountEmail.toLowerCase()}`) : null;
           const list = localSent ? JSON.parse(localSent) : [];
-          return sortMessages(list.map(enrichMessage));
+          if (list.length > 0) {
+            return sortMessages(list.map(enrichMessage));
+          }
         }
-        return [];
+        throw error;
       }
     }
 

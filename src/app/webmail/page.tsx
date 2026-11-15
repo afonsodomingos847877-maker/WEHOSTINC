@@ -537,6 +537,9 @@ function WebmailContent() {
 
   const [currentFolder, setCurrentFolder] = useState<'inbox' | 'notifications' | 'sent' | 'starred' | 'trash' | 'drafts' | 'scheduled'>('inbox');
   const [messages, setMessages] = useState<WebmailMessage[]>([]);
+  const [messageLimit, setMessageLimit] = useState<number>(20);
+  const [isLoadingMoreMessages, setIsLoadingMoreMessages] = useState<boolean>(false);
+  const [messagesLoadError, setMessagesLoadError] = useState<string>('');
   const [selectedMessage, setSelectedMessage] = useState<WebmailMessage | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [deleteConfirmModal, setDeleteConfirmModal] = useState<{ isOpen: boolean; msgId: string; msgIds?: string[]; subject: string; isPermanent: boolean } | null>(null);
@@ -1898,15 +1901,18 @@ function WebmailContent() {
       }
 
       // 2. REVALIDAÇÃO SILENCIOSA: Sincroniza em segundo plano sem travar a navegação
+      setMessageLimit(20);
+      setMessagesLoadError('');
       (async () => {
         try {
-          const msgs = await webmailManager.getMessages(selectedAccountEmail, mailboxPassword, folder);
+          const msgs = await webmailManager.getMessages(selectedAccountEmail, mailboxPassword, folder, 20);
           const filtered = currentFolder === 'starred' ? msgs.filter(m => m.starred) : currentFolder === 'notifications' ? msgs.filter(m => isNotificationEmail(m)) : currentFolder === 'inbox' ? msgs.filter(m => !isNotificationEmail(m)) : msgs;
           
           // Gravar no cache rápido
           setCachedMessages(selectedAccountEmail, currentFolder, filtered);
 
           setMessages(filtered);
+          setMessagesLoadError('');
           setSelectedMessage(prev => {
             if (prev && filtered.some(m => m.id === prev.id)) {
               return filtered.find(m => m.id === prev.id) || prev;
@@ -1932,6 +1938,7 @@ function WebmailContent() {
           }
         } catch (error) {
           console.error('[Webmail] Error loading messages:', error);
+          setMessagesLoadError('Ligação lenta ou sem resposta do servidor.');
           if (!cached || cached.length === 0) {
             setMessages([]);
             setSelectedMessage(null);
@@ -1962,7 +1969,7 @@ function WebmailContent() {
     const autoSyncTimer = setInterval(() => {
       if (typeof document !== 'undefined' && document.hidden) return;
       const folder = (currentFolder === 'starred' || currentFolder === 'notifications') ? 'inbox' : currentFolder as 'inbox' | 'sent' | 'drafts' | 'trash' | 'scheduled';
-      webmailManager.getMessages(selectedAccountEmail, mailboxPassword, folder).then(msgs => {
+      webmailManager.getMessages(selectedAccountEmail, mailboxPassword, folder, messageLimit).then(msgs => {
         const filtered = currentFolder === 'starred' ? msgs.filter(m => m.starred) : currentFolder === 'notifications' ? msgs.filter(m => isNotificationEmail(m)) : currentFolder === 'inbox' ? msgs.filter(m => !isNotificationEmail(m)) : msgs;
         setMessages(prev => {
           const hasNew = prev.length !== filtered.length || (prev[0] && filtered[0] && prev[0].id !== filtered[0].id);
@@ -1982,18 +1989,20 @@ function WebmailContent() {
     }, 60000);
 
     return () => clearInterval(autoSyncTimer);
-  }, [selectedAccountEmail, mailboxPassword, currentFolder]);
+  }, [selectedAccountEmail, mailboxPassword, currentFolder, messageLimit]);
 
   const refreshMessages = async () => {
     setSelectedIds(new Set());
     if (selectedAccountEmail && mailboxPassword) {
       setIsRefreshingWebmail(true);
+      setMessagesLoadError('');
       try {
         const folder = (currentFolder === 'starred' || currentFolder === 'notifications') ? 'inbox' : currentFolder as 'inbox' | 'sent' | 'drafts' | 'trash' | 'scheduled';
-        const msgs = await webmailManager.getMessages(selectedAccountEmail, mailboxPassword, folder);
+        const msgs = await webmailManager.getMessages(selectedAccountEmail, mailboxPassword, folder, messageLimit);
         const filtered = currentFolder === 'starred' ? msgs.filter(m => m.starred) : currentFolder === 'notifications' ? msgs.filter(m => isNotificationEmail(m)) : currentFolder === 'inbox' ? msgs.filter(m => !isNotificationEmail(m)) : msgs;
         setCachedMessages(selectedAccountEmail, currentFolder, filtered);
         setMessages(filtered);
+        setMessagesLoadError('');
         setLastSyncedTime(new Date());
         if (folder === 'inbox') {
           const unread = msgs.filter(m => !m.isRead && !isNotificationEmail(m)).length;
@@ -2007,8 +2016,30 @@ function WebmailContent() {
         setFolderStats(prev => ({ ...prev, scheduled: schedAll.length }));
       } catch (error) {
         console.error('[Webmail] Error refreshing messages:', error);
+        setMessagesLoadError('Ligação lenta ou sem resposta do servidor.');
       }
       setIsRefreshingWebmail(false);
+    }
+  };
+
+  const loadMoreMessages = async () => {
+    if (!selectedAccountEmail || !mailboxPassword || isLoadingMoreMessages) return;
+    const nextLimit = Math.min(messageLimit + 20, 200);
+    setIsLoadingMoreMessages(true);
+    setMessagesLoadError('');
+    try {
+      const folder = (currentFolder === 'starred' || currentFolder === 'notifications') ? 'inbox' : currentFolder as 'inbox' | 'sent' | 'drafts' | 'trash' | 'scheduled';
+      const msgs = await webmailManager.getMessages(selectedAccountEmail, mailboxPassword, folder, nextLimit);
+      const filtered = currentFolder === 'starred' ? msgs.filter(m => m.starred) : currentFolder === 'notifications' ? msgs.filter(m => isNotificationEmail(m)) : currentFolder === 'inbox' ? msgs.filter(m => !isNotificationEmail(m)) : msgs;
+      setMessageLimit(nextLimit);
+      setCachedMessages(selectedAccountEmail, currentFolder, filtered);
+      setMessages(filtered);
+      setLastSyncedTime(new Date());
+    } catch (error) {
+      console.error('[Webmail] Error loading more messages:', error);
+      setMessagesLoadError('Não foi possível carregar mais mensagens (ligação lenta).');
+    } finally {
+      setIsLoadingMoreMessages(false);
     }
   };
 
@@ -4971,12 +5002,41 @@ function WebmailContent() {
                 </div>
               ))
             ) : displayMessages.length === 0 ? (
-              <div className="p-8 text-center text-neutral-400 text-xs my-auto">
-                <Mail className="h-8 w-8 mx-auto mb-2 opacity-40" />
-                <p className="font-semibold text-neutral-600">Nenhuma mensagem nesta pasta.</p>
-              </div>
+              messagesLoadError ? (
+                <div className="p-6 text-center text-neutral-500 text-xs my-auto space-y-2.5">
+                  <AlertCircle className="h-8 w-8 mx-auto text-amber-500 opacity-80" />
+                  <p className="font-semibold text-neutral-700">{messagesLoadError}</p>
+                  <button
+                    type="button"
+                    onClick={refreshMessages}
+                    disabled={isRefreshingWebmail}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white font-semibold text-xs transition cursor-pointer disabled:opacity-50"
+                  >
+                    <RefreshCw className={`h-3.5 w-3.5 ${isRefreshingWebmail ? 'animate-spin' : ''}`} />
+                    <span>{isRefreshingWebmail ? 'A tentar...' : 'Tentar novamente'}</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="p-8 text-center text-neutral-400 text-xs my-auto">
+                  <Mail className="h-8 w-8 mx-auto mb-2 opacity-40" />
+                  <p className="font-semibold text-neutral-600">Nenhuma mensagem nesta pasta.</p>
+                </div>
+              )
             ) : (
-              displayMessages.map((msg) => {
+              <>
+                {messagesLoadError && (
+                  <div className="mx-2 mt-1.5 px-3 py-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-[11px] flex items-center justify-between gap-2">
+                    <span className="truncate font-medium">A mostrar cache local ({messagesLoadError})</span>
+                    <button
+                      type="button"
+                      onClick={refreshMessages}
+                      className="shrink-0 font-bold underline hover:text-amber-950 cursor-pointer"
+                    >
+                      Tentar novamente
+                    </button>
+                  </div>
+                )}
+                {displayMessages.map((msg) => {
                 const isSelected = selectedMessage?.id === msg.id;
                 const hasAtt = msg.attachments && msg.attachments.length > 0;
                 const securityCheck = analyzeEmailSecurity(msg, selectedAccountEmail, trustedSenders);
@@ -5104,7 +5164,20 @@ function WebmailContent() {
                     </div>
                   </div>
                 );
-              })
+              })}
+              {currentFolder !== 'scheduled' && currentFolder !== 'drafts' && messages.length >= messageLimit && messageLimit < 200 && (
+                <div className="px-3 py-3 text-center">
+                  <button
+                    type="button"
+                    onClick={loadMoreMessages}
+                    disabled={isLoadingMoreMessages}
+                    className="w-full py-2 px-3 rounded-xl bg-neutral-100 hover:bg-neutral-200/80 text-neutral-700 font-semibold text-xs border border-neutral-200 transition cursor-pointer disabled:opacity-50"
+                  >
+                    {isLoadingMoreMessages ? 'A carregar mais e-mails...' : 'Carregar mais e-mails antigos'}
+                  </button>
+                </div>
+              )}
+              </>
             )}
           </div>
         </section>

@@ -65,23 +65,36 @@ export async function GET(request: Request) {
         const provider = getEmailProvider();
         if (provider.isConfigured()) {
           const migaduDomainSet = new Set<string>();
-          dbDomains.forEach(d => { if (d.domainName) migaduDomainSet.add(d.domainName.toLowerCase().trim()); });
-          try {
-            const SiteModel = (await import('@/lib/models/Site')).default;
-            const dbSites = await SiteModel.find({}).lean();
-            dbSites.forEach((s: any) => { if (s.domain) migaduDomainSet.add(s.domain.toLowerCase().trim()); });
-          } catch {}
-          migaduDomainSet.add('wehosthere.com');
+          let fetchedLiveDomains = false;
 
           try {
             const liveDomains = await provider.listDomains();
             if (Array.isArray(liveDomains)) {
+              fetchedLiveDomains = true;
               liveDomains.forEach((ld: any) => {
                 const dn = (ld.domainName || ld.name || '').toLowerCase().trim();
-                if (dn) migaduDomainSet.add(dn);
+                if (dn && dn.includes('.')) migaduDomainSet.add(dn);
               });
             }
           } catch {}
+
+          // Fallback to DB domains only if listDomains() failed
+          if (!fetchedLiveDomains) {
+            const isValidDomain = (d: string) => /^[a-z0-9.-]+\.[a-z]{2,}$/i.test(d);
+            dbDomains.forEach(d => {
+              const dn = (d.domainName || '').toLowerCase().trim();
+              if (dn && isValidDomain(dn)) migaduDomainSet.add(dn);
+            });
+            try {
+              const SiteModel = (await import('@/lib/models/Site')).default;
+              const dbSites = await SiteModel.find({}).lean();
+              dbSites.forEach((s: any) => {
+                const dn = (s.domain || '').toLowerCase().trim();
+                if (dn && isValidDomain(dn)) migaduDomainSet.add(dn);
+              });
+            } catch {}
+            migaduDomainSet.add('wehosthere.com');
+          }
 
           const migaduDomainNames = Array.from(migaduDomainSet);
           for (const dName of migaduDomainNames) {
