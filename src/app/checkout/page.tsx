@@ -1709,7 +1709,7 @@ function CheckoutContent() {
                               setLoading(false);
                               setError('');
                             }}
-                            className="group w-full py-3 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold rounded-xl text-xs sm:text-sm shadow-md hover:shadow-lg ring-2 ring-emerald-500/25 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer select-none"
+                            className="btn-cta-shine group w-full py-3 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold rounded-xl text-xs sm:text-sm shadow-lg shadow-emerald-600/30 hover:shadow-xl hover:shadow-emerald-600/40 border-b-[3px] border-emerald-800/80 active:border-b-0 ring-2 ring-emerald-500/25 hover:-translate-y-0.5 active:translate-y-0.5 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer select-none"
                           >
                             <span>Fazer Pagamento Manual</span>
                             <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
@@ -2133,13 +2133,13 @@ function CheckoutContent() {
                 <button
                   type="button"
                   onClick={handleProceedToPayment}
-                  className={`w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-extrabold text-sm rounded-xl shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer flex items-center justify-center space-x-2 hover:scale-[1.01] ${
+                  className={`btn-cta-shine group w-full py-3 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 active:from-emerald-800 active:to-teal-800 text-white font-extrabold text-sm rounded-xl shadow-lg shadow-emerald-600/30 hover:shadow-xl hover:shadow-emerald-600/40 border-b-[3px] border-emerald-800/80 active:border-b-0 ring-2 ring-emerald-500/25 hover:-translate-y-0.5 active:translate-y-0.5 active:scale-[0.98] transition-all duration-200 cursor-pointer select-none flex items-center justify-center space-x-2 ${
                     shakeBtn ? 'animate-[shake_0.5s_ease]' : ''
                   }`}
                   style={shakeBtn ? { animation: 'shake 0.5s ease' } : {}}
                 >
                   <span>Continuar para Pagamento</span>
-                  <ArrowRight className="h-4 w-4" />
+                  <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
                 </button>
 
                 <div className="text-center pt-0.5">
@@ -2957,7 +2957,7 @@ function CheckoutContent() {
                   type="submit"
                   disabled={loading || paymentMethod === 'emola'}
                   onClick={() => console.log('[Checkout] Botão de compra clicado')}
-                  className="w-full py-3 sm:py-3.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-extrabold text-sm sm:text-base rounded-xl shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 hover:scale-[1.01]"
+                  className="btn-cta-shine group w-full py-3 sm:py-3.5 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 active:from-emerald-800 active:to-teal-800 text-white font-extrabold text-sm sm:text-base rounded-xl shadow-lg shadow-emerald-600/30 hover:shadow-xl hover:shadow-emerald-600/40 border-b-[3px] border-emerald-800/80 active:border-b-0 ring-2 ring-emerald-500/25 hover:-translate-y-0.5 active:translate-y-0.5 active:scale-[0.98] disabled:hover:translate-y-0 disabled:active:scale-100 disabled:border-b-0 transition-all duration-200 cursor-pointer select-none disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
                 >
                   {loading ? (
                     <>
@@ -2973,7 +2973,7 @@ function CheckoutContent() {
                     <>
                       <Lock className="h-4 w-4" />
                       <span>Finalizar Pagamento ({grandTotal.toLocaleString('pt-MZ')} MT)</span>
-                      <ArrowRight className="h-4 w-4" />
+                      <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
                     </>
                   )}
                 </button>

@@ -18,6 +18,7 @@ import DashboardNav from '@/components/DashboardNav';
 import DashboardSidebar from '@/components/DashboardSidebar';
 import PageLoader from '@/components/PageLoader';
 import { useLanguage } from '@/context/LanguageContext';
+import gradientBannerBg from '@/app/gradientebanner.jpg';
 
 function CircularProgress({ percentage, colorClass, size = 64, strokeWidth = 6 }: { percentage: number; colorClass: string; size?: number; strokeWidth?: number }) {
   const radius = (size - strokeWidth) / 2;
@@ -552,75 +553,74 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {/* Welcome Card com Datacenter Background */}
-            <div className="relative overflow-hidden bg-slate-950 rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 text-white border border-slate-800">
-              <div 
-                className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-35 mix-blend-luminosity"
-                style={{ backgroundImage: "url('/datacenter-bg.jpg')" }}
+            {/* Welcome Card com Gradiente Banner */}
+            <div className="relative overflow-hidden bg-white rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 text-slate-900 border border-slate-200/80">
+              <div
+                className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                style={{ backgroundImage: `url(${gradientBannerBg.src})` }}
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-900/90 to-primary-950/80" />
 
               <div className="relative z-10">
                 <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-                  <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white">{t('dash.welcome_title')}, {user.name}!</h1>
+                  <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900">{t('dash.welcome_title')}, {user.name}!</h1>
                   <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] sm:text-xs font-extrabold uppercase tracking-wider ${
-                    user.plan === 'enterprise' ? 'bg-purple-500/25 text-purple-200 border border-purple-400/40 shadow-sm' :
-                    user.plan === 'pro' ? 'bg-blue-500/25 text-blue-200 border border-blue-400/40 shadow-sm' :
-                    user.plan === 'basic' ? 'bg-emerald-500/25 text-emerald-200 border border-emerald-400/40 shadow-sm' :
-                    'bg-slate-700/60 text-slate-300 border border-slate-600'
+                    user.plan === 'enterprise' ? 'bg-purple-100/90 text-purple-800 border border-purple-200 shadow-sm backdrop-blur-sm' :
+                    user.plan === 'pro' ? 'bg-blue-100/90 text-blue-800 border border-blue-200 shadow-sm backdrop-blur-sm' :
+                    user.plan === 'basic' ? 'bg-emerald-100/90 text-emerald-800 border border-emerald-200 shadow-sm backdrop-blur-sm' :
+                    'bg-slate-100/90 text-slate-700 border border-slate-200 backdrop-blur-sm'
                   }`}>
-                    <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
+                    <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
                     <span>Plano {planInfo.name}</span>
                   </span>
                 </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-3">
                 <Link
                   href="/dashboard/sites"
-                  className="w-full h-11 sm:h-12 flex items-center justify-center space-x-1.5 sm:space-x-2 bg-primary-600 hover:bg-primary-500 text-white px-3 sm:px-4 rounded-xl font-bold text-xs sm:text-sm shadow-md shadow-primary-900/30 transition whitespace-nowrap"
+                  className="w-full h-11 sm:h-12 flex items-center justify-center space-x-1.5 sm:space-x-2 bg-primary-600 hover:bg-primary-500 text-white px-3 sm:px-4 rounded-xl font-bold text-xs sm:text-sm shadow-md shadow-primary-600/25 transition whitespace-nowrap"
                 >
                   <Globe className="h-4 w-4 sm:h-5 sm:w-5" />
                   <span>{t('dash.btn_new_site')}</span>
                 </Link>
                 <Link
                   href="/dashboard/email"
-                  className="w-full h-11 sm:h-12 flex items-center justify-center space-x-1.5 sm:space-x-2 bg-white/10 hover:bg-white/20 text-white border border-white/15 backdrop-blur-sm px-3 sm:px-4 rounded-xl font-semibold text-xs sm:text-sm transition whitespace-nowrap"
+                  className="w-full h-11 sm:h-12 flex items-center justify-center space-x-1.5 sm:space-x-2 bg-white/75 hover:bg-white text-slate-800 border border-slate-200/80 backdrop-blur-md shadow-xs px-3 sm:px-4 rounded-xl font-semibold text-xs sm:text-sm transition whitespace-nowrap"
                 >
                   <Mail className="h-4 w-4 sm:h-5 sm:w-5" />
                   <span>{t('dash.btn_email')}</span>
                 </Link>
                 <Link
                   href="/dashboard/domains"
-                  className="w-full h-11 sm:h-12 flex items-center justify-center space-x-1.5 sm:space-x-2 bg-white/10 hover:bg-white/20 text-white border border-white/15 backdrop-blur-sm px-3 sm:px-4 rounded-xl transition font-semibold text-xs sm:text-sm whitespace-nowrap"
+                  className="w-full h-11 sm:h-12 flex items-center justify-center space-x-1.5 sm:space-x-2 bg-white/75 hover:bg-white text-slate-800 border border-slate-200/80 backdrop-blur-md shadow-xs px-3 sm:px-4 rounded-xl transition font-semibold text-xs sm:text-sm whitespace-nowrap"
                 >
-                  <Plus className="h-4 w-4 sm:h-5 sm:w-5 text-primary-300" />
+                  <Plus className="h-4 w-4 sm:h-5 sm:w-5 text-primary-600" />
                   <span>Registar Domínio</span>
                 </Link>
                 <Link
                   href="/dashboard/visual-builder"
-                  className="w-full h-11 sm:h-12 flex items-center justify-center space-x-1.5 sm:space-x-2 bg-white/10 hover:bg-white/20 text-white border border-white/15 backdrop-blur-sm px-3 sm:px-4 rounded-xl font-semibold text-xs sm:text-sm transition whitespace-nowrap"
+                  className="w-full h-11 sm:h-12 flex items-center justify-center space-x-1.5 sm:space-x-2 bg-white/75 hover:bg-white text-slate-800 border border-slate-200/80 backdrop-blur-md shadow-xs px-3 sm:px-4 rounded-xl font-semibold text-xs sm:text-sm transition whitespace-nowrap"
                 >
-                  <Layers className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+                  <Layers className="h-4 w-4 sm:h-5 sm:w-5 text-slate-700" />
                   <span>Editor Visual Pro</span>
                 </Link>
                 <Link
                   href="/site-quote"
-                  className="w-full h-11 sm:h-12 flex items-center justify-center space-x-1.5 sm:space-x-2 bg-white/10 hover:bg-white/20 text-white border border-white/15 backdrop-blur-sm px-3 sm:px-4 rounded-xl font-semibold text-xs sm:text-sm transition whitespace-nowrap"
+                  className="w-full h-11 sm:h-12 flex items-center justify-center space-x-1.5 sm:space-x-2 bg-white/75 hover:bg-white text-slate-800 border border-slate-200/80 backdrop-blur-md shadow-xs px-3 sm:px-4 rounded-xl font-semibold text-xs sm:text-sm transition whitespace-nowrap"
                 >
-                  <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-primary-300" />
+                  <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-primary-600" />
                   <span>{t('dash.btn_request_site')}</span>
                 </Link>
                 <Link
                   href="/dashboard/systems"
-                  className="w-full h-11 sm:h-12 flex items-center justify-center space-x-1.5 sm:space-x-2 bg-white/10 hover:bg-white/20 text-white border border-white/15 backdrop-blur-sm px-3 sm:px-4 rounded-xl transition font-semibold text-xs sm:text-sm whitespace-nowrap"
+                  className="w-full h-11 sm:h-12 flex items-center justify-center space-x-1.5 sm:space-x-2 bg-white/75 hover:bg-white text-slate-800 border border-slate-200/80 backdrop-blur-md shadow-xs px-3 sm:px-4 rounded-xl transition font-semibold text-xs sm:text-sm whitespace-nowrap"
                 >
                   <Star className="h-4 w-4 sm:h-5 sm:w-5" />
                   <span>{t('dash.btn_systems')}</span>
                 </Link>
                 <Link
                   href="/dashboard/uptime"
-                  className="w-full h-11 sm:h-12 flex items-center justify-center space-x-1.5 sm:space-x-2 bg-white/10 hover:bg-white/20 text-white border border-white/15 backdrop-blur-sm px-3 sm:px-4 rounded-xl transition font-semibold text-xs sm:text-sm whitespace-nowrap"
+                  className="w-full h-11 sm:h-12 flex items-center justify-center space-x-1.5 sm:space-x-2 bg-white/75 hover:bg-white text-slate-800 border border-slate-200/80 backdrop-blur-md shadow-xs px-3 sm:px-4 rounded-xl transition font-semibold text-xs sm:text-sm whitespace-nowrap"
                 >
-                  <Activity className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-400" />
+                  <Activity className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />
                   <span>{t('dash.btn_uptime')}</span>
                 </Link>
                 </div>
