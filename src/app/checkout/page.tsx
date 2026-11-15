@@ -71,6 +71,46 @@ function CheckoutContent() {
   const [email, setEmail] = useState('');
   const [ddi, setDdi] = useState('+258');
   const [whatsapp, setWhatsapp] = useState('');
+  const [whatsappPlaceholderTyped, setWhatsappPlaceholderTyped] = useState('Número sem DDI (ex: 84 123 4567)');
+
+  useEffect(() => {
+    const phrases = [
+      'Número sem DDI (ex: 84 123 4567)',
+      'Digite o seu WhatsApp (ex: 84 123 4567)',
+      'Ex: 84 123 4567 ou 86 123 4567'
+    ];
+    let phraseIndex = 0;
+    let charIndex = 0;
+    let isDeleting = false;
+    let timeoutId: ReturnType<typeof setTimeout>;
+
+    const tick = () => {
+      const current = phrases[phraseIndex];
+      if (!isDeleting) {
+        if (charIndex < current.length) {
+          charIndex++;
+          setWhatsappPlaceholderTyped(current.slice(0, charIndex));
+          timeoutId = setTimeout(tick, 45);
+        } else {
+          isDeleting = true;
+          timeoutId = setTimeout(tick, 2400);
+        }
+      } else {
+        if (charIndex > 0) {
+          charIndex--;
+          setWhatsappPlaceholderTyped(current.slice(0, charIndex));
+          timeoutId = setTimeout(tick, 22);
+        } else {
+          isDeleting = false;
+          phraseIndex = (phraseIndex + 1) % phrases.length;
+          timeoutId = setTimeout(tick, 220);
+        }
+      }
+    };
+
+    timeoutId = setTimeout(tick, 300);
+    return () => clearTimeout(timeoutId);
+  }, []);
   const [paymentMethod, setPaymentMethod] = useState<'mpesa' | 'emola' | 'card' | 'bank_transfer'>('mpesa');
   
   // Phone for M-Pesa / eMola push payment
@@ -1669,10 +1709,10 @@ function CheckoutContent() {
                               setLoading(false);
                               setError('');
                             }}
-                            className="w-full py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs sm:text-sm shadow-sm transition flex items-center justify-center gap-2 cursor-pointer"
+                            className="group w-full py-3 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold rounded-xl text-xs sm:text-sm shadow-md hover:shadow-lg ring-2 ring-emerald-500/25 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer select-none"
                           >
                             <span>Fazer Pagamento Manual</span>
-                            <ArrowRight className="h-4 w-4" />
+                            <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
                           </button>
 
                           <a
@@ -2024,7 +2064,7 @@ function CheckoutContent() {
                           type="tel"
                           value={whatsapp}
                           onChange={(e) => { setWhatsapp(e.target.value); if (fieldErrors.whatsapp) setFieldErrors(prev => ({ ...prev, whatsapp: '' })); }}
-                          placeholder="Número sem DDI (ex: 84 123 4567)"
+                          placeholder={`${whatsappPlaceholderTyped}|`}
                           required
                           className={`w-full sm:flex-1 px-3 py-2 border rounded-xl outline-none transition text-gray-900 placeholder-gray-400 text-sm shadow-xs ${
                             fieldErrors.whatsapp
@@ -2338,10 +2378,38 @@ function CheckoutContent() {
                 <div className="mt-4 p-4 bg-emerald-50/60 rounded-xl border border-emerald-200 space-y-4">
                   <div className="space-y-2 text-xs text-emerald-900">
                     <span className="font-bold block text-sm text-emerald-950">🏦 Contas Bancárias Oficiais para Transferência:</span>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-white p-3 rounded-xl border border-emerald-200 font-mono text-[11px]">
-                      <div>
-                        <strong className="text-gray-900">Millennium BIM:</strong><br />
-                        NIB: 433372004293948
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 bg-white p-3 rounded-xl border border-emerald-200 font-mono text-[11px]">
+                      <div className="flex flex-col justify-between gap-1">
+                        <strong className="text-gray-900">Millennium BIM:</strong>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => copyToClipboard('433372004293948')}
+                            title="Clique para copiar o NIB"
+                            className="inline-flex items-center gap-1.5 text-left text-gray-800 hover:text-emerald-700 transition cursor-pointer group"
+                          >
+                            <span>NIB: <span className="font-bold select-all">433372004293948</span></span>
+                            <span
+                              className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-sans font-semibold border transition-all duration-150 group-active:scale-95 ${
+                                copiedNs === '433372004293948'
+                                  ? 'bg-emerald-600 text-white border-emerald-600'
+                                  : 'bg-emerald-50 text-emerald-700 border-emerald-200 group-hover:bg-emerald-100'
+                              }`}
+                            >
+                              {copiedNs === '433372004293948' ? (
+                                <>
+                                  <Check className="w-3 h-3" />
+                                  <span>Copiado</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Copy className="w-3 h-3" />
+                                  <span>Copiar</span>
+                                </>
+                              )}
+                            </span>
+                          </button>
+                        </div>
                       </div>
                       <div>
                         <strong className="text-gray-900">BCI:</strong><br />
@@ -2351,18 +2419,70 @@ function CheckoutContent() {
                         <strong className="text-gray-900">Standard Bank:</strong><br />
                         <span className="text-gray-400 italic">NIB em breve</span>
                       </div>
-                      <div>
-                        <strong className="text-gray-900">M-Pesa Manual:</strong><br />
-                        <a
-                          href="https://wa.me/258848335618?text=Olá%2C%20quero%20confirmar%20o%20meu%20pagamento%20via%20M-Pesa"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-emerald-600 hover:text-emerald-700 font-bold transition"
-                        >+258 84 833 5618 (WEHOSTHERE)</a>
+                      <div className="flex flex-col justify-between gap-1">
+                        <strong className="text-gray-900">M-Pesa Manual:</strong>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <a
+                            href="https://wa.me/258848335618?text=Olá%2C%20quero%20confirmar%20o%20meu%20pagamento%20via%20M-Pesa"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-emerald-600 hover:text-emerald-700 font-bold transition select-all"
+                          >+258 84 833 5618 (WEHOSTHERE)</a>
+                          <button
+                            type="button"
+                            onClick={() => copyToClipboard('848335618')}
+                            title="Clique para copiar o número M-Pesa"
+                            className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-sans font-semibold border transition-all duration-150 active:scale-95 cursor-pointer ${
+                              copiedNs === '848335618'
+                                ? 'bg-emerald-600 text-white border-emerald-600'
+                                : 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                            }`}
+                          >
+                            {copiedNs === '848335618' ? (
+                              <>
+                                <Check className="w-3 h-3" />
+                                <span>Copiado</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3 h-3" />
+                                <span>Copiar</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
                       </div>
-                      <div>
-                        <strong className="text-gray-900">E-Mola Manual:</strong><br />
-                        <span className="text-gray-400 italic font-sans">Indisponível de momento</span>
+                      <div className="flex flex-col justify-between gap-1">
+                        <strong className="text-gray-900">E-Mola Manual:</strong>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => copyToClipboard('879642412')}
+                            title="Clique para copiar o número e-Mola"
+                            className="inline-flex items-center gap-1.5 text-left text-emerald-600 hover:text-emerald-700 font-bold transition cursor-pointer group"
+                          >
+                            <span className="select-all">+258 87 964 2412</span>
+                            <span
+                              className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-sans font-semibold border transition-all duration-150 group-active:scale-95 ${
+                                copiedNs === '879642412'
+                                  ? 'bg-emerald-600 text-white border-emerald-600'
+                                  : 'bg-emerald-50 text-emerald-700 border-emerald-200 group-hover:bg-emerald-100'
+                              }`}
+                            >
+                              {copiedNs === '879642412' ? (
+                                <>
+                                  <Check className="w-3 h-3" />
+                                  <span>Copiado</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Copy className="w-3 h-3" />
+                                  <span>Copiar</span>
+                                </>
+                              )}
+                            </span>
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
