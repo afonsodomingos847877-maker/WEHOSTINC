@@ -384,5 +384,26 @@ body:has(aside[aria-label="Barra Promocional do Programa de Afiliados"].translat
   50% { transform: translate3d(14%, -10%, 0) scale(1.2) rotate(26deg); }
 }
 
+/* ─── Carrossel contínuo de parceiros numa única linha ─── */
+@keyframes partners-marquee {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.partners-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: partners-marquee 28s linear infinite;
+  will-change: transform;
+}
+
+.partners-marquee-wrap:hover .partners-marquee-track {
+  animation-play-state: paused;
+}
+
 
 
