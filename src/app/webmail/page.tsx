@@ -726,6 +726,7 @@ function WebmailContent() {
   // Collapse states
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [composeTypedText, setComposeTypedText] = useState('Escrever E-mail');
+  const [emptyTitleTyped, setEmptyTitleTyped] = useState('Nenhum e-mail selecionado');
   const [replyPlaceholderTyped, setReplyPlaceholderTyped] = useState('Escreva aqui a sua resposta...');
 
   useEffect(() => {
@@ -771,7 +772,7 @@ function WebmailContent() {
     const phrases = ['Escrever E-mail', 'Nova Mensagem', 'Enviar E-mail'];
     let phraseIndex = 0;
     let charIndex = phrases[0].length;
-    let isDeleting = false;
+    let isDeleting = true;
     let timeoutId: ReturnType<typeof setTimeout>;
 
     const tick = () => {
@@ -798,7 +799,42 @@ function WebmailContent() {
       }
     };
 
-    timeoutId = setTimeout(tick, 2200);
+    timeoutId = setTimeout(tick, 900);
+    return () => clearTimeout(timeoutId);
+  }, []);
+
+  useEffect(() => {
+    const phrases = ['Nenhum e-mail selecionado', 'Nenhuma mensagem aberta', 'Escolha um e-mail à esquerda'];
+    let phraseIndex = 0;
+    let charIndex = phrases[0].length;
+    let isDeleting = true;
+    let timeoutId: ReturnType<typeof setTimeout>;
+
+    const tick = () => {
+      const current = phrases[phraseIndex];
+      if (!isDeleting) {
+        if (charIndex < current.length) {
+          charIndex++;
+          setEmptyTitleTyped(current.slice(0, charIndex));
+          timeoutId = setTimeout(tick, 70);
+        } else {
+          isDeleting = true;
+          timeoutId = setTimeout(tick, 2600);
+        }
+      } else {
+        if (charIndex > 0) {
+          charIndex--;
+          setEmptyTitleTyped(current.slice(0, charIndex));
+          timeoutId = setTimeout(tick, 35);
+        } else {
+          isDeleting = false;
+          phraseIndex = (phraseIndex + 1) % phrases.length;
+          timeoutId = setTimeout(tick, 250);
+        }
+      }
+    };
+
+    timeoutId = setTimeout(tick, 1400);
     return () => clearTimeout(timeoutId);
   }, []);
   const [isFiltersCollapsed, setIsFiltersCollapsed] = useState(false);
@@ -3809,18 +3845,30 @@ function WebmailContent() {
           {/* Account Switcher */}
           {accounts.length > 0 ? (
             <div className="flex items-center space-x-1.5 bg-neutral-100 hover:bg-neutral-200/60 px-2.5 sm:px-3 py-1.5 rounded-xl border border-neutral-200 max-w-[140px] sm:max-w-xs transition">
-              {userAvatarUrl ? (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img
-                  src={userAvatarUrl}
-                  alt={selectedAccountEmail}
-                  onClick={() => setShowInternalChat(true)}
-                  className="h-5 w-5 rounded-full object-cover border border-emerald-400 shrink-0 cursor-pointer"
-                  title="Foto de perfil (clique para editar no Chat da Equipa)"
+              <span className="relative inline-flex shrink-0">
+                {userAvatarUrl ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={userAvatarUrl}
+                    alt={selectedAccountEmail}
+                    onClick={() => setShowInternalChat(true)}
+                    className="h-5 w-5 rounded-full object-cover shrink-0 cursor-pointer"
+                    title="Foto de perfil (clique para editar no Chat da Equipa)"
+                  />
+                ) : (
+                  <span className="h-5 w-5 rounded-full bg-neutral-200 text-neutral-700 flex items-center justify-center shrink-0">
+                    <User className="h-3 w-3" />
+                  </span>
+                )}
+                <span
+                  className={`absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full ring-2 ring-neutral-100 ${
+                    accounts.find(a => a.email === selectedAccountEmail)?.status === 'pending'
+                      ? 'bg-amber-400'
+                      : 'bg-emerald-500'
+                  }`}
+                  title={accounts.find(a => a.email === selectedAccountEmail)?.status === 'pending' ? 'Em processamento' : 'Ativo'}
                 />
-              ) : (
-                <User className="h-3.5 w-3.5 text-neutral-600 shrink-0" />
-              )}
+              </span>
               <select
                 value={selectedAccountEmail}
                 onChange={(e) => {
@@ -3840,7 +3888,7 @@ function WebmailContent() {
                   const pending = acc.status === 'pending' || !acc.status;
                   return (
                     <option key={acc.id} value={acc.email} className="bg-white text-gray-900">
-                      {acc.email} {pending ? '⏳ (Em Processamento)' : '✓ (Ativo)'}
+                      {acc.email}{pending ? ' (Em Processamento)' : ''}
                     </option>
                   );
                 })}
@@ -3853,18 +3901,21 @@ function WebmailContent() {
               className="flex items-center space-x-2 text-xs text-neutral-700 font-mono font-bold bg-neutral-100 hover:bg-neutral-200/70 px-2.5 py-1.5 rounded-xl border border-neutral-200 truncate max-w-[130px] sm:max-w-[210px] cursor-pointer transition"
               title="Clique para abrir o Chat da Equipa ou alterar a sua Foto de Perfil"
             >
-              {userAvatarUrl ? (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img
-                  src={userAvatarUrl}
-                  alt={selectedAccountEmail}
-                  className="h-5 w-5 rounded-full object-cover border border-emerald-500 shrink-0"
-                />
-              ) : (
-                <span className="h-5 w-5 rounded-full bg-neutral-900 text-emerald-400 font-sans font-extrabold text-[10px] flex items-center justify-center shrink-0">
-                  {selectedAccountEmail.charAt(0).toUpperCase()}
-                </span>
-              )}
+              <span className="relative inline-flex shrink-0">
+                {userAvatarUrl ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={userAvatarUrl}
+                    alt={selectedAccountEmail}
+                    className="h-5 w-5 rounded-full object-cover shrink-0"
+                  />
+                ) : (
+                  <span className="h-5 w-5 rounded-full bg-neutral-900 text-white font-sans font-extrabold text-[10px] flex items-center justify-center shrink-0">
+                    {selectedAccountEmail.charAt(0).toUpperCase()}
+                  </span>
+                )}
+                <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-neutral-100" title="Ativo" />
+              </span>
               <span className="truncate">{selectedAccountEmail}</span>
             </button>
           ) : null}
@@ -6139,7 +6190,10 @@ function WebmailContent() {
                   <Mail className="h-10 w-10 text-white/80" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-white text-lg mb-1 drop-shadow-lg">Nenhum e-mail selecionado</h3>
+                  <h3 className="font-bold text-white text-lg mb-1 drop-shadow-lg inline-flex items-center justify-center">
+                    <span>{emptyTitleTyped}</span>
+                    <span className="inline-block w-[2px] h-5 bg-white/90 ml-1 animate-pulse" aria-hidden="true" />
+                  </h3>
                   <p className="text-sm text-white/70 drop-shadow max-w-xs">Selecione uma mensagem na lista à esquerda para visualizar.</p>
                 </div>
                 <button
