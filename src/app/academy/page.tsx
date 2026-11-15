@@ -98,8 +98,8 @@ export default function PublicAcademyPage() {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
           {/* Micro pill */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50/90 border border-emerald-200 text-emerald-700 text-xs font-semibold mb-6 shadow-xs animate-in fade-in duration-300">
-            <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary-50/90 border border-primary-200 text-primary-700 text-xs font-semibold mb-6 shadow-xs animate-in fade-in duration-300">
+            <Sparkles className="w-3.5 h-3.5 text-primary-600" />
             <span>Formação Prática para o Mercado Real</span>
           </div>
 
@@ -107,7 +107,7 @@ export default function PublicAcademyPage() {
             prefix="Aprende a Criar, Escalar e Monetizar na "
             highlight="Era Digital"
             className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-slate-900 max-w-4xl mx-auto leading-[1.15]"
-            highlightClassName="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-teal-600 to-primary-600"
+            highlightClassName="text-primary-600"
           />
 
           <p className="mt-4 text-sm sm:text-base text-slate-600 max-w-xl mx-auto leading-relaxed">
@@ -117,19 +117,19 @@ export default function PublicAcademyPage() {
           {/* Quick Trust Highlights */}
           <div className="mt-8 flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-xs sm:text-sm text-slate-700 font-medium">
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <CheckCircle2 className="w-4 h-4 text-primary-600 shrink-0" />
               <span>Acesso Vitalício Imediato</span>
             </div>
             <div className="flex items-center gap-2">
-              <Smartphone className="w-4 h-4 text-emerald-600 shrink-0" />
+              <Smartphone className="w-4 h-4 text-primary-600 shrink-0" />
               <span>Pagamento M-Pesa & e-Mola</span>
             </div>
             <div className="flex items-center gap-2">
-              <Award className="w-4 h-4 text-emerald-600 shrink-0" />
+              <Award className="w-4 h-4 text-primary-600 shrink-0" />
               <span>Certificado Oficial com QR Code</span>
             </div>
             <div className="flex items-center gap-2">
-              <Play className="w-4 h-4 text-emerald-600 shrink-0" />
+              <Play className="w-4 h-4 text-primary-600 shrink-0" />
               <span>1ª Aula Grátis em Todos os Cursos</span>
             </div>
           </div>
@@ -143,7 +143,7 @@ export default function PublicAcademyPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Pesquisar curso ou tecnologia..."
-                className="w-full pl-12 pr-4 py-3.5 bg-white/90 backdrop-blur-md border border-slate-200/90 rounded-2xl text-slate-900 placeholder-slate-400 text-sm shadow-md focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
+                className="w-full pl-12 pr-4 py-3.5 bg-white/90 backdrop-blur-md border border-slate-200/90 rounded-2xl text-slate-900 placeholder-slate-400 text-sm shadow-md focus:outline-none focus:ring-2 focus:ring-primary-500 transition"
               />
             </div>
           </div>
@@ -151,15 +151,15 @@ export default function PublicAcademyPage() {
       </section>
 
       {/* DISCREET LOGIN CALLOUT FOR EXISTING STUDENTS */}
-      <section className="bg-emerald-500/10 border-y border-emerald-500/20 py-3">
+      <section className="bg-primary-50/70 border-y border-primary-100 py-3">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs sm:text-sm">
-          <div className="flex items-center gap-2 text-emerald-900 font-medium">
-            <GraduationCap className="w-4 h-4 text-emerald-600 shrink-0" />
+          <div className="flex items-center gap-2 text-slate-800 font-medium">
+            <GraduationCap className="w-4 h-4 text-primary-600 shrink-0" />
             <span>Já és aluno? Continua as tuas aulas de onde paraste.</span>
           </div>
           <Link
             href="/login?redirect=/dashboard/academy"
-            className="inline-flex items-center gap-1 font-bold text-emerald-700 hover:text-emerald-800 underline underline-offset-4"
+            className="inline-flex items-center gap-1 font-bold text-primary-700 hover:text-primary-800 underline underline-offset-4"
           >
             <span>Entrar na Área do Aluno</span>
             <ArrowRight className="w-3.5 h-3.5" />
@@ -171,7 +171,7 @@ export default function PublicAcademyPage() {
       <section id="cursos" className="py-16 sm:py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
           <div>
-            <div className="flex items-center gap-2 text-emerald-600 text-xs font-bold uppercase tracking-wider mb-2">
+            <div className="flex items-center gap-2 text-primary-600 text-xs font-bold uppercase tracking-wider mb-2">
               <BookOpen className="w-4 h-4" />
               <span>Catálogo Disponível</span>
             </div>
@@ -250,7 +250,7 @@ export default function PublicAcademyPage() {
                         {course.category || 'Tecnologia'}
                       </span>
                       {course.freeLessonsCount && course.freeLessonsCount > 0 && (
-                        <span className="px-2.5 py-1 rounded-full bg-emerald-500/90 backdrop-blur-md text-white text-[11px] font-bold flex items-center gap-1 shadow-xs">
+                        <span className="px-2.5 py-1 rounded-full bg-primary-600/95 backdrop-blur-md text-white text-[11px] font-bold flex items-center gap-1 shadow-xs">
                           <Play className="w-3 h-3 fill-current" />
                           <span>1 Aula Grátis</span>
                         </span>
@@ -275,7 +275,7 @@ export default function PublicAcademyPage() {
                         </span>
                         <span>•</span>
                         <span className="flex items-center gap-1">
-                          <Award className="w-3.5 h-3.5 text-emerald-600" />
+                          <Award className="w-3.5 h-3.5 text-primary-600" />
                           Certificado Oficial
                         </span>
                         <span>•</span>
@@ -384,7 +384,7 @@ export default function PublicAcademyPage() {
             </div>
 
             <div className="bg-slate-800/60 border border-slate-700/80 p-6 rounded-2xl relative">
-              <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white font-black text-lg flex items-center justify-center mb-4">
+              <div className="w-10 h-10 rounded-xl bg-primary-600 text-white font-black text-lg flex items-center justify-center mb-4">
                 2
               </div>
               <h3 className="font-bold text-base text-white mb-2">Dados Mínimos</h3>
@@ -394,7 +394,7 @@ export default function PublicAcademyPage() {
             </div>
 
             <div className="bg-slate-800/60 border border-slate-700/80 p-6 rounded-2xl relative">
-              <div className="w-10 h-10 rounded-xl bg-amber-500 text-white font-black text-lg flex items-center justify-center mb-4">
+              <div className="w-10 h-10 rounded-xl bg-primary-600 text-white font-black text-lg flex items-center justify-center mb-4">
                 3
               </div>
               <h3 className="font-bold text-base text-white mb-2">M-Pesa / e-Mola</h3>
@@ -404,7 +404,7 @@ export default function PublicAcademyPage() {
             </div>
 
             <div className="bg-slate-800/60 border border-slate-700/80 p-6 rounded-2xl relative">
-              <div className="w-10 h-10 rounded-xl bg-cyan-500 text-white font-black text-lg flex items-center justify-center mb-4">
+              <div className="w-10 h-10 rounded-xl bg-primary-600 text-white font-black text-lg flex items-center justify-center mb-4">
                 4
               </div>
               <h3 className="font-bold text-base text-white mb-2">Acesso & Vinculação</h3>
