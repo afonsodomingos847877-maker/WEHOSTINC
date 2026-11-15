@@ -116,6 +116,9 @@ export default function AffiliatesPage() {
   const [stats, setStats] = useState<AffiliateStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [showShortsModal, setShowShortsModal] = useState(false);
+  const [acceptedAffiliateTerms, setAcceptedAffiliateTerms] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [termsWarning, setTermsWarning] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showPayoutModal, setShowPayoutModal] = useState(false);
   const [showReauthPayout, setShowReauthPayout] = useState(false);
@@ -644,11 +647,60 @@ export default function AffiliatesPage() {
                 </div>
               </div>
 
-              {/* Actions */}
-              <div className="space-y-1.5 pt-0.5">
+              {/* Terms Acceptance + Actions */}
+              <div className="space-y-2 pt-0.5">
+                <label
+                  className={`flex items-center gap-2.5 px-3 py-2 rounded-xl border text-xs cursor-pointer transition select-none ${
+                    termsWarning && !acceptedAffiliateTerms
+                      ? 'bg-amber-50 border-amber-400 text-amber-900 ring-2 ring-amber-300/60'
+                      : acceptedAffiliateTerms
+                      ? 'bg-emerald-50/70 border-emerald-200 text-slate-800'
+                      : 'bg-slate-50 border-slate-200 text-slate-700 hover:border-slate-300'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={acceptedAffiliateTerms}
+                    onChange={(e) => {
+                      setAcceptedAffiliateTerms(e.target.checked);
+                      if (e.target.checked) setTermsWarning(false);
+                    }}
+                    className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer shrink-0"
+                  />
+                  <span className="leading-snug">
+                    Li e aceito os{' '}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setShowTermsModal(true);
+                      }}
+                      className="font-bold text-emerald-700 hover:text-emerald-800 underline cursor-pointer"
+                    >
+                      Termos e Condições
+                    </button>{' '}
+                    do Programa de Afiliados.
+                  </span>
+                </label>
+
+                {termsWarning && !acceptedAffiliateTerms && (
+                  <p className="text-[11px] font-semibold text-amber-700 px-1">
+                    Aceite os Termos e Condições acima para continuar.
+                  </p>
+                )}
+
                 <Link
                   href={`/checkout?service=affiliate_verification&amount=2&duration=1&domain=affiliate&userId=${encodeURIComponent(session?.user?.id || '')}`}
-                  className="btn-cta-orbit group w-full flex items-center justify-center gap-2.5 py-3 px-6 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-extrabold rounded-2xl text-sm sm:text-base shadow-md hover:shadow-lg transition-all"
+                  onClick={(e) => {
+                    if (!acceptedAffiliateTerms) {
+                      e.preventDefault();
+                      setTermsWarning(true);
+                    }
+                  }}
+                  className={`btn-cta-orbit group w-full flex items-center justify-center gap-2.5 py-3 px-6 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-extrabold rounded-2xl text-sm sm:text-base shadow-md hover:shadow-lg transition-all ${
+                    !acceptedAffiliateTerms ? 'opacity-80' : ''
+                  }`}
                 >
                   <Users className="h-5 w-5" />
                   <span>{errorMessage.includes('já é afiliado') ? 'Verificar Telefone — 2 MZN' : 'Tornar-se Afiliado — 2 MZN'}</span>
@@ -753,6 +805,80 @@ export default function AffiliatesPage() {
             </button>
           </div>
         </div>
+
+        {/* Modal Termos e Condições de Afiliados */}
+        {showTermsModal && (
+          <div
+            className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={() => setShowTermsModal(false)}
+          >
+            <div
+              className="w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="h-5 w-5 text-emerald-600" />
+                  <h2 className="text-base font-extrabold text-slate-900">
+                    Termos e Condições de Afiliados
+                  </h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowTermsModal(false)}
+                  aria-label="Fechar termos"
+                  className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center cursor-pointer transition"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="p-6 max-h-[60vh] overflow-y-auto space-y-3.5 text-xs sm:text-sm text-slate-600 leading-relaxed">
+                <div>
+                  <h3 className="font-bold text-slate-900">1. Ativação e Verificação</h3>
+                  <p>Para participar, é necessária uma verificação única de 2 MZN para validar o seu número M-Pesa/e-Mola.</p>
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900">2. Comissões de 30%</h3>
+                  <p>O afiliado recebe 30% sobre vendas confirmadas pelo seu link exclusivo. Compras próprias (auto-indicação) não geram comissão.</p>
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900">3. Saques</h3>
+                  <p>O saque mínimo é de 1.000 MT, pago via M-Pesa para o número verificado na conta.</p>
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900">4. Conduta</h3>
+                  <p>É proibido spam, promessas enganosas ou uso indevido da marca WEHOSTHERE. Fraudes resultam na suspensão da conta.</p>
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900">5. Atualizações</h3>
+                  <p>A WEHOSTHERE reserva-se o direito de ajustar regras ou percentuais mediante aviso prévio no painel.</p>
+                </div>
+              </div>
+
+              <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setShowTermsModal(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-200/70 transition cursor-pointer"
+                >
+                  Fechar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAcceptedAffiliateTerms(true);
+                    setTermsWarning(false);
+                    setShowTermsModal(false);
+                  }}
+                  className="px-4 py-2 rounded-xl text-xs font-extrabold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition cursor-pointer"
+                >
+                  Li e Aceito os Termos
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Modal YouTube Shorts */}
         {showShortsModal && (
