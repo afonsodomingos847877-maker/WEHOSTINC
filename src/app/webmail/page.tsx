@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { 
   Mail, Inbox, Send, Star, Trash2, Edit3, Search, RefreshCw, 
   ArrowLeft, CheckCircle2, ShieldCheck, ShieldAlert, User, Paperclip, Reply, Forward,
-  FileText, LogOut, ChevronRight, X, AlertCircle, Sparkles, Clock, Printer, Download, Loader2, Filter, Maximize2, Minimize2, Bold, Italic, Underline, Type,
+  FileText, LogOut, ChevronRight, ChevronUp, ChevronDown, X, AlertCircle, Sparkles, Clock, Printer, Download, Loader2, Filter, Maximize2, Minimize2, Bold, Italic, Underline, Type,
   Wand2, Bot, FileSignature, Lightbulb, Check, CheckCheck, Wifi, WifiOff, Pin, PinOff, Flag, Flame, Lock, Key, Eye, EyeOff,
   Bell, Calendar, TrendingUp, LayoutGrid, HelpCircle, Smartphone, Laptop, Monitor,
   Globe, Languages, Sun, Sunset, Moon, MessageSquare, Image as ImageIcon, ExternalLink, BarChart3,
@@ -542,6 +542,28 @@ function WebmailContent() {
   const [messagesLoadError, setMessagesLoadError] = useState<string>('');
   const [selectedMessage, setSelectedMessage] = useState<WebmailMessage | null>(null);
   const [isLoadingMessageBody, setIsLoadingMessageBody] = useState(false);
+  const viewerScrollRef = useRef<HTMLDivElement | null>(null);
+  const [viewerScrollPercent, setViewerScrollPercent] = useState(0);
+  const [viewerCanScroll, setViewerCanScroll] = useState(false);
+
+  const updateViewerScroll = useCallback(() => {
+    const el = viewerScrollRef.current;
+    if (!el) return;
+    const maxScroll = el.scrollHeight - el.clientHeight;
+    setViewerCanScroll(maxScroll > 40);
+    if (maxScroll <= 0) {
+      setViewerScrollPercent(0);
+    } else {
+      setViewerScrollPercent(Math.min(100, Math.max(0, Math.round((el.scrollTop / maxScroll) * 100))));
+    }
+  }, []);
+
+  useEffect(() => {
+    const el = viewerScrollRef.current;
+    if (el) el.scrollTop = 0;
+    const t = setTimeout(updateViewerScroll, 80);
+    return () => clearTimeout(t);
+  }, [selectedMessage?.id, selectedMessage?.body, updateViewerScroll]);
   const [searchQuery, setSearchQuery] = useState('');
   const [deleteConfirmModal, setDeleteConfirmModal] = useState<{ isOpen: boolean; msgId: string; msgIds?: string[]; subject: string; isPermanent: boolean } | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -5212,7 +5234,11 @@ function WebmailContent() {
         {/* Message Viewer Pane - Mobile First */}
         <main className={`relative overflow-hidden w-full flex-1 min-h-0 bg-[#fcfdf9] flex flex-col ${selectedMessage ? 'flex' : 'hidden md:flex'}`}>
           <AnimatedMeshGradient />
-          <div className="relative z-10 flex-1 min-h-0 overflow-y-auto flex flex-col">
+          <div
+            ref={viewerScrollRef}
+            onScroll={updateViewerScroll}
+            className="relative z-10 flex-1 min-h-0 overflow-y-auto flex flex-col"
+          >
           {selectedMessage ? (
             <div className="p-4 sm:p-6 max-w-4xl mx-auto w-full flex-1 flex flex-col space-y-3">
               
@@ -5813,11 +5839,19 @@ function WebmailContent() {
                   <div className="flex items-center gap-1.5">
                     <button
                       type="button"
-                      onClick={() => handleGenerateAIReply('quick_accept')}
-                      disabled={isGeneratingReply}
-                      className="px-3 py-1.5 bg-white hover:bg-neutral-100 text-neutral-900 rounded-xl text-[11px] font-semibold transition shadow-xs cursor-pointer"
+                      onClick={handleSummarizeWithAI}
+                      disabled={isGeneratingSummary}
+                      className="px-3 py-1.5 bg-white hover:bg-neutral-100 text-neutral-900 rounded-xl text-[11px] font-semibold transition shadow-xs cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                      title="Resumir e-mail com IA"
                     >
-                      Confirmar
+                      {isGeneratingSummary ? (
+                        <>
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          <span>A resumir...</span>
+                        </>
+                      ) : (
+                        <span>Resumir</span>
+                      )}
                     </button>
                   </div>
                 </div>
@@ -6316,6 +6350,55 @@ function WebmailContent() {
             </div>
           )}
           </div>
+          {selectedMessage && viewerCanScroll && (
+            <div className="absolute right-4 sm:right-6 bottom-6 z-20 flex flex-col items-center gap-1.5 bg-white/95 backdrop-blur-md border border-neutral-200/80 shadow-lg rounded-full p-1.5 animate-in fade-in duration-200">
+              <button
+                type="button"
+                onClick={() => viewerScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
+                className="w-8 h-8 rounded-full bg-sky-50 hover:bg-sky-100 text-sky-600 flex items-center justify-center transition cursor-pointer"
+                title="Ir para o topo"
+                aria-label="Ir para o topo do e-mail"
+              >
+                <ChevronUp className="w-4 h-4" />
+              </button>
+              <span className="text-[10px] font-bold text-slate-700 tabular-nums select-none leading-none py-0.5">
+                {viewerScrollPercent}%
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  const el = viewerScrollRef.current;
+                  if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+                }}
+                className="relative w-8 h-8 rounded-full hover:bg-sky-50 text-sky-600 flex items-center justify-center transition cursor-pointer"
+                title="Ir para o fim"
+                aria-label="Ir para o fim do e-mail"
+              >
+                <svg className="absolute inset-0 w-8 h-8 -rotate-90" viewBox="0 0 36 36">
+                  <circle
+                    cx="18"
+                    cy="18"
+                    r="15"
+                    fill="none"
+                    stroke="#e0f2fe"
+                    strokeWidth="2.5"
+                  />
+                  <circle
+                    cx="18"
+                    cy="18"
+                    r="15"
+                    fill="none"
+                    stroke="#0284c7"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeDasharray={94.25}
+                    strokeDashoffset={94.25 - (94.25 * viewerScrollPercent) / 100}
+                  />
+                </svg>
+                <ChevronDown className="w-4 h-4 relative z-10" />
+              </button>
+            </div>
+          )}
         </main>
         </>
         )}
