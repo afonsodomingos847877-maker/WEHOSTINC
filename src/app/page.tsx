@@ -18,6 +18,7 @@ import NewsletterPopup from '@/components/NewsletterPopup';
 import ScrollRevealHeading from '@/components/ScrollRevealHeading';
 import BackToTopBar from '@/components/BackToTopBar';
 import AffiliateFloatingPromo from '@/components/AffiliateFloatingPromo';
+import AnimatedMeshGradient from '@/components/AnimatedMeshGradient';
 import { soundEffects } from '@/lib/soundEffects';
 
 export default function Home() {
@@ -146,70 +147,10 @@ export default function Home() {
       {/* Hero + Banner - two-column on desktop, stacked on mobile */}
       <section id="infraestrutura" className="relative min-h-[600px] sm:min-h-[700px] px-4 bg-[#fcfdf9] text-slate-900 overflow-hidden w-full flex items-center justify-center pb-0 border-b border-slate-100">
         {/* Gradiente vivo animado inspirado no bannergrad */}
-        <div aria-hidden="true" className="absolute inset-0 overflow-hidden pointer-events-none">
-          {/* Onda Violeta / Índigo (inferior esquerda) */}
-          <div
-            className="absolute -bottom-32 -left-24 w-[80%] sm:w-[64%] h-[80%] rounded-[48%_52%_60%_40%] blur-[65px] sm:blur-[90px] opacity-90 will-change-transform"
-            style={{
-              background: 'radial-gradient(ellipse at 38% 58%, #4f46e5 0%, #6d5dfc 42%, #a594ff 72%, transparent 100%)',
-              animation: 'meshWaveViolet 8s ease-in-out infinite',
-            }}
-          />
-          {/* Onda Esmeralda / Teal (superior direita) */}
-          <div
-            className="absolute -top-24 -right-24 w-[84%] sm:w-[70%] h-[84%] rounded-[40%_60%_45%_55%] blur-[65px] sm:blur-[90px] opacity-90 will-change-transform"
-            style={{
-              background: 'radial-gradient(ellipse at 58% 44%, #009e7f 0%, #00bfa5 45%, #2dd4bf 74%, transparent 100%)',
-              animation: 'meshWaveTeal 9.5s ease-in-out infinite',
-            }}
-          />
-          {/* Pulso luminoso Ciano / Menta que desliza sobre a onda superior */}
-          <div
-            className="absolute top-[6%] right-[12%] w-[44%] h-[48%] rounded-full blur-[70px] opacity-70 will-change-transform"
-            style={{
-              background: 'radial-gradient(circle at 50% 50%, rgba(45, 212, 191, 0.75) 0%, rgba(56, 189, 248, 0.35) 55%, transparent 80%)',
-              animation: 'meshGlowDrift 7s ease-in-out infinite',
-            }}
-          />
-          {/* Ponte suave central (fusão entre violeta e teal) */}
-          <div
-            className="absolute top-[20%] left-[20%] w-[58%] h-[60%] rounded-full blur-[80px] opacity-65 will-change-transform"
-            style={{
-              background: 'radial-gradient(circle at 50% 50%, rgba(56, 189, 248, 0.5) 0%, rgba(129, 140, 248, 0.35) 48%, transparent 78%)',
-              animation: 'meshBridge 10s ease-in-out infinite',
-            }}
-          />
-          {/* Curva inferior suave */}
-          <div
-            className="absolute -bottom-24 left-[24%] w-[54%] h-[54%] rounded-full blur-[75px] opacity-70 will-change-transform"
-            style={{
-              background: 'radial-gradient(circle at 50% 50%, rgba(109, 93, 252, 0.6) 0%, rgba(45, 212, 191, 0.3) 60%, transparent 82%)',
-              animation: 'meshWaveViolet 9s ease-in-out infinite reverse',
-            }}
-          />
-        </div>
-        <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-b from-white/10 via-transparent to-white/65 pointer-events-none" />
+        <AnimatedMeshGradient />
 
-        {/* Keyframes globais do mascote e do gradiente vivo */}
+        {/* Keyframes globais do mascote */}
         <style>{`
-          @keyframes meshWaveViolet {
-            0%, 100% { transform: translate3d(0%, 0%, 0) scale(1) rotate(0deg); opacity: 0.88; }
-            33% { transform: translate3d(12%, -11%, 0) scale(1.16) rotate(10deg); opacity: 0.96; }
-            66% { transform: translate3d(-7%, 7%, 0) scale(0.92) rotate(-8deg); opacity: 0.8; }
-          }
-          @keyframes meshWaveTeal {
-            0%, 100% { transform: translate3d(0%, 0%, 0) scale(1) rotate(0deg); opacity: 0.88; }
-            35% { transform: translate3d(-13%, 10%, 0) scale(1.15) rotate(-10deg); opacity: 0.96; }
-            70% { transform: translate3d(8%, -8%, 0) scale(0.92) rotate(8deg); opacity: 0.8; }
-          }
-          @keyframes meshGlowDrift {
-            0%, 100% { transform: translate3d(0%, 0%, 0) scale(0.95); opacity: 0.55; }
-            50% { transform: translate3d(-18%, 14%, 0) scale(1.22); opacity: 0.85; }
-          }
-          @keyframes meshBridge {
-            0%, 100% { transform: translate3d(-4%, 2%, 0) scale(0.96) rotate(0deg); }
-            50% { transform: translate3d(14%, -10%, 0) scale(1.2) rotate(8deg); }
-          }
           @keyframes mascoteFloat {
             0%, 100% { transform: translateY(0px) rotate(-1deg); }
             50% { transform: translateY(-18px) rotate(1deg); }

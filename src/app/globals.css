@@ -355,5 +355,34 @@ body:has(aside[aria-label="Barra Promocional do Programa de Afiliados"].translat
   will-change: transform;
 }
 
+/* ─── Gradiente mesh vivo inspirado no bannergrad ─── */
+@keyframes meshAngleOrbit {
+  0% { transform: rotate(0deg) scale(1.05); }
+  50% { transform: rotate(180deg) scale(1.12); }
+  100% { transform: rotate(360deg) scale(1.05); }
+}
+
+@keyframes meshWaveViolet {
+  0%, 100% { transform: translate3d(0%, 0%, 0) scale(1) rotate(0deg) skew(0deg, 0deg); opacity: 0.88; }
+  33% { transform: translate3d(13%, -11%, 0) scale(1.16) rotate(24deg) skew(4deg, -3deg); opacity: 0.96; }
+  66% { transform: translate3d(-6%, 8%, 0) scale(0.94) rotate(-20deg) skew(-4deg, 3deg); opacity: 0.8; }
+}
+
+@keyframes meshWaveTeal {
+  0%, 100% { transform: translate3d(0%, 0%, 0) scale(1) rotate(0deg) skew(0deg, 0deg); opacity: 0.88; }
+  35% { transform: translate3d(-14%, 10%, 0) scale(1.15) rotate(-24deg) skew(-4deg, 3deg); opacity: 0.96; }
+  70% { transform: translate3d(8%, -8%, 0) scale(0.93) rotate(20deg) skew(3deg, -4deg); opacity: 0.8; }
+}
+
+@keyframes meshGlowDrift {
+  0%, 100% { transform: translate3d(0%, 0%, 0) scale(0.95) rotate(0deg); opacity: 0.55; }
+  50% { transform: translate3d(-18%, 14%, 0) scale(1.22) rotate(32deg); opacity: 0.85; }
+}
+
+@keyframes meshBridge {
+  0%, 100% { transform: translate3d(-4%, 2%, 0) scale(0.96) rotate(-12deg); }
+  50% { transform: translate3d(14%, -10%, 0) scale(1.2) rotate(26deg); }
+}
+
 
 

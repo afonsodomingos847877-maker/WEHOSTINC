@@ -11,6 +11,7 @@ import {
 import AcademyNavbar from '@/components/academy/AcademyNavbar';
 import AcademyFooter from '@/components/academy/AcademyFooter';
 import TypewriterHeroTitle from '@/components/academy/TypewriterHeroTitle';
+import AnimatedMeshGradient from '@/components/AnimatedMeshGradient';
 
 interface Course {
   id: string;
@@ -89,12 +90,9 @@ export default function PublicAcademyPage() {
       <AcademyNavbar />
 
       {/* HERO SECTION */}
-      <section className="relative overflow-hidden bg-white text-slate-900 pt-16 pb-20 sm:pt-24 sm:pb-28 border-b border-slate-200/70">
-        {/* Bannergrad background */}
-        <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat banner-bg-zoom"
-          style={{ backgroundImage: "url('/bannergrad.jpg')" }}
-        />
+      <section className="relative overflow-hidden bg-[#fcfdf9] text-slate-900 pt-16 pb-20 sm:pt-24 sm:pb-28 border-b border-slate-200/70">
+        {/* Gradiente vivo animado inspirado no bannergrad */}
+        <AnimatedMeshGradient />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
           {/* Micro pill */}
