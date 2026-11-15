@@ -46,31 +46,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Credenciais necessárias para descarregar o anexo' }, { status: 401 });
     }
 
-    const message = await migaduImapSmtp.getMessage(email, password, uid, folder);
-    if (!message || !message.attachments || !message.attachments[part]) {
+    const attResult = await migaduImapSmtp.getAttachmentBuffer(email, password, uid, folder, part, filename);
+    if (!attResult || !attResult.buffer) {
       return NextResponse.json({ error: 'Anexo não encontrado' }, { status: 404 });
     }
 
-    const targetAtt = message.attachments[part];
-    let fileBuffer: Buffer | null = null;
-
-    if (targetAtt.url && targetAtt.url.startsWith('data:')) {
-      const base64Data = targetAtt.url.split(',')[1];
-      if (base64Data) {
-        fileBuffer = Buffer.from(base64Data, 'base64');
-      }
-    }
-
-    if (!fileBuffer) {
-      return NextResponse.json({ error: 'Falha ao extrair o conteúdo do anexo' }, { status: 500 });
-    }
-
+    const fileBuffer = attResult.buffer;
     const isDownload = searchParams.get('download') === '1';
-    const rawFilename = targetAtt.filename || filename;
+    const rawFilename = attResult.filename || filename;
     const safeFilename = encodeURIComponent(rawFilename);
     const ext = rawFilename.split('.').pop()?.toLowerCase() || '';
 
-    let contentType = targetAtt.contentType || '';
+    let contentType = attResult.contentType || '';
     if (!contentType || contentType === 'application/octet-stream') {
       if (ext === 'pdf') contentType = 'application/pdf';
       else if (['jpg', 'jpeg'].includes(ext)) contentType = 'image/jpeg';

@@ -102,7 +102,59 @@ export function isLikelyEnglishEmail(subject: string, text: string): boolean {
   return enMatches > ptMatches && enMatches >= 2;
 }
 
-export function resolveReplyIdentities(from: string, fromName?: string, senderName?: string, isEn = false) {
+export function isWehosthereEmail(emailOrSender?: string): boolean {
+  const raw = (emailOrSender || '').trim().toLowerCase();
+  if (!raw || !raw.includes('@')) return true;
+  const domain = raw.split('@').pop()?.replace(/[>\s].*$/, '') || '';
+  return !domain || domain === 'wehosthere.com' || domain.endsWith('.wehosthere.com');
+}
+
+export function extractCompanyFromContext(
+  senderEmail?: string,
+  subject?: string,
+  text?: string
+): { domain: string; companyName: string; isWehosthere: boolean } {
+  const raw = (senderEmail || '').trim().toLowerCase();
+  const domain = raw.includes('@') ? (raw.split('@').pop()?.replace(/[>\s].*$/, '') || '') : '';
+  const isWehosthere = !domain || domain === 'wehosthere.com' || domain.endsWith('.wehosthere.com');
+  if (isWehosthere) {
+    return { domain: domain || 'wehosthere.com', companyName: 'WEHOSTHERE', isWehosthere: true };
+  }
+
+  const domainBase = domain.split('.')[0] || domain;
+  const combined = `${subject || ''}\n${text || ''}`;
+
+  // Tentar extrair o nome real da empresa a partir da thread/assinatura (ex: "Agent: MSS-Mozambique Support Services" ou "Empresa | Cargo")
+  const agentMatch = combined.match(/\bAgent:\s*([A-Za-zÀ-Ú0-9][A-Za-zÀ-Ú0-9\s\-&.,]{2,60}?)(?:\r?\n|\|\||$)/i);
+  if (agentMatch?.[1]) {
+    return { domain, companyName: agentMatch[1].trim(), isWehosthere: false };
+  }
+
+  // Procurar linha de assinatura que mencione o domínio ou base do domínio
+  const lines = combined.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  for (const line of lines) {
+    if (line.toLowerCase().includes(domainBase) && line.length <= 80 && !line.includes('@') && !/^https?:\/\//i.test(line)) {
+      const cleaned = line.replace(/[|•\-–]+/g, ' ').replace(/\s+/g, ' ').trim();
+      if (cleaned.length >= 2) {
+        return { domain, companyName: cleaned, isWehosthere: false };
+      }
+    }
+  }
+
+  const formattedDomain = domainBase.length <= 4
+    ? domainBase.toUpperCase()
+    : domainBase.charAt(0).toUpperCase() + domainBase.slice(1);
+  return { domain, companyName: formattedDomain, isWehosthere: false };
+}
+
+export function resolveReplyIdentities(
+  from: string,
+  fromName?: string,
+  senderName?: string,
+  isEn = false,
+  subject?: string,
+  text?: string
+) {
   let recipientName = (fromName || '').trim();
   if (!recipientName && from) {
     const rawFromName = from.split('<')[0].replace(/["']/g, '').trim();
@@ -119,7 +171,24 @@ export function resolveReplyIdentities(from: string, fromName?: string, senderNa
     }
   }
 
-  let signatureLabel = isEn ? 'Afonso Domingos | WEHOSTHERE' : 'Afonso Domingos | WEHOSTHERE';
+  const { companyName, isWehosthere } = extractCompanyFromContext(senderName, subject, text);
+
+  if (!isWehosthere) {
+    const cleanSender = (senderName || '').split('@')[0].replace(/[._\-0-9]+/g, ' ').trim();
+    let signatureLabel = companyName;
+    if (/^(info|suporte|support|geral|contato|contact|comercial|vendas|admin)$/i.test(cleanSender) || !cleanSender) {
+      signatureLabel = isEn ? `${companyName} Team` : `Equipa ${companyName}`;
+    } else {
+      const formattedSender = cleanSender
+        .split(/\s+/)
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+        .join(' ');
+      signatureLabel = `${formattedSender} | ${companyName}`;
+    }
+    return { recipientName, signatureLabel, companyName, isWehosthere };
+  }
+
+  let signatureLabel = 'Afonso Domingos | WEHOSTHERE';
   if (senderName) {
     const cleanSender = senderName.split('@')[0].trim().toLowerCase();
     if (cleanSender === 'info' || cleanSender.includes('afonso')) {
@@ -133,7 +202,7 @@ export function resolveReplyIdentities(from: string, fromName?: string, senderNa
     }
   }
 
-  return { recipientName, signatureLabel };
+  return { recipientName, signatureLabel, companyName, isWehosthere };
 }
 
 export function getWehosthereKnowledgeContext(): string {
@@ -359,7 +428,7 @@ export function buildContextualEmailReply(params: {
   const fullContext = `${subject} ${textWithoutEmails}`.toLowerCase();
   const isEn = isLikelyEnglishEmail(subject, normalizedText);
 
-  const { recipientName, signatureLabel } = resolveReplyIdentities(from, fromName, senderName, isEn);
+  const { recipientName, signatureLabel, isWehosthere } = resolveReplyIdentities(from, fromName, senderName, isEn, subject, normalizedText);
 
   if (tone === 'quick_accept') {
     const nameStr = recipientName ? ` ${recipientName}` : '';
@@ -563,7 +632,7 @@ export function buildContextualEmailReply(params: {
     ? `Prezado(a)${recipientName ? ` ${recipientName}` : ''},`
     : `Olá${recipientName ? ` ${recipientName}` : ''},`;
 
-  if (sections.length > 0) {
+  if (isWehosthere && sections.length > 0) {
     if (variant === 1) {
       const conciseSections = sections
         .map((s) => s.replace(/^\d+\.\s+/gm, '▸ ').replace(/\n{2,}/g, '\n'))
@@ -683,7 +752,15 @@ export async function generateSmartReply(params: GenerateSmartReplyParams): Prom
   const cleanText = structuredLines.join('\n');
   const readableEmailText = normalizeIncomingEmailText(cleanEmailHtmlToReadableText(content) || cleanText);
   const isEnIncoming = isLikelyEnglishEmail(subject, readableEmailText);
-  const { recipientName, signatureLabel } = resolveReplyIdentities(from, fromName, senderName, isEnIncoming);
+  const { recipientName, signatureLabel, companyName, isWehosthere } = resolveReplyIdentities(
+    from,
+    fromName,
+    senderName,
+    isEnIncoming,
+    subject,
+    readableEmailText
+  );
+  const senderDomain = (senderName && senderName.includes('@')) ? senderName.split('@').pop()?.trim().toLowerCase() : '';
 
   const altRule = Number(variation) > 0
     ? `\n- IMPORTANTE: Gere uma versão alternativa #${Number(variation) + 1} com estrutura, saudação e formulação claramente diferentes da resposta anterior.${previousReply ? `\n- Evite repetir a resposta anterior:\n"""\n${String(previousReply).slice(0, 600)}\n"""` : ''}`
@@ -700,10 +777,11 @@ export async function generateSmartReply(params: GenerateSmartReplyParams): Prom
     : 'profissional, claro e objetivo';
 
   const agentRule = isAutomatedAgent
-    ? `\n- Escreva diretamente em nome de Afonso Domingos / WEHOSTHERE de forma 100% natural, humana e prestativa. NUNCA mencione que é um robô, IA ou assistente automático, e NUNCA adicione avisos ou notas de resposta automática.`
+    ? `\n- Escreva diretamente em nome de ${isWehosthere ? 'Afonso Domingos / WEHOSTHERE' : companyName} de forma 100% natural, humana e prestativa. NUNCA mencione que é um robô, IA ou assistente automático, e NUNCA adicione avisos ou notas de resposta automática.`
     : '';
 
-  const openSystemPrompt = `Você é o assistente de e-mail oficial da WEHOSTHERE. Escreva uma resposta completa e pronta para enviar, especificamente adaptada ao conteúdo real do e-mail recebido.
+  const openSystemPrompt = isWehosthere
+    ? `Você é o assistente de e-mail oficial da WEHOSTHERE. Escreva uma resposta completa e pronta para enviar, especificamente adaptada ao conteúdo real do e-mail recebido.
 Regras obrigatórias:
 - Leia com atenção o e-mail recebido e responda diretamente ao que essa mensagem diz ou pergunta.
 - NÃO copie nem despeje tabelas inteiras ou serviços não relacionados se o e-mail recebido perguntou apenas sobre um assunto específico (ou se não perguntou sobre serviços/preços).
@@ -715,7 +793,17 @@ Regras obrigatórias:
 - NÃO use asteriscos (** ou *) nem formatação Markdown.${altRule}${agentRule}
 
 Base de Conhecimento Oficial Completa da Plataforma WEHOSTHERE (use apenas as secções relevantes à pergunta):
-${getWehosthereKnowledgeContext()}`;
+${getWehosthereKnowledgeContext()}`
+    : `Você é o assistente de e-mail profissional da conta "${senderName || senderDomain}" (empresa identificada: "${companyName}", domínio: "${senderDomain}").
+Regras obrigatórias:
+- Identifique a empresa em questão, o setor de atuação e o contexto real através do domínio "${senderDomain}", das assinaturas e do histórico completo do e-mail recebido, e responda de forma coerente com a atividade dessa empresa.
+- NUNCA mencione a WEHOSTHERE, nem serviços de alojamento/domínios da WEHOSTHERE, nem links wehosthere.com ou contactos da WEHOSTHERE — este e-mail NÃO pertence à WEHOSTHERE.
+- Leia com atenção o e-mail recebido e responda diretamente ao que essa mensagem diz ou pergunta, em nome de "${companyName}".
+- Tom solicitado: ${toneDesc}.
+- Idioma: responda no mesmo idioma do e-mail recebido (${isEnIncoming ? 'Inglês' : 'Português'}).
+- Saudação: dirija-se a ${recipientName ? `"${recipientName}"` : 'forma cordial adequada (ex.: "Prezado(a)," ou "Olá,")'}. NUNCA escreva placeholders entre colchetes como [Nome], [Seu Nome], [Empresa].
+- Assinatura final: assine como "${signatureLabel}".
+- NÃO use asteriscos (** ou *) nem formatação Markdown.${altRule}${agentRule}`;
 
   const openUserPrompt = `E-mail recebido:\nAssunto: ${subject || '(Sem assunto)'}\nDe: ${fromName ? `${fromName} <${from}>` : from}\n\nConteúdo:\n${readableEmailText.slice(0, 3500)}\n\nInstrução extra: ${prompt || 'Nenhuma'}`;
 

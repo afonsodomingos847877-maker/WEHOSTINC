@@ -279,10 +279,12 @@ export async function runEmailAgentForMailbox(
     }
 
     try {
-      const senderDisplayName =
-        agentEmail === 'info@wehosthere.com'
+      const isWehosthereMailbox = agentEmail.endsWith('@wehosthere.com');
+      const senderDisplayName = isWehosthereMailbox
+        ? agentEmail === 'info@wehosthere.com'
           ? 'Afonso Domingos (WEHOSTHERE)'
-          : `Equipa WEHOSTHERE (${agentEmail})`;
+          : `Equipa WEHOSTHERE (${agentEmail})`
+        : agentEmail;
 
       // Para respostas de thread, indicar no prompt que é uma continuação de conversa
       const isThreadReply = /^re:/i.test(msg.subject || '') || (msg.references && msg.references.length > 0);
@@ -303,24 +305,26 @@ export async function runEmailAgentForMailbox(
 
       const replySubject = /^re:/i.test(msg.subject || '')
         ? msg.subject
-        : `Re: ${msg.subject || 'O seu contacto WEHOSTHERE'}`;
+        : `Re: ${msg.subject || (isWehosthereMailbox ? 'O seu contacto WEHOSTHERE' : 'O seu contacto')}`;
 
       const rawReplyText = generated.result.trim();
-      const hasSignatureAlready = /Afonso Domingos/i.test(rawReplyText);
+      const hasSignatureAlready = isWehosthereMailbox ? /Afonso Domingos/i.test(rawReplyText) : true;
       const corporateSignatureText = hasSignatureAlready
         ? ''
         : `\n\n--\nAfonso Domingos\nWEHOSTHERE - Hospedagem & Soluções Web\nWhatsApp / Tel: +258 84 833 5618\nEmail: ${agentEmail} | Web: https://www.wehosthere.com`;
 
       const replyText = `${rawReplyText}${corporateSignatureText}`;
 
-      const corporateSignatureHtml = `
+      const corporateSignatureHtml = isWehosthereMailbox
+        ? `
 <div style="margin-top:20px;padding-top:16px;border-top:1px solid #e2e8f0;font-family:'Segoe UI',Arial,sans-serif;color:#334155;font-size:13px;line-height:1.6;">
   <div style="font-size:14px;font-weight:700;color:#0f172a;">Afonso Domingos</div>
   <div style="color:#2563eb;font-weight:600;font-size:12px;margin-bottom:6px;">WEHOSTHERE - Hospedagem &amp; Soluções Web</div>
   <div style="color:#475569;font-size:12px;">📱 WhatsApp / Tel: <strong>+258 84 833 5618</strong></div>
   <div style="color:#475569;font-size:12px;">📧 Email: <a href="mailto:${agentEmail}" style="color:#2563eb;text-decoration:none;">${agentEmail}</a></div>
   <div style="color:#475569;font-size:12px;">🌐 Website: <a href="https://www.wehosthere.com" style="color:#2563eb;text-decoration:none;">www.wehosthere.com</a></div>
-</div>`;
+</div>`
+        : '';
 
       const replyHtml = `<div style="font-family:'Segoe UI',Arial,sans-serif;font-size:14px;line-height:1.6;color:#0f172a;white-space:normal;">${escapeHtml(rawReplyText).replace(/\n/g, '<br/>')}${corporateSignatureHtml}</div>`;
 
@@ -328,10 +332,11 @@ export async function runEmailAgentForMailbox(
         new Set([...(msg.references || []), messageId].filter(Boolean))
       ).join(' ');
 
-      const fromDisplayName =
-        agentEmail === 'info@wehosthere.com'
+      const fromDisplayName = isWehosthereMailbox
+        ? agentEmail === 'info@wehosthere.com'
           ? 'Afonso Domingos | WEHOSTHERE'
-          : 'WEHOSTHERE Suporte';
+          : 'WEHOSTHERE Suporte'
+        : agentEmail.split('@')[0];
 
       let sendChannel = 'resend';
       const resendRes = await sendViaResend({

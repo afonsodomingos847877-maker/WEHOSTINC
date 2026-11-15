@@ -6071,9 +6071,11 @@ function WebmailContent() {
                             <span className="text-xs font-bold text-neutral-800 truncate group-hover:text-black">{att.name}</span>
                           </div>
                           <div className="flex items-center space-x-1">
-                            {att.type?.startsWith('image/') && (
+                            {att.type?.startsWith('image/') ? (
                               <ImageIcon className="h-3.5 w-3.5 text-neutral-400" />
-                            )}
+                            ) : (att.type === 'application/pdf' || att.name?.toLowerCase().endsWith('.pdf')) ? (
+                              <Eye className="h-3.5 w-3.5 text-neutral-400" />
+                            ) : null}
                             <Download className="h-3.5 w-3.5 text-neutral-400 group-hover:text-neutral-900 shrink-0" />
                           </div>
                         </button>

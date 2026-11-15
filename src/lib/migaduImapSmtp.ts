@@ -557,6 +557,53 @@ export class MigaduImapSmtpService {
   /**
    * Get a specific message by UID
    */
+  async getAttachmentBuffer(
+    email: string,
+    password: string,
+    uid: number,
+    folder: string = 'INBOX',
+    partIndex: number = 0,
+    filenameHint?: string,
+    customConfig?: ExternalServerConfig
+  ): Promise<{ buffer: Buffer; filename: string; contentType: string } | null> {
+    const config = await this.resolveServerConfig(email, customConfig);
+    const client = this.createImapClient(email, password, config);
+
+    try {
+      await client.connect();
+      await this.openMailboxSmart(client, folder);
+
+      for await (const msg of client.fetch(uid.toString(), { source: true, uid: true }, { uid: true })) {
+        if (msg.source) {
+          const parsed = await simpleParser(msg.source);
+          const atts = parsed.attachments || [];
+          let target: (typeof atts)[number] | undefined = atts[partIndex];
+          if (!target && filenameHint) {
+            const lowerHint = filenameHint.toLowerCase();
+            target = atts.find((a) => (a.filename || '').toLowerCase() === lowerHint);
+          }
+          if (target && target.content) {
+            await client.logout();
+            return {
+              buffer: Buffer.isBuffer(target.content) ? target.content : Buffer.from(target.content),
+              filename: target.filename || filenameHint || 'anexo',
+              contentType: target.contentType || 'application/octet-stream',
+            };
+          }
+        }
+      }
+
+      await client.logout();
+      return null;
+    } catch (error) {
+      console.error('[IMAP] Failed to get attachment buffer:', error);
+      try {
+        await client.logout();
+      } catch {}
+      return null;
+    }
+  }
+
   async getMessage(
     email: string,
     password: string,
