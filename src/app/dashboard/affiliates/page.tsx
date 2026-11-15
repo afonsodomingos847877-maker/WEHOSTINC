@@ -9,7 +9,7 @@ import {
   Download, Share2, Calendar, Filter, RefreshCw, Wallet,
   ArrowUpRight, Eye, ShoppingCart, Home, BarChart3, Gift, HelpCircle,
   Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin, ArrowLeft, ArrowRight,
-  UserCheck, UserPlus, Sparkles, ShieldCheck, Rocket, Percent, CreditCard, AlertTriangle, Activity
+  UserCheck, UserPlus, Sparkles, ShieldCheck, Rocket, Percent, CreditCard, AlertTriangle, Activity, Play, X
 } from 'lucide-react';
 import { auth, User } from '@/lib/auth';
 import ReauthenticationModal from '@/components/ReauthenticationModal';
@@ -115,6 +115,7 @@ export default function AffiliatesPage() {
   const [materials, setMaterials] = useState<MarketingMaterial[]>([]);
   const [stats, setStats] = useState<AffiliateStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showShortsModal, setShowShortsModal] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showPayoutModal, setShowPayoutModal] = useState(false);
   const [showReauthPayout, setShowReauthPayout] = useState(false);
@@ -684,9 +685,9 @@ export default function AffiliatesPage() {
             </div>
           </div>
 
-          {/* Compact Bottom Strip: Coin Banner + 3 Steps */}
+          {/* Compact Bottom Strip: Coin Banner + 3 Steps + Shorts Video */}
           <div className="shrink-0 grid lg:grid-cols-12 gap-3 sm:gap-4 items-stretch">
-            <div className="lg:col-span-4 relative rounded-2xl overflow-hidden shadow-md border border-amber-200/70 h-24 lg:h-[92px]">
+            <div className="lg:col-span-3 relative rounded-2xl overflow-hidden shadow-md border border-amber-200/70 h-24 lg:h-[92px]">
               <img
                 src="/afiliadobanner1.jpg"
                 alt="Comissões em Meticais"
@@ -694,39 +695,95 @@ export default function AffiliatesPage() {
               />
               <div className="absolute inset-0 bg-gradient-to-r from-slate-950/80 via-slate-950/40 to-transparent flex flex-col justify-center px-4 text-white">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300">
-                  Renda Extra em Moçambique
+                  Renda Extra
                 </span>
-                <p className="text-sm font-black leading-tight">
-                  Saque rápido a partir de 1.000 MT
+                <p className="text-xs sm:text-sm font-black leading-tight">
+                  Saque a partir de 1.000 MT
                 </p>
               </div>
             </div>
 
-            <div className="lg:col-span-8 bg-white rounded-2xl shadow-xs border border-slate-200/80 p-3 grid sm:grid-cols-3 gap-2.5 items-center">
-              <div className="flex items-center gap-2.5 p-2 rounded-xl bg-slate-50 border border-slate-100">
+            <div className="lg:col-span-6 bg-white rounded-2xl shadow-xs border border-slate-200/80 p-2.5 sm:p-3 grid sm:grid-cols-3 gap-2 items-center">
+              <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 border border-slate-100">
                 <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary-600 text-white text-[11px] font-black shrink-0">1</span>
                 <div className="min-w-0">
                   <h3 className="text-xs font-bold text-slate-900 leading-tight">Ative sua conta</h3>
-                  <p className="text-[11px] text-slate-500 truncate">Verificação única de 2 MZN</p>
+                  <p className="text-[11px] text-slate-500 truncate">Verificação de 2 MZN</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2.5 p-2 rounded-xl bg-slate-50 border border-slate-100">
+              <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 border border-slate-100">
                 <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary-600 text-white text-[11px] font-black shrink-0">2</span>
                 <div className="min-w-0">
                   <h3 className="text-xs font-bold text-slate-900 leading-tight">Divulgue seu link</h3>
-                  <p className="text-[11px] text-slate-500 truncate">WhatsApp e redes sociais</p>
+                  <p className="text-[11px] text-slate-500 truncate">WhatsApp e redes</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2.5 p-2 rounded-xl bg-slate-50 border border-slate-100">
+              <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 border border-slate-100">
                 <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-600 text-white text-[11px] font-black shrink-0">3</span>
                 <div className="min-w-0">
                   <h3 className="text-xs font-bold text-slate-900 leading-tight">Receba 30%</h3>
-                  <p className="text-[11px] text-slate-500 truncate">Comissão pronta para saque</p>
+                  <p className="text-[11px] text-slate-500 truncate">Saque via M-Pesa</p>
                 </div>
               </div>
             </div>
+
+            <button
+              type="button"
+              onClick={() => setShowShortsModal(true)}
+              className="lg:col-span-3 relative rounded-2xl overflow-hidden shadow-md border border-slate-200/80 h-24 lg:h-[92px] group cursor-pointer text-left"
+            >
+              <img
+                src="https://i.ytimg.com/vi/XjxmWsELfcA/hqdefault.jpg"
+                alt="Assistir Reels do Programa de Afiliados"
+                className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-slate-950/85 via-slate-950/55 to-slate-950/35 flex items-center gap-3 px-4 text-white">
+                <div className="w-10 h-10 rounded-full bg-red-600 group-hover:bg-red-500 flex items-center justify-center shrink-0 shadow-lg transition-transform duration-200 group-hover:scale-110">
+                  <Play className="h-4 w-4 text-white fill-white ml-0.5" />
+                </div>
+                <div className="min-w-0">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-red-300 block">
+                    YouTube Shorts
+                  </span>
+                  <p className="text-xs sm:text-sm font-extrabold leading-tight truncate">
+                    Ver vídeo rápido
+                  </p>
+                </div>
+              </div>
+            </button>
           </div>
         </div>
+
+        {/* Modal YouTube Shorts */}
+        {showShortsModal && (
+          <div
+            className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={() => setShowShortsModal(false)}
+          >
+            <div
+              className="relative w-full max-w-[360px] bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border border-slate-700/80"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                onClick={() => setShowShortsModal(false)}
+                aria-label="Fechar vídeo"
+                className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full bg-slate-900/80 hover:bg-slate-800 text-white flex items-center justify-center border border-white/15 cursor-pointer transition"
+              >
+                <X className="h-4 w-4" />
+              </button>
+              <div className="aspect-[9/16] w-full bg-black">
+                <iframe
+                  src="https://www.youtube.com/embed/XjxmWsELfcA?autoplay=1&rel=0"
+                  title="Programa de Afiliados WEHOSTHERE"
+                  className="w-full h-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
