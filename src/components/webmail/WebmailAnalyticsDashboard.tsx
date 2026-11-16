@@ -48,30 +48,41 @@ export default function WebmailAnalyticsDashboard({
   onNavigateFolder,
 }: WebmailAnalyticsDashboardProps) {
   const [timeRange, setTimeRange] = useState<TimeRange>('months');
-  const [hoveredPointIdx, setHoveredPointIdx] = useState<number>(3); // Default highlight on Apr (like reference image)
+  const [hoveredPointIdx, setHoveredPointIdx] = useState<number>(7);
   const [activeMetricBar, setActiveMetricBar] = useState<{ card: number; bar: number } | null>(null);
 
   const domain = (accountEmail.split('@')[1] || 'wehosthere.com').toLowerCase();
 
-  // Agregação inteligente de todas as mensagens (caixa atual + caches locais de enviados/agendados/rascunhos)
+  // Agregação real de todas as mensagens (estado atual + cache de pastas da sessão + caches locais)
   const analyticsData = useMemo(() => {
     let sentCache: WebmailMessage[] = [];
+    let inboxCache: WebmailMessage[] = [];
     let scheduledCache: WebmailMessage[] = [];
     let draftsCache: WebmailMessage[] = [];
+    const emailLower = (accountEmail || '').toLowerCase();
 
-    if (typeof window !== 'undefined' && accountEmail) {
+    if (typeof window !== 'undefined' && emailLower) {
       try {
-        const rawSent = localStorage.getItem(
-          `wehosthere_webmail_sent_cache_${accountEmail.toLowerCase()}`
-        );
-        if (rawSent) sentCache = JSON.parse(rawSent);
+        const rawInboxSession = sessionStorage.getItem(`wehost_cache_${emailLower}:inbox`);
+        if (rawInboxSession) inboxCache = JSON.parse(rawInboxSession);
+      } catch {}
+      try {
+        const rawSentSession = sessionStorage.getItem(`wehost_cache_${emailLower}:sent`);
+        if (rawSentSession) sentCache = JSON.parse(rawSentSession);
+      } catch {}
+      try {
+        const rawSent = localStorage.getItem(`wehosthere_webmail_sent_cache_${emailLower}`);
+        if (rawSent) {
+          const localSent: WebmailMessage[] = JSON.parse(rawSent);
+          sentCache = [...sentCache, ...localSent];
+        }
       } catch {}
       try {
         const rawSched = localStorage.getItem('wehosthere_webmail_scheduled');
         if (rawSched) {
           const allSched: WebmailMessage[] = JSON.parse(rawSched);
           scheduledCache = allSched.filter(
-            (m) => (m.accountEmail || '').toLowerCase() === accountEmail.toLowerCase()
+            (m) => (m.accountEmail || '').toLowerCase() === emailLower
           );
         }
       } catch {}
@@ -80,42 +91,52 @@ export default function WebmailAnalyticsDashboard({
         if (rawDrafts) {
           const allDrafts: WebmailMessage[] = JSON.parse(rawDrafts);
           draftsCache = allDrafts.filter(
-            (m) => (m.accountEmail || '').toLowerCase() === accountEmail.toLowerCase()
+            (m) => (m.accountEmail || '').toLowerCase() === emailLower
           );
         }
       } catch {}
     }
 
-    const inboxMsgs = messages.filter((m) => m.folder === 'inbox');
+    // Deduplicação por ID dando prioridade às mensagens atualmente em memória
+    const dedupById = (list: WebmailMessage[]) => {
+      const map = new Map<string, WebmailMessage>();
+      for (const item of list) {
+        if (!item?.id) continue;
+        if (!map.has(item.id)) map.set(item.id, item);
+      }
+      return Array.from(map.values());
+    };
+
+    const inboxMsgs = dedupById([
+      ...messages.filter((m) => m.folder === 'inbox'),
+      ...inboxCache.filter((m) => !m.folder || m.folder === 'inbox'),
+    ]);
+    const sentMsgs = dedupById([
+      ...messages.filter((m) => m.folder === 'sent'),
+      ...sentCache,
+    ]);
+
     const totalInbox = Math.max(inboxMsgs.length, folderStats.inboxUnread);
     const readInboxCount = inboxMsgs.filter((m) => m.isRead).length;
-    const totalSent = Math.max(
-      folderStats.sent,
-      sentCache.length,
-      messages.filter((m) => m.folder === 'sent').length
-    );
+    const totalSent = Math.max(folderStats.sent, sentMsgs.length);
     const totalScheduled = Math.max(folderStats.scheduled, scheduledCache.length);
     const totalDrafts = Math.max(folderStats.drafts, draftsCache.length);
 
-    // Taxa de Leitura (Open Rate)
+    // Taxa de Leitura real (sem pisos nem valores inventados)
     const openRate =
-      totalInbox > 0
-        ? Math.min(100, Math.max(12, (readInboxCount / totalInbox) * 100))
-        : 87.74;
+      inboxMsgs.length > 0 ? Math.min(100, (readInboxCount / inboxMsgs.length) * 100) : 0;
 
-    // Taxa de Resposta / Interação (Click / Response Rate)
+    // Proporção real de enviados sobre o volume total
     const totalVolume = totalInbox + totalSent;
     const responseRate =
-      totalVolume > 0
-        ? Math.min(98, Math.max(18.5, ((totalSent + readInboxCount * 0.45) / Math.max(totalVolume, 1)) * 100))
-        : 33.18;
+      totalVolume > 0 ? Math.min(100, (totalSent / totalVolume) * 100) : 0;
 
-    // Mensagens com anexos
-    const withAttachments = [...inboxMsgs, ...sentCache].filter(
+    // Mensagens reais com anexos
+    const withAttachments = dedupById([...inboxMsgs, ...sentMsgs]).filter(
       (m) => m.attachments && m.attachments.length > 0
     ).length;
 
-    // Top Remetentes / Contactos
+    // Top Remetentes / Contactos reais
     const contactCounts = new Map<string, { name: string; email: string; count: number }>();
     for (const m of inboxMsgs) {
       const addr = (m.fromEmail || '').toLowerCase();
@@ -131,7 +152,7 @@ export default function WebmailAnalyticsDashboard({
         });
       }
     }
-    for (const s of sentCache) {
+    for (const s of sentMsgs) {
       const addr = (s.toEmail || '').toLowerCase();
       if (!addr) continue;
       const cur = contactCounts.get(addr);
@@ -150,10 +171,60 @@ export default function WebmailAnalyticsDashboard({
       .sort((a, b) => b.count - a.count)
       .slice(0, 5);
 
-    // Eventos de Atividade & Agendamento (para o gráfico lateral "Campaign / Email Activity")
-    const allRecent = [...scheduledCache, ...sentCache, ...inboxMsgs].slice(0, 6);
+    // Mini gráficos reais dos últimos 9 dias
+    const now = new Date();
+    const dailyBuckets = Array.from({ length: 9 }, (_, i) => {
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (8 - i));
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      const label = d.toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' });
+      return { key, label, inbox: 0, read: 0, sent: 0 };
+    });
+    const dailyMap = new Map(dailyBuckets.map((b) => [b.key, b]));
+
+    const toDayKey = (rawDate?: string) => {
+      if (!rawDate) return '';
+      const dt = new Date(rawDate);
+      if (isNaN(dt.getTime())) return '';
+      return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+    };
+
+    for (const m of inboxMsgs) {
+      const b = dailyMap.get(toDayKey(m.date));
+      if (b) {
+        b.inbox++;
+        if (m.isRead) b.read++;
+      }
+    }
+    for (const s of sentMsgs) {
+      const b = dailyMap.get(toDayKey(s.date));
+      if (b) b.sent++;
+    }
+
+    const maxDayVol = Math.max(1, ...dailyBuckets.map((b) => b.inbox + b.sent));
+    const dailyMiniBars = dailyBuckets.map((b) => {
+      const dayTotal = b.inbox + b.sent;
+      return {
+        label: b.label,
+        volumeCount: dayTotal,
+        volumePct: dayTotal > 0 ? Math.max(8, Math.round((dayTotal / maxDayVol) * 100)) : 4,
+        sentPct: dayTotal > 0 ? Math.round((b.sent / dayTotal) * 100) : 0,
+        openPct: b.inbox > 0 ? Math.round((b.read / b.inbox) * 100) : 0,
+      };
+    });
+
+    // Eventos reais recentes ordenados por data
+    const allRecent = [...scheduledCache, ...sentMsgs, ...inboxMsgs]
+      .filter((m) => !isNaN(new Date(m.scheduledFor || m.date).getTime()))
+      .sort(
+        (a, b) =>
+          new Date(b.scheduledFor || b.date).getTime() -
+          new Date(a.scheduledFor || a.date).getTime()
+      )
+      .slice(0, 8);
 
     return {
+      inboxMsgs,
+      sentMsgs,
       totalInbox,
       readInboxCount,
       totalSent,
@@ -164,36 +235,103 @@ export default function WebmailAnalyticsDashboard({
       responseRate,
       withAttachments,
       topContacts,
+      dailyMiniBars,
       allRecent,
       scheduledCache,
     };
   }, [accountEmail, messages, folderStats]);
 
-  // Dados para o Gráfico Principal de Linhas Suaves (Email Data) conforme o período selecionado
+  // Dados reais para o Gráfico Principal de Linhas Suaves (Email Data) agrupados por data
   const chartSeries = useMemo(() => {
-    const baseOpen = Math.round(analyticsData.openRate);
-    const baseResp = Math.round(analyticsData.responseRate);
+    const now = new Date();
+    const { inboxMsgs, sentMsgs } = analyticsData;
 
     if (timeRange === '7d') {
+      const daysPt = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+      const buckets = Array.from({ length: 7 }, (_, i) => {
+        const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (6 - i));
+        const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+        const label = i === 6 ? 'Hoje' : daysPt[d.getDay()];
+        return { key, label, inbox: 0, read: 0, sent: 0 };
+      });
+      const map = new Map(buckets.map((b) => [b.key, b]));
+      for (const m of inboxMsgs) {
+        const dt = new Date(m.date);
+        if (isNaN(dt.getTime())) continue;
+        const b = map.get(`${dt.getFullYear()}-${dt.getMonth()}-${dt.getDate()}`);
+        if (b) { b.inbox++; if (m.isRead) b.read++; }
+      }
+      for (const s of sentMsgs) {
+        const dt = new Date(s.date);
+        if (isNaN(dt.getTime())) continue;
+        const b = map.get(`${dt.getFullYear()}-${dt.getMonth()}-${dt.getDate()}`);
+        if (b) b.sent++;
+      }
       return {
-        labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom', 'Hoje'],
-        openRateValues: [58, 72, 64, Math.max(63, baseOpen - 8), 78, 69, 82, baseOpen],
-        clickRateValues: [42, 54, 48, Math.max(52, baseResp + 15), 62, 51, 66, Math.max(45, baseResp + 12)],
+        labels: buckets.map((b) => b.label),
+        openRateValues: buckets.map((b) => (b.inbox > 0 ? Math.round((b.read / b.inbox) * 100) : 0)),
+        clickRateValues: buckets.map((b) =>
+          b.inbox + b.sent > 0 ? Math.round((b.sent / (b.inbox + b.sent)) * 100) : 0
+        ),
       };
     }
+
     if (timeRange === 'years') {
+      const curYear = now.getFullYear();
+      const buckets = Array.from({ length: 6 }, (_, i) => {
+        const y = curYear - (5 - i);
+        return { key: y, label: String(y), inbox: 0, read: 0, sent: 0 };
+      });
+      const map = new Map(buckets.map((b) => [b.key, b]));
+      for (const m of inboxMsgs) {
+        const dt = new Date(m.date);
+        if (isNaN(dt.getTime())) continue;
+        const b = map.get(dt.getFullYear());
+        if (b) { b.inbox++; if (m.isRead) b.read++; }
+      }
+      for (const s of sentMsgs) {
+        const dt = new Date(s.date);
+        if (isNaN(dt.getTime())) continue;
+        const b = map.get(dt.getFullYear());
+        if (b) b.sent++;
+      }
       return {
-        labels: ['2021', '2022', '2023', '2024', '2025', '2026', 'Meta', 'Proj.'],
-        openRateValues: [48, 56, 68, 63, 74, baseOpen, 89, 92],
-        clickRateValues: [32, 44, 51, 58, 64, Math.max(48, baseResp + 14), 72, 76],
+        labels: buckets.map((b) => b.label),
+        openRateValues: buckets.map((b) => (b.inbox > 0 ? Math.round((b.read / b.inbox) * 100) : 0)),
+        clickRateValues: buckets.map((b) =>
+          b.inbox + b.sent > 0 ? Math.round((b.sent / (b.inbox + b.sent)) * 100) : 0
+        ),
       };
+    }
+
+    // Últimos 8 meses reais
+    const monthsPt = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    const buckets = Array.from({ length: 8 }, (_, i) => {
+      const d = new Date(now.getFullYear(), now.getMonth() - (7 - i), 1);
+      const key = `${d.getFullYear()}-${d.getMonth()}`;
+      return { key, label: monthsPt[d.getMonth()], inbox: 0, read: 0, sent: 0 };
+    });
+    const map = new Map(buckets.map((b) => [b.key, b]));
+    for (const m of inboxMsgs) {
+      const dt = new Date(m.date);
+      if (isNaN(dt.getTime())) continue;
+      const b = map.get(`${dt.getFullYear()}-${dt.getMonth()}`);
+      if (b) { b.inbox++; if (m.isRead) b.read++; }
+    }
+    for (const s of sentMsgs) {
+      const dt = new Date(s.date);
+      if (isNaN(dt.getTime())) continue;
+      const b = map.get(`${dt.getFullYear()}-${dt.getMonth()}`);
+      if (b) b.sent++;
     }
     return {
-      labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago'],
-      openRateValues: [44, 40, 76, 63, 62, 48, 36, Math.max(60, baseOpen - 12)],
-      clickRateValues: [32, 61, 45, 58, 65, 44, 70, 38],
+      labels: buckets.map((b) => b.label),
+      openRateValues: buckets.map((b) => (b.inbox > 0 ? Math.round((b.read / b.inbox) * 100) : 0)),
+      clickRateValues: buckets.map((b) =>
+        b.inbox + b.sent > 0 ? Math.round((b.sent / (b.inbox + b.sent)) * 100) : 0
+      ),
     };
-  }, [timeRange, analyticsData.openRate, analyticsData.responseRate]);
+  }, [timeRange, analyticsData]);
 
   // Gerador de Curva SVG Cubic Bezier Suave (estilo onda fluida da imagem de referência)
   const buildSmoothSvgPath = (values: number[], width: number, height: number, padX = 28, padY = 20) => {
@@ -224,7 +362,8 @@ export default function WebmailAnalyticsDashboard({
   const svgHeight = 230;
   const openCurve = buildSmoothSvgPath(chartSeries.openRateValues, svgWidth, svgHeight);
   const clickCurve = buildSmoothSvgPath(chartSeries.clickRateValues, svgWidth, svgHeight);
-  const activePt = openCurve.pts[hoveredPointIdx] || openCurve.pts[3];
+  const safeHoverIdx = Math.min(hoveredPointIdx, Math.max(0, openCurve.pts.length - 1));
+  const activePt = openCurve.pts[safeHoverIdx] || openCurve.pts[0];
 
   // Exportar relatório em CSV
   const handleExportCsv = () => {
@@ -253,7 +392,7 @@ export default function WebmailAnalyticsDashboard({
     document.body.removeChild(link);
   };
 
-  // Dados para a linha do tempo de atividade semanal (inspirado em "Campaign activity" da imagem)
+  // Dados reais para a linha do tempo de atividade semanal (sem eventos fictícios)
   const timelineEvents = useMemo(() => {
     const items: Array<{
       day: string;
@@ -265,72 +404,55 @@ export default function WebmailAnalyticsDashboard({
       textClass: string;
     }> = [];
 
-    const daysMap = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const daysPt = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    const usedDays = new Set<string>();
 
-    if (analyticsData.scheduledCache.length > 0) {
-      analyticsData.scheduledCache.slice(0, 2).forEach((s, idx) => {
-        const dt = new Date(s.scheduledFor || s.date);
-        const dayName = daysPt[dt.getDay()] || 'Qui';
-        items.push({
-          day: dayName,
-          timeLabel: dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          offsetPct: idx === 0 ? 14 : 38,
-          title: `Agendado: ${s.subject.slice(0, 26)}`,
-          dotColor: idx === 0 ? '#b45309' : '#9333ea',
-          bgClass: idx === 0 ? 'bg-amber-100/90 border-amber-200' : 'bg-fuchsia-100/90 border-fuchsia-200',
-          textClass: idx === 0 ? 'text-amber-950' : 'text-fuchsia-950',
-        });
+    const toOffsetPct = (dt: Date) => {
+      const minutesFrom08 = dt.getHours() * 60 + dt.getMinutes() - 8 * 60;
+      const ratio = Math.max(0, Math.min(1, minutesFrom08 / (12 * 60)));
+      return Math.round(4 + ratio * 54);
+    };
+
+    for (const s of analyticsData.scheduledCache) {
+      const dt = new Date(s.scheduledFor || s.date);
+      if (isNaN(dt.getTime())) continue;
+      const dayName = daysPt[dt.getDay()];
+      if (usedDays.has(dayName)) continue;
+      usedDays.add(dayName);
+      items.push({
+        day: dayName,
+        timeLabel: dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        offsetPct: toOffsetPct(dt),
+        title: `Agendado: ${(s.subject || 'Sem assunto').slice(0, 26)}`,
+        dotColor: '#b45309',
+        bgClass: 'bg-amber-100/90 border-amber-200',
+        textClass: 'text-amber-950',
       });
     }
 
-    if (items.length < 3) {
-      const sampleMsgs = analyticsData.allRecent.slice(0, 3 - items.length);
-      sampleMsgs.forEach((m, idx) => {
-        const dt = new Date(m.date);
-        const dayName = daysPt[isNaN(dt.getTime()) ? (idx + 2) % 7 : dt.getDay()];
-        const isFirst = idx % 2 === 0;
-        items.push({
-          day: dayName,
-          timeLabel: isNaN(dt.getTime())
-            ? '11:30'
-            : dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          offsetPct: isFirst ? 12 : 36,
-          title: (m.subject || 'Comunicação Corporativa').slice(0, 28),
-          dotColor: isFirst ? '#b45309' : '#7e22ce',
-          bgClass: isFirst
-            ? 'bg-amber-100/90 border-amber-200/80'
-            : 'bg-purple-100/90 border-purple-200/80',
-          textClass: isFirst ? 'text-amber-950' : 'text-purple-950',
-        });
+    for (const m of analyticsData.allRecent) {
+      if (items.length >= 5) break;
+      const dt = new Date(m.scheduledFor || m.date);
+      if (isNaN(dt.getTime())) continue;
+      const dayName = daysPt[dt.getDay()];
+      if (usedDays.has(dayName)) continue;
+      usedDays.add(dayName);
+      const isSent = m.folder === 'sent';
+      items.push({
+        day: dayName,
+        timeLabel: dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        offsetPct: toOffsetPct(dt),
+        title: (m.subject || '(Sem assunto)').slice(0, 28),
+        dotColor: isSent ? '#4338ca' : '#0f766e',
+        bgClass: isSent
+          ? 'bg-indigo-100/90 border-indigo-200/80'
+          : 'bg-teal-100/90 border-teal-200/80',
+        textClass: isSent ? 'text-indigo-950' : 'text-teal-950',
       });
-    }
-
-    if (items.length === 0) {
-      items.push(
-        {
-          day: 'Qui',
-          timeLabel: '11:00',
-          offsetPct: 12,
-          title: `Sincronização IMAP @${domain}`,
-          dotColor: '#b45309',
-          bgClass: 'bg-amber-100/90 border-amber-200',
-          textClass: 'text-amber-950',
-        },
-        {
-          day: 'Ter',
-          timeLabel: '13:30',
-          offsetPct: 38,
-          title: 'Relatórios & Atendimento Ativo',
-          dotColor: '#7e22ce',
-          bgClass: 'bg-fuchsia-100/90 border-fuchsia-200',
-          textClass: 'text-fuchsia-950',
-        }
-      );
     }
 
     return items;
-  }, [analyticsData.scheduledCache, analyticsData.allRecent, domain]);
+  }, [analyticsData.scheduledCache, analyticsData.allRecent]);
 
   return (
     <div className="flex-1 min-h-0 overflow-y-auto bg-[#f8f9fc] p-4 sm:p-7 font-sans">
@@ -438,24 +560,26 @@ export default function WebmailAnalyticsDashboard({
                 </div>
               </div>
 
-              {/* Mini Bar Chart (Verde Esmeralda na barra em destaque) */}
+              {/* Mini Bar Chart real dos últimos 9 dias */}
               <div className="flex items-end space-x-1.5 h-12">
-                {[22, 34, 48, 65, 52, 38, 88, 56, 62].map((h, idx) => {
+                {analyticsData.dailyMiniBars.map((bar, idx) => {
                   const isHighlighted =
-                    activeMetricBar?.card === 0 ? activeMetricBar.bar === idx : idx === 6;
+                    activeMetricBar?.card === 0
+                      ? activeMetricBar.bar === idx
+                      : idx === analyticsData.dailyMiniBars.length - 1;
                   return (
                     <button
-                      key={idx}
+                      key={bar.label}
                       type="button"
                       onMouseEnter={() => setActiveMetricBar({ card: 0, bar: idx })}
                       onMouseLeave={() => setActiveMetricBar(null)}
-                      style={{ height: `${h}%` }}
+                      style={{ height: `${bar.volumePct}%` }}
                       className={`w-2.5 rounded-t-sm transition-all duration-200 cursor-pointer ${
                         isHighlighted
                           ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.45)] scale-y-105'
                           : 'bg-neutral-200/80 hover:bg-neutral-300'
                       }`}
-                      title={`Volume relativo: ${h}%`}
+                      title={`${bar.label}: ${bar.volumeCount} e-mail(s)`}
                     />
                   );
                 })}
@@ -463,10 +587,10 @@ export default function WebmailAnalyticsDashboard({
             </div>
           </div>
 
-          {/* Card 2: Click / Response Rate */}
+          {/* Card 2: Proporção de Envios / Resposta */}
           <div className=" pt-4 md:pt-0 md:px-6 flex flex-col justify-between space-y-4">
             <div className="flex items-center space-x-2 text-xs font-bold text-neutral-700">
-              <span>Taxa de Resposta</span>
+              <span>Taxa de Envio / Resposta</span>
               <MousePointerClick className="w-3.5 h-3.5 text-neutral-500" />
             </div>
             <div className="flex items-end justify-between gap-4">
@@ -479,24 +603,26 @@ export default function WebmailAnalyticsDashboard({
                 </div>
               </div>
 
-              {/* Mini Bar Chart (Laranja na barra em destaque) */}
+              {/* Mini Bar Chart real dos últimos 9 dias */}
               <div className="flex items-end space-x-1.5 h-12">
-                {[20, 32, 42, 60, 50, 35, 86, 54, 60].map((h, idx) => {
+                {analyticsData.dailyMiniBars.map((bar, idx) => {
                   const isHighlighted =
-                    activeMetricBar?.card === 1 ? activeMetricBar.bar === idx : idx === 6;
+                    activeMetricBar?.card === 1
+                      ? activeMetricBar.bar === idx
+                      : idx === analyticsData.dailyMiniBars.length - 1;
                   return (
                     <button
-                      key={idx}
+                      key={bar.label}
                       type="button"
                       onMouseEnter={() => setActiveMetricBar({ card: 1, bar: idx })}
                       onMouseLeave={() => setActiveMetricBar(null)}
-                      style={{ height: `${h}%` }}
+                      style={{ height: `${Math.max(4, bar.sentPct)}%` }}
                       className={`w-2.5 rounded-t-sm transition-all duration-200 cursor-pointer ${
                         isHighlighted
                           ? 'bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.45)] scale-y-105'
                           : 'bg-neutral-200/80 hover:bg-neutral-300'
                       }`}
-                      title={`Interação: ${h}%`}
+                      title={`${bar.label}: ${bar.sentPct}% enviados`}
                     />
                   );
                 })}
@@ -520,24 +646,26 @@ export default function WebmailAnalyticsDashboard({
                 </div>
               </div>
 
-              {/* Mini Bar Chart (Azul/Índigo na barra em destaque) */}
+              {/* Mini Bar Chart real dos últimos 9 dias */}
               <div className="flex items-end space-x-1.5 h-12">
-                {[24, 36, 46, 62, 54, 40, 90, 58, 64].map((h, idx) => {
+                {analyticsData.dailyMiniBars.map((bar, idx) => {
                   const isHighlighted =
-                    activeMetricBar?.card === 2 ? activeMetricBar.bar === idx : idx === 6;
+                    activeMetricBar?.card === 2
+                      ? activeMetricBar.bar === idx
+                      : idx === analyticsData.dailyMiniBars.length - 1;
                   return (
                     <button
-                      key={idx}
+                      key={bar.label}
                       type="button"
                       onMouseEnter={() => setActiveMetricBar({ card: 2, bar: idx })}
                       onMouseLeave={() => setActiveMetricBar(null)}
-                      style={{ height: `${h}%` }}
+                      style={{ height: `${Math.max(4, bar.openPct)}%` }}
                       className={`w-2.5 rounded-t-sm transition-all duration-200 cursor-pointer ${
                         isHighlighted
                           ? 'bg-indigo-600 shadow-[0_0_10px_rgba(79,70,229,0.45)] scale-y-105'
                           : 'bg-neutral-200/80 hover:bg-neutral-300'
                       }`}
-                      title={`Taxa de abertura: ${h}%`}
+                      title={`${bar.label}: ${bar.openPct}% lidos`}
                     />
                   );
                 })}
@@ -633,7 +761,7 @@ export default function WebmailAnalyticsDashboard({
 
                     {/* Pontos Interativos ao passar o rato */}
                     {openCurve.pts.map((pt, idx) => {
-                      const isCurrent = idx === hoveredPointIdx;
+                      const isCurrent = idx === safeHoverIdx;
                       return (
                         <g
                           key={idx}
@@ -695,7 +823,7 @@ export default function WebmailAnalyticsDashboard({
                         type="button"
                         onClick={() => setHoveredPointIdx(idx)}
                         className={`cursor-pointer transition ${
-                          hoveredPointIdx === idx
+                          safeHoverIdx === idx
                             ? 'text-neutral-900 font-extrabold'
                             : 'hover:text-neutral-700'
                         }`}
@@ -729,41 +857,46 @@ export default function WebmailAnalyticsDashboard({
                 <div className="border-l border-dashed border-neutral-200 h-full" />
               </div>
 
-              <div className="space-y-4 relative z-10 my-auto">
-                {['Dom', 'Qui', 'Qua', 'Ter', 'Seg'].map((dayLabel, rowIdx) => {
-                  const matchingEvent = timelineEvents[rowIdx % timelineEvents.length];
-                  const showPill = rowIdx === 1 || rowIdx === 3 || (rowIdx === 2 && timelineEvents.length > 2);
+              {timelineEvents.length === 0 ? (
+                <div className="my-auto text-center text-xs text-neutral-400 py-8">
+                  Sem atividade recente registada nesta sessão.
+                </div>
+              ) : (
+                <div className="space-y-4 relative z-10 my-auto">
+                  {['Sex', 'Qui', 'Qua', 'Ter', 'Seg'].map((dayLabel) => {
+                    const matchingEvent = timelineEvents.find((e) => e.day === dayLabel);
 
-                  return (
-                    <div key={dayLabel} className="flex items-center min-h-[30px]">
-                      <span className="w-10 text-xs font-semibold text-neutral-400 shrink-0">
-                        {dayLabel}
-                      </span>
-                      <div className="flex-1 relative h-8 flex items-center">
-                        {showPill && matchingEvent && (
-                          <div
-                            style={{ marginLeft: `${matchingEvent.offsetPct}%` }}
-                            className={`inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full border text-xs font-bold shadow-2xs transition-transform hover:scale-105 cursor-pointer truncate max-w-[85%] ${matchingEvent.bgClass} ${matchingEvent.textClass}`}
-                            title={`${matchingEvent.title} (${matchingEvent.timeLabel})`}
-                          >
-                            <span
-                              className="w-2.5 h-2.5 rounded-full shrink-0"
-                              style={{ backgroundColor: matchingEvent.dotColor }}
-                            />
-                            <span className="truncate">{matchingEvent.title}</span>
-                          </div>
-                        )}
+                    return (
+                      <div key={dayLabel} className="flex items-center min-h-[30px]">
+                        <span className="w-10 text-xs font-semibold text-neutral-400 shrink-0">
+                          {dayLabel}
+                        </span>
+                        <div className="flex-1 relative h-8 flex items-center">
+                          {matchingEvent && (
+                            <div
+                              style={{ marginLeft: `${matchingEvent.offsetPct}%` }}
+                              className={`inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full border text-xs font-bold shadow-2xs transition-transform hover:scale-105 cursor-pointer truncate max-w-[85%] ${matchingEvent.bgClass} ${matchingEvent.textClass}`}
+                              title={`${matchingEvent.title} (${matchingEvent.timeLabel})`}
+                            >
+                              <span
+                                className="w-2.5 h-2.5 rounded-full shrink-0"
+                                style={{ backgroundColor: matchingEvent.dotColor }}
+                              />
+                              <span className="truncate">{matchingEvent.title}</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              )}
 
               {/* Eixo X de Horários */}
               <div className="flex items-center justify-between pl-12 pr-4 pt-3 text-[11px] font-semibold text-neutral-400">
-                <span>11:00</span>
-                <span>13:00</span>
-                <span>15:00</span>
+                <span>08:00</span>
+                <span>14:00</span>
+                <span>20:00</span>
               </div>
             </div>
           </div>
