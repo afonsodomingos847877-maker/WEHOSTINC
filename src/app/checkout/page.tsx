@@ -1174,6 +1174,62 @@ function CheckoutContent() {
     }
   };
 
+  // Verificar retorno automático do Stripe Checkout
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const stripeSessionId = params.get('stripe_session_id');
+    const stripeCanceled = params.get('stripe_canceled');
+
+    if (stripeCanceled === '1') {
+      setCheckoutStep(2);
+      setPaymentMethod('card');
+      setError('Pagamento por cartão cancelado. Pode tentar novamente ou escolher outro método.');
+      params.delete('stripe_canceled');
+      const cleanUrl = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ''}`;
+      window.history.replaceState({}, '', cleanUrl);
+      return;
+    }
+
+    if (stripeSessionId) {
+      let saved: any = null;
+      try {
+        const raw = sessionStorage.getItem('wehosthere_stripe_pending');
+        if (raw) saved = JSON.parse(raw);
+      } catch {}
+
+      if (saved) {
+        if (saved.name) setName(saved.name);
+        if (saved.email) setEmail(saved.email);
+        if (saved.whatsapp) setWhatsapp(saved.whatsapp);
+        if (saved.ddi) setDdi(saved.ddi);
+      }
+      setPaymentMethod('card');
+      setCheckoutStep(2);
+      setLoading(true);
+
+      fetch(apiEndpoint(`/api/payments/stripe/verify?sessionId=${encodeURIComponent(stripeSessionId)}`))
+        .then(r => r.json())
+        .then(async (data) => {
+          if (data?.success && data?.paid) {
+            try { sessionStorage.removeItem('wehosthere_stripe_pending'); } catch {}
+            params.delete('stripe_session_id');
+            const cleanUrl = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ''}`;
+            window.history.replaceState({}, '', cleanUrl);
+            await finalizeOrder(true);
+          } else {
+            setError('Pagamento por cartão ainda não foi confirmado pela Stripe.');
+            setLoading(false);
+          }
+        })
+        .catch(() => {
+          setError('Não foi possível verificar o pagamento Stripe. Tente recarregar a página.');
+          setLoading(false);
+        });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -1376,9 +1432,52 @@ function CheckoutContent() {
         // Admin deve aprovar manualmente após verificar comprovativo
         await finalizeOrder(false);
       } else if (paymentMethod === 'card') {
-        // 🔒 CARTÃO NÃO IMPLEMENTADO - Não permitir pagamento por cartão
-        setError('Pagamento por cartão ainda não disponível. Por favor, use M-Pesa ou Transferência / Comprovativo.');
-        setLoading(false);
+        const cardRef = `WH-CARD-${Date.now().toString().slice(-6)}`;
+        const isWebsite = selectedPlan?.id === 'website_creation';
+        const siteLabel = isWebsite && siteTypeName ? ` - ${siteTypeName}` : '';
+        const cycleLabel = isWebsite ? '' : ` (${durationMonths} ${durationMonths === 1 ? 'Mês' : 'Meses'})`;
+        const stripeServiceName = isCoursePayment
+          ? `Curso: ${courseNameParam || 'Curso WEHOSTHERE'}`
+          : (selectedPlan
+              ? (domainParam
+                  ? `${selectedPlan.name}${siteLabel}${cycleLabel} + Domínio (${domainParam})`
+                  : `${selectedPlan.name}${siteLabel}${cycleLabel}`)
+              : `Registo de Domínio: ${domainParam || 'Domínio Avulso'}`);
+
+        try {
+          sessionStorage.setItem(
+            'wehosthere_stripe_pending',
+            JSON.stringify({ name, email, whatsapp, ddi, paymentReference: cardRef })
+          );
+        } catch {}
+
+        const currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.delete('stripe_session_id');
+        currentUrl.searchParams.delete('stripe_canceled');
+        const baseReturn = currentUrl.toString();
+        const sep = baseReturn.includes('?') ? '&' : '?';
+
+        const stripeRes = await fetch(apiEndpoint('/api/payments/stripe/checkout'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amountMzn: grandTotal,
+            serviceName: stripeServiceName,
+            customerEmail: email,
+            orderReference: cardRef,
+            successUrl: `${baseReturn}${sep}stripe_session_id={CHECKOUT_SESSION_ID}`,
+            cancelUrl: `${baseReturn}${sep}stripe_canceled=1`,
+            metadata: {
+              domain: domainParam || '',
+              plan: selectedPlan?.id || '',
+            },
+          }),
+        });
+        const stripeData = await stripeRes.json();
+        if (!stripeRes.ok || !stripeData?.url) {
+          throw new Error(stripeData?.error || 'Falha ao iniciar pagamento por cartão via Stripe.');
+        }
+        window.location.href = stripeData.url;
         return;
       }
     } catch (err) {
@@ -2279,17 +2378,21 @@ function CheckoutContent() {
                   <span className="text-[11px] sm:text-xs font-bold text-gray-800">eMola</span>
                 </button>
 
-                {/* Credit Card Option - Desativado temporariamente - NÃO mostrar para verificação de afiliado */}
+                {/* Credit Card Option (Stripe Checkout) - NÃO mostrar para verificação de afiliado */}
                 {!isAffiliateVerification && (
-                  <div
-                    className="relative p-2 sm:p-2.5 border-2 rounded-xl text-center flex flex-col items-center justify-center border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed select-none"
-                    title="Pagamento por cartão ainda não disponível. Em breve!"
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod('card')}
+                    className={`p-2 sm:p-2.5 border-2 rounded-xl text-center flex flex-col items-center justify-center transition cursor-pointer ${
+                      paymentMethod === 'card'
+                        ? 'border-indigo-600 bg-indigo-50/60 shadow-sm ring-2 ring-indigo-500/20'
+                        : 'border-gray-200 bg-white hover:border-gray-300'
+                    }`}
+                    title="Pagar com Cartão Visa / Mastercard via Stripe"
                   >
-                    <span className="absolute -top-1.5 -right-1.5 bg-gray-500 text-white text-[8px] font-bold px-1.5 py-0.2 rounded-full uppercase tracking-wide">Em Breve</span>
                     <img src="/visa.png" alt="Visa" className="h-5 sm:h-5.5 w-auto object-contain mb-0.5" />
-                    <span className="text-[11px] sm:text-xs font-bold text-gray-400">Cartão</span>
-                    <Lock className="h-2.5 w-2.5 text-gray-400 mt-0.5" />
-                  </div>
+                    <span className="text-[11px] sm:text-xs font-bold text-gray-800">Cartão</span>
+                  </button>
                 )}
 
                 {/* Bank Transfer Option */}
@@ -2386,39 +2489,21 @@ function CheckoutContent() {
               )}
 
               {!isAffiliateVerification && paymentMethod === 'card' && (
-                <div className="mt-4 p-4 bg-gray-50 rounded-xl border border-gray-200 space-y-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1">Número do Cartão</label>
-                    <input
-                      type="text"
-                      value={cardNumber}
-                      onChange={(e) => setCardNumber(e.target.value)}
-                      placeholder="0000 0000 0000 0000"
-                      className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500 min-h-[48px]"
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1">Validade</label>
-                      <input
-                        type="text"
-                        value={cardExpiry}
-                        onChange={(e) => setCardExpiry(e.target.value)}
-                        placeholder="MM/AA"
-                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500 min-h-[48px]"
-                      />
+                <div className="mt-4 p-4 bg-indigo-50/70 rounded-xl border border-indigo-200 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck className="h-4 w-4 text-indigo-600 shrink-0" />
+                      <span className="text-xs font-extrabold text-indigo-950">
+                        Pagamento Seguro por Cartão (Visa / Mastercard via Stripe)
+                      </span>
                     </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1">CVV</label>
-                      <input
-                        type="text"
-                        value={cardCvc}
-                        onChange={(e) => setCardCvc(e.target.value)}
-                        placeholder="123"
-                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500 min-h-[48px]"
-                      />
-                    </div>
+                    <span className="text-[11px] font-bold text-indigo-700 bg-white px-2.5 py-0.5 rounded-full border border-indigo-200">
+                      ~ ${Math.max(0.5, grandTotal / 63.9).toFixed(2)} USD
+                    </span>
                   </div>
+                  <p className="text-xs text-indigo-900/80 leading-relaxed">
+                    Ao clicar em concluir, será redirecionado para o ambiente seguro da <strong>Stripe</strong> para inserir os dados do seu cartão com proteção 3D Secure.
+                  </p>
                 </div>
               )}
 
