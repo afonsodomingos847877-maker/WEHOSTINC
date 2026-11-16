@@ -224,6 +224,73 @@ export function buildAffiliateReportHtml(params: {
   `;
 }
 
+/**
+ * E-mail de incentivo enviado quando o afiliado passa uma semana sem novos cliques ou inscrições.
+ */
+export function buildAffiliateEncouragementHtml(params: {
+  affiliateName: string;
+  affiliateCode: string;
+  affiliateLink: string;
+  availableBalance?: number;
+}): string {
+  const { affiliateName, affiliateCode, affiliateLink, availableBalance = 0 } = params;
+  const firstName = (affiliateName || 'Parceiro(a)').trim().split(' ')[0] || 'Parceiro(a)';
+
+  return `
+    <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:640px;margin:0 auto;color:#111827;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e5e7eb;">
+      ${WEHOSTHERE_EMAIL_BANNER}
+      <div style="background:#ffffff;padding:24px 24px 18px;text-align:center;border-bottom:1px solid #e5e7eb;">
+        <span style="display:inline-block;background:#f9fafb;color:#111827;font-size:11px;font-weight:800;letter-spacing:0.8px;text-transform:uppercase;padding:4px 12px;border-radius:9999px;border:1px solid #e5e7eb;margin-bottom:10px;">
+          Programa de Afiliados WEHOSTHERE
+        </span>
+        <h1 style="color:#111827;font-size:20px;font-weight:800;margin:0 0 4px;">
+          Esta semana pode ser o seu ponto de viragem, ${firstName}!
+        </h1>
+        <p style="color:#6b7280;font-size:13px;margin:0;">
+          Notámos uma semana tranquila sem novos cliques ou inscrições — estamos aqui para ajudar.
+        </p>
+      </div>
+
+      <div style="padding:24px;">
+        <p style="margin:0 0 16px;font-size:14px;color:#374151;line-height:1.6;">
+          Olá <strong>${affiliateName || 'Parceiro(a)'}</strong>, o seu código <strong>${affiliateCode}</strong> continua 100% ativo e pronto para gerar comissões. Às vezes basta uma única partilha no sítio certo para começar a converter!
+        </p>
+
+        <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:18px;">
+          <p style="margin:0 0 6px;font-size:11px;font-weight:800;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;">
+            O seu link exclusivo de divulgação
+          </p>
+          <p style="margin:0;font-size:13px;font-family:monospace;color:#111827;word-break:break-all;">
+            <a href="${affiliateLink}" style="color:#111827;font-weight:700;text-decoration:none;">${affiliateLink}</a>
+          </p>
+        </div>
+
+        <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;padding:16px 18px;margin-bottom:18px;">
+          <h3 style="margin:0 0 10px;font-size:13px;font-weight:800;color:#111827;text-transform:uppercase;">
+            3 ideias rápidas para conseguir cliques esta semana
+          </h3>
+          <ul style="margin:0;padding-left:18px;font-size:13px;color:#374151;line-height:1.7;">
+            <li><strong>Estado do WhatsApp:</strong> Partilhe uma breve nota a dizer que ajuda empresas a registar domínios (.co.mz / .com) e criar e-mail profissional, deixando o seu link.</li>
+            <li><strong>Contactos diretos:</strong> Envie para 2 ou 3 empreendedores ou amigos que ainda usam <em>@gmail.com</em> no negócio e mostre como ter um domínio próprio.</li>
+            <li><strong>Bio das redes sociais:</strong> Adicione o seu link na bio do Instagram, LinkedIn ou Facebook para gerar tráfego contínuo.</li>
+          </ul>
+        </div>
+
+        ${availableBalance > 0 ? `
+        <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:12px 16px;margin-bottom:18px;font-size:13px;color:#111827;">
+          Saldo já disponível na sua conta: <strong>${availableBalance.toLocaleString('pt-MZ')} MZN</strong>
+        </div>` : ''}
+
+        <div style="text-align:center;margin:22px 0 10px;">
+          <a href="${SITE_URL}/dashboard/affiliates" style="display:block;width:100%;padding:14px 24px;background:#0a0a0a;color:#ffffff;border:1px solid rgba(16,185,129,0.35);border-radius:9999px;font-size:14px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;box-shadow:0 2px 10px rgba(0,0,0,0.12);">
+            Abrir Painel &amp; Materiais de Divulgação →
+          </a>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 async function resolveAffiliateRecipient(userId: string): Promise<{ email: string; name: string } | null> {
   const orConditions: any[] = [{ id: userId }];
   if (mongoose.Types.ObjectId.isValid(userId)) {
@@ -264,16 +331,34 @@ export async function generateAndSendAffiliateReports(
       }
 
       const metrics = await computeAffiliatePeriodMetrics(aff, period);
-      const html = buildAffiliateReportHtml({
-        affiliateName: recipient.name,
-        affiliateCode: aff.affiliateCode,
-        affiliateLink: aff.affiliateLink,
-        metrics,
-      });
+      const isInactiveWeek =
+        period === 'weekly' &&
+        metrics.clicks === 0 &&
+        metrics.signups === 0 &&
+        metrics.conversions === 0;
+
+      const firstName = (recipient.name || 'Parceiro(a)').trim().split(' ')[0] || 'Parceiro(a)';
+      const html = isInactiveWeek
+        ? buildAffiliateEncouragementHtml({
+            affiliateName: recipient.name,
+            affiliateCode: aff.affiliateCode,
+            affiliateLink: aff.affiliateLink,
+            availableBalance: metrics.availableBalance,
+          })
+        : buildAffiliateReportHtml({
+            affiliateName: recipient.name,
+            affiliateCode: aff.affiliateCode,
+            affiliateLink: aff.affiliateLink,
+            metrics,
+          });
+
+      const subject = isInactiveWeek
+        ? `Vamos destravar a sua semana na WEHOSTHERE, ${firstName}!`
+        : `${metrics.periodLabel} de Afiliado WEHOSTHERE - ${metrics.rangeLabel}`;
 
       await sendEmail({
         to: recipient.email,
-        subject: `📊 ${metrics.periodLabel} de Afiliado WEHOSTHERE - ${metrics.rangeLabel}`,
+        subject,
         html,
       });
       sent++;
