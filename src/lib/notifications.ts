@@ -91,7 +91,7 @@ Equipa {{nome_empresa}}`,
     id: 'order-received',
     name: 'Pedido recebido',
     category: 'Pedidos',
-    subject: '🧾 Recebemos o seu pedido {{numero_pedido}} - {{nome_empresa}}',
+    subject: 'Recebemos o seu pedido {{numero_pedido}} - {{nome_empresa}}',
     body: `Olá {{nome_cliente}},
 
 Recebemos o seu novo pedido {{numero_pedido}} com sucesso!
@@ -114,7 +114,7 @@ Equipa {{nome_empresa}}`,
     id: 'order-approved',
     name: 'Pedido aprovado',
     category: 'Pedidos',
-    subject: '✅ O seu pedido {{numero_pedido}} foi APROVADO! - {{nome_empresa}}',
+    subject: 'O seu pedido {{numero_pedido}} foi APROVADO! - {{nome_empresa}}',
     body: `Olá {{nome_cliente}},
 
 Temos o prazer de informar que o seu pedido {{numero_pedido}} foi APROVADO e ativado com sucesso!
@@ -137,7 +137,7 @@ Equipa {{nome_empresa}}`,
     id: 'order-rejected',
     name: 'Pedido rejeitado',
     category: 'Pedidos',
-    subject: '⚠️ Atualização sobre o seu pedido {{numero_pedido}} - {{nome_empresa}}',
+    subject: 'Atualização sobre o seu pedido {{numero_pedido}} - {{nome_empresa}}',
     body: `Olá {{nome_cliente}},
 
 Informamos que o seu pedido {{numero_pedido}} no valor de {{valor}} não pôde ser aprovado neste momento.
@@ -157,7 +157,7 @@ Equipa {{nome_empresa}}`,
     id: 'order-cancelled',
     name: 'Pedido cancelado',
     category: 'Pedidos',
-    subject: '❌ Confirmação de cancelamento do pedido {{numero_pedido}}',
+    subject: 'Confirmação de cancelamento do pedido {{numero_pedido}}',
     body: `Olá {{nome_cliente}},
 
 Confirmamos que o seu pedido {{numero_pedido}} no valor de {{valor}} foi cancelado em {{data}}.
@@ -174,7 +174,7 @@ Equipa {{nome_empresa}}`,
     id: 'order-pending',
     name: 'Encomenda recebida (pagamento pendente)',
     category: 'Pedidos',
-    subject: '📦 Encomenda Recebida - {{nome_empresa}}',
+    subject: 'Encomenda Recebida - {{nome_empresa}}',
     body: `Olá {{nome_cliente}},
 
 Recebemos a sua encomenda {{orderRef}} com sucesso!
@@ -197,7 +197,7 @@ Equipa {{nome_empresa}}`,
     id: 'payment-confirmed',
     name: 'Pagamento confirmado',
     category: 'Pagamentos',
-    subject: '💳 Pagamento Confirmado com Sucesso - Fatura {{numero_pedido}}',
+    subject: 'Pagamento Confirmado com Sucesso - Fatura {{numero_pedido}}',
     body: `Olá {{nome_cliente}},
 
 O seu pagamento no valor de {{valor}} para o pedido {{numero_pedido}} foi confirmado com sucesso em {{data}}!
@@ -238,7 +238,7 @@ Equipa {{nome_empresa}}`,
     id: 'order-status-changed',
     name: 'Alteração do estado do pedido',
     category: 'Pedidos',
-    subject: '🔔 Alteração de Estado no seu Pedido {{numero_pedido}}',
+    subject: 'Alteração de Estado no seu Pedido {{numero_pedido}}',
     body: `Olá {{nome_cliente}},
 
 O estado do seu pedido {{numero_pedido}} foi alterado para: {{estado_pedido}}.
@@ -257,7 +257,7 @@ Equipa {{nome_empresa}}`,
     id: 'password-reset',
     name: 'Recuperação de palavra-passe',
     category: 'Segurança',
-    subject: '🔐 Instruções para Recuperação de Palavra-passe',
+    subject: 'Instruções para Recuperação de Palavra-passe',
     body: `Olá {{nome_cliente}},
 
 Recebemos um pedido para redefinir a palavra-passe associada à sua conta {{email}} em {{data}}.
@@ -276,7 +276,7 @@ Equipa de Segurança {{nome_empresa}}`,
     id: 'important-notice',
     name: 'Avisos importantes',
     category: 'Geral',
-    subject: '📢 Comunicado Importante - {{nome_empresa}}',
+    subject: 'Comunicado Importante - {{nome_empresa}}',
     body: `Caro(a) {{nome_cliente}},
 
 Gostaríamos de partilhar um aviso importante relativo à sua conta na {{nome_empresa}}.
@@ -319,7 +319,7 @@ Equipa {{nome_empresa}}`,
     id: 'payment-failed',
     name: 'Pagamento falhado',
     category: 'Pagamentos',
-    subject: '❌ Problema no seu Pagamento - Pedido {{numero_pedido}}',
+    subject: 'Problema no seu Pagamento - Pedido {{numero_pedido}}',
     body: `Olá {{nome_cliente}},
 
 Informamos que o seu pagamento de {{valor}} referente ao pedido {{numero_pedido}} não pôde ser processado com sucesso em {{data}}.
@@ -345,7 +345,7 @@ Equipa {{nome_empresa}}`,
     id: 'support-ticket-received',
     name: 'Ticket de suporte recebido',
     category: 'Suporte',
-    subject: '🎫 Recebemos o seu pedido de suporte #{{numero_ticket}} - {{nome_empresa}}',
+    subject: 'Recebemos o seu pedido de suporte #{{numero_ticket}} - {{nome_empresa}}',
     body: `Olá {{nome_cliente}},
 
 Confirmamos que recebemos o seu pedido de suporte e a nossa equipa técnica já está a analisar a situação.
@@ -371,7 +371,7 @@ Equipa de Suporte {{nome_empresa}}`,
     id: 'abandoned-cart',
     name: 'Carrinho Abandonado',
     category: 'Vendas',
-    subject: '🛍️ O seu domínio/hospedagem está à sua espera! - {{nome_empresa}}',
+    subject: 'O seu domínio/hospedagem está à sua espera! - {{nome_empresa}}',
     body: `Olá {{nome_cliente}},
 
 Notámos que iniciou o pedido {{numero_pedido}}, mas ainda não concluiu o pagamento.
@@ -392,20 +392,20 @@ Equipa {{nome_empresa}}`,
     id: 'service-credentials',
     name: 'Credenciais de Acesso ao Serviço',
     category: 'Ativações',
-    subject: '🔑 Os seus Dados de Acesso ao Serviço - {{nome_empresa}}',
+    subject: 'Os seus Dados de Acesso ao Serviço - {{nome_empresa}}',
     body: `Olá {{nome_cliente}},
 
 O seu serviço atrelado ao pedido {{numero_pedido}} foi ativado com sucesso!
 
 Abaixo encontram-se as suas credenciais privadas para gestão do seu alojamento, e-mails e domínios:
 
-🔑 Dados de Acesso:
+Dados de Acesso:
 • Nome de Utilizador: {{utilizador}}
 • Palavra-passe Temporária: {{palavra_passe}}
 • Painel de Gestão: {{link_painel}}
 • Webmail Corporativo: {{link_webmail}}
 
-🌐 Servidores de Nome (DNS):
+Servidores de Nome (DNS):
 • NS1: {{servidor_dns1}}
 • NS2: {{servidor_dns2}}
 
@@ -423,18 +423,18 @@ Equipa Técnica {{nome_empresa}}`,
     id: 'new-blog-post',
     name: 'Nova Publicação no Blog',
     category: 'Blog',
-    subject: '📰 Nova Publicação: {{titulo_post}} - {{nome_empresa}}',
+    subject: 'Nova Publicação: {{titulo_post}} - {{nome_empresa}}',
     body: `Olá {{nome_cliente}},
 
 Temos uma nova publicação no blog que pode ser do seu interesse!
 
-📝 {{titulo_post}}
+{{titulo_post}}
 
 {{imagem_capa}}
 
 {{resumo_post}}
 
-🔗 Ler artigo completo: {{link_post}}
+Ler artigo completo: {{link_post}}
 
 Publicado em: {{data_publicacao}}
 
@@ -450,20 +450,20 @@ Equipa {{nome_empresa}}`,
     id: 'site-offline-alert',
     name: 'Alerta de Site Offline',
     category: 'Uptime',
-    subject: '⚠️ Alerta: {{nome_site}} está offline',
+    subject: 'Alerta: {{nome_site}} está offline',
     body: `Olá {{nome_cliente}},
 
 Detectamos que o seu site {{nome_site}} está offline.
 
-📍 URL: {{url_site}}
-🕐 Horário: {{horario_offline}}
-⏱️ Tempo de resposta: {{tempo_resposta}}ms
+URL: {{url_site}}
+Horário: {{horario_offline}}
+⏱Tempo de resposta: {{tempo_resposta}}ms
 
 A nossa equipa de suporte já foi notificada e está a investigar o problema.
 
 Se precisar de assistência imediata, contacte-nos:
-📧 Email: info@wehosthere.com
-📱 WhatsApp: +258 84 833 5618
+Email: info@wehosthere.com
+WhatsApp: +258 84 833 5618
 
 Atenciosamente,
 Equipa WEHOSTHERE`,
@@ -475,23 +475,23 @@ Equipa WEHOSTHERE`,
     id: 'abandoned-cart-recovery',
     name: 'Recuperação de Carrinho Abandonado',
     category: 'Marketing',
-    subject: '🛒 Ainda está interessado nos seus serviços?',
+    subject: 'Ainda está interessado nos seus serviços?',
     body: `Olá {{nome_cliente}},
 
 Notámos que adicionou serviços ao seu carrinho mas ainda não concluiu a compra.
 
-📋 Itens no seu carrinho:
+Itens no seu carrinho:
 {{lista_itens}}
 
-💰 Total: {{total_valor}} MZN
+Total: {{total_valor}} MZN
 
 Não perca esta oportunidade de ter os seus serviços online com a WEHOSTHERE!
 
-🔗 Voltar ao carrinho: {{link_carrinho}}
+Voltar ao carrinho: {{link_carrinho}}
 
 Se tiver alguma dúvida, estamos aqui para ajudar:
-📧 Email: info@wehosthere.com
-📱 WhatsApp: +258 84 833 5618
+Email: info@wehosthere.com
+WhatsApp: +258 84 833 5618
 
 Atenciosamente,
 Equipa WEHOSTHERE`,
@@ -515,17 +515,17 @@ Seu histórico:
 
 Como cliente valioso, preparamos uma oferta especial para você:
 
-🎁 **Desconto exclusivo de 20%** em todos os serviços!
+**Desconto exclusivo de 20%** em todos os serviços!
 
 Use o código: {{codigo_desconto}}
 
 Oferta válida até: {{data_validade}}
 
-🔗 Ver serviços: {{link_servicos}}
+Ver serviços: {{link_servicos}}
 
 Se tiver alguma dúvida ou precisar de ajuda, estamos aqui:
-📧 Email: info@wehosthere.com
-📱 WhatsApp: +258 84 833 5618
+Email: info@wehosthere.com
+WhatsApp: +258 84 833 5618
 
 Esperamos vê-lo em breve!
 
@@ -554,8 +554,8 @@ Aqui está o seu relatório mensal de disponibilidade do site {{nome_site}} ({{u
 O uptime do seu site foi de {{uptime_percentual}}% durante o mês de {{mes_relatorio}}.
 
 Se tiver alguma dúvida ou precisar de ajuda, estamos aqui:
-📧 Email: info@wehosthere.com
-📱 WhatsApp: +258 84 833 5618
+Email: info@wehosthere.com
+WhatsApp: +258 84 833 5618
 
 Atenciosamente,
 Equipa WEHOSTHERE`,
@@ -572,7 +572,7 @@ Equipa WEHOSTHERE`,
 
 Temos uma ótima notícia! Uma nova venda foi realizada com sucesso.
 
-📦 **Detalhes do Pedido #{{numero_pedido}}:**
+**Detalhes do Pedido #{{numero_pedido}}:**
 
 - **Valor Total:** {{valor_total}}
 - **Itens:** {{itens}}
@@ -581,8 +581,8 @@ Temos uma ótima notícia! Uma nova venda foi realizada com sucesso.
 O pagamento foi confirmado e o pedido está sendo processado.
 
 Se tiver alguma dúvida, estamos aqui:
-📧 Email: info@wehosthere.com
-📱 WhatsApp: +258 84 833 5618
+Email: info@wehosthere.com
+WhatsApp: +258 84 833 5618
 
 Obrigado pela confiança!
 
@@ -596,12 +596,12 @@ Equipa WEHOSTHERE`,
     id: 'subscription-renewal',
     name: 'Renovação de Assinatura',
     category: 'Vendas',
-    subject: '🔄 Renovação de Assinatura - {{nome_plano}}',
+    subject: 'Renovação de Assinatura - {{nome_plano}}',
     body: `Olá {{nome_cliente}},
 
 A sua assinatura foi renovada com sucesso!
 
-📋 **Detalhes da Renovação:**
+**Detalhes da Renovação:**
 
 - **Plano:** {{nome_plano}}
 - **Valor:** {{valor_total}}
@@ -610,8 +610,8 @@ A sua assinatura foi renovada com sucesso!
 Os serviços continuarão disponíveis sem interrupções.
 
 Se tiver alguma dúvida, estamos aqui:
-📧 Email: info@wehosthere.com
-📱 WhatsApp: +258 84 833 5618
+Email: info@wehosthere.com
+WhatsApp: +258 84 833 5618
 
 Atenciosamente,
 Equipa WEHOSTHERE`,
@@ -623,7 +623,7 @@ Equipa WEHOSTHERE`,
     id: 'upgrade-notification',
     name: 'Notificação de Upgrade',
     category: 'Vendas',
-    subject: '⬆️ Upgrade Realizado - {{nome_plano}}',
+    subject: '⬆Upgrade Realizado - {{nome_plano}}',
     body: `Olá {{nome_cliente}},
 
 Parabéns! Você fez um upgrade no seu plano com sucesso.
@@ -637,8 +637,8 @@ Parabéns! Você fez um upgrade no seu plano com sucesso.
 Aproveite os novos recursos e funcionalidades!
 
 Se tiver alguma dúvida, estamos aqui:
-📧 Email: info@wehosthere.com
-📱 WhatsApp: +258 84 833 5618
+Email: info@wehosthere.com
+WhatsApp: +258 84 833 5618
 
 Atenciosamente,
 Equipa WEHOSTHERE`,
@@ -650,12 +650,12 @@ Equipa WEHOSTHERE`,
     id: 'refund-notification',
     name: 'Notificação de Reembolso',
     category: 'Vendas',
-    subject: '💰 Reembolso Processado - Pedido #{{numero_pedido}}',
+    subject: 'Reembolso Processado - Pedido #{{numero_pedido}}',
     body: `Olá {{nome_cliente}},
 
 O reembolso do pedido #{{numero_pedido}} foi processado com sucesso.
 
-💵 **Detalhes do Reembolso:**
+**Detalhes do Reembolso:**
 
 - **Valor Reembolsado:** {{valor_total}}
 - **Motivo:** {{motivo}}
@@ -664,8 +664,8 @@ O reembolso do pedido #{{numero_pedido}} foi processado com sucesso.
 O valor será creditado na sua forma de pagamento em até 5-10 dias úteis.
 
 Se tiver alguma dúvida, estamos aqui:
-📧 Email: info@wehosthere.com
-📱 WhatsApp: +258 84 833 5618
+Email: info@wehosthere.com
+WhatsApp: +258 84 833 5618
 
 Atenciosamente,
 Equipa WEHOSTHERE`,
@@ -677,12 +677,12 @@ Equipa WEHOSTHERE`,
     id: 'payment-failed',
     name: 'Falha no Pagamento',
     category: 'Vendas',
-    subject: '⚠️ Falha no Pagamento - Pedido #{{numero_pedido}}',
+    subject: 'Falha no Pagamento - Pedido #{{numero_pedido}}',
     body: `Olá {{nome_cliente}},
 
 Houve uma falha no processamento do pagamento do pedido #{{numero_pedido}}.
 
-❌ **Detalhes:**
+**Detalhes:**
 
 - **Valor:** {{valor_total}}
 - **Motivo:** {{motivo_falha}}
@@ -691,8 +691,8 @@ Houve uma falha no processamento do pagamento do pedido #{{numero_pedido}}.
 Por favor, tente novamente ou entre em contato conosco para resolver o problema.
 
 Se tiver alguma dúvida, estamos aqui:
-📧 Email: info@wehosthere.com
-📱 WhatsApp: +258 84 833 5618
+Email: info@wehosthere.com
+WhatsApp: +258 84 833 5618
 
 Atenciosamente,
 Equipa WEHOSTHERE`,
@@ -709,7 +709,7 @@ Equipa WEHOSTHERE`,
 
 Parabéns! Você ganhou uma nova comissão através do seu programa de afiliados!
 
-💰 **Detalhes da Comissão:**
+**Detalhes da Comissão:**
 
 - **Valor da Comissão:** {{valor_comissao}} MZN
 - **Valor do Pedido:** {{valor_pedido}} MZN
@@ -734,12 +734,12 @@ Equipa WEHOSTHERE`,
     id: 'affiliate-commission-approved',
     name: 'Comissão Aprovada',
     category: 'Afiliados',
-    subject: '✅ Comissão Aprovada - {{valor_comissao}} MZN disponível para saque',
+    subject: 'Comissão Aprovada - {{valor_comissao}} MZN disponível para saque',
     body: `Olá {{nome_afiliado}},
 
 Sua comissão foi aprovada e já está disponível para saque!
 
-💰 **Detalhes:**
+**Detalhes:**
 
 - **Valor da Comissão:** {{valor_comissao}} MZN
 - **Saldo Disponível:** {{saldo_disponivel}} MZN
@@ -760,12 +760,12 @@ Equipa WEHOSTHERE`,
     id: 'affiliate-payout-processed',
     name: 'Saque Processado',
     category: 'Afiliados',
-    subject: '💰 Saque Processado - {{valor_saque}} MZN',
+    subject: 'Saque Processado - {{valor_saque}} MZN',
     body: `Olá {{nome_afiliado}},
 
 Seu saque foi processado com sucesso!
 
-💰 **Detalhes do Saque:**
+**Detalhes do Saque:**
 
 - **Valor Sacado:** {{valor_saque}} MZN
 - **Método de Pagamento:** {{metodo_pagamento}}
@@ -778,8 +778,8 @@ O valor será creditado na sua conta conforme o método escolhido:
 - M-Pesa: Imediato a 24 horas
 
 Se tiver alguma dúvida, entre em contato:
-📧 Email: info@wehosthere.com
-📱 WhatsApp: +258 84 833 5618
+Email: info@wehosthere.com
+WhatsApp: +258 84 833 5618
 
 Atenciosamente,
 Equipa WEHOSTHERE`,
@@ -796,10 +796,10 @@ Equipa WEHOSTHERE`,
 
 Parabéns! Você agora é um afiliado oficial da WEHOSTHERE!
 
-🔗 Seu Link de Afiliado:
+Seu Link de Afiliado:
 {{link_afiliado}}
 
-💰 Como Funciona:
+Como Funciona:
 
 1. Compartilhe seu link de afiliado
 2. Quando alguém clicar e fazer uma compra, você ganha 30% de comissão
@@ -817,8 +817,8 @@ Acesse o painel de afiliados: https://wehosthere.com/dashboard/affiliates
 Lá você encontrará materiais de marketing prontos para usar, estatísticas detalhadas e muito mais!
 
 Se tiver alguma dúvida, estamos aqui para ajudar:
-📧 Email: info@wehosthere.com
-📱 WhatsApp: +258 84 833 5618
+Email: info@wehosthere.com
+WhatsApp: +258 84 833 5618
 
 Boas vendas!
 
@@ -1190,16 +1190,15 @@ export async function dispatchMessage(payload: SendMessagePayload): Promise<{ su
             <div style="white-space:pre-line;font-size:15px;color:#334155;line-height:1.8;">${finalBody}</div>
             <hr style="border:none;border-top:1px solid #e2e8f0;margin:28px 0 16px;">
             <div style="text-align:center;">
-              <img src="https://wehosthere.com/logo.png" alt="WEHOSTHERE" width="80" style="max-width:80px;height:auto;opacity:0.35;margin-bottom:10px;" />
               <p style="color:#64748b;font-size:12px;margin:0 0 12px;font-weight:600;">Siga-nos nas redes sociais</p>
               <div style="display:flex;justify-content:center;gap:16px;margin-bottom:14px;">
                 <a href="https://www.facebook.com/profile.php?id=61592497206566" target="_blank" rel="noopener noreferrer"
-                   style="display:inline-flex;align-items:center;gap:6px;background:#1877F2;color:white;text-decoration:none;font-size:12px;font-weight:700;padding:7px 14px;border-radius:8px;">
+                   style="display:inline-flex;align-items:center;gap:6px;background:#0f172a;color:white;text-decoration:none;font-size:12px;font-weight:700;padding:7px 14px;border-radius:8px;">
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
                   Facebook
                 </a>
                 <a href="https://www.linkedin.com/company/wehosthere" target="_blank" rel="noopener noreferrer"
-                   style="display:inline-flex;align-items:center;gap:6px;background:#0A66C2;color:white;text-decoration:none;font-size:12px;font-weight:700;padding:7px 14px;border-radius:8px;">
+                   style="display:inline-flex;align-items:center;gap:6px;background:#0f172a;color:white;text-decoration:none;font-size:12px;font-weight:700;padding:7px 14px;border-radius:8px;">
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
                   LinkedIn
                 </a>
