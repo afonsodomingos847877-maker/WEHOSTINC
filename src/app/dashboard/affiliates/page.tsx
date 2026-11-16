@@ -853,6 +853,20 @@ export default function AffiliatesPage() {
                   <h3 className="font-bold text-slate-900">5. Atualizações</h3>
                   <p>A WEHOSTHERE reserva-se o direito de ajustar regras ou percentuais mediante aviso prévio no painel.</p>
                 </div>
+                <div className="mt-2 p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                  <div>
+                    <h3 className="font-bold text-emerald-950 text-xs sm:text-sm">Comunidade Oficial no WhatsApp</h3>
+                    <p className="text-[11px] sm:text-xs text-emerald-800">Entre no grupo para receber dicas, materiais e suporte direto.</p>
+                  </div>
+                  <a
+                    href="https://chat.whatsapp.com/DKHcQmIHQbADfucTKWDGbf"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold text-center shrink-0 transition"
+                  >
+                    Entrar no WhatsApp →
+                  </a>
+                </div>
               </div>
 
               <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2.5">
