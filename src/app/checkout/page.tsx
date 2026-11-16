@@ -1904,8 +1904,8 @@ function CheckoutContent() {
         </div>
       </header>
 
-      {/* Main Container - fills remaining height, no page scroll */}
-      <main className="max-w-2xl mx-auto px-4 pt-3 pb-4 flex flex-col" style={{height: 'calc(100dvh - 56px)', overflow: 'hidden'}}>
+      {/* Main Container - compact height fitting content */}
+      <main className="max-w-2xl mx-auto px-4 pt-4 pb-8 flex flex-col">
         <div className="mb-2 flex items-center justify-between">
           {checkoutStep === 2 ? (
             <button
@@ -1929,7 +1929,7 @@ function CheckoutContent() {
         </div>
 
         {/* Checkout Card */}
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden flex flex-col flex-1 min-h-0">
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden flex flex-col">
           
           {/* Stepper Visual de 2 Etapas */}
           <div className="bg-gray-50/90 border-b border-gray-200 px-4 sm:px-6 py-2.5 sm:py-3">
