@@ -131,12 +131,12 @@ export default function SitesPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; id: string; domain?: string } | null>(null);
   const [toastMsg, setToastMsg] = useState<{ title?: string; message: string; type: 'success' | 'error' } | null>(null);
 
-  const confirmDeleteSite = () => {
+  const confirmDeleteSite = async () => {
     if (!deleteConfirm) return;
     try {
       const { id, domain } = deleteConfirm;
       soundEffects.playToggleSiteSound(false);
-      dataManager.deleteSite(id, domain);
+      await dataManager.deleteSite(id, domain);
       setSites(prev => prev.filter(s => s.id !== id && s.domain !== domain));
       setDeleteConfirm(null);
       setToastMsg({ title: 'Site Removido', message: `O site ${domain || ''} foi permanentemente eliminado.`, type: 'success' });

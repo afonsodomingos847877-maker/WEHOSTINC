@@ -116,11 +116,11 @@ export default function DomainsPage() {
     setShowReauthDeleteDomain(true);
   };
 
-  const executeDeleteDomain = () => {
+  const executeDeleteDomain = async () => {
     if (!pendingDeleteSite) return;
     try {
       const { id, domain } = pendingDeleteSite;
-      dataManager.deleteSite(id, domain);
+      await dataManager.deleteSite(id, domain);
       soundEffects.playDeleteEmailSound();
       setSites(prev => prev.filter(s => s.id !== id && s.domain !== domain));
       setPendingDeleteSite(null);

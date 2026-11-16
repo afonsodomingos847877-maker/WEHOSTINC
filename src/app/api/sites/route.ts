@@ -5,6 +5,7 @@ import { EmailDomain } from '@/models/EmailDomain';
 import { EmailMailbox } from '@/models/EmailMailbox';
 import EmailAccountModel from '@/lib/models/EmailAccount';
 import { getEmailProvider } from '@/lib/emailProviders/base';
+import { cascadeDeleteDomain } from '@/lib/cascadeDelete';
 
 let FALLBACK_SITES: any[] = [];
 
@@ -140,41 +141,18 @@ export async function POST(req: Request) {
           await SiteModel.deleteMany({ $or: deleteConditions });
         }
 
-        // CASCATAS DE ELIMINAÇÃO: Remove também de EmailDomain, EmailMailbox e EmailAccountModel
-        // para impedir que GET /api/sites ressuscite o domínio automaticamente
+        // CASCATAS DE ELIMINAÇÃO: Remove no Migadu (caixas + domínio) e em todas as coleções MongoDB
+        // para impedir que GET /api/sites ou GET /api/email-providers/migadu/domains ressuscitem o domínio
         const domainToDelete = (tDomain && tDomain.includes('.')) ? tDomain : (tId && tId.includes('.')) ? tId : '';
         if (domainToDelete) {
-          const domainRegex = new RegExp(`^${domainToDelete}$`, 'i');
-          const emailRegex = { $regex: `@${domainToDelete}$`, $options: 'i' };
-
           try {
-            const domainDoc = await EmailDomain.findOne({ domainName: domainRegex });
-            await Promise.all([
-              EmailDomain.deleteMany({ domainName: domainRegex }),
-              EmailMailbox.deleteMany({
-                $or: [
-                  { email: emailRegex },
-                  ...(domainDoc ? [{ domainId: domainDoc._id.toString() }] : [])
-                ]
-              }),
-              EmailAccountModel.deleteMany({
-                $or: [
-                  { domain: domainRegex },
-                  { email: emailRegex }
-                ]
-              })
-            ]);
-
-            try {
-              const provider = getEmailProvider();
-              if (provider.isConfigured()) {
-                await provider.deleteDomain(domainToDelete);
-              }
-            } catch (provErr) {
-              console.warn('[Sites DELETE] Provider delete warning:', provErr);
-            }
-          } catch (cascadeErr) {
+            await cascadeDeleteDomain(domainToDelete);
+          } catch (cascadeErr: any) {
             console.error('[Sites Delete Cascade Error]:', cascadeErr);
+            return NextResponse.json(
+              { success: false, error: cascadeErr?.message || 'Erro ao eliminar domínio no provedor.' },
+              { status: 500 }
+            );
           }
         }
 

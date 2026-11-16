@@ -1106,9 +1106,9 @@ export default function AdminPage() {
       title: 'Eliminar Domínio & Site',
       message: `Tem certeza que deseja ELIMINAR permanentemente o domínio "${domain}"? Todos os e-mails associados também serão removidos.`,
       variant: 'danger',
-      onConfirm: () => {
+      onConfirm: async () => {
         try {
-          dataManager.deleteSite(id, domain);
+          await dataManager.deleteSite(id, domain);
           setSites(prev => prev.filter(s => s.id !== id && s.domain !== domain));
           setEmails(prev => prev.filter(e => (e.domain || '').toLowerCase() !== domain.toLowerCase() && !e.email.toLowerCase().endsWith(`@${domain.toLowerCase()}`)));
           setConfirmModalData(null);
@@ -1158,7 +1158,7 @@ export default function AdminPage() {
       title: 'Eliminar Conta de E-mail',
       message: `Tem certeza que deseja ELIMINAR a conta de e-mail "${displayEmail}"?`,
       variant: 'danger',
-      onConfirm: () => {
+      onConfirm: async () => {
         try {
           dataManager.deleteEmail(id, userEmail, emailStr);
           setEmails(prev => prev.filter(e => e.id !== id && e.email !== displayEmail));
@@ -1178,7 +1178,7 @@ export default function AdminPage() {
       title: 'Eliminar Pedido de Serviço',
       message: `Tem certeza que deseja ELIMINAR permanentemente o pedido "${orderId}"? Esta ação removerá a fatura do sistema.`,
       variant: 'danger',
-      onConfirm: () => {
+      onConfirm: async () => {
         try {
           dataManager.deleteOrder(orderId);
           setOrders(prev => prev.filter(o => o.id !== orderId));
@@ -3194,7 +3194,7 @@ export default function AdminPage() {
                                   title: 'Eliminar Utilizador',
                                   message: `Tem certeza que deseja eliminar permanentemente o utilizador "${user.name}" (${user.email})?`,
                                   variant: 'danger',
-                                  onConfirm: () => {
+                                  onConfirm: async () => {
                                     auth.deleteUser(user.id, user.email);
                                     setUsers(auth.getUsers());
                                     setConfirmModalData(null);

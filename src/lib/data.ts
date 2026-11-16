@@ -827,39 +827,44 @@ export const dataManager = {
     return newSite;
   },
 
-  deleteSite: (id: string, domain?: string): void => {
+  deleteSite: async (id: string, domain?: string): Promise<void> => {
     const targetDomain = (domain || id).toLowerCase();
-    const sites = dataManager.getSites().filter(
-      s => s.id !== id && (s.domain || '').toLowerCase() !== targetDomain
-    );
     if (typeof window !== 'undefined') {
-      localStorage.setItem(SITES_KEY, JSON.stringify(sites));
-
-      fetch(apiEndpoint('/api/sites'), {
+      const res = await fetch(apiEndpoint('/api/sites'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'delete', siteId: id, domain: targetDomain })
-      }).catch(err => console.error('Erro de exclusão de site no servidor:', err));
+      });
+      if (!res.ok) {
+        let errMsg = 'Falha ao eliminar o domínio no servidor.';
+        try {
+          const errData = await res.json();
+          if (errData?.error) errMsg = errData.error;
+        } catch {}
+        throw new Error(errMsg);
+      }
 
-      // Auto-delete any associated emails for this domain locally and on server
       if (targetDomain) {
-        // 1. Local cascade delete
-        const emails = dataManager.getEmails();
-        const emailsToDelete = emails.filter(e => {
-          const domainOfEmail = e.email.includes('@') ? e.email.split('@')[1].toLowerCase() : '';
-          return domainOfEmail === targetDomain || e.email.toLowerCase().endsWith(`@${targetDomain}`);
-        });
-        emailsToDelete.forEach(e => {
-          dataManager.deleteEmail(e.id, e.userEmail, e.email);
-        });
-
-        // 2. Server API cascade delete for all emails of this domain
-        fetch(apiEndpoint('/api/emails'), {
+        const emailRes = await fetch(apiEndpoint('/api/emails'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'delete', domain: targetDomain })
-        }).catch(err => console.error('Erro de exclusão de emails do domínio no servidor:', err));
+        });
+        if (!emailRes.ok) {
+          console.warn('Aviso ao eliminar emails associados no servidor:', emailRes.status);
+        }
+
+        const remainingEmails = dataManager.getEmails().filter(e => {
+          const domainOfEmail = e.email.includes('@') ? e.email.split('@')[1].toLowerCase() : '';
+          return domainOfEmail !== targetDomain && !e.email.toLowerCase().endsWith(`@${targetDomain}`);
+        });
+        localStorage.setItem(EMAILS_KEY, JSON.stringify(remainingEmails));
       }
+
+      const sites = dataManager.getSites().filter(
+        s => s.id !== id && (s.domain || '').toLowerCase() !== targetDomain
+      );
+      localStorage.setItem(SITES_KEY, JSON.stringify(sites));
     }
   },
 

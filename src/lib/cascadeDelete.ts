@@ -54,13 +54,45 @@ export async function cascadeDeleteDomain(domainName: string): Promise<void> {
 
   const domainDoc = await EmailDomain.findOne({ domainName: exactDomainRegex }).lean();
 
-  try {
-    const provider = getEmailProvider();
-    if (provider.isConfigured()) {
-      await provider.deleteDomain(cleanDomain);
+  const provider = getEmailProvider();
+  if (provider.isConfigured()) {
+    // 1. Apagar primeiro todas as caixas de correio no Migadu para evitar que o provedor recuse apagar o domínio
+    try {
+      const mailboxes = await provider.listMailboxes(cleanDomain);
+      if (Array.isArray(mailboxes) && mailboxes.length > 0) {
+        await Promise.all(
+          mailboxes.map(async (mb: any) => {
+            const localPart = (mb.localPart || (mb.email ? String(mb.email).split('@')[0] : '')).trim();
+            if (!localPart) return;
+            try {
+              await provider.deleteMailbox(cleanDomain, localPart);
+            } catch (mbErr: any) {
+              const msg = String(mbErr?.message || '');
+              if (mbErr?.statusCode !== 404 && !/404|not found|does not exist/i.test(msg)) {
+                console.warn(`[CascadeDelete] Provider mailbox delete warning (${localPart}@${cleanDomain}):`, mbErr);
+              }
+            }
+          })
+        );
+      }
+    } catch (listErr: any) {
+      const msg = String(listErr?.message || '');
+      if (listErr?.statusCode !== 404 && !/404|not found|does not exist/i.test(msg)) {
+        console.warn(`[CascadeDelete] Provider listMailboxes warning (${cleanDomain}):`, listErr);
+      }
     }
-  } catch (err) {
-    console.warn('[CascadeDelete] Provider domain delete warning:', err);
+
+    // 2. Apagar o domínio no Migadu (só ignora se o domínio já não existir no provedor - 404)
+    try {
+      await provider.deleteDomain(cleanDomain);
+    } catch (err: any) {
+      const msg = String(err?.message || '');
+      const isNotFound = err?.statusCode === 404 || /404|not found|does not exist/i.test(msg);
+      if (!isNotFound) {
+        console.error('[CascadeDelete] Provider domain delete failed:', err);
+        throw new Error(`Falha ao eliminar o domínio ${cleanDomain} no servidor de e-mail: ${msg || 'erro desconhecido'}`);
+      }
+    }
   }
 
   await Promise.all([
