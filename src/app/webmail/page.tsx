@@ -2027,33 +2027,74 @@ function WebmailContent() {
     }
   }, [selectedAccountEmail]);
 
-  // Sincronização Automática em Segundo Plano (Auto-Sync a cada 60 segundos com pausa em aba inativa)
+  // Sincronização Automática em Tempo Real (a cada 12s + imediata ao focar/voltar à aba)
   useEffect(() => {
     if (!selectedAccountEmail || !mailboxPassword) return;
 
-    const autoSyncTimer = setInterval(() => {
+    let isSyncingBg = false;
+    const runBackgroundSync = async () => {
+      if (isSyncingBg) return;
       if (typeof document !== 'undefined' && document.hidden) return;
-      const folder = (currentFolder === 'starred' || currentFolder === 'notifications') ? 'inbox' : currentFolder as 'inbox' | 'sent' | 'drafts' | 'trash' | 'scheduled' | 'junk' | 'archive';
-      webmailManager.getMessages(selectedAccountEmail, mailboxPassword, folder, messageLimit).then(msgs => {
-        const filtered = currentFolder === 'starred' ? msgs.filter(m => m.starred) : currentFolder === 'notifications' ? msgs.filter(m => isNotificationEmail(m)) : currentFolder === 'inbox' ? msgs.filter(m => !isNotificationEmail(m)) : msgs;
+      isSyncingBg = true;
+      try {
+        const folder = (currentFolder === 'starred' || currentFolder === 'notifications')
+          ? 'inbox'
+          : currentFolder as 'inbox' | 'sent' | 'drafts' | 'trash' | 'scheduled' | 'junk' | 'archive';
+        const msgs = await webmailManager.getMessages(selectedAccountEmail, mailboxPassword, folder, messageLimit);
+        const filtered = currentFolder === 'starred'
+          ? msgs.filter(m => m.starred)
+          : currentFolder === 'notifications'
+          ? msgs.filter(m => isNotificationEmail(m))
+          : currentFolder === 'inbox'
+          ? msgs.filter(m => !isNotificationEmail(m))
+          : msgs;
+
+        if (folder === 'inbox') {
+          const unread = msgs.filter(m => !m.isRead && !isNotificationEmail(m)).length;
+          const notificationsUnread = msgs.filter(m => !m.isRead && isNotificationEmail(m)).length;
+          const starred = msgs.filter(m => m.starred).length;
+          setFolderStats(st => ({ ...st, inboxUnread: unread, notificationsUnread, starred }));
+        } else if (folder === 'scheduled') {
+          setFolderStats(st => ({ ...st, scheduled: msgs.length }));
+        }
+
         setMessages(prev => {
-          const hasNew = prev.length !== filtered.length || (prev[0] && filtered[0] && prev[0].id !== filtered[0].id);
-          if (hasNew) {
+          const prevMap = new Map(prev.map(m => [m.id, m]));
+          const merged = filtered.map(m => {
+            const existing = prevMap.get(m.id);
+            return existing?.body ? { ...m, body: existing.body, attachments: existing.attachments ?? m.attachments } : m;
+          });
+          const changed =
+            prev.length !== merged.length ||
+            merged.some((m, idx) => prev[idx]?.id !== m.id || prev[idx]?.isRead !== m.isRead || prev[idx]?.starred !== m.starred);
+          if (changed) {
+            setCachedMessages(selectedAccountEmail, currentFolder, merged);
             setLastSyncedTime(new Date());
-            if (folder === 'inbox') {
-              const unread = filtered.filter(m => !m.isRead).length;
-              setFolderStats(st => ({ ...st, inboxUnread: unread }));
-            }
-            return filtered;
+            return merged;
           }
           return prev;
         });
-      }).catch(err => {
+      } catch (err) {
         console.warn('[Webmail Auto-Sync] Sync check:', err);
-      });
-    }, 60000);
+      } finally {
+        isSyncingBg = false;
+      }
+    };
 
-    return () => clearInterval(autoSyncTimer);
+    const autoSyncTimer = setInterval(runBackgroundSync, 12000);
+    const onFocusOrVisible = () => {
+      if (typeof document === 'undefined' || !document.hidden) {
+        runBackgroundSync();
+      }
+    };
+    window.addEventListener('focus', onFocusOrVisible);
+    document.addEventListener('visibilitychange', onFocusOrVisible);
+
+    return () => {
+      clearInterval(autoSyncTimer);
+      window.removeEventListener('focus', onFocusOrVisible);
+      document.removeEventListener('visibilitychange', onFocusOrVisible);
+    };
   }, [selectedAccountEmail, mailboxPassword, currentFolder, messageLimit]);
 
   const refreshMessages = async () => {
