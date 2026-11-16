@@ -6,7 +6,7 @@ export const DEFAULT_FROM_NAME = 'WEHOSTHERE';
 
 // Gradiente mesh oficial WEHOSTHERE compatível com clientes de e-mail
 export const WEHOSTHERE_EMAIL_BANNER =
-  `<div style="background:#fcfdf9;border-bottom:1px solid #e2e8f0;"><img src="${SITE_URL}/socialbanner.jpg" alt="WEHOSTHERE" style="width:100%;max-width:100%;height:auto;display:block;" /></div>`;
+  `<div style="background:#fcfdf9;border-bottom:1px solid #e2e8f0;"><img src="https://www.wehosthere.com/socialbanner.jpg" alt="WEHOSTHERE" style="width:100%;max-width:100%;height:auto;display:block;" /></div>`;
 
 export const WEHOSTHERE_MESH_HEADER_BG =
   'background-color:#ffffff;border-bottom:1px solid #f1f5f9;';
@@ -1226,8 +1226,8 @@ export async function sendAnalyticsMilestoneEmail(data: AnalyticsMilestoneEmailD
     : `Marco de ${formattedMilestone} Visitantes Únicos`;
 
   const subtitle = isViews
-    ? `O seu site WEHOSTHERE ultrapassou a marca de <strong style="color:#ffffff;">${formattedMilestone} páginas vistas</strong> (+100 visualizações).`
-    : `O seu site registou <strong style="color:#ffffff;">${formattedMilestone} visitantes únicos</strong> (+10 novos utilizadores).`;
+    ? `O seu site WEHOSTHERE ultrapassou a marca de <strong style="color:#0f172a;">${formattedMilestone} páginas vistas</strong> (+100 visualizações).`
+    : `O seu site registou <strong style="color:#0f172a;">${formattedMilestone} visitantes únicos</strong> (+10 novos utilizadores).`;
 
   const topPagesRows = (data.topPages || []).slice(0, 4).map((p, idx) => `
     <tr style="border-bottom:1px solid #f1f5f9;">

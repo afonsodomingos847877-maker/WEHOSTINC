@@ -408,6 +408,14 @@ function rewriteEmailImages(html: string, attachments?: WebmailAttachment[]): st
     const src = decodeHtmlEntities(String(rawSrc).trim());
     if (!src || src.startsWith('data:') || src.startsWith('blob:') || src.startsWith('/api/')) return full;
 
+    // Domínio próprio WEHOSTHERE: carregar diretamente pela rota relativa (evita proxy/Cloudflare)
+    if (/^https?:\/\/(www\.)?wehosthere\.com\//i.test(src)) {
+      try {
+        const u = new URL(src);
+        return `${prefix}${quote}${u.pathname}${u.search}${quote}`;
+      } catch {}
+    }
+
     // CDNs públicas conhecidas: carregar directamente sem proxy
     if (
       src.includes('res.cloudinary.com') ||
