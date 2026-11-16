@@ -1478,13 +1478,21 @@ function WebmailContent() {
     setComposeBody(prev => (prev ? prev + sig : sig));
   };
 
-  const handleReplyMessage = () => {
+  const handleReplyMessage = (initialReplyText?: string) => {
     if (!selectedMessage) return;
     setComposeTo(selectedMessage.fromEmail);
     setComposeSubject(`Re: ${selectedMessage.subject}`);
     const sig = getSignatureHtml();
     const sigBlock = sig ? `${sig}<p><br></p>` : '';
-    setComposeBody(`<p><br></p><p><br></p>${sigBlock}<hr style="border:0;border-top:1px solid #e5e7eb;margin:15px 0;"/><p><strong>De:</strong> ${selectedMessage.fromName} &lt;${selectedMessage.fromEmail}&gt;<br/><strong>Data:</strong> ${new Date(selectedMessage.date).toLocaleString()}<br/><strong>Assunto:</strong> ${selectedMessage.subject}</p><blockquote>${selectedMessage.body}</blockquote>`);
+    const trimmedDraft = (initialReplyText || '').trim();
+    const draftHtml = trimmedDraft
+      ? `<p>${trimmedDraft
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/\n/g, '<br/>')}</p><p><br></p>`
+      : '<p><br></p><p><br></p>';
+    setComposeBody(`${draftHtml}${sigBlock}<hr style="border:0;border-top:1px solid #e5e7eb;margin:15px 0;"/><p><strong>De:</strong> ${selectedMessage.fromName} &lt;${selectedMessage.fromEmail}&gt;<br/><strong>Data:</strong> ${new Date(selectedMessage.date).toLocaleString()}<br/><strong>Assunto:</strong> ${selectedMessage.subject}</p><blockquote>${selectedMessage.body}</blockquote>`);
     setComposeCc('');
     setComposeBcc('');
     setComposeAttachments([]);
@@ -6470,11 +6478,26 @@ function WebmailContent() {
                   className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded-xl text-xs text-neutral-900 outline-none focus:bg-white focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 font-sans resize-y transition leading-relaxed"
                 />
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  {quickReplyStatus !== 'idle' && (
-                    <span className={`text-xs font-bold ${quickReplyStatus === 'sent' ? 'text-neutral-900' : 'text-rose-600'}`}>
-                      {quickReplyStatus === 'sent' ? '✅ Enviada com sucesso!' : 'Erro ao enviar.'}
-                    </span>
-                  )}
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const draft = replyText;
+                        handleReplyMessage(draft);
+                        if (draft.trim()) setReplyText('');
+                      }}
+                      className="px-3 py-1.5 bg-white hover:bg-neutral-100 text-neutral-800 border border-neutral-200 rounded-xl text-xs font-semibold transition cursor-pointer inline-flex items-center gap-1.5 shadow-2xs"
+                      title="Abrir resposta no editor completo (anexos, formatação, CC/BCC, templates, agendamento)"
+                    >
+                      <Maximize2 className="h-3.5 w-3.5 text-neutral-600" />
+                      <span>Editor completo</span>
+                    </button>
+                    {quickReplyStatus !== 'idle' && (
+                      <span className={`text-xs font-bold ${quickReplyStatus === 'sent' ? 'text-neutral-900' : 'text-rose-600'}`}>
+                        {quickReplyStatus === 'sent' ? '✅ Enviada com sucesso!' : 'Erro ao enviar.'}
+                      </span>
+                    )}
+                  </div>
                   <button
                     type="button"
                     onClick={handleSendQuickReply}
