@@ -817,7 +817,7 @@ export default function InternalDomainChat({
                   onClick={() => setSelectedPeer('general')}
                   className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs transition cursor-pointer ${
                     selectedPeer === 'general'
-                      ? 'bg-primary-600 text-white font-bold shadow-xs'
+                      ? 'bg-gradient-to-r from-indigo-600 via-primary-600 to-teal-500 text-white font-bold shadow-xs'
                       : 'text-neutral-700 hover:bg-neutral-200/70 font-medium'
                   }`}
                 >
@@ -865,7 +865,7 @@ export default function InternalDomainChat({
                         onClick={() => setSelectedPeer(col.email)}
                         className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs transition cursor-pointer ${
                           isSelected
-                            ? 'bg-primary-600 text-white font-bold shadow-xs'
+                            ? 'bg-gradient-to-r from-indigo-600 via-primary-600 to-teal-500 text-white font-bold shadow-xs'
                             : 'text-neutral-700 hover:bg-neutral-200/70 font-medium'
                         }`}
                       >
