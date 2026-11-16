@@ -749,9 +749,10 @@ export async function sendRoleChangeEmail(toEmail: string, userName: string, new
     to: toEmail,
     subject,
     html: `
-      <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;color:#111;">
-        <div style="background:${gradientHeader};padding:40px 32px;border-radius:16px 16px 0 0;text-align:center;">
-          <p style="color:#ede9fe;margin:8px 0 0;font-size:14px;font-weight:700;letter-spacing:0.5px;">
+      <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;color:#111;border-radius:16px;overflow:hidden;border:1px solid #e5e7eb;">
+        ${WEHOSTHERE_EMAIL_BANNER}
+        <div style="background:#ffffff;padding:28px 32px;border-bottom:1px solid #e5e7eb;text-align:center;">
+          <p style="color:#111827;margin:0;font-size:14px;font-weight:800;letter-spacing:0.5px;">
             ${isSuperAdmin ? 'NÍVEL MÁXIMO DE ACESSO' : isAdmin ? 'GESTÃO OPERACIONAL' : 'ATUALIZAÇÃO DE PERFIL'}
           </p>
         </div>
@@ -1570,8 +1571,9 @@ export async function sendAdminNewSubmissionEmail(opts: {
     subject: `[Revista] Nova história submetida: "${opts.storyTitle}" por ${opts.authorName}`,
     html: `
       <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;color:#111827;background:#ffffff;border:1px solid #e5e7eb;border-radius:16px;overflow:hidden;">
-        <div style="background:#111827;padding:24px 32px;text-align:center;">
-          <h2 style="color:#ffffff;margin:0;font-size:20px;">Nova Submissão na Revista</h2>
+        ${WEHOSTHERE_EMAIL_BANNER}
+        <div style="background:#ffffff;padding:24px 32px;text-align:center;border-bottom:1px solid #e5e7eb;">
+          <h2 style="color:#111827;margin:0;font-size:20px;font-weight:800;">Nova Submissão na Revista</h2>
           <p style="color:#6b7280;margin:4px 0 0;font-size:13px;">Codando Histórias &bull; Painel de Moderação</p>
         </div>
         <div style="padding:28px;">

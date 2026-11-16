@@ -4,7 +4,7 @@ import AffiliateClick from '@/lib/models/AffiliateClick';
 import AffiliateEvent from '@/lib/models/AffiliateEvent';
 import Commission from '@/lib/models/Commission';
 import UserModel from '@/lib/models/User';
-import { sendEmail } from '@/lib/sendgrid';
+import { sendEmail, WEHOSTHERE_EMAIL_BANNER } from '@/lib/sendgrid';
 import { SITE_URL } from '@/lib/siteConfig';
 
 export type AffiliateReportPeriod = 'daily' | 'weekly' | 'monthly';
@@ -154,11 +154,11 @@ export function buildAffiliateReportHtml(params: {
   const earnGrowth = calcGrowth(metrics.earnings, metrics.prevEarnings);
 
   return `
-    <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:640px;margin:0 auto;color:#0f172a;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e2e8f0;">
-      <div style="background:linear-gradient(135deg,#0f172a,#1e3a8a);padding:28px 24px;text-align:center;">
-        <img src="${SITE_URL}/logo.png" alt="WEHOSTHERE" style="width:140px;height:auto;display:block;margin:0 auto 12px;" />
-        <h1 style="color:#ffffff;font-size:20px;font-weight:800;margin:0 0 4px;">${metrics.periodLabel} de Afiliado</h1>
-        <p style="color:#93c5fd;font-size:13px;margin:0;">${metrics.rangeLabel}</p>
+    <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:640px;margin:0 auto;color:#111827;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e5e7eb;">
+      ${WEHOSTHERE_EMAIL_BANNER}
+      <div style="background:#ffffff;padding:24px 24px 18px;text-align:center;border-bottom:1px solid #e5e7eb;">
+        <h1 style="color:#111827;font-size:20px;font-weight:800;margin:0 0 4px;">${metrics.periodLabel} de Afiliado</h1>
+        <p style="color:#6b7280;font-size:13px;margin:0;">${metrics.rangeLabel}</p>
       </div>
 
       <div style="padding:24px;">
@@ -211,13 +211,13 @@ export function buildAffiliateReportHtml(params: {
         </div>
 
         <div style="text-align:center;margin:24px 0 10px;">
-          <a href="${SITE_URL}/dashboard/affiliates" style="display:inline-block;background:#2563eb;color:#ffffff;text-decoration:none;font-weight:700;font-size:14px;padding:12px 24px;border-radius:10px;">
-            Abrir Painel de Afiliados
+          <a href="${SITE_URL}/dashboard/affiliates" style="display:block;width:100%;padding:14px 24px;background:#0a0a0a;color:#ffffff;border:1px solid rgba(16,185,129,0.35);border-radius:9999px;font-size:14px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;box-shadow:0 2px 10px rgba(0,0,0,0.12);">
+            Abrir Painel de Afiliados →
           </a>
         </div>
 
-        <p style="margin:16px 0 0;font-size:11px;color:#64748b;text-align:center;">
-          Seu link de divulgação: <a href="${affiliateLink}" style="color:#2563eb;">${affiliateLink}</a>
+        <p style="margin:16px 0 0;font-size:11px;color:#6b7280;text-align:center;">
+          Seu link de divulgação: <a href="${affiliateLink}" style="color:#111827;font-weight:600;">${affiliateLink}</a>
         </p>
       </div>
     </div>
