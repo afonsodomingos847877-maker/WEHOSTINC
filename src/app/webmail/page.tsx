@@ -886,6 +886,7 @@ function WebmailContent() {
   const [internalChatUnread, setInternalChatUnread] = useState(0);
   const [internalChatOnline, setInternalChatOnline] = useState(0);
   const [showAnalyticsDashboard, setShowAnalyticsDashboard] = useState(false);
+  const [closedMessageIds, setClosedMessageIds] = useState<Set<string>>(new Set());
 
   // Attachment preview state
   const [previewAttachment, setPreviewAttachment] = useState<WebmailAttachment | null>(null);
@@ -2238,6 +2239,12 @@ function WebmailContent() {
   }, [messages, currentFolder, mailboxPassword, isLoadingMessages]);
 
   const handleSelectMessage = async (msg: WebmailMessage) => {
+    setClosedMessageIds(prev => {
+      if (!prev.has(msg.id)) return prev;
+      const next = new Set(prev);
+      next.delete(msg.id);
+      return next;
+    });
     setSelectedMessage(msg);
     const imapFolder = FOLDER_IMAP_MAP[msg.folder] || 'INBOX';
 
@@ -5623,7 +5630,7 @@ function WebmailContent() {
               })() : null}
 
               {/* Cartão Unificado do E-mail (Cabeçalho + Barra IA + Corpo + Resposta Rápida) */}
-              <div className={`bg-white/95 backdrop-blur-md rounded-2xl shadow-sm border border-slate-200/90 overflow-hidden divide-y divide-slate-100 flex flex-col animate-in fade-in duration-300 ${selectedMessage.body ? 'flex-1' : ''}`}>
+              <div className={`bg-white/95 backdrop-blur-md rounded-2xl shadow-sm border border-slate-200/90 overflow-hidden divide-y divide-slate-100 flex flex-col animate-in fade-in duration-300 ${Boolean(selectedMessage.body) && !closedMessageIds.has(selectedMessage.id) ? 'flex-1' : ''}`}>
               {!(floatingBriefing && floatingBriefing.isOpen && mailboxPassword) && (
               <div className="p-3 sm:p-4 space-y-2.5 bg-white">
                 <div className="flex items-start justify-between gap-2.5">
@@ -5708,6 +5715,17 @@ function WebmailContent() {
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
+                    {Boolean(selectedMessage.body) && !closedMessageIds.has(selectedMessage.id) && (
+                      <button
+                        type="button"
+                        onClick={() => setClosedMessageIds(prev => new Set(prev).add(selectedMessage.id))}
+                        className="ml-1 px-2.5 py-1 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 hover:text-neutral-900 rounded-xl text-xs font-bold transition cursor-pointer inline-flex items-center gap-1"
+                        title="Fechar e-mail"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                        <span>Fechar</span>
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -5912,7 +5930,7 @@ function WebmailContent() {
               })()}
 
               {/* AI Assistant Smart Bar (Apenas quando o conteúdo do e-mail está aberto) */}
-              {!!selectedMessage.body && (
+              {Boolean(selectedMessage.body) && !closedMessageIds.has(selectedMessage.id) && (
               <div className="bg-neutral-50 border-y border-neutral-200 px-4 sm:px-6 py-2.5 text-neutral-900 space-y-2.5">
                 <div className="flex flex-wrap items-center justify-between gap-1.5">
                   <div className="flex flex-wrap items-center gap-1.5">
@@ -6133,7 +6151,7 @@ function WebmailContent() {
               )}
 
               {/* Body section */}
-              <div className={`bg-white ${selectedMessage.body ? 'p-4 sm:p-6 flex-1 space-y-4' : 'px-4 sm:px-6 py-4'}`}>
+              <div className={`bg-white ${Boolean(selectedMessage.body) && !closedMessageIds.has(selectedMessage.id) ? 'p-4 sm:p-6 flex-1 space-y-4' : 'px-4 sm:px-6 py-4'}`}>
                 {translatedEmail && translatedEmail.msgId === selectedMessage.id ? (
                   <div className="space-y-3">
                     <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 bg-emerald-50/90 border border-emerald-200 rounded-2xl text-xs">
@@ -6173,12 +6191,24 @@ function WebmailContent() {
                     <Loader2 className="w-4 h-4 animate-spin text-neutral-900" />
                     <span className="text-xs font-medium">A carregar conteúdo do e-mail...</span>
                   </div>
-                ) : !selectedMessage.body ? (
+                ) : !selectedMessage.body || closedMessageIds.has(selectedMessage.id) ? (
                   <div className="flex items-center justify-between gap-3 py-1">
-                    <span className="text-xs text-neutral-500">O conteúdo completo deste e-mail ainda não foi carregado.</span>
+                    <span className="text-xs text-neutral-500">
+                      {selectedMessage.body ? 'E-mail fechado.' : 'O conteúdo completo deste e-mail ainda não foi carregado.'}
+                    </span>
                     <button
                       type="button"
-                      onClick={() => handleSelectMessage(selectedMessage)}
+                      onClick={() => {
+                        if (selectedMessage.body) {
+                          setClosedMessageIds(prev => {
+                            const next = new Set(prev);
+                            next.delete(selectedMessage.id);
+                            return next;
+                          });
+                        } else {
+                          handleSelectMessage(selectedMessage);
+                        }
+                      }}
                       className="px-4 py-1.5 bg-neutral-900 hover:bg-black text-white rounded-full text-xs font-semibold transition cursor-pointer shrink-0"
                     >
                       Abrir e-mail
@@ -6255,7 +6285,7 @@ function WebmailContent() {
               </div>
 
               {/* Quick Reply Form (Apenas quando o conteúdo do e-mail está aberto) */}
-              {!!selectedMessage.body && (
+              {Boolean(selectedMessage.body) && !closedMessageIds.has(selectedMessage.id) && (
               <div className="bg-slate-50/75 p-4 sm:p-5 space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="text-xs font-bold text-neutral-700 flex items-center space-x-1.5">
