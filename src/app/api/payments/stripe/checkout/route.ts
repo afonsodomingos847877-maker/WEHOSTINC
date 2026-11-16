@@ -43,6 +43,7 @@ export async function POST(request: NextRequest) {
 
     const params = new URLSearchParams();
     params.append('mode', 'payment');
+    params.append('managed_payments[enabled]', 'false');
     params.append('success_url', successUrl);
     params.append('cancel_url', cancelUrl);
     params.append('client_reference_id', orderReference);
