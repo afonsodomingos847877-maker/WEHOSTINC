@@ -1027,6 +1027,80 @@ export class MigaduImapSmtpService {
     }
   }
 
+  async saveDraftMessage(
+    options: {
+      from: string;
+      to?: string[];
+      cc?: string[];
+      bcc?: string[];
+      subject: string;
+      text?: string;
+      html?: string;
+    },
+    password: string,
+    previousUid?: number,
+    customConfig?: ExternalServerConfig
+  ): Promise<number | null> {
+    const config = await this.resolveServerConfig(options.from, customConfig);
+    const client = this.createImapClient(options.from, password, config);
+
+    try {
+      await client.connect();
+      const draftsFolder = await this.resolveMailboxPath(client, 'Drafts');
+      await this.openMailboxSmart(client, draftsFolder);
+
+      if (previousUid && Number.isFinite(previousUid) && previousUid > 0) {
+        try {
+          await client.messageDelete(String(previousUid), { uid: true });
+        } catch {}
+      }
+
+      const mailGen = nodemailer.createTransport({ streamTransport: true, newline: 'windows' });
+      const rawMessage = await new Promise<Buffer>((resolve, reject) => {
+        mailGen.sendMail(
+          {
+            from: options.from,
+            to: options.to && options.to.length > 0 ? options.to.join(', ') : undefined,
+            cc: options.cc && options.cc.length > 0 ? options.cc.join(', ') : undefined,
+            bcc: options.bcc && options.bcc.length > 0 ? options.bcc.join(', ') : undefined,
+            subject: options.subject || '(Sem assunto)',
+            text: options.text,
+            html: options.html,
+          },
+          (err, info) => {
+            if (err) return reject(err);
+            const chunks: Buffer[] = [];
+            const stream = (info as any).message;
+            if (stream && typeof stream.on === 'function') {
+              stream.on('data', (chunk: Buffer) => chunks.push(chunk));
+              stream.on('end', () => resolve(Buffer.concat(chunks)));
+              stream.on('error', reject);
+            } else {
+              resolve(Buffer.from(''));
+            }
+          }
+        );
+      });
+
+      let newUid: number | null = null;
+      if (rawMessage && rawMessage.length > 0) {
+        const appendRes: any = await client.append(draftsFolder, rawMessage, ['\\Draft', '\\Seen']);
+        if (appendRes && typeof appendRes.uid === 'number') {
+          newUid = appendRes.uid;
+        }
+      }
+
+      await client.logout();
+      return newUid;
+    } catch (err) {
+      console.warn('[IMAP] Could not save draft to IMAP Drafts folder:', err);
+      try {
+        await client.logout();
+      } catch {}
+      return null;
+    }
+  }
+
   /**
    * Fetch recent unread messages in INBOX for autonomous AI agent inspection (does NOT mark as read)
    */

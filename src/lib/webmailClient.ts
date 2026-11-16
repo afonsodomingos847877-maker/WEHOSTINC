@@ -28,7 +28,7 @@ export interface WebmailMessage {
   starred: boolean;
   pinned?: boolean;
   priority?: 'high' | 'normal' | 'low';
-  folder: 'inbox' | 'sent' | 'drafts' | 'trash' | 'scheduled';
+  folder: 'inbox' | 'sent' | 'drafts' | 'trash' | 'scheduled' | 'junk' | 'archive';
   avatarColor?: string;
   attachments?: WebmailAttachment[];
 }
@@ -49,6 +49,8 @@ export const FOLDER_IMAP_MAP: Record<string, string> = {
   sent: 'Sent',
   drafts: 'Drafts',
   trash: 'Trash',
+  junk: 'Junk',
+  archive: 'Archive',
 };
 
 const WEBMAIL_SENT_KEY = 'wehosthere_webmail_sent_cache';
@@ -148,7 +150,7 @@ export const webmailManager = {
   getMessages: async (
     accountEmail?: string,
     password?: string,
-    folder: 'inbox' | 'sent' | 'drafts' | 'trash' | 'scheduled' = 'inbox',
+    folder: 'inbox' | 'sent' | 'drafts' | 'trash' | 'scheduled' | 'junk' | 'archive' = 'inbox',
     limit: number = 20
   ): Promise<WebmailMessage[]> => {
     const fetchWithRetry = async (url: string, retries = 2, timeoutMs = 25000): Promise<Response> => {
@@ -271,22 +273,35 @@ export const webmailManager = {
           accountEmail,
         }));
 
-        // Para pasta "Enviados" (sent), mesclar com cache local para exibição instantânea
+        // Para pasta "Enviados" (sent), confiar na lista IMAP como fonte da verdade (mantendo apenas envios dos últimos 15s ainda a sincronizar)
         if (folder === 'sent') {
-          const localSent = typeof window !== 'undefined' ? localStorage.getItem(`${WEBMAIL_SENT_KEY}_${accountEmail.toLowerCase()}`) : null;
+          const sentKey = `${WEBMAIL_SENT_KEY}_${accountEmail.toLowerCase()}`;
+          const localSent = typeof window !== 'undefined' ? localStorage.getItem(sentKey) : null;
           const sentCache: WebmailMessage[] = localSent ? JSON.parse(localSent) : [];
-          
-          // Mesclar mensagens mantendo ordenação por data mais recente
+          const nowMs = Date.now();
           const allSent = [...imapMsgs];
+          const stillPending: WebmailMessage[] = [];
+
           for (const localMsg of sentCache) {
-            const alreadyInImap = allSent.some(m => 
-              m.subject === localMsg.subject && 
+            const ageMs = nowMs - new Date(localMsg.date).getTime();
+            const alreadyInImap = allSent.some(m =>
+              m.subject === localMsg.subject &&
               m.toEmail === localMsg.toEmail &&
               Math.abs(new Date(m.date).getTime() - new Date(localMsg.date).getTime()) < 120000
             );
-            if (!alreadyInImap) {
+            if (!alreadyInImap && ageMs >= 0 && ageMs < 15000) {
               allSent.push(localMsg);
+              stillPending.push(localMsg);
             }
+          }
+          if (typeof window !== 'undefined') {
+            try {
+              if (stillPending.length > 0) {
+                localStorage.setItem(sentKey, JSON.stringify(stillPending));
+              } else {
+                localStorage.removeItem(sentKey);
+              }
+            } catch {}
           }
           return sortMessages(allSent.map(enrichMessage));
         }
@@ -514,12 +529,13 @@ export const webmailManager = {
 
   moveFolder: async (
     msgId: string,
-    newFolder: 'inbox' | 'sent' | 'drafts' | 'trash',
+    newFolder: 'inbox' | 'sent' | 'drafts' | 'trash' | 'junk' | 'archive',
     accountEmail?: string,
     password?: string,
     uid?: number,
     fromImapFolder?: string
-  ): Promise<void> => {
+  ): Promise<boolean> => {
+    let apiOk = true;
     if (accountEmail && password && uid) {
       try {
         const res = await fetch(apiEndpoint('/api/webmail/move'), {
@@ -534,15 +550,16 @@ export const webmailManager = {
           }),
         });
         if (!res.ok) {
+          apiOk = false;
           const data = await res.json().catch(() => ({}));
           console.error('[Webmail] Move failed:', data.error);
         }
       } catch (error) {
+        apiOk = false;
         console.error('[Webmail] API move folder failed:', error);
       }
     }
-    // If moving from sent, remove from local sent cache
-    if (typeof window !== 'undefined' && accountEmail && fromImapFolder === 'Sent') {
+    if (apiOk && typeof window !== 'undefined' && accountEmail && fromImapFolder === 'Sent') {
       try {
         const sentKey = `${WEBMAIL_SENT_KEY}_${accountEmail.toLowerCase()}`;
         const stored = localStorage.getItem(sentKey);
@@ -553,12 +570,13 @@ export const webmailManager = {
         }
       } catch {}
     }
+    return apiOk;
   },
 
   deleteAllMessages: async (
     accountEmail: string,
     password: string,
-    folder: 'inbox' | 'sent' | 'drafts' | 'trash' | 'scheduled'
+    folder: 'inbox' | 'sent' | 'drafts' | 'trash' | 'scheduled' | 'junk' | 'archive'
   ): Promise<{ success: boolean; deletedCount?: number; error?: string }> => {
     if (folder === 'scheduled') {
       if (typeof window !== 'undefined') {
@@ -614,7 +632,8 @@ export const webmailManager = {
     password?: string,
     uid?: number,
     imapFolder?: string
-  ): Promise<void> => {
+  ): Promise<boolean> => {
+    let apiOk = true;
     if (accountEmail && password && uid) {
       try {
         const res = await fetch(apiEndpoint('/api/webmail/delete'), {
@@ -628,13 +647,16 @@ export const webmailManager = {
           }),
         });
         if (!res.ok) {
+          apiOk = false;
           const data = await res.json().catch(() => ({}));
           console.error('[Webmail] Delete failed:', data.error);
         }
       } catch (error) {
+        apiOk = false;
         console.error('[Webmail] API delete failed:', error);
       }
     }
+    if (!apiOk) return false;
     // Remove from local drafts if it is a draft
     if (typeof window !== 'undefined') {
       try {
@@ -666,6 +688,7 @@ export const webmailManager = {
         } catch {}
       }
     }
+    return true;
   },
 
   saveDraft: async (
@@ -674,8 +697,34 @@ export const webmailManager = {
     subject: string,
     body: string,
     attachments?: WebmailAttachment[],
-    password?: string
+    password?: string,
+    previousUid?: number
   ): Promise<WebmailMessage> => {
+    let serverUid: number | undefined = previousUid;
+    if (accountEmail && password && accountEmail.toLowerCase() !== 'teste@wehosthere.com') {
+      try {
+        const res = await fetch(apiEndpoint('/api/webmail/draft'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: accountEmail,
+            password,
+            to: toEmail,
+            subject,
+            body,
+            previousUid,
+          }),
+        });
+        if (res.ok) {
+          const data = await res.json().catch(() => ({}));
+          if (typeof data.uid === 'number') {
+            serverUid = data.uid;
+          }
+        }
+      } catch (err) {
+        console.warn('[Webmail] Could not sync draft to IMAP:', err);
+      }
+    }
     let drafts: WebmailMessage[] = [];
     if (typeof window !== 'undefined') {
       try {
@@ -696,6 +745,7 @@ export const webmailManager = {
 
     const draftData = {
       accountEmail,
+      uid: serverUid,
       fromName: (accountEmail || '').split('@')[0] || 'Rascunho',
       fromEmail: accountEmail,
       toEmail,

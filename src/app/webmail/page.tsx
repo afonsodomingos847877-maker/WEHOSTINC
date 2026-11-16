@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useMemo, useCallback, Suspense } from 'rea
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
-  Mail, Inbox, Send, Star, Trash2, Edit3, Search, RefreshCw, 
+  Mail, Inbox, Send, Star, Trash2, Edit3, Search, RefreshCw, Archive, 
   ArrowLeft, CheckCircle2, ShieldCheck, ShieldAlert, User, Paperclip, Reply, Forward,
   FileText, LogOut, ChevronRight, ChevronUp, ChevronDown, X, AlertCircle, Sparkles, Clock, Printer, Download, Loader2, Filter, Maximize2, Minimize2, Bold, Italic, Underline, Type,
   Wand2, Bot, FileSignature, Lightbulb, Check, CheckCheck, Wifi, WifiOff, Pin, PinOff, Flag, Flame, Lock, Key, Eye, EyeOff,
@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { auth, User as AuthUser } from '@/lib/auth';
 import { dataManager, EmailAccount } from '@/lib/data';
-import { webmailManager, WebmailMessage, WebmailAttachment, ATTACHMENT_MAX_SIZE, ATTACHMENT_MAX_COUNT, ATTACHMENT_TOTAL_MAX_SIZE } from '@/lib/webmailClient';
+import { webmailManager, FOLDER_IMAP_MAP, WebmailMessage, WebmailAttachment, ATTACHMENT_MAX_SIZE, ATTACHMENT_MAX_COUNT, ATTACHMENT_TOTAL_MAX_SIZE } from '@/lib/webmailClient';
 import { emailTemplates, templateCategories, templateCategoriesEN, EmailTemplate } from '@/lib/emailTemplates';
 import { soundEffects } from '@/lib/soundEffects';
 import BrandLogo from '@/components/BrandLogo';
@@ -543,7 +543,8 @@ function WebmailContent() {
     return () => clearTimeout(timeoutId);
   }, [mailboxPassword, showWebmailLogin]);
 
-  const [currentFolder, setCurrentFolder] = useState<'inbox' | 'notifications' | 'sent' | 'starred' | 'trash' | 'drafts' | 'scheduled'>('inbox');
+  const [currentFolder, setCurrentFolder] = useState<'inbox' | 'notifications' | 'sent' | 'starred' | 'trash' | 'drafts' | 'scheduled' | 'junk' | 'archive'>('inbox');
+  const [editingDraftUid, setEditingDraftUid] = useState<number | undefined>(undefined);
   const [messages, setMessages] = useState<WebmailMessage[]>([]);
   const [messageLimit, setMessageLimit] = useState<number>(20);
   const [isLoadingMoreMessages, setIsLoadingMoreMessages] = useState<boolean>(false);
@@ -1385,15 +1386,18 @@ function WebmailContent() {
     setComposeAttachments(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleSaveDraftManually = () => {
-    webmailManager.saveDraft(
+  const handleSaveDraftManually = async () => {
+    await webmailManager.saveDraft(
       selectedAccountEmail,
       composeTo,
       composeSubject,
       composeBody,
-      composeAttachments
+      composeAttachments,
+      mailboxPassword,
+      editingDraftUid
     );
     setEditingDraftId(null);
+    setEditingDraftUid(undefined);
     refreshMessages();
     setSentSuccessMsg('Rascunho guardado com sucesso!');
     setTimeout(() => {
@@ -1408,20 +1412,23 @@ function WebmailContent() {
     }, 1500);
   };
 
-  const handleCloseCompose = () => {
+  const handleCloseCompose = async () => {
     // Se houver conteúdo, salvar como rascunho
     if (composeTo || composeSubject || composeBody) {
-      webmailManager.saveDraft(
+      await webmailManager.saveDraft(
         selectedAccountEmail,
         composeTo,
         composeSubject,
         composeBody,
-        composeAttachments
+        composeAttachments,
+        mailboxPassword,
+        editingDraftUid
       );
       refreshMessages();
     }
     setShowCompose(false);
     setEditingDraftId(null);
+    setEditingDraftUid(undefined);
     setEditingScheduledId(null);
     setShowSchedulePicker(false);
     setComposeScheduledFor('');
@@ -1913,7 +1920,7 @@ function WebmailContent() {
   useEffect(() => {
     setSelectedIds(new Set());
     if (selectedAccountEmail && mailboxPassword) {
-      const folder = (currentFolder === 'starred' || currentFolder === 'notifications') ? 'inbox' : currentFolder as 'inbox' | 'sent' | 'drafts' | 'trash' | 'scheduled';
+      const folder = (currentFolder === 'starred' || currentFolder === 'notifications') ? 'inbox' : currentFolder as 'inbox' | 'sent' | 'drafts' | 'trash' | 'scheduled' | 'junk' | 'archive';
       
       // 1. EXIBIÇÃO INSTANTÂNEA: Se temos mensagens em cache, exibe imediatamente (0ms)
       const cached = getCachedMessages(selectedAccountEmail, currentFolder);
@@ -1999,7 +2006,7 @@ function WebmailContent() {
 
     const autoSyncTimer = setInterval(() => {
       if (typeof document !== 'undefined' && document.hidden) return;
-      const folder = (currentFolder === 'starred' || currentFolder === 'notifications') ? 'inbox' : currentFolder as 'inbox' | 'sent' | 'drafts' | 'trash' | 'scheduled';
+      const folder = (currentFolder === 'starred' || currentFolder === 'notifications') ? 'inbox' : currentFolder as 'inbox' | 'sent' | 'drafts' | 'trash' | 'scheduled' | 'junk' | 'archive';
       webmailManager.getMessages(selectedAccountEmail, mailboxPassword, folder, messageLimit).then(msgs => {
         const filtered = currentFolder === 'starred' ? msgs.filter(m => m.starred) : currentFolder === 'notifications' ? msgs.filter(m => isNotificationEmail(m)) : currentFolder === 'inbox' ? msgs.filter(m => !isNotificationEmail(m)) : msgs;
         setMessages(prev => {
@@ -2028,7 +2035,7 @@ function WebmailContent() {
       setIsRefreshingWebmail(true);
       setMessagesLoadError('');
       try {
-        const folder = (currentFolder === 'starred' || currentFolder === 'notifications') ? 'inbox' : currentFolder as 'inbox' | 'sent' | 'drafts' | 'trash' | 'scheduled';
+        const folder = (currentFolder === 'starred' || currentFolder === 'notifications') ? 'inbox' : currentFolder as 'inbox' | 'sent' | 'drafts' | 'trash' | 'scheduled' | 'junk' | 'archive';
         const msgs = await webmailManager.getMessages(selectedAccountEmail, mailboxPassword, folder, messageLimit);
         const filtered = currentFolder === 'starred' ? msgs.filter(m => m.starred) : currentFolder === 'notifications' ? msgs.filter(m => isNotificationEmail(m)) : currentFolder === 'inbox' ? msgs.filter(m => !isNotificationEmail(m)) : msgs;
         setCachedMessages(selectedAccountEmail, currentFolder, filtered);
@@ -2059,7 +2066,7 @@ function WebmailContent() {
     setIsLoadingMoreMessages(true);
     setMessagesLoadError('');
     try {
-      const folder = (currentFolder === 'starred' || currentFolder === 'notifications') ? 'inbox' : currentFolder as 'inbox' | 'sent' | 'drafts' | 'trash' | 'scheduled';
+      const folder = (currentFolder === 'starred' || currentFolder === 'notifications') ? 'inbox' : currentFolder as 'inbox' | 'sent' | 'drafts' | 'trash' | 'scheduled' | 'junk' | 'archive';
       const msgs = await webmailManager.getMessages(selectedAccountEmail, mailboxPassword, folder, nextLimit);
       const filtered = currentFolder === 'starred' ? msgs.filter(m => m.starred) : currentFolder === 'notifications' ? msgs.filter(m => isNotificationEmail(m)) : currentFolder === 'inbox' ? msgs.filter(m => !isNotificationEmail(m)) : msgs;
       setMessageLimit(nextLimit);
@@ -2224,7 +2231,7 @@ function WebmailContent() {
 
   const handleSelectMessage = async (msg: WebmailMessage) => {
     setSelectedMessage(msg);
-    const imapFolder = msg.folder === 'sent' ? 'Sent' : msg.folder === 'trash' ? 'Trash' : msg.folder === 'drafts' ? 'Drafts' : 'INBOX';
+    const imapFolder = FOLDER_IMAP_MAP[msg.folder] || 'INBOX';
 
     if (!msg.isRead) {
       await webmailManager.markAsRead(msg.id, true, selectedAccountEmail, mailboxPassword, msg.uid, imapFolder);
@@ -2263,6 +2270,7 @@ function WebmailContent() {
       setComposeBody(activeMsg.body);
       setComposeAttachments(activeMsg.attachments || []);
       setEditingDraftId(activeMsg.id);
+      setEditingDraftUid(activeMsg.uid);
       setShowCompose(true);
     }
   };
@@ -2332,7 +2340,11 @@ function WebmailContent() {
       return;
     }
     const isAlreadyInTrash = msg.folder === 'trash';
-    const imapFolder = msg.folder === 'sent' ? 'Sent' : msg.folder === 'trash' ? 'Trash' : msg.folder === 'drafts' ? 'Drafts' : 'INBOX';
+    const imapFolder = FOLDER_IMAP_MAP[msg.folder] || 'INBOX';
+
+    const prevMessages = messages;
+    const prevSelected = selectedMessage;
+    const prevStats = folderStats;
     
     // Atualização otimista na interface
     setMessages(prev => prev.filter(m => m.id !== msgId));
@@ -2350,15 +2362,21 @@ function WebmailContent() {
     soundEffects.playDeleteEmailSound();
 
     try {
-      if (isAlreadyInTrash) {
-        // Etapa 2: Eliminação permanente - a mensagem já está na Lixeira
-        await webmailManager.deletePermanently(msgId, selectedAccountEmail, mailboxPassword, msg.uid, imapFolder);
-      } else {
-        // Etapa 1: Mover para a Lixeira - a mensagem pode ser recuperada
-        await webmailManager.moveFolder(msgId, 'trash', selectedAccountEmail, mailboxPassword, msg.uid, imapFolder);
+      const ok = isAlreadyInTrash
+        ? await webmailManager.deletePermanently(msgId, selectedAccountEmail, mailboxPassword, msg.uid, imapFolder)
+        : await webmailManager.moveFolder(msgId, 'trash', selectedAccountEmail, mailboxPassword, msg.uid, imapFolder);
+      if (!ok) {
+        setMessages(prevMessages);
+        setSelectedMessage(prevSelected);
+        setFolderStats(prevStats);
+        alert('Falha de ligação ao servidor de e-mail. A mensagem não foi removida.');
       }
     } catch (err) {
       console.error('[Webmail] Error deleting/moving message:', err);
+      setMessages(prevMessages);
+      setSelectedMessage(prevSelected);
+      setFolderStats(prevStats);
+      alert('Falha de ligação ao servidor de e-mail. A mensagem não foi removida.');
     } finally {
       setDeleteConfirmModal(null);
     }
@@ -2385,13 +2403,15 @@ function WebmailContent() {
   };
 
   const handleEmptyFolder = async () => {
-    if (!['inbox', 'sent', 'trash', 'drafts', 'scheduled'].includes(currentFolder)) return;
+    if (!['inbox', 'sent', 'trash', 'drafts', 'scheduled', 'junk', 'archive'].includes(currentFolder)) return;
     const folderLabels: Record<string, string> = {
       inbox: 'Entrada (INBOX)',
       sent: 'Enviados',
       trash: 'Lixeira',
       drafts: 'Rascunhos',
       scheduled: 'Agendados',
+      junk: 'Spam',
+      archive: 'Arquivo',
     };
     const label = folderLabels[currentFolder] || currentFolder;
     if (
@@ -2407,7 +2427,7 @@ function WebmailContent() {
       const res = await webmailManager.deleteAllMessages(
         selectedAccountEmail,
         mailboxPassword,
-        currentFolder as 'inbox' | 'sent' | 'drafts' | 'trash' | 'scheduled'
+        currentFolder as 'inbox' | 'sent' | 'drafts' | 'trash' | 'scheduled' | 'junk' | 'archive'
       );
       if (!res.success) {
         alert(res.error || 'Não foi possível esvaziar a pasta.');
@@ -2452,6 +2472,10 @@ function WebmailContent() {
     const idSet = new Set(msgIds);
     const targetMsgs = messages.filter(m => idSet.has(m.id));
 
+    const prevMessages = messages;
+    const prevSelected = selectedMessage;
+    const prevStats = folderStats;
+
     setMessages(prev => prev.filter(m => !idSet.has(m.id)));
     if (selectedMessage && idSet.has(selectedMessage.id)) {
       setSelectedMessage(null);
@@ -2489,25 +2513,28 @@ function WebmailContent() {
     soundEffects.playDeleteEmailSound();
 
     try {
-      await Promise.allSettled(
+      const results = await Promise.allSettled(
         targetMsgs.map(msg => {
           const isAlreadyInTrash = msg.folder === 'trash';
-          const imapFolder =
-            msg.folder === 'sent'
-              ? 'Sent'
-              : msg.folder === 'trash'
-              ? 'Trash'
-              : msg.folder === 'drafts'
-              ? 'Drafts'
-              : 'INBOX';
+          const imapFolder = FOLDER_IMAP_MAP[msg.folder] || 'INBOX';
           if (isAlreadyInTrash) {
             return webmailManager.deletePermanently(msg.id, selectedAccountEmail, mailboxPassword, msg.uid, imapFolder);
           }
           return webmailManager.moveFolder(msg.id, 'trash', selectedAccountEmail, mailboxPassword, msg.uid, imapFolder);
         })
       );
+      const anyFailed = results.some(r => r.status === 'rejected' || (r.status === 'fulfilled' && r.value === false));
+      if (anyFailed) {
+        setMessages(prevMessages);
+        setSelectedMessage(prevSelected);
+        setFolderStats(prevStats);
+        alert('Algumas mensagens não puderam ser removidas por falha de ligação ao servidor.');
+      }
     } catch (err) {
       console.error('[Webmail] Error in bulk delete:', err);
+      setMessages(prevMessages);
+      setSelectedMessage(prevSelected);
+      setFolderStats(prevStats);
     } finally {
       setIsBulkDeleting(false);
       setDeleteConfirmModal(null);
@@ -4484,6 +4511,30 @@ function WebmailContent() {
         </button>
 
         <button
+          onClick={() => { soundEffects.playFolderSwitchSound(); setCurrentFolder('junk'); setSelectedMessage(null); }}
+          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl whitespace-nowrap font-bold transition-all duration-200 shrink-0 border ${
+            currentFolder === 'junk' 
+              ? 'bg-neutral-900 text-white shadow-xs border-neutral-900' 
+              : 'bg-neutral-100 text-neutral-600 hover:text-neutral-900 hover:bg-neutral-200/70 border-neutral-200/80'
+          }`}
+        >
+          <ShieldAlert className="h-3.5 w-3.5" />
+          <span>Spam</span>
+        </button>
+
+        <button
+          onClick={() => { soundEffects.playFolderSwitchSound(); setCurrentFolder('archive'); setSelectedMessage(null); }}
+          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl whitespace-nowrap font-bold transition-all duration-200 shrink-0 border ${
+            currentFolder === 'archive' 
+              ? 'bg-neutral-900 text-white shadow-xs border-neutral-900' 
+              : 'bg-neutral-100 text-neutral-600 hover:text-neutral-900 hover:bg-neutral-200/70 border-neutral-200/80'
+          }`}
+        >
+          <Archive className="h-3.5 w-3.5" />
+          <span>Arquivo</span>
+        </button>
+
+        <button
           onClick={() => { soundEffects.playFolderSwitchSound(); setCurrentFolder('drafts'); setSelectedMessage(null); }}
           className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl whitespace-nowrap font-bold transition-all duration-200 shrink-0 border ${
             currentFolder === 'drafts' 
@@ -4684,6 +4735,30 @@ function WebmailContent() {
             >
               <Trash2 className={`h-4 w-4 ${!showAnalyticsDashboard && currentFolder === 'trash' ? 'text-white' : 'text-neutral-500'}`} />
               <span>Lixeira</span>
+            </button>
+
+            <button
+              onClick={() => { soundEffects.playFolderSwitchSound(); setShowAnalyticsDashboard(false); setCurrentFolder('junk'); }}
+              className={`w-full flex items-center space-x-2.5 px-3 py-1.5 rounded-xl transition-all duration-200 cursor-pointer border ${
+                !showAnalyticsDashboard && currentFolder === 'junk' 
+                  ? 'bg-neutral-900 text-white border-neutral-900 font-bold shadow-xs' 
+                  : 'hover:bg-neutral-100 text-neutral-600 hover:text-neutral-900 border-transparent'
+              }`}
+            >
+              <ShieldAlert className={`h-4 w-4 ${!showAnalyticsDashboard && currentFolder === 'junk' ? 'text-white' : 'text-neutral-500'}`} />
+              <span>Spam</span>
+            </button>
+
+            <button
+              onClick={() => { soundEffects.playFolderSwitchSound(); setShowAnalyticsDashboard(false); setCurrentFolder('archive'); }}
+              className={`w-full flex items-center space-x-2.5 px-3 py-1.5 rounded-xl transition-all duration-200 cursor-pointer border ${
+                !showAnalyticsDashboard && currentFolder === 'archive' 
+                  ? 'bg-neutral-900 text-white border-neutral-900 font-bold shadow-xs' 
+                  : 'hover:bg-neutral-100 text-neutral-600 hover:text-neutral-900 border-transparent'
+              }`}
+            >
+              <Archive className={`h-4 w-4 ${!showAnalyticsDashboard && currentFolder === 'archive' ? 'text-white' : 'text-neutral-500'}`} />
+              <span>Arquivo</span>
             </button>
 
             <button
@@ -5047,7 +5122,7 @@ function WebmailContent() {
                     <span>Eliminar ({selectedIds.size})</span>
                   </button>
                 </div>
-              ) : ['inbox', 'sent', 'trash', 'drafts', 'scheduled'].includes(currentFolder) ? (
+              ) : ['inbox', 'sent', 'trash', 'drafts', 'scheduled', 'junk', 'archive'].includes(currentFolder) ? (
                 <button
                   type="button"
                   onClick={handleEmptyFolder}
