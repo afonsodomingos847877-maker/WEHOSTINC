@@ -1193,8 +1193,8 @@ export async function dispatchMessage(payload: SendMessagePayload): Promise<{ su
               style="max-width:160px;height:auto;display:block;margin:0 auto;"
               onerror="this.style.display='none';document.getElementById('wh-logo-text').style.display='block';"
             />
-            <span id="wh-logo-text" style="display:none;color:white;font-size:22px;font-weight:800;letter-spacing:1px;">WEHOSTHERE</span>
-            <p style="color:rgba(255,255,255,0.9);margin:10px 0 0;font-size:13px;">Hospedagem &amp; Serviços de Nuvem</p>
+            <span id="wh-logo-text" style="display:none;color:#0f172a;font-size:22px;font-weight:800;letter-spacing:1px;">WEHOSTHERE</span>
+            <p style="color:#334155;font-weight:600;margin:10px 0 0;font-size:13px;">Hospedagem &amp; Serviços de Nuvem</p>
           </div>
           <div style="background:#ffffff;padding:32px 24px;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 12px 12px;">
             <div style="white-space:pre-line;font-size:15px;color:#334155;line-height:1.8;">${finalBody}</div>
