@@ -2,7 +2,7 @@ import { connectDB } from '@/lib/mongodb';
 import { decryptPassword } from '@/lib/encryption';
 import { generateSmartReply } from '@/lib/emailAssistantCore';
 import { IncomingAgentMessage, migaduImapSmtp } from '@/lib/migaduImapSmtp';
-import { sendEmail as sendViaResend } from '@/lib/sendgrid';
+import { sendEmail as sendViaResend, WEHOSTHERE_EMAIL_BANNER } from '@/lib/sendgrid';
 import {
   EmailAgentConfig,
   EmailAgentConfigDocument,
@@ -326,7 +326,10 @@ export async function runEmailAgentForMailbox(
 </div>`
         : '';
 
-      const replyHtml = `<div style="font-family:'Segoe UI',Arial,sans-serif;font-size:14px;line-height:1.6;color:#0f172a;white-space:normal;">${escapeHtml(rawReplyText).replace(/\n/g, '<br/>')}${corporateSignatureHtml}</div>`;
+      const innerReplyHtml = `${escapeHtml(rawReplyText).replace(/\n/g, '<br/>')}${corporateSignatureHtml}`;
+      const replyHtml = isWehosthereMailbox
+        ? `<div style="font-family:'Segoe UI',Arial,sans-serif;max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;">${WEHOSTHERE_EMAIL_BANNER}<div style="padding:20px 24px;font-size:14px;line-height:1.6;color:#0f172a;white-space:normal;">${innerReplyHtml}</div></div>`
+        : `<div style="font-family:'Segoe UI',Arial,sans-serif;font-size:14px;line-height:1.6;color:#0f172a;white-space:normal;">${innerReplyHtml}</div>`;
 
       const referencesHeader = Array.from(
         new Set([...(msg.references || []), messageId].filter(Boolean))

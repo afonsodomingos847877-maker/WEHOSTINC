@@ -8,6 +8,7 @@ import { replaceDataImagesWithCloudinary } from '@/lib/cloudinaryUpload';
 import { canAccessMailbox } from '@/lib/serverAuth';
 import { safeFetchPublicUrl } from '@/lib/ssrfGuard';
 import { isDemoAccount } from '@/lib/demoWebmailData';
+import { WEHOSTHERE_EMAIL_BANNER } from '@/lib/sendgrid';
 
 export const maxDuration = 60;
 
@@ -231,6 +232,15 @@ export async function POST(request: NextRequest) {
 
     const validInReplyTo = inReplyTo && !inReplyTo.startsWith('uid:') ? inReplyTo : undefined;
 
+    const baseHtml = emailBody || `<p>${plainText || '(Anexo enviado)'}</p>`;
+    const shouldAddBanner =
+      cleanEmail.endsWith('@wehosthere.com') &&
+      typeof baseHtml === 'string' &&
+      !baseHtml.includes('socialbanner.jpg');
+    const finalHtml = shouldAddBanner
+      ? `<div style="font-family:'Segoe UI',Arial,sans-serif;max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;">${WEHOSTHERE_EMAIL_BANNER}<div style="padding:20px 24px;color:#111827;font-size:14px;line-height:1.6;">${baseHtml}</div></div>`
+      : baseHtml;
+
     await migaduImapSmtp.sendEmail({
       from: cleanEmail,
       to: parseRecipients(to),
@@ -238,7 +248,7 @@ export async function POST(request: NextRequest) {
       bcc: parseRecipients(bcc),
       subject: subject || '(Sem assunto)',
       text: plainText || emailBody || '(Anexo enviado)',
-      html: emailBody || `<p>${plainText || '(Anexo enviado)'}</p>`,
+      html: finalHtml,
       priority: priority || 'normal',
       inReplyTo: validInReplyTo,
       references: validInReplyTo ? [validInReplyTo] : undefined,
