@@ -1,4 +1,4 @@
-import { sendEmail, WEHOSTHERE_MESH_HEADER_BG } from '@/lib/sendgrid';
+import { sendEmail, WEHOSTHERE_EMAIL_BANNER } from '@/lib/sendgrid';
 
 export type CommunicationChannel = 'email' | 'whatsapp' | 'sms';
 
@@ -1185,17 +1185,7 @@ export async function dispatchMessage(payload: SendMessagePayload): Promise<{ su
         subject: finalSubject,
         text: finalBody,
         html: `<div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;color:#1e293b;line-height:1.7;">
-          <div style="${WEHOSTHERE_MESH_HEADER_BG}padding:28px 24px 24px;border-radius:12px 12px 0 0;text-align:center;">
-            <img
-              src="https://wehosthere.com/logo.png"
-              alt="WEHOSTHERE"
-              width="160"
-              style="max-width:160px;height:auto;display:block;margin:0 auto;"
-              onerror="this.style.display='none';document.getElementById('wh-logo-text').style.display='block';"
-            />
-            <span id="wh-logo-text" style="display:none;color:#0f172a;font-size:22px;font-weight:800;letter-spacing:1px;">WEHOSTHERE</span>
-            <p style="color:#334155;font-weight:600;margin:10px 0 0;font-size:13px;">Hospedagem &amp; Serviços de Nuvem</p>
-          </div>
+          <div style="border-radius:12px 12px 0 0;overflow:hidden;">${WEHOSTHERE_EMAIL_BANNER}</div>
           <div style="background:#ffffff;padding:32px 24px;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 12px 12px;">
             <div style="white-space:pre-line;font-size:15px;color:#334155;line-height:1.8;">${finalBody}</div>
             <hr style="border:none;border-top:1px solid #e2e8f0;margin:28px 0 16px;">
