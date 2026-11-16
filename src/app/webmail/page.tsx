@@ -2384,6 +2384,52 @@ function WebmailContent() {
     }
   };
 
+  const handleEmptyFolder = async () => {
+    if (!['inbox', 'sent', 'trash', 'drafts', 'scheduled'].includes(currentFolder)) return;
+    const folderLabels: Record<string, string> = {
+      inbox: 'Entrada (INBOX)',
+      sent: 'Enviados',
+      trash: 'Lixeira',
+      drafts: 'Rascunhos',
+      scheduled: 'Agendados',
+    };
+    const label = folderLabels[currentFolder] || currentFolder;
+    if (
+      !window.confirm(
+        `Tem a certeza que deseja ELIMINAR PERMANENTEMENTE todas as mensagens da pasta "${label}"? Esta ação não pode ser desfeita.`
+      )
+    ) {
+      return;
+    }
+
+    setIsBulkDeleting(true);
+    try {
+      const res = await webmailManager.deleteAllMessages(
+        selectedAccountEmail,
+        mailboxPassword,
+        currentFolder as 'inbox' | 'sent' | 'drafts' | 'trash' | 'scheduled'
+      );
+      if (!res.success) {
+        alert(res.error || 'Não foi possível esvaziar a pasta.');
+        return;
+      }
+      setMessages([]);
+      setSelectedMessage(null);
+      setSelectedIds(new Set());
+      setFolderStats(prev => ({
+        ...prev,
+        ...(currentFolder === 'inbox' ? { inbox: 0, notifications: 0 } : {}),
+        ...(currentFolder === 'sent' ? { sent: 0 } : {}),
+        ...(currentFolder === 'trash' ? { trash: 0 } : {}),
+        ...(currentFolder === 'drafts' ? { drafts: 0 } : {}),
+        ...(currentFolder === 'scheduled' ? { scheduled: 0 } : {}),
+      }));
+      soundEffects.playDeleteEmailSound?.();
+    } finally {
+      setIsBulkDeleting(false);
+    }
+  };
+
   const handleBulkDelete = () => {
     if (selectedIds.size === 0) return;
     const ids = Array.from(selectedIds);
@@ -4982,7 +5028,7 @@ function WebmailContent() {
                     : 'Selecionar tudo'}
                 </span>
               </label>
-              {selectedIds.size > 0 && (
+              {selectedIds.size > 0 ? (
                 <div className="flex items-center space-x-1.5">
                   <button
                     type="button"
@@ -5001,7 +5047,18 @@ function WebmailContent() {
                     <span>Eliminar ({selectedIds.size})</span>
                   </button>
                 </div>
-              )}
+              ) : ['inbox', 'sent', 'trash', 'drafts', 'scheduled'].includes(currentFolder) ? (
+                <button
+                  type="button"
+                  onClick={handleEmptyFolder}
+                  disabled={isBulkDeleting}
+                  className="flex items-center space-x-1 px-2 py-1 text-[11px] font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-lg border border-rose-200/70 transition cursor-pointer disabled:opacity-50"
+                  title="Eliminar permanentemente todas as mensagens desta pasta"
+                >
+                  <Trash2 className="h-3 w-3" />
+                  <span>Esvaziar</span>
+                </button>
+              ) : null}
             </div>
           )}
 

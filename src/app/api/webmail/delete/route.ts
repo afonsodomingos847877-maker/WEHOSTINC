@@ -5,10 +5,21 @@ import { migaduImapSmtp } from '@/lib/migaduImapSmtp';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, password, uid, folder } = body;
+    const { email, password, uid, folder, deleteAll } = body;
 
     if (email && email.toLowerCase().trim() === 'teste@wehosthere.com') {
       return NextResponse.json({ success: true, isDemo: true });
+    }
+
+    if (deleteAll === true) {
+      if (!email || !password || !folder) {
+        return NextResponse.json(
+          { error: 'Email, password, and folder are required' },
+          { status: 400 }
+        );
+      }
+      const deletedCount = await migaduImapSmtp.deleteAllMessages(email, password, folder);
+      return NextResponse.json({ success: true, deletedCount });
     }
 
     const numericUid = Number(uid);

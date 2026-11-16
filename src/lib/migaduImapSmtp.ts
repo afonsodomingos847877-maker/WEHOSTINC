@@ -877,6 +877,35 @@ export class MigaduImapSmtpService {
     }
   }
 
+  async deleteAllMessages(
+    email: string,
+    password: string,
+    folder: string = 'INBOX',
+    customConfig?: ExternalServerConfig
+  ): Promise<number> {
+    const config = await this.resolveServerConfig(email, customConfig);
+    const client = this.createImapClient(email, password, config);
+
+    try {
+      await client.connect();
+      const mailbox = await this.openMailboxSmart(client, folder);
+      if (!mailbox || mailbox.exists === 0) {
+        await client.logout();
+        return 0;
+      }
+      const total = mailbox.exists;
+      await client.messageDelete('1:*');
+      await client.logout();
+      return total;
+    } catch (error) {
+      console.error('[IMAP] Failed to delete all messages for:', email, error);
+      try {
+        await client.logout();
+      } catch {}
+      throw error;
+    }
+  }
+
   /**
    * Send an email via SMTP and save a copy to the IMAP Sent folder
    */

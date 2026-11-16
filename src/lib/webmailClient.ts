@@ -555,6 +555,59 @@ export const webmailManager = {
     }
   },
 
+  deleteAllMessages: async (
+    accountEmail: string,
+    password: string,
+    folder: 'inbox' | 'sent' | 'drafts' | 'trash' | 'scheduled'
+  ): Promise<{ success: boolean; deletedCount?: number; error?: string }> => {
+    if (folder === 'scheduled') {
+      if (typeof window !== 'undefined') {
+        try { localStorage.removeItem(WEBMAIL_SCHEDULED_KEY); } catch {}
+      }
+      return { success: true };
+    }
+
+    if (folder === 'drafts' && typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem(WEBMAIL_STORAGE_KEY);
+        if (stored) {
+          const drafts: WebmailMessage[] = JSON.parse(stored);
+          const remaining = drafts.filter((m) => m.accountEmail.toLowerCase() !== accountEmail.toLowerCase());
+          localStorage.setItem(WEBMAIL_STORAGE_KEY, JSON.stringify(remaining));
+        }
+      } catch {}
+    }
+
+    if (folder === 'sent' && typeof window !== 'undefined' && accountEmail) {
+      try { localStorage.removeItem(`${WEBMAIL_SENT_KEY}_${accountEmail.toLowerCase()}`); } catch {}
+    }
+
+    if (!accountEmail || !password) {
+      return { success: true };
+    }
+
+    try {
+      const imapFolder = FOLDER_IMAP_MAP[folder] || 'INBOX';
+      const res = await fetch(apiEndpoint('/api/webmail/delete'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: accountEmail,
+          password,
+          folder: imapFolder,
+          deleteAll: true,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        return { success: false, error: data.error || `HTTP ${res.status}` };
+      }
+      return { success: true, deletedCount: data.deletedCount };
+    } catch (error: any) {
+      return { success: false, error: error?.message || 'Falha ao esvaziar pasta' };
+    }
+  },
+
   deletePermanently: async (
     msgId: string,
     accountEmail?: string,
