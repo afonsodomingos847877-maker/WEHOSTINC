@@ -352,7 +352,7 @@ export async function sendInvoiceIssuedEmail(opts: SendInvoiceIssuedEmailOptions
           </h3>
           <ul style="margin:0;padding-left:18px;color:#374151;font-size:13px;line-height:1.8;">
             <li><strong>M-Pesa:</strong> +258 84 833 5618 (Titular: WEHOSTHERE / Afonso Domingos)</li>
-            <li><strong>e-Mola:</strong> +258 86 833 5618 / +258 84 833 5618</li>
+            <li><strong>e-Mola:</strong> +258 87 964 2412</li>
             <li><strong>Millennium BIM:</strong> NIB: <code>433372004293948</code></li>
           </ul>
           <p style="margin:10px 0 0;font-size:12px;color:#6b7280;">
