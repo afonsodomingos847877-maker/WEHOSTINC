@@ -101,7 +101,7 @@ export async function sendWelcomeEmail(toEmail: string, userName: string, plan: 
     subject: `✅ Confirme sua conta WEHOSTHERE, ${userName}!`,
     html: `
       <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;color:#111;">
-        <div style="background:linear-gradient(135deg,#1d4ed8,#3b82f6);padding:40px 32px;border-radius:16px 16px 0 0;text-align:center;">
+        <div style="${WEHOSTHERE_MESH_HEADER_BG}padding:40px 32px;border-radius:16px 16px 0 0;text-align:center;">
           <img src="${SITE_URL}/logo.png" alt="WEHOSTHERE Logo" style="width:180px;height:auto;margin:0 auto 16px;display:block;" />
           <p style="color:#bfdbfe;margin:8px 0 0;font-size:14px;">Plataforma de Hospedagem Profissional</p>
         </div>
@@ -128,7 +128,7 @@ export async function sendInvoiceEmail(toEmail: string, userName: string, invoic
     subject: `🧾 Pagamento Confirmado - Fatura ${invoiceRef} | WEHOSTHERE`,
     html: `
       <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;color:#111;">
-        <div style="background:linear-gradient(135deg,#059669,#10b981);padding:40px 32px;border-radius:16px 16px 0 0;text-align:center;">
+        <div style="${WEHOSTHERE_MESH_HEADER_BG}padding:40px 32px;border-radius:16px 16px 0 0;text-align:center;">
           <img src="${SITE_URL}/logo.png" alt="WEHOSTHERE Logo" style="width:180px;height:auto;margin:0 auto 16px;display:block;" />
           <p style="color:#d1fae5;margin:8px 0 0;font-size:13px;">Fatura ${invoiceRef}</p>
         </div>
@@ -246,7 +246,7 @@ export async function sendInvoiceIssuedEmail(opts: SendInvoiceIssuedEmailOptions
   const html = `
     <div style="font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif;max-width:620px;margin:0 auto;color:#0f172a;background:#ffffff;">
       <!-- Cabeçalho com Branding WEHOSTHERE -->
-      <div style="background:linear-gradient(135deg,#0052cc 0%,#0065ff 50%,#003884 100%);padding:36px 32px 30px;border-radius:18px 18px 0 0;text-align:center;">
+      <div style="${WEHOSTHERE_MESH_HEADER_BG}padding:36px 32px 30px;border-radius:18px 18px 0 0;text-align:center;">
         <img src="${SITE_URL}/logo.png" alt="WEHOSTHERE Logo" style="width:190px;height:auto;margin:0 auto 14px;display:block;" />
         <span style="display:inline-block;background:rgba(255,255,255,0.18);color:#ffffff;font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:5px 14px;border-radius:20px;border:1px solid rgba(255,255,255,0.25);">
           Fatura Comercial Oficial
@@ -430,7 +430,7 @@ export async function sendSupportTicketEmail(toEmail: string, userName: string, 
     subject: `🎫 Ticket de Suporte Aberto - #${ticketId} | WEHOSTHERE`,
     html: `
       <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;">
-        <div style="background:linear-gradient(135deg,#7c3aed,#6d28d9);padding:40px 32px;border-radius:16px 16px 0 0;text-align:center;">
+        <div style="${WEHOSTHERE_MESH_HEADER_BG}padding:40px 32px;border-radius:16px 16px 0 0;text-align:center;">
           <img src="${SITE_URL}/logo.png" alt="WEHOSTHERE Logo" style="width:180px;height:auto;margin:0 auto 16px;display:block;" />
           <p style="color:#ede9fe;margin:8px 0 0;font-size:13px;">#${ticketId}</p>
         </div>
@@ -519,7 +519,7 @@ export async function sendAccountActivatedEmail(toEmail: string, userName: strin
     subject: '✅ Sua conta WEHOSTHERE foi ativada com sucesso!',
     html: `
       <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;color:#111;">
-        <div style="background:linear-gradient(135deg,#059669,#10b981);padding:40px 32px;border-radius:16px 16px 0 0;text-align:center;">
+        <div style="${WEHOSTHERE_MESH_HEADER_BG}padding:40px 32px;border-radius:16px 16px 0 0;text-align:center;">
           <img src="${SITE_URL}/logo.png" alt="WEHOSTHERE Logo" style="width:180px;height:auto;margin:0 auto 16px;display:block;" />
           <p style="color:#d1fae5;margin:8px 0 0;font-size:13px;">Conta Ativada</p>
         </div>
@@ -554,7 +554,7 @@ export async function sendLoginNotificationEmail(toEmail: string, userName: stri
     subject: '🔐 Nova sessão iniciada na sua conta WEHOSTHERE',
     html: `
       <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;color:#111;">
-        <div style="background:linear-gradient(135deg,#3b82f6,#1d4ed8);padding:40px 32px;border-radius:16px 16px 0 0;text-align:center;">
+        <div style="${WEHOSTHERE_MESH_HEADER_BG}padding:40px 32px;border-radius:16px 16px 0 0;text-align:center;">
           <img src="${SITE_URL}/logo.png" alt="WEHOSTHERE Logo" style="width:180px;height:auto;margin:0 auto 16px;display:block;" />
           <p style="color:#bfdbfe;margin:8px 0 0;font-size:13px;">Notificação de Login</p>
         </div>
@@ -591,7 +591,7 @@ export async function sendNewsletterEmail(toEmail: string, subject: string, cont
     subject: subject,
     html: `
       <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;color:#111;">
-        <div style="background:linear-gradient(135deg,#8b5cf6,#6366f1);padding:40px 32px;border-radius:16px 16px 0 0;text-align:center;">
+        <div style="${WEHOSTHERE_MESH_HEADER_BG}padding:40px 32px;border-radius:16px 16px 0 0;text-align:center;">
           <img src="${SITE_URL}/logo.png" alt="WEHOSTHERE Logo" style="width:180px;height:auto;margin:0 auto 16px;display:block;" />
           <p style="color:#e9d5ff;margin:8px 0 0;font-size:13px;">Newsletter</p>
         </div>
@@ -618,10 +618,10 @@ export async function sendCourseEnrollmentEmail(toEmail: string, userName: strin
 
   return sendEmail({
     to: toEmail,
-    subject: `🎓 Bem-vindo ao curso: ${courseTitle}!`,
+    subject: `Bem-vindo ao curso: ${courseTitle}!`,
     html: `
       <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;color:#111;">
-        <div style="background:linear-gradient(135deg,#2563eb,#4f46e5);padding:40px 32px;border-radius:16px 16px 0 0;text-align:center;">
+        <div style="${WEHOSTHERE_MESH_HEADER_BG}padding:40px 32px;border-radius:16px 16px 0 0;text-align:center;">
           <img src="${SITE_URL}/logo.png" alt="WEHOSTHERE Logo" style="width:180px;height:auto;margin:0 auto 16px;display:block;" />
           <p style="color:#e0e7ff;margin:8px 0 0;font-size:14px;font-weight:600;">Academia Web WEHOSTHERE</p>
         </div>
@@ -641,7 +641,7 @@ export async function sendCourseEnrollmentEmail(toEmail: string, userName: strin
           </div>
           
           <div style="text-align:center;margin:32px 0;">
-            <a href="${academyUrl}" style="background:linear-gradient(135deg,#2563eb,#4f46e5);color:white;font-weight:700;padding:16px 36px;border-radius:10px;text-decoration:none;font-size:15px;display:inline-block;box-shadow:0 4px 12px rgba(37,99,235,0.25);">Começar a Assistir Agora →</a>
+            <a href="${academyUrl}" style="${WEHOSTHERE_MESH_HEADER_BG}color:white;font-weight:700;padding:16px 36px;border-radius:10px;text-decoration:none;font-size:15px;display:inline-block;box-shadow:0 4px 12px rgba(37,99,235,0.25);">Começar a Assistir Agora →</a>
           </div>
           
           <p style="color:#94a3b8;font-size:12px;margin:24px 0 0;text-align:center;">Equipa WEHOSTHERE - Academia de Desenvolvimento Web</p>
@@ -656,10 +656,10 @@ export async function sendCoursePurchaseEmail(toEmail: string, userName: string,
 
   return sendEmail({
     to: toEmail,
-    subject: `🎉 Acesso Completo Liberado: ${courseTitle}!`,
+    subject: `Acesso Completo Liberado: ${courseTitle}!`,
     html: `
       <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;color:#111;">
-        <div style="background:linear-gradient(135deg,#059669,#10b981);padding:40px 32px;border-radius:16px 16px 0 0;text-align:center;">
+        <div style="${WEHOSTHERE_MESH_HEADER_BG}padding:40px 32px;border-radius:16px 16px 0 0;text-align:center;">
           <img src="${SITE_URL}/logo.png" alt="WEHOSTHERE Logo" style="width:180px;height:auto;margin:0 auto 16px;display:block;" />
           <p style="color:#d1fae5;margin:8px 0 0;font-size:14px;font-weight:600;">Pagamento Confirmado</p>
         </div>
@@ -679,7 +679,7 @@ export async function sendCoursePurchaseEmail(toEmail: string, userName: string,
           </div>
           
           <div style="text-align:center;margin:32px 0;">
-            <a href="${academyUrl}" style="background:linear-gradient(135deg,#059669,#10b981);color:white;font-weight:700;padding:16px 36px;border-radius:10px;text-decoration:none;font-size:15px;display:inline-block;box-shadow:0 4px 12px rgba(16,185,129,0.25);">${claimToken ? 'Ativar Acesso & Assistir Aulas →' : 'Acessar Todas as Aulas →'}</a>
+            <a href="${academyUrl}" style="${WEHOSTHERE_MESH_HEADER_BG}color:white;font-weight:700;padding:16px 36px;border-radius:10px;text-decoration:none;font-size:15px;display:inline-block;box-shadow:0 4px 12px rgba(16,185,129,0.25);">${claimToken ? 'Ativar Acesso & Assistir Aulas →' : 'Acessar Todas as Aulas →'}</a>
           </div>
           
           <p style="color:#94a3b8;font-size:12px;margin:24px 0 0;text-align:center;">Equipa WEHOSTHERE - Academia de Desenvolvimento Web</p>
@@ -695,12 +695,12 @@ export async function sendCourseCompletionEmail(toEmail: string, userName: strin
     subject: `🏆 Parabéns! O seu Certificado de ${courseTitle} está pronto!`,
     html: `
       <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;color:#111;">
-        <div style="background:linear-gradient(135deg,#7c3aed,#9333ea);padding:40px 32px;border-radius:16px 16px 0 0;text-align:center;">
+        <div style="${WEHOSTHERE_MESH_HEADER_BG}padding:40px 32px;border-radius:16px 16px 0 0;text-align:center;">
           <img src="${SITE_URL}/logo.png" alt="WEHOSTHERE Logo" style="width:180px;height:auto;margin:0 auto 16px;display:block;" />
           <p style="color:#ede9fe;margin:8px 0 0;font-size:14px;font-weight:600;">Certificado Oficial de Conclusão</p>
         </div>
         <div style="background:#f8fafc;padding:40px 32px;border-radius:0 0 16px 16px;border:1px solid #e2e8f0;">
-          <p style="color:#334155;font-size:16px;line-height:1.7;">Parabéns, <strong>${userName}</strong>! 🎓</p>
+          <p style="color:#334155;font-size:16px;line-height:1.7;">Parabéns, <strong>${userName}</strong>! </p>
           <p style="color:#334155;font-size:15px;line-height:1.7;">
             Você concluiu com distinção todas as lições e módulos do curso <strong>${courseTitle}</strong>.
           </p>
@@ -711,7 +711,7 @@ export async function sendCourseCompletionEmail(toEmail: string, userName: strin
           </div>
           
           <div style="text-align:center;margin:32px 0;">
-            <a href="${verificationUrl}" style="background:linear-gradient(135deg,#7c3aed,#9333ea);color:white;font-weight:700;padding:16px 36px;border-radius:10px;text-decoration:none;font-size:15px;display:inline-block;box-shadow:0 4px 12px rgba(124,58,237,0.25);">Visualizar e Imprimir Certificado →</a>
+            <a href="${verificationUrl}" style="${WEHOSTHERE_MESH_HEADER_BG}color:white;font-weight:700;padding:16px 36px;border-radius:10px;text-decoration:none;font-size:15px;display:inline-block;box-shadow:0 4px 12px rgba(124,58,237,0.25);">Visualizar e Imprimir Certificado →</a>
           </div>
           
           <p style="color:#64748b;font-size:13px;line-height:1.6;margin:16px 0 0;">
@@ -732,9 +732,9 @@ export async function sendRoleChangeEmail(toEmail: string, userName: string, new
 
   let subject = `ℹ️ Atualização de Permissões na sua conta WEHOSTHERE`;
   if (isSuperAdmin) {
-    subject = `👑 Acesso Total Concedido: Promovido a Super Administrador da WEHOSTHERE!`;
+    subject = `Acesso Total Concedido: Promovido a Super Administrador da WEHOSTHERE!`;
   } else if (isAdmin) {
-    subject = `🛡️ Acesso Concedido: Promovido a Administrador da WEHOSTHERE!`;
+    subject = `Acesso Concedido: Promovido a Administrador da WEHOSTHERE!`;
   }
 
   const gradientHeader = isSuperAdmin
@@ -751,7 +751,7 @@ export async function sendRoleChangeEmail(toEmail: string, userName: string, new
         <div style="background:${gradientHeader};padding:40px 32px;border-radius:16px 16px 0 0;text-align:center;">
           <img src="${SITE_URL}/logo.png" alt="WEHOSTHERE Logo" style="width:180px;height:auto;margin:0 auto 16px;display:block;" />
           <p style="color:#ede9fe;margin:8px 0 0;font-size:14px;font-weight:700;letter-spacing:0.5px;">
-            ${isSuperAdmin ? '👑 NÍVEL MÁXIMO DE ACESSO' : isAdmin ? '🛡️ GESTÃO OPERACIONAL' : '👤 ATUALIZAÇÃO DE PERFIL'}
+            ${isSuperAdmin ? 'NÍVEL MÁXIMO DE ACESSO' : isAdmin ? 'GESTÃO OPERACIONAL' : 'ATUALIZAÇÃO DE PERFIL'}
           </p>
         </div>
         <div style="background:#ffffff;padding:40px 32px;border-radius:0 0 16px 16px;border:1px solid #e2e8f0;border-top:none;">
@@ -759,7 +759,7 @@ export async function sendRoleChangeEmail(toEmail: string, userName: string, new
           
           ${isSuperAdmin ? `
             <p style="color:#334155;font-size:15px;line-height:1.7;">
-              Informamos com grande honra que a sua conta recebeu privilégios de <strong>Super Administrador da plataforma WEHOSTHERE 👑</strong>.
+              Informamos com grande honra que a sua conta recebeu privilégios de <strong>Super Administrador da plataforma WEHOSTHERE </strong>.
             </p>
             <div style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:12px;padding:22px;margin:24px 0;">
               <p style="margin:0 0 10px;font-weight:800;color:#581c87;font-size:15px;">Privilégios Totais Concedidos:</p>
@@ -775,7 +775,7 @@ export async function sendRoleChangeEmail(toEmail: string, userName: string, new
             </div>
           ` : isAdmin ? `
             <p style="color:#334155;font-size:15px;line-height:1.7;">
-              Informamos que a sua conta foi promovida para <strong>Administrador da plataforma WEHOSTHERE 🛡️</strong>.
+              Informamos que a sua conta foi promovida para <strong>Administrador da plataforma WEHOSTHERE </strong>.
             </p>
             <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:22px;margin:24px 0;">
               <p style="margin:0 0 10px;font-weight:800;color:#1e40af;font-size:15px;">Privilégios Operacionais Ativados:</p>
@@ -846,15 +846,15 @@ export async function sendDomainSearchAlertEmail(toEmail: string, data: DomainSe
     : 'Desconhecido';
 
   const subject = data.isAvailable
-    ? `🎯 Oportunidade: Pesquisa de Domínio "${data.domain}" [DISPONÍVEL]`
-    : `🔍 Alerta: Pesquisa de Domínio "${data.domain}" [OCUPADO]`;
+    ? `Oportunidade: Pesquisa de Domínio "${data.domain}" [DISPONÍVEL]`
+    : `Alerta: Pesquisa de Domínio "${data.domain}" [OCUPADO]`;
 
   return sendEmail({
     to: toEmail,
     subject,
     html: `
       <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:620px;margin:0 auto;color:#111;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e2e8f0;box-shadow:0 4px 20px rgba(0,0,0,0.06);">
-        <div style="background:linear-gradient(135deg,#0f172a,#1e293b);padding:32px 28px;text-align:center;">
+        <div style="${WEHOSTHERE_MESH_HEADER_BG}padding:32px 28px;text-align:center;">
           <img src="${SITE_URL}/logo.png" alt="WEHOSTHERE Logo" style="width:160px;height:auto;margin:0 auto 12px;display:block;" />
           <div style="display:inline-block;background:rgba(255,255,255,0.1);backdrop-filter:blur(8px);padding:6px 14px;border-radius:20px;margin-top:6px;">
             <span style="color:#38bdf8;font-size:12px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;">⚡ Alerta de Pesquisa em Tempo Real</span>
@@ -883,13 +883,13 @@ export async function sendDomainSearchAlertEmail(toEmail: string, data: DomainSe
           <!-- Informações Detalhadas -->
           <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:24px;">
             <p style="color:#0f172a;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 14px;">
-              📊 Detalhes da Consulta
+              Detalhes da Consulta
             </p>
             <table style="width:100%;border-collapse:collapse;font-size:13px;">
               <tr style="border-bottom:1px solid #e2e8f0;">
                 <td style="padding:8px 0;color:#64748b;font-weight:600;">Visitante:</td>
                 <td style="padding:8px 0;color:#0f172a;text-align:right;font-weight:700;">
-                  ${data.userEmail ? `${data.userName ? `${data.userName} (` : ''}${data.userEmail}${data.userName ? ')' : ''}` : '👤 Visitante Anónimo'}
+                  ${data.userEmail ? `${data.userName ? `${data.userName} (` : ''}${data.userEmail}${data.userName ? ')' : ''}` : 'Visitante Anónimo'}
                 </td>
               </tr>
               <tr style="border-bottom:1px solid #e2e8f0;">
@@ -961,7 +961,7 @@ export async function sendDomainLeadAlertEmail(toEmail: string, data: DomainLead
     whatsappUrl = `https://wa.me/${cleanPhone}?text=${initialMsg}`;
   }
 
-  const subject = `🔥 Lead Quente: Tentativa de Compra do Domínio "${data.domain}"`;
+  const subject = `Lead Quente: Tentativa de Compra do Domínio "${data.domain}"`;
 
   return sendEmail({
     to: toEmail,
@@ -971,7 +971,7 @@ export async function sendDomainLeadAlertEmail(toEmail: string, data: DomainLead
         <div style="background:linear-gradient(135deg,#7c2d12,#ea580c);padding:32px 28px;text-align:center;">
           <img src="${SITE_URL}/logo.png" alt="WEHOSTHERE Logo" style="width:160px;height:auto;margin:0 auto 12px;display:block;" />
           <div style="display:inline-block;background:rgba(255,255,255,0.18);backdrop-filter:blur(8px);padding:6px 16px;border-radius:20px;margin-top:6px;">
-            <span style="color:#ffffff;font-size:12px;font-weight:800;letter-spacing:0.8px;text-transform:uppercase;">🔥 NOVO LEAD QUENTE - TENTATIVA DE COMPRA</span>
+            <span style="color:#ffffff;font-size:12px;font-weight:800;letter-spacing:0.8px;text-transform:uppercase;">NOVO LEAD QUENTE - TENTATIVA DE COMPRA</span>
           </div>
         </div>
 
@@ -997,7 +997,7 @@ export async function sendDomainLeadAlertEmail(toEmail: string, data: DomainLead
           <!-- Informações de Contacto do Lead -->
           <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:24px;">
             <p style="color:#0f172a;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 14px;">
-              👤 Dados de Contacto do Cliente
+              Dados de Contacto do Cliente
             </p>
             <table style="width:100%;border-collapse:collapse;font-size:14px;">
               <tr style="border-bottom:1px solid #e2e8f0;">
@@ -1096,17 +1096,17 @@ export async function sendSiteQuoteAlertEmail(toEmail: string, data: SiteQuoteAl
     whatsappUrl = `https://wa.me/${cleanPhone}?text=${initialMsg}`;
   }
 
-  const subject = `🚀 Novo Lead de Criação de Site: ${data.projectName} (${priceFormatted})`;
+  const subject = `Novo Lead de Criação de Site: ${data.projectName} (${priceFormatted})`;
 
   return sendEmail({
     to: toEmail,
     subject,
     html: `
       <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:620px;margin:0 auto;color:#111;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e2e8f0;box-shadow:0 4px 20px rgba(0,0,0,0.06);">
-        <div style="background:linear-gradient(135deg,#1e1b4b,#4338ca);padding:32px 28px;text-align:center;">
+        <div style="${WEHOSTHERE_MESH_HEADER_BG}padding:32px 28px;text-align:center;">
           <img src="${SITE_URL}/logo.png" alt="WEHOSTHERE Logo" style="width:160px;height:auto;margin:0 auto 12px;display:block;" />
           <div style="display:inline-block;background:rgba(255,255,255,0.18);backdrop-filter:blur(8px);padding:6px 16px;border-radius:20px;margin-top:6px;">
-            <span style="color:#ffffff;font-size:12px;font-weight:800;letter-spacing:0.8px;text-transform:uppercase;">🚀 NOVO LEAD DE CRIAÇÃO DE SITE</span>
+            <span style="color:#ffffff;font-size:12px;font-weight:800;letter-spacing:0.8px;text-transform:uppercase;">NOVO LEAD DE CRIAÇÃO DE SITE</span>
           </div>
         </div>
 
@@ -1344,7 +1344,7 @@ export async function sendStoryBroadcastEmail(opts: StoryBroadcastOptions): Prom
       <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;color:#111;background:#ffffff;">
 
         <!-- Header -->
-        <div style="background:linear-gradient(135deg,#0f172a 0%,#1e3a8a 60%,#312e81 100%);padding:28px 32px 20px;border-radius:16px 16px 0 0;text-align:center;">
+        <div style="${WEHOSTHERE_MESH_HEADER_BG}padding:28px 32px 20px;border-radius:16px 16px 0 0;text-align:center;">
           <img src="${SITE_URL}/logo.png" alt="WEHOSTHERE" style="width:140px;height:auto;margin:0 auto 14px;display:block;" />
           <div style="display:inline-block;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);padding:5px 14px;border-radius:20px;">
             <span style="color:#a5b4fc;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;">Codando Histórias · Nova Publicação</span>
@@ -1427,15 +1427,15 @@ export async function sendBirthdayEmail(opts: BirthdayEmailOptions): Promise<{ s
 
   return sendEmail({
     to: opts.toEmail,
-    subject: `🎂 Parabéns pelo seu Aniversário, ${firstName}! 🎉 | WEHOSTHERE`,
+    subject: `Parabéns pelo seu Aniversário, ${firstName}! | WEHOSTHERE`,
     html: `
       <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:620px;margin:0 auto;color:#1e293b;background:#ffffff;border-radius:18px;overflow:hidden;border:1px solid #e2e8f0;box-shadow:0 8px 30px rgba(0,0,0,0.08);">
 
         <!-- Header Festivo com Gradiente Dourado / Roxo / Azul -->
-        <div style="background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 50%,#d97706 100%);padding:36px 28px 28px;text-align:center;">
+        <div style="${WEHOSTHERE_MESH_HEADER_BG}padding:36px 28px 28px;text-align:center;">
           <img src="${SITE_URL}/logo.png" alt="WEHOSTHERE" style="width:145px;height:auto;margin:0 auto 16px;display:block;" />
           <div style="display:inline-block;background:rgba(255,255,255,0.18);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.3);padding:6px 18px;border-radius:30px;">
-            <span style="color:#ffffff;font-size:12px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;">🎂 DIA ESPECIAL · FELIZ ANIVERSÁRIO! 🎈</span>
+            <span style="color:#ffffff;font-size:12px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;">DIA ESPECIAL · FELIZ ANIVERSÁRIO! </span>
           </div>
         </div>
 
@@ -1443,8 +1443,7 @@ export async function sendBirthdayEmail(opts: BirthdayEmailOptions): Promise<{ s
         <div style="padding:32px 28px;background:#ffffff;">
 
           <h1 style="color:#0f172a;font-size:24px;font-weight:900;margin:0 0 12px;text-align:center;line-height:1.3;">
-            Parabéns, ${fullName}! 🥂🎉
-          </h1>
+            Parabéns, ${fullName}! </h1>
 
           <p style="color:#475569;font-size:15px;line-height:1.7;margin:0 0 20px;text-align:center;">
             Hoje é o seu dia! Em nome de toda a equipa e da família <strong>WEHOSTHERE</strong>, queremos desejar-lhe um <strong>Feliz Aniversário</strong> repleto de saúde, alegria, grandes realizações e muito sucesso em todos os seus projetos digitais e pessoais.
@@ -1519,7 +1518,7 @@ export async function sendStorySubmissionReceivedEmail(opts: StorySubmissionNoti
     subject: `📝 Recebemos a tua história: "${opts.storyTitle}" | Revista Codando Histórias`,
     html: `
       <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;color:#0f172a;background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;overflow:hidden;">
-        <div style="background:linear-gradient(135deg,#5A189A 0%,#7B2CBF 100%);padding:28px 32px;text-align:center;">
+        <div style="${WEHOSTHERE_MESH_HEADER_BG}padding:28px 32px;text-align:center;">
           <h2 style="color:#ffffff;margin:0;font-size:22px;font-weight:800;letter-spacing:-0.02em;">Codando Histórias</h2>
           <p style="color:#E0AAFF;margin:6px 0 0;font-size:13px;font-weight:600;">Revista Digital WEHOSTHERE</p>
         </div>
@@ -1566,7 +1565,7 @@ export async function sendAdminNewSubmissionEmail(opts: {
 
   return sendEmail({
     to: adminEmail,
-    subject: `🔔 [Revista] Nova história submetida: "${opts.storyTitle}" por ${opts.authorName}`,
+    subject: `[Revista] Nova história submetida: "${opts.storyTitle}" por ${opts.authorName}`,
     html: `
       <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;color:#0f172a;background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;overflow:hidden;">
         <div style="background:#0f172a;padding:24px 32px;text-align:center;">
@@ -1605,12 +1604,11 @@ export async function sendStoryApprovedEmail(opts: {
 
   return sendEmail({
     to: opts.toEmail,
-    subject: `🎉 Parabéns! A tua história foi publicada: "${opts.storyTitle}" | Codando Histórias`,
+    subject: `Parabéns! A tua história foi publicada: "${opts.storyTitle}" | Codando Histórias`,
     html: `
       <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;color:#0f172a;background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;overflow:hidden;">
-        <div style="background:linear-gradient(135deg,#10b981 0%,#059669 100%);padding:28px 32px;text-align:center;">
-          <span style="font-size:36px;">🎉</span>
-          <h2 style="color:#ffffff;margin:8px 0 0;font-size:22px;font-weight:800;">A tua história está no ar!</h2>
+        <div style="${WEHOSTHERE_MESH_HEADER_BG}padding:28px 32px;text-align:center;">
+                    <h2 style="color:#ffffff;margin:8px 0 0;font-size:22px;font-weight:800;">A tua história está no ar!</h2>
           <p style="color:#d1fae5;margin:4px 0 0;font-size:13px;">Revista Codando Histórias &bull; WEHOSTHERE</p>
         </div>
         <div style="padding:32px 28px;text-align:center;">
@@ -1657,7 +1655,7 @@ export async function sendRevistaInviteEmail(opts: {
     subject: `🎙️ Convite Editorial: Partilha a tua jornada na Revista "Codando Histórias" | WEHOSTHERE`,
     html: `
       <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;color:#0f172a;background:#ffffff;border:1px solid #E0AAFF;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(123,44,191,0.08);">
-        <div style="background:linear-gradient(135deg,#7B2CBF 0%,#5A189A 100%);padding:36px 32px;text-align:center;">
+        <div style="${WEHOSTHERE_MESH_HEADER_BG}padding:36px 32px;text-align:center;">
           <div style="display:inline-block;background:rgba(255,255,255,0.15);padding:6px 14px;border-radius:9999px;color:#FAF5FF;font-size:12px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:12px;">
             ✨ Convite Especial da Redacção
           </div>
@@ -1678,7 +1676,7 @@ export async function sendRevistaInviteEmail(opts: {
           ${opts.proposedTopic ? `
           <div style="background:#FAF5FF;border-left:4px solid #7B2CBF;border-radius:0 10px 10px 0;padding:14px 18px;margin:20px 0;">
             <p style="margin:0 0 4px;font-size:11px;font-weight:800;color:#7B2CBF;text-transform:uppercase;letter-spacing:0.05em;">
-              💡 Pauta / Tema Sugerido pela Redacção:
+              Pauta / Tema Sugerido pela Redacção:
             </p>
             <p style="margin:0;font-size:14px;font-weight:600;color:#0f172a;">
               "${opts.proposedTopic}"
@@ -1696,7 +1694,7 @@ export async function sendRevistaInviteEmail(opts: {
           </p>
 
           <div style="text-align:center;margin:30px 0;">
-            <a href="${inviteUrl}" style="background:linear-gradient(135deg,#7B2CBF 0%,#5A189A 100%);color:#ffffff;font-weight:700;font-size:15px;padding:15px 36px;border-radius:12px;text-decoration:none;display:inline-block;box-shadow:0 4px 16px rgba(123,44,191,0.35);">
+            <a href="${inviteUrl}" style="${WEHOSTHERE_MESH_HEADER_BG}color:#ffffff;font-weight:700;font-size:15px;padding:15px 36px;border-radius:12px;text-decoration:none;display:inline-block;box-shadow:0 4px 16px rgba(123,44,191,0.35);">
               Abrir Formulário Pré-Preenchido →
             </a>
             <p style="font-size:11px;color:#94a3b8;margin:8px 0 0;">O teu nome e e-mail já serão preenchidos automaticamente.</p>
