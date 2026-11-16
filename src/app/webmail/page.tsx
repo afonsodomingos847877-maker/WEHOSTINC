@@ -6288,16 +6288,16 @@ function WebmailContent() {
               {Boolean(selectedMessage.body) && !closedMessageIds.has(selectedMessage.id) && (
               <div className="bg-slate-50/75 p-4 sm:p-5 space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="text-xs font-bold text-neutral-700 flex items-center space-x-1.5">
-                    <Reply className="h-4 w-4 text-neutral-600" />
-                    <span className="truncate">Resposta rápida para <span className="font-mono text-neutral-900">{selectedMessage.fromEmail}</span></span>
+                  <span className="text-xs font-bold text-neutral-700 flex items-center space-x-1.5 min-w-0">
+                    <Reply className="h-3.5 w-3.5 text-neutral-500 shrink-0" />
+                    <span className="truncate font-mono text-neutral-800">{selectedMessage.fromEmail}</span>
                   </span>
                   <div className="flex flex-wrap items-center gap-1.5">
                     <button
                       type="button"
                       onClick={() => handleGenerateAIReply('smart', hasAiGeneratedReply && !!replyText.trim())}
                       disabled={isGeneratingReply}
-                      className="px-3 py-1 rounded-xl text-[11px] font-semibold transition cursor-pointer flex items-center gap-1.5 border border-neutral-900 bg-neutral-900 hover:bg-black text-white shadow-2xs disabled:opacity-50 active:scale-95"
+                      className="px-2.5 py-1 rounded-xl text-[11px] font-semibold transition cursor-pointer flex items-center gap-1.5 border border-neutral-900 bg-neutral-900 hover:bg-black text-white shadow-2xs disabled:opacity-50 active:scale-95"
                       title={
                         hasAiGeneratedReply && replyText.trim()
                           ? 'Gerar uma versão alternativa diferente da resposta atual'
@@ -6315,8 +6315,8 @@ function WebmailContent() {
                         {isGeneratingReply
                           ? 'A gerar...'
                           : hasAiGeneratedReply && replyText.trim()
-                          ? `Outra (v${(aiReplyVariation % 3) + 1})`
-                          : 'Gerar Resposta'}
+                          ? `v${(aiReplyVariation % 3) + 1}`
+                          : 'Gerar'}
                       </span>
                     </button>
                     <button
@@ -6330,9 +6330,9 @@ function WebmailContent() {
                           startVoiceRecording('quick_reply');
                         }
                       }}
-                      className={`px-2.5 py-1 rounded-xl text-[11px] font-semibold transition cursor-pointer flex items-center gap-1.5 border ${
+                      className={`p-1.5 rounded-xl text-[11px] font-semibold transition cursor-pointer flex items-center gap-1 border ${
                         isRecordingVoice && voiceTargetMode === 'quick_reply'
-                          ? 'bg-neutral-900 text-white border-neutral-900 animate-pulse shadow-sm'
+                          ? 'bg-neutral-900 text-white border-neutral-900 animate-pulse shadow-sm px-2.5'
                           : 'bg-white hover:bg-neutral-100 text-neutral-800 border-neutral-200'
                       }`}
                       title="Ditar resposta por voz"
@@ -6343,19 +6343,16 @@ function WebmailContent() {
                           <span>Parar</span>
                         </>
                       ) : (
-                        <>
-                          <Mic className="h-3.5 w-3.5 text-neutral-600" />
-                          <span>Voz</span>
-                        </>
+                        <Mic className="h-3.5 w-3.5 text-neutral-600" />
                       )}
                     </button>
                     <button
                       type="button"
                       onClick={() => handleSpeakEmailText('quick_reply')}
                       disabled={!replyText.trim() && !(isSpeakingEmail && speakingSource === 'quick_reply')}
-                      className={`px-2.5 py-1 rounded-xl text-[11px] font-semibold transition cursor-pointer flex items-center gap-1.5 border disabled:opacity-40 ${
+                      className={`p-1.5 rounded-xl text-[11px] font-semibold transition cursor-pointer flex items-center gap-1 border disabled:opacity-40 ${
                         isSpeakingEmail && speakingSource === 'quick_reply'
-                          ? 'bg-neutral-900 text-white border-neutral-900 shadow-sm'
+                          ? 'bg-neutral-900 text-white border-neutral-900 shadow-sm px-2.5'
                           : 'bg-white hover:bg-neutral-100 text-neutral-800 border-neutral-200'
                       }`}
                       title="Ouvir em áudio a resposta escrita"
@@ -6366,10 +6363,7 @@ function WebmailContent() {
                           <span>Parar</span>
                         </>
                       ) : (
-                        <>
-                          <Volume2 className="h-3.5 w-3.5 text-neutral-600" />
-                          <span>Ouvir</span>
-                        </>
+                        <Volume2 className="h-3.5 w-3.5 text-neutral-600" />
                       )}
                     </button>
                     <div className="inline-flex items-center rounded-xl border border-neutral-200 bg-neutral-100 p-0.5">
@@ -6397,7 +6391,6 @@ function WebmailContent() {
                         <span>EN</span>
                       </button>
                     </div>
-                    <span className="text-[11px] text-neutral-400 hidden sm:inline">Shift + Enter para nova linha</span>
                   </div>
                 </div>
 
