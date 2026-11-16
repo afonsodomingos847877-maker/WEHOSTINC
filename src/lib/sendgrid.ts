@@ -116,7 +116,7 @@ export async function sendWelcomeEmail(toEmail: string, userName: string, plan: 
             ${confirmationCode || '------'}
           </div>
           <div style="text-align:center;margin:24px 0;">
-            <a href="${confirmPageLink}" style="display:inline-block;min-width:240px;padding:13px 24px;background:#111827;color:#ffffff;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">Ir para página de confirmação →</a>
+            <a href="${confirmPageLink}" style="display:block;width:100%;padding:14px 24px;background:#0a0a0a;color:#ffffff;border:1px solid rgba(16,185,129,0.35);border-radius:9999px;font-size:14px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;box-shadow:0 2px 10px rgba(0,0,0,0.12);">Ir para página de confirmação →</a>
           </div>
           <p style="color:#6b7280;font-size:12px;margin:0;">Este código expira em 24 horas. Equipa WEHOSTHERE - Hospedagem Profissional em Moçambique</p>
         </div>
@@ -143,7 +143,7 @@ export async function sendInvoiceEmail(toEmail: string, userName: string, invoic
             <tr style="background:#f9fafb;"><td style="padding:12px;font-weight:700;color:#1e3a8a;">Referência</td><td style="padding:12px;">${invoiceRef}</td></tr>
           </table>
           <div style="text-align:center;margin:24px 0;">
-            <a href="${SITE_URL}/dashboard/billing" style="display:inline-block;min-width:240px;padding:13px 24px;background:#111827;color:#ffffff;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">Ver Faturamento →</a>
+            <a href="${SITE_URL}/dashboard/billing" style="display:block;width:100%;padding:14px 24px;background:#0a0a0a;color:#ffffff;border:1px solid rgba(16,185,129,0.35);border-radius:9999px;font-size:14px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;box-shadow:0 2px 10px rgba(0,0,0,0.12);">Ver Faturamento →</a>
           </div>
           <p style="color:#6b7280;font-size:12px;margin:0;">WEHOSTHERE - info@wehosthere.com</p>
         </div>
@@ -369,7 +369,7 @@ export async function sendInvoiceIssuedEmail(opts: SendInvoiceIssuedEmailOptions
 
         <!-- Botão de Ação -->
         <div style="text-align:center;margin:30px 0 16px;">
-          <a href="${billingDashboardUrl}" style="display:inline-block;min-width:240px;padding:13px 24px;background:#111827;color:#ffffff;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">
+          <a href="${billingDashboardUrl}" style="display:block;width:100%;padding:14px 24px;background:#0a0a0a;color:#ffffff;border:1px solid rgba(16,185,129,0.35);border-radius:9999px;font-size:14px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;box-shadow:0 2px 10px rgba(0,0,0,0.12);">
             Aceder ao Painel & Ver Fatura / Recibo →
           </a>
         </div>
@@ -442,7 +442,7 @@ export async function sendSupportTicketEmail(toEmail: string, userName: string, 
             <p style="margin:0;font-weight:700;color:#111827;">${subject}</p>
           </div>
           <div style="text-align:center;margin:24px 0;">
-            <a href="${SITE_URL}/dashboard/tickets" style="display:inline-block;min-width:240px;padding:13px 24px;background:#111827;color:#ffffff;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">Ver Ticket →</a>
+            <a href="${SITE_URL}/dashboard/tickets" style="display:block;width:100%;padding:14px 24px;background:#0a0a0a;color:#ffffff;border:1px solid rgba(16,185,129,0.35);border-radius:9999px;font-size:14px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;box-shadow:0 2px 10px rgba(0,0,0,0.12);">Ver Ticket →</a>
           </div>
           <p style="color:#6b7280;font-size:12px;margin:0;">WEHOSTHERE - info@wehosthere.com</p>
         </div>
@@ -467,7 +467,7 @@ export async function sendPasswordResetEmail(toEmail: string, userName: string, 
           <p style="color:#4b5563;line-height:1.7;">Olá <strong>${userName}</strong>,</p>
           <p style="color:#4b5563;line-height:1.7;">Recebemos um pedido para redefinir a sua senha. Se não fez este pedido, pode ignorar este email.</p>
           <div style="text-align:center;margin:32px 0;">
-            <a href="${resetUrl}" style="display:inline-block;min-width:240px;padding:13px 24px;background:#111827;color:#ffffff;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">Redefinir Senha →</a>
+            <a href="${resetUrl}" style="display:block;width:100%;padding:14px 24px;background:#0a0a0a;color:#ffffff;border:1px solid rgba(16,185,129,0.35);border-radius:9999px;font-size:14px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;box-shadow:0 2px 10px rgba(0,0,0,0.12);">Redefinir Senha →</a>
           </div>
           <p style="color:#6b7280;font-size:12px;margin:0;">Este link expira em 1 hora por segurança.</p>
           <p style="color:#6b7280;font-size:12px;margin:16px 0 0;">Equipa WEHOSTHERE - Hospedagem Profissional em Moçambique</p>
@@ -538,7 +538,7 @@ export async function sendAccountActivatedEmail(toEmail: string, userName: strin
             </ul>
           </div>
           <div style="text-align:center;margin:32px 0;">
-            <a href="${loginUrl}" style="display:inline-block;min-width:240px;padding:13px 24px;background:#111827;color:#ffffff;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">Fazer Login Agora →</a>
+            <a href="${loginUrl}" style="display:block;width:100%;padding:14px 24px;background:#0a0a0a;color:#ffffff;border:1px solid rgba(16,185,129,0.35);border-radius:9999px;font-size:14px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;box-shadow:0 2px 10px rgba(0,0,0,0.12);">Fazer Login Agora →</a>
           </div>
           <p style="color:#6b7280;font-size:12px;margin:0;">Se tiver alguma dúvida, entre em contacto com o nosso suporte.</p>
           <p style="color:#6b7280;font-size:12px;margin:16px 0 0;">Equipa WEHOSTHERE - Hospedagem Profissional em Moçambique</p>
@@ -577,7 +577,7 @@ export async function sendLoginNotificationEmail(toEmail: string, userName: stri
           <p style="color:#111827;line-height:1.7;margin-top:8px;">Se você não reconhece este login, por favor altere a sua senha imediatamente e entre em contacto com o nosso suporte.</p>
           
           <div style="text-align:center;margin:32px 0;">
-            <a href="${dashboardUrl}" style="display:inline-block;min-width:240px;padding:13px 24px;background:#111827;color:#ffffff;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">Acessar Painel →</a>
+            <a href="${dashboardUrl}" style="display:block;width:100%;padding:14px 24px;background:#0a0a0a;color:#ffffff;border:1px solid rgba(16,185,129,0.35);border-radius:9999px;font-size:14px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;box-shadow:0 2px 10px rgba(0,0,0,0.12);">Acessar Painel →</a>
           </div>
           <p style="color:#6b7280;font-size:12px;margin:0;">Se tiver alguma dúvida, entre em contacto com o nosso suporte.</p>
           <p style="color:#6b7280;font-size:12px;margin:16px 0 0;">Equipa WEHOSTHERE - Hospedagem Profissional em Moçambique</p>
@@ -643,7 +643,7 @@ export async function sendCourseEnrollmentEmail(toEmail: string, userName: strin
           </div>
           
           <div style="text-align:center;margin:32px 0;">
-            <a href="${academyUrl}" style="display:inline-block;min-width:240px;padding:13px 24px;background:#111827;color:#ffffff;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">Começar a Assistir Agora →</a>
+            <a href="${academyUrl}" style="display:block;width:100%;padding:14px 24px;background:#0a0a0a;color:#ffffff;border:1px solid rgba(16,185,129,0.35);border-radius:9999px;font-size:14px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;box-shadow:0 2px 10px rgba(0,0,0,0.12);">Começar a Assistir Agora →</a>
           </div>
           
           <p style="color:#6b7280;font-size:12px;margin:24px 0 0;text-align:center;">Equipa WEHOSTHERE - Academia de Desenvolvimento Web</p>
@@ -681,7 +681,7 @@ export async function sendCoursePurchaseEmail(toEmail: string, userName: string,
           </div>
           
           <div style="text-align:center;margin:32px 0;">
-            <a href="${academyUrl}" style="display:inline-block;min-width:240px;padding:13px 24px;background:#111827;color:#ffffff;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">${claimToken ? 'Ativar Acesso & Assistir Aulas →' : 'Acessar Todas as Aulas →'}</a>
+            <a href="${academyUrl}" style="display:block;width:100%;padding:14px 24px;background:#0a0a0a;color:#ffffff;border:1px solid rgba(16,185,129,0.35);border-radius:9999px;font-size:14px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;box-shadow:0 2px 10px rgba(0,0,0,0.12);">${claimToken ? 'Ativar Acesso & Assistir Aulas →' : 'Acessar Todas as Aulas →'}</a>
           </div>
           
           <p style="color:#6b7280;font-size:12px;margin:24px 0 0;text-align:center;">Equipa WEHOSTHERE - Academia de Desenvolvimento Web</p>
@@ -713,7 +713,7 @@ export async function sendCourseCompletionEmail(toEmail: string, userName: strin
           </div>
           
           <div style="text-align:center;margin:32px 0;">
-            <a href="${verificationUrl}" style="display:inline-block;min-width:240px;padding:13px 24px;background:#111827;color:#ffffff;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">Visualizar e Imprimir Certificado →</a>
+            <a href="${verificationUrl}" style="display:block;width:100%;padding:14px 24px;background:#0a0a0a;color:#ffffff;border:1px solid rgba(16,185,129,0.35);border-radius:9999px;font-size:14px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;box-shadow:0 2px 10px rgba(0,0,0,0.12);">Visualizar e Imprimir Certificado →</a>
           </div>
           
           <p style="color:#6b7280;font-size:13px;line-height:1.6;margin:16px 0 0;">
@@ -772,7 +772,7 @@ export async function sendRoleChangeEmail(toEmail: string, userName: string, new
               </ul>
             </div>
             <div style="text-align:center;margin:32px 0;">
-              <a href="${targetUrl}" style="display:inline-block;min-width:240px;padding:13px 24px;background:#111827;color:#ffffff;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">Aceder como Super Admin →</a>
+              <a href="${targetUrl}" style="display:block;width:100%;padding:14px 24px;background:#0a0a0a;color:#ffffff;border:1px solid rgba(16,185,129,0.35);border-radius:9999px;font-size:14px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;box-shadow:0 2px 10px rgba(0,0,0,0.12);">Aceder como Super Admin →</a>
             </div>
           ` : isAdmin ? `
             <p style="color:#374151;font-size:15px;line-height:1.7;">
@@ -788,7 +788,7 @@ export async function sendRoleChangeEmail(toEmail: string, userName: string, new
               </ul>
             </div>
             <div style="text-align:center;margin:32px 0;">
-              <a href="${targetUrl}" style="display:inline-block;min-width:240px;padding:13px 24px;background:#111827;color:#ffffff;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">Aceder ao Painel Administrativo →</a>
+              <a href="${targetUrl}" style="display:block;width:100%;padding:14px 24px;background:#0a0a0a;color:#ffffff;border:1px solid rgba(16,185,129,0.35);border-radius:9999px;font-size:14px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;box-shadow:0 2px 10px rgba(0,0,0,0.12);">Aceder ao Painel Administrativo →</a>
             </div>
           ` : `
             <p style="color:#374151;font-size:15px;line-height:1.7;">
@@ -798,7 +798,7 @@ export async function sendRoleChangeEmail(toEmail: string, userName: string, new
               Continua a ter acesso total a todos os seus sites, contas de e-mail, domínios, faturas e cursos na Academia.
             </p>
             <div style="text-align:center;margin:32px 0;">
-              <a href="${targetUrl}" style="display:inline-block;min-width:240px;padding:13px 24px;background:#111827;color:#ffffff;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">Aceder ao Dashboard do Cliente →</a>
+              <a href="${targetUrl}" style="display:block;width:100%;padding:14px 24px;background:#0a0a0a;color:#ffffff;border:1px solid rgba(16,185,129,0.35);border-radius:9999px;font-size:14px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;box-shadow:0 2px 10px rgba(0,0,0,0.12);">Aceder ao Dashboard do Cliente →</a>
             </div>
           `}
           
@@ -916,7 +916,7 @@ export async function sendDomainSearchAlertEmail(toEmail: string, data: DomainSe
 
           <!-- Botão de Ação -->
           <div style="text-align:center;margin:32px 0 16px;">
-            <a href="${adminUrl}" style="display:inline-block;min-width:240px;padding:13px 24px;background:#111827;color:#ffffff;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">
+            <a href="${adminUrl}" style="display:block;width:100%;padding:14px 24px;background:#0a0a0a;color:#ffffff;border:1px solid rgba(16,185,129,0.35);border-radius:9999px;font-size:14px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;box-shadow:0 2px 10px rgba(0,0,0,0.12);">
               Abrir Painel de Pesquisas de Domínio →
             </a>
           </div>
@@ -1037,11 +1037,11 @@ export async function sendDomainLeadAlertEmail(toEmail: string, data: DomainLead
           <!-- Ações Rápidas de Fechamento -->
           <div style="margin:24px 0 16px;text-align:center;">
             ${whatsappUrl ? `
-              <a href="${whatsappUrl}" target="_blank" style="display:inline-block;min-width:240px;padding:13px 24px;background:#111827;color:#ffffff;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">
+              <a href="${whatsappUrl}" target="_blank" style="display:block;width:100%;padding:14px 24px;background:#0a0a0a;color:#ffffff;border:1px solid rgba(16,185,129,0.35);border-radius:9999px;font-size:14px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;box-shadow:0 2px 10px rgba(0,0,0,0.12);">
                 Falar com Cliente no WhatsApp →
               </a>
             ` : ''}
-            <a href="${adminUrl}" style="display:inline-block;min-width:240px;padding:13px 24px;background:#ffffff;color:#111827;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">
+            <a href="${adminUrl}" style="display:block;width:100%;padding:14px 24px;background:#ffffff;color:#0a0a0a;border:1px solid #d1d5db;border-radius:9999px;font-size:14px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">
               Ver no Painel de Leads →
             </a>
           </div>
@@ -1167,11 +1167,11 @@ export async function sendSiteQuoteAlertEmail(toEmail: string, data: SiteQuoteAl
           <!-- Ações Rápidas -->
           <div style="margin:24px 0 16px;text-align:center;">
             ${whatsappUrl ? `
-              <a href="${whatsappUrl}" target="_blank" style="display:inline-block;min-width:240px;padding:13px 24px;background:#111827;color:#ffffff;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">
+              <a href="${whatsappUrl}" target="_blank" style="display:block;width:100%;padding:14px 24px;background:#0a0a0a;color:#ffffff;border:1px solid rgba(16,185,129,0.35);border-radius:9999px;font-size:14px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;box-shadow:0 2px 10px rgba(0,0,0,0.12);">
                 Falar com o Lead no WhatsApp →
               </a>
             ` : ''}
-            <a href="${adminUrl}" style="display:inline-block;min-width:240px;padding:13px 24px;background:#ffffff;color:#111827;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">
+            <a href="${adminUrl}" style="display:block;width:100%;padding:14px 24px;background:#ffffff;color:#0a0a0a;border:1px solid #d1d5db;border-radius:9999px;font-size:14px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">
               Ver no Painel de Cotações →
             </a>
           </div>
@@ -1281,7 +1281,7 @@ export async function sendAnalyticsMilestoneEmail(data: AnalyticsMilestoneEmailD
           ` : ''}
 
           <div style="text-align:center;padding:8px 0 4px;">
-            <a href="${adminUrl}" style="display:inline-block;min-width:240px;padding:13px 24px;background:#111827;color:#ffffff;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">
+            <a href="${adminUrl}" style="display:block;width:100%;padding:14px 24px;background:#0a0a0a;color:#ffffff;border:1px solid rgba(16,185,129,0.35);border-radius:9999px;font-size:14px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;box-shadow:0 2px 10px rgba(0,0,0,0.12);">
               Abrir Painel de Visitantes &rarr;
             </a>
           </div>
@@ -1378,7 +1378,7 @@ export async function sendStoryBroadcastEmail(opts: StoryBroadcastOptions): Prom
               <p style="color:#6b7280;font-size:13px;margin:0 0 6px;">Por <strong style="color:#374151;">${opts.authorName}</strong></p>
               <p style="color:#4b5563;font-size:14px;line-height:1.7;margin:14px 0 20px;">${opts.storyExcerpt.length > 220 ? opts.storyExcerpt.slice(0, 220) + '…' : opts.storyExcerpt}</p>
               <div style="text-align:center;">
-                <a href="${storyUrl}" style="display:inline-block;min-width:240px;padding:13px 24px;background:#111827;color:#ffffff;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">
+                <a href="${storyUrl}" style="display:block;width:100%;padding:14px 24px;background:#0a0a0a;color:#ffffff;border:1px solid rgba(16,185,129,0.35);border-radius:9999px;font-size:14px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;box-shadow:0 2px 10px rgba(0,0,0,0.12);">
                   Ler história completa →
                 </a>
               </div>
@@ -1474,7 +1474,7 @@ export async function sendBirthdayEmail(opts: BirthdayEmailOptions): Promise<{ s
           <div style="text-align:center;margin:32px 0 16px;">
             <a 
               href="${dashboardUrl}" 
-              style="display:inline-block;min-width:240px;padding:13px 24px;background:#111827;color:#ffffff;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;"
+              style="display:block;width:100%;padding:14px 24px;background:#0a0a0a;color:#ffffff;border:1px solid rgba(16,185,129,0.35);border-radius:9999px;font-size:14px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;box-shadow:0 2px 10px rgba(0,0,0,0.12);"
             >
               Aceder ao meu Painel WEHOSTHERE →
             </a>
@@ -1584,7 +1584,7 @@ export async function sendAdminNewSubmissionEmail(opts: {
             <p style="margin:0;font-size:13px;"><strong>Categoria:</strong> ${opts.category}</p>
           </div>
           <div style="text-align:center;">
-            <a href="${adminReviewUrl}" style="display:inline-block;min-width:240px;padding:13px 24px;background:#111827;color:#ffffff;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">
+            <a href="${adminReviewUrl}" style="display:block;width:100%;padding:14px 24px;background:#0a0a0a;color:#ffffff;border:1px solid rgba(16,185,129,0.35);border-radius:9999px;font-size:14px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;box-shadow:0 2px 10px rgba(0,0,0,0.12);">
               Rever & Aprovar no Painel →
             </a>
           </div>
@@ -1622,7 +1622,7 @@ export async function sendStoryApprovedEmail(opts: {
             A tua história <strong>"${opts.storyTitle}"</strong> foi aprovada pela equipa editorial e já está publicada e visível para toda a comunidade.
           </p>
           <div style="margin-bottom:28px;">
-            <a href="${storyUrl}" style="display:inline-block;min-width:240px;padding:13px 24px;background:#111827;color:#ffffff;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">
+            <a href="${storyUrl}" style="display:block;width:100%;padding:14px 24px;background:#0a0a0a;color:#ffffff;border:1px solid rgba(16,185,129,0.35);border-radius:9999px;font-size:14px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;box-shadow:0 2px 10px rgba(0,0,0,0.12);">
               Ver a minha história ao vivo →
             </a>
           </div>
@@ -1697,7 +1697,7 @@ export async function sendRevistaInviteEmail(opts: {
           </p>
 
           <div style="text-align:center;margin:30px 0;">
-            <a href="${inviteUrl}" style="display:inline-block;min-width:240px;padding:13px 24px;background:#111827;color:#ffffff;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">
+            <a href="${inviteUrl}" style="display:block;width:100%;padding:14px 24px;background:#0a0a0a;color:#ffffff;border:1px solid rgba(16,185,129,0.35);border-radius:9999px;font-size:14px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;box-shadow:0 2px 10px rgba(0,0,0,0.12);">
               Abrir Formulário Pré-Preenchido →
             </a>
             <p style="font-size:11px;color:#4b5563;margin:8px 0 0;">O teu nome e e-mail já serão preenchidos automaticamente.</p>

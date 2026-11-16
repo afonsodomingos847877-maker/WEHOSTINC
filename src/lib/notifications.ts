@@ -1193,12 +1193,12 @@ export async function dispatchMessage(payload: SendMessagePayload): Promise<{ su
               <p style="color:#6b7280;font-size:12px;margin:0 0 12px;font-weight:600;">Siga-nos nas redes sociais</p>
               <div style="display:flex;justify-content:center;gap:16px;margin-bottom:14px;">
                 <a href="https://www.facebook.com/profile.php?id=61592497206566" target="_blank" rel="noopener noreferrer"
-                   style="display:inline-block;min-width:240px;padding:13px 24px;background:#111827;color:#ffffff;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">
+                   style="display:block;width:100%;padding:14px 24px;background:#0a0a0a;color:#ffffff;border:1px solid rgba(16,185,129,0.35);border-radius:9999px;font-size:14px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;box-shadow:0 2px 10px rgba(0,0,0,0.12);">
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
                   Facebook
                 </a>
                 <a href="https://www.linkedin.com/company/wehosthere" target="_blank" rel="noopener noreferrer"
-                   style="display:inline-block;min-width:240px;padding:13px 24px;background:#ffffff;color:#111827;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">
+                   style="display:block;width:100%;padding:14px 24px;background:#ffffff;color:#0a0a0a;border:1px solid #d1d5db;border-radius:9999px;font-size:14px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
                   LinkedIn
                 </a>

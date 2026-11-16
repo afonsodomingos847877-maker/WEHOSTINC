@@ -142,7 +142,7 @@ export async function GET(req: Request) {
 
             <!-- CTA -->
             <div style="text-align:center;margin:20px 0;">
-              <a href="${SITE_URL}/admin" style="display:inline-block;min-width:240px;padding:13px 24px;background:#111827;color:#ffffff;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">
+              <a href="${SITE_URL}/admin" style="display:block;width:100%;padding:14px 24px;background:#0a0a0a;color:#ffffff;border:1px solid rgba(16,185,129,0.35);border-radius:9999px;font-size:14px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;box-shadow:0 2px 10px rgba(0,0,0,0.12);">
                 Abrir Painel Completo →
               </a>
             </div>
