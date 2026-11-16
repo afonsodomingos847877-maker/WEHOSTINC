@@ -655,6 +655,7 @@ function WebmailContent() {
     latestSender?: string;
     latestSubject?: string;
     latestMsgId?: string;
+    targetFolder?: 'inbox' | 'notifications';
   } | null>(null);
   const briefingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const briefingCloseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -2054,6 +2055,33 @@ function WebmailContent() {
           const notificationsUnread = msgs.filter(m => !m.isRead && isNotificationEmail(m)).length;
           const starred = msgs.filter(m => m.starred).length;
           setFolderStats(st => ({ ...st, inboxUnread: unread, notificationsUnread, starred }));
+
+          // Notificar também quando entrar um e-mail novo na pasta Notificações (mesmo estando na Entrada)
+          if (!isInitialLoadRef.current && knownInboxIdsRef.current.size > 0) {
+            const newIncomingAll = msgs.filter(m => !knownInboxIdsRef.current.has(m.id) && !m.isRead);
+            if (newIncomingAll.length > 0) {
+              knownInboxIdsRef.current = new Set([...Array.from(knownInboxIdsRef.current), ...msgs.map(m => m.id)]);
+              const newest = newIncomingAll[0];
+              const targetFolder: 'inbox' | 'notifications' = isNotificationEmail(newest) ? 'notifications' : 'inbox';
+              soundEffects.playNewEmailSound();
+              setFloatingBriefing({
+                isOpen: true,
+                isClosing: false,
+                type: 'new_incoming',
+                unreadCount: newIncomingAll.length,
+                overdueCount: msgs.filter(m => isMessageOverdue(m)).length,
+                urgentCount: msgs.filter(m => !m.isRead && m.priority === 'high').length,
+                latestSender: newest?.fromName,
+                latestSubject: newest?.subject,
+                latestMsgId: newest?.id,
+                targetFolder,
+              });
+              if (briefingTimeoutRef.current) clearTimeout(briefingTimeoutRef.current);
+              briefingTimeoutRef.current = setTimeout(() => {
+                dismissFloatingBriefing();
+              }, 7500);
+            }
+          }
         } else if (folder === 'scheduled') {
           setFolderStats(st => ({ ...st, scheduled: msgs.length }));
         }
@@ -2235,9 +2263,9 @@ function WebmailContent() {
     knownInboxIdsRef.current = new Set();
   }, [selectedAccountEmail]);
 
-  // Detect new incoming emails or initial login briefing in inbox and show floating card
+  // Detect new incoming emails or initial login briefing in inbox/notifications and show floating card
   useEffect(() => {
-    if (currentFolder === 'inbox' && mailboxPassword && !isLoadingMessages) {
+    if ((currentFolder === 'inbox' || currentFolder === 'notifications') && mailboxPassword && !isLoadingMessages) {
       if (isInitialLoadRef.current) {
         knownInboxIdsRef.current = new Set(messages.map(m => m.id));
         isInitialLoadRef.current = false;
@@ -5562,7 +5590,7 @@ function WebmailContent() {
                           <button
                             type="button"
                             onClick={() => {
-                              setCurrentFolder('inbox');
+                              setCurrentFolder(floatingBriefing.targetFolder || 'inbox');
                               setFilterType('unread');
                               const firstUnread = messages.find((m) => !m.isRead);
                               if (firstUnread) handleSelectMessage(firstUnread);
