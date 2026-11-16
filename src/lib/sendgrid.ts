@@ -254,7 +254,7 @@ export async function sendInvoiceIssuedEmail(opts: SendInvoiceIssuedEmailOptions
       ${WEHOSTHERE_EMAIL_BANNER}
         <div style="${WEHOSTHERE_MESH_HEADER_BG}padding:36px 32px 30px;border-radius:18px 18px 0 0;text-align:center;">
         <img src="${SITE_URL}/logo.png" alt="WEHOSTHERE Logo" style="width:190px;height:auto;margin:0 auto 14px;display:block;" />
-        <span style="display:inline-block;background:rgba(255,255,255,0.78);color:#0f172a;font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:5px 14px;border-radius:20px;border:1px solid rgba(15,23,42,0.12);">
+        <span style="display:inline-block;background:#f1f5f9;color:#0f172a;font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:5px 14px;border-radius:20px;border:1px solid rgba(15,23,42,0.12);">
           Fatura Comercial Oficial
         </span>
         <h1 style="color:#0f172a;font-size:22px;font-weight:800;margin:12px 0 4px;letter-spacing:-0.5px;">
@@ -870,7 +870,7 @@ export async function sendDomainSearchAlertEmail(toEmail: string, data: DomainSe
         ${WEHOSTHERE_EMAIL_BANNER}
         <div style="${WEHOSTHERE_MESH_HEADER_BG}padding:32px 28px;text-align:center;">
           <img src="${SITE_URL}/logo.png" alt="WEHOSTHERE Logo" style="width:160px;height:auto;margin:0 auto 12px;display:block;" />
-          <div style="display:inline-block;background:rgba(255,255,255,0.78);backdrop-filter:blur(8px);padding:6px 14px;border-radius:20px;margin-top:6px;">
+          <div style="display:inline-block;background:#f1f5f9;backdrop-filter:blur(8px);padding:6px 14px;border-radius:20px;margin-top:6px;">
             <span style="color:#38bdf8;font-size:12px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;">⚡ Alerta de Pesquisa em Tempo Real</span>
           </div>
         </div>
@@ -1120,7 +1120,7 @@ export async function sendSiteQuoteAlertEmail(toEmail: string, data: SiteQuoteAl
         ${WEHOSTHERE_EMAIL_BANNER}
         <div style="${WEHOSTHERE_MESH_HEADER_BG}padding:32px 28px;text-align:center;">
           <img src="${SITE_URL}/logo.png" alt="WEHOSTHERE Logo" style="width:160px;height:auto;margin:0 auto 12px;display:block;" />
-          <div style="display:inline-block;background:rgba(255,255,255,0.78);backdrop-filter:blur(8px);padding:6px 16px;border-radius:20px;margin-top:6px;">
+          <div style="display:inline-block;background:#f1f5f9;backdrop-filter:blur(8px);padding:6px 16px;border-radius:20px;margin-top:6px;">
             <span style="color:#0f172a;font-size:12px;font-weight:800;letter-spacing:0.8px;text-transform:uppercase;">NOVO LEAD DE CRIAÇÃO DE SITE</span>
           </div>
         </div>
@@ -1246,13 +1246,13 @@ export async function sendAnalyticsMilestoneEmail(data: AnalyticsMilestoneEmailD
       <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;color:#0f172a;border-radius:16px;overflow:hidden;box-shadow:0 12px 36px rgba(15,23,42,0.08);border:1px solid #e2e8f0;background:#ffffff;">
         ${WEHOSTHERE_EMAIL_BANNER}
         <div style="${WEHOSTHERE_MESH_HEADER_BG}padding:36px 28px;text-align:center;color:#0f172a;">
-          <div style="display:inline-block;padding:5px 14px;background:rgba(255,255,255,0.78);border:1px solid rgba(15,23,42,0.12);border-radius:999px;font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:14px;color:#0f172a;">
+          <div style="display:inline-block;padding:5px 14px;background:#f1f5f9;border:1px solid rgba(15,23,42,0.12);border-radius:999px;font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:14px;color:#0f172a;">
             ${isViews ? 'Marco de Visualizações • +100' : 'Marco de Audiência • +10'}
           </div>
-          <h1 style="margin:0 0 8px;font-size:24px;font-weight:800;letter-spacing:-0.4px;color:#ffffff;">
+          <h1 style="margin:0 0 8px;font-size:24px;font-weight:800;letter-spacing:-0.4px;color:#0f172a;">
             ${title}
           </h1>
-          <p style="margin:0;font-size:14px;color:rgba(255,255,255,0.88);line-height:1.55;">
+          <p style="margin:0;font-size:14px;color:#334155;line-height:1.55;">
             ${subtitle}
           </p>
         </div>
@@ -1363,7 +1363,7 @@ export async function sendStoryBroadcastEmail(opts: StoryBroadcastOptions): Prom
         ${WEHOSTHERE_EMAIL_BANNER}
         <div style="${WEHOSTHERE_MESH_HEADER_BG}padding:28px 32px 20px;border-radius:16px 16px 0 0;text-align:center;">
           <img src="${SITE_URL}/logo.png" alt="WEHOSTHERE" style="width:140px;height:auto;margin:0 auto 14px;display:block;" />
-          <div style="display:inline-block;background:rgba(255,255,255,0.78);border:1px solid rgba(15,23,42,0.12);padding:5px 14px;border-radius:20px;">
+          <div style="display:inline-block;background:#f1f5f9;border:1px solid rgba(15,23,42,0.12);padding:5px 14px;border-radius:20px;">
             <span style="color:#a5b4fc;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;">Codando Histórias · Nova Publicação</span>
           </div>
         </div>
@@ -1452,7 +1452,7 @@ export async function sendBirthdayEmail(opts: BirthdayEmailOptions): Promise<{ s
         ${WEHOSTHERE_EMAIL_BANNER}
         <div style="${WEHOSTHERE_MESH_HEADER_BG}padding:36px 28px 28px;text-align:center;">
           <img src="${SITE_URL}/logo.png" alt="WEHOSTHERE" style="width:145px;height:auto;margin:0 auto 16px;display:block;" />
-          <div style="display:inline-block;background:rgba(255,255,255,0.78);backdrop-filter:blur(10px);border:1px solid rgba(15,23,42,0.12);padding:6px 18px;border-radius:30px;">
+          <div style="display:inline-block;background:#f1f5f9;backdrop-filter:blur(10px);border:1px solid rgba(15,23,42,0.12);padding:6px 18px;border-radius:30px;">
             <span style="color:#0f172a;font-size:12px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;">DIA ESPECIAL · FELIZ ANIVERSÁRIO! </span>
           </div>
         </div>
@@ -1677,10 +1677,10 @@ export async function sendRevistaInviteEmail(opts: {
       <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;color:#0f172a;background:#ffffff;border:1px solid #E0AAFF;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(123,44,191,0.08);">
         ${WEHOSTHERE_EMAIL_BANNER}
         <div style="${WEHOSTHERE_MESH_HEADER_BG}padding:36px 32px;text-align:center;">
-          <div style="display:inline-block;background:rgba(255,255,255,0.78);padding:6px 14px;border-radius:9999px;color:#FAF5FF;font-size:12px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:12px;">
+          <div style="display:inline-block;background:#f1f5f9;padding:6px 14px;border-radius:9999px;color:#FAF5FF;font-size:12px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:12px;">
             ✨ Convite Especial da Redacção
           </div>
-          <h1 style="color:#ffffff;margin:0;font-size:24px;font-weight:800;line-height:1.3;">
+          <h1 style="color:#0f172a;margin:0;font-size:24px;font-weight:800;line-height:1.3;">
             Queremos destacar a tua história na Codando Histórias
           </h1>
           <p style="color:#FAF5FF;margin:8px 0 0;font-size:13px;">Revista Digital WEHOSTHERE &bull; Moçambique</p>
