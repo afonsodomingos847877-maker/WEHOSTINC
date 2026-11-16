@@ -117,7 +117,7 @@ export async function checkAndNotifyMilestones(): Promise<{
     }
 
     // ── 2. MARCO DE VISITANTES ÚNICOS (+10) ──
-    const uniqueStep = 10;
+    const uniqueStep = 100;
     let uniqueRecord = await AnalyticsMilestoneModel.findOne({ key: 'unique_visitors' });
 
     if (!uniqueRecord) {
@@ -173,7 +173,7 @@ export async function checkAndNotifyMilestones(): Promise<{
           // 2. Criar Notificação no Painel de Administração
           await AdminNotification.create({
             title: `👥 Novo Marco: ${targetUniqueMilestone.toLocaleString('pt-MZ')} Visitantes Únicos!`,
-            message: `O seu site recebeu +10 novos visitantes únicos, atingindo o marco de ${targetUniqueMilestone.toLocaleString('pt-MZ')} pessoas/sessões distintas!`,
+            message: `O seu site recebeu +100 novos visitantes únicos, atingindo o marco de ${targetUniqueMilestone.toLocaleString('pt-MZ')} pessoas/sessões distintas!`,
             type: 'system',
             link: '/admin',
             userEmail: adminEmail,

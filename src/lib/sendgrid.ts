@@ -1213,7 +1213,7 @@ export async function sendAnalyticsMilestoneEmail(data: AnalyticsMilestoneEmailD
 
   const subtitle = isViews
     ? `O seu site WEHOSTHERE ultrapassou a marca de <strong style="color:#111827;">${formattedMilestone} páginas vistas</strong> (+100 visualizações).`
-    : `O seu site registou <strong style="color:#111827;">${formattedMilestone} visitantes únicos</strong> (+10 novos utilizadores).`;
+    : `O seu site registou <strong style="color:#111827;">${formattedMilestone} visitantes únicos</strong> (+100 novos utilizadores).`;
 
   const topPagesRows = (data.topPages || []).slice(0, 4).map((p, idx) => `
     <tr style="border-bottom:1px solid #e5e7eb;">
@@ -1233,7 +1233,7 @@ export async function sendAnalyticsMilestoneEmail(data: AnalyticsMilestoneEmailD
         ${WEHOSTHERE_EMAIL_BANNER}
         <div style="${WEHOSTHERE_MESH_HEADER_BG}padding:36px 28px;text-align:center;color:#111827;">
           <div style="display:inline-block;padding:5px 14px;background:#f9fafb;border:1px solid rgba(15,23,42,0.12);border-radius:999px;font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:14px;color:#111827;">
-            ${isViews ? 'Marco de Visualizações • +100' : 'Marco de Audiência • +10'}
+            ${isViews ? 'Marco de Visualizações • +100' : 'Marco de Audiência • +100'}
           </div>
           <h1 style="margin:0 0 8px;font-size:24px;font-weight:800;letter-spacing:-0.4px;color:#111827;">
             ${title}
@@ -1252,7 +1252,7 @@ export async function sendAnalyticsMilestoneEmail(data: AnalyticsMilestoneEmailD
               ${formattedMilestone}
             </div>
             <div style="display:inline-block;background:${isViews ? '#f9fafb' : '#f9fafb'};color:${isViews ? '#4338ca' : '#047857'};border:1px solid ${isViews ? '#c7d2fe' : '#a7f3d0'};font-size:12px;font-weight:600;padding:4px 12px;border-radius:999px;">
-              ${isViews ? '+100 páginas vistas acumuladas' : '+10 novos utilizadores distintos'}
+              ${isViews ? '+100 páginas vistas acumuladas' : '+100 novos utilizadores distintos'}
             </div>
           </div>
 
@@ -1289,7 +1289,7 @@ export async function sendAnalyticsMilestoneEmail(data: AnalyticsMilestoneEmailD
 
         <div style="background:#f9fafb;padding:18px 28px;text-align:center;border-top:1px solid #e5e7eb;font-size:11px;color:#6b7280;line-height:1.5;">
           <p style="margin:0 0 3px;font-weight:600;color:#6b7280;">WEHOSTHERE &mdash; Monitoramento de Tráfego &amp; Audiência</p>
-          <p style="margin:0;">Notificação automática gerada a cada marco de +100 visualizações e +10 visitantes únicos.</p>
+          <p style="margin:0;">Notificação automática gerada a cada marco de +100 visualizações e +100 visitantes únicos.</p>
         </div>
       </div>
     `,
