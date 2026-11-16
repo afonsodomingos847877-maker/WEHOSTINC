@@ -6,6 +6,8 @@ import { decryptPassword } from '@/lib/encryption';
 import { canAccessMailbox } from '@/lib/serverAuth';
 import { getDemoMessages, isDemoAccount } from '@/lib/demoWebmailData';
 
+export const dynamic = 'force-dynamic';
+
 // GET - List messages from IMAP
 export async function GET(request: NextRequest) {
   try {
@@ -132,7 +134,10 @@ export async function GET(request: NextRequest) {
       }))
     }));
 
-    return NextResponse.json({ success: true, messages });
+    return NextResponse.json(
+      { success: true, messages },
+      { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate' } }
+    );
   } catch (error) {
     console.error('[Webmail Messages] Error:', error);
     return NextResponse.json(

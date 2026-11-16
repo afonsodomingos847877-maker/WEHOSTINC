@@ -604,6 +604,7 @@ function WebmailContent() {
   // Percentagem Dinâmica de Processamento e Sincronização (0% a 100%)
   const [syncPercentage, setSyncPercentage] = useState<number>(0);
   const [isSyncVisible, setIsSyncVisible] = useState<boolean>(false);
+  const [syncResultMessage, setSyncResultMessage] = useState<string>('Sincronização 100% concluída!');
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -622,12 +623,19 @@ function WebmailContent() {
         });
       }, 160);
     } else if (isSyncVisible) {
-      // Quando termina de processar, atinge 100% e fecha suavemente
+      // Só conclui a 100% após a consulta real ao servidor terminar
+      setSyncResultMessage(
+        messagesLoadError
+          ? 'Falha ao consultar o servidor.'
+          : messages.length > 0
+          ? `Sincronização concluída (${messages.length} mensagens)`
+          : 'Servidor consultado — ainda não há mensagens.'
+      );
       setSyncPercentage(100);
       fadeTimeout = setTimeout(() => {
         setIsSyncVisible(false);
         setSyncPercentage(0);
-      }, 550);
+      }, 1200);
     }
 
     return () => {
@@ -5148,7 +5156,7 @@ function WebmailContent() {
                     <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-600 shrink-0" />
                   )}
                   <span className="font-bold text-[11px] tracking-tight truncate">
-                    {syncPercentage >= 100 ? 'Sincronização 100% concluída!' : 'A processar e a sincronizar e-mails...'}
+                    {syncPercentage >= 100 ? syncResultMessage : 'A consultar servidor e a sincronizar...'}
                   </span>
                   <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-md tabular-nums tracking-wider ${
                     syncPercentage >= 100 
@@ -5206,9 +5214,14 @@ function WebmailContent() {
                   </button>
                 </div>
               ) : (
-                <div className="p-8 text-center text-neutral-400 text-xs my-auto">
+                <div className="p-8 text-center text-neutral-400 text-xs my-auto space-y-1.5">
                   <Mail className="h-8 w-8 mx-auto mb-2 opacity-40" />
-                  <p className="font-semibold text-neutral-600">Nenhuma mensagem nesta pasta.</p>
+                  <p className="font-semibold text-neutral-600">Ainda não há mensagens nesta pasta.</p>
+                  {lastSyncedTime && (
+                    <p className="text-[11px] text-neutral-400">
+                      Servidor consultado às {lastSyncedTime.toLocaleTimeString('pt-MZ')}
+                    </p>
+                  )}
                 </div>
               )
             ) : (

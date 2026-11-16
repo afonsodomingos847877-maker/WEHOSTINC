@@ -159,7 +159,12 @@ export const webmailManager = {
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), timeoutMs);
         try {
-          const res = await fetch(url, { method: 'GET', signal: controller.signal });
+          const res = await fetch(url, {
+            method: 'GET',
+            cache: 'no-store',
+            headers: { 'Cache-Control': 'no-cache' },
+            signal: controller.signal,
+          });
           clearTimeout(timer);
           if (res.ok || (res.status >= 400 && res.status < 500)) {
             return res;
@@ -258,6 +263,7 @@ export const webmailManager = {
           password,
           folder: imapFolder,
           limit: String(limit),
+          _t: String(Date.now()),
         });
 
         const res = await fetchWithRetry(apiEndpoint(`/api/webmail/messages?${params.toString()}`));
