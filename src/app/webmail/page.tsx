@@ -5908,12 +5908,12 @@ function WebmailContent() {
                 );
               })()}
 
-              {/* AI Assistant Smart Bar (Clean Minimalist, integrado no cartão) */}
-              <div className="bg-slate-900 px-4 sm:px-6 py-2.5 text-white space-y-2.5">
+              {/* AI Assistant Smart Bar (Clean Minimalist Black & White) */}
+              <div className="bg-neutral-50 border-y border-neutral-200 px-4 sm:px-6 py-2.5 text-neutral-900 space-y-2.5">
                 <div className="flex flex-wrap items-center justify-between gap-1.5">
                   <div className="flex flex-wrap items-center gap-1.5">
                     {/* Tradução compacta (PT / EN) */}
-                    <div className="flex items-center bg-white/10 border border-white/10 rounded-xl p-0.5">
+                    <div className="flex items-center bg-white border border-neutral-200 rounded-xl p-0.5">
                       <span className="px-1.5 text-neutral-400 flex items-center" title="Traduzir e-mail">
                         <Globe className="h-3.5 w-3.5" />
                       </span>
@@ -5923,8 +5923,8 @@ function WebmailContent() {
                         disabled={isTranslatingEmail !== null}
                         className={`px-2 py-1 rounded-lg text-[11px] font-semibold transition flex items-center gap-1 cursor-pointer ${
                           translatedEmail?.msgId === selectedMessage.id && translatedEmail?.lang === 'pt'
-                            ? 'bg-white text-neutral-900'
-                            : 'text-white/85 hover:bg-white/15'
+                            ? 'bg-neutral-900 text-white'
+                            : 'text-neutral-700 hover:bg-neutral-100'
                         }`}
                         title="Traduzir e-mail para Português"
                       >
@@ -5937,8 +5937,8 @@ function WebmailContent() {
                         disabled={isTranslatingEmail !== null}
                         className={`px-2 py-1 rounded-lg text-[11px] font-semibold transition flex items-center gap-1 cursor-pointer ${
                           translatedEmail?.msgId === selectedMessage.id && translatedEmail?.lang === 'en'
-                            ? 'bg-white text-neutral-900'
-                            : 'text-white/85 hover:bg-white/15'
+                            ? 'bg-neutral-900 text-white'
+                            : 'text-neutral-700 hover:bg-neutral-100'
                         }`}
                         title="Traduzir e-mail para Inglês (English)"
                       >
@@ -5949,7 +5949,7 @@ function WebmailContent() {
                         <button
                           type="button"
                           onClick={() => setTranslatedEmail(null)}
-                          className="px-1.5 py-1 rounded-lg text-[10px] font-medium text-neutral-300 hover:text-white hover:bg-white/10 transition cursor-pointer"
+                          className="px-1.5 py-1 rounded-lg text-[10px] font-medium text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 transition cursor-pointer"
                           title="Voltar ao idioma original"
                         >
                           Original
@@ -5963,8 +5963,8 @@ function WebmailContent() {
                       onClick={() => handleSpeakEmailText('email')}
                       className={`p-2 rounded-xl transition flex items-center justify-center cursor-pointer border ${
                         isSpeakingEmail && speakingSource === 'email'
-                          ? 'bg-white text-neutral-900 border-white'
-                          : 'bg-white/10 hover:bg-white/20 border-white/10 text-white'
+                          ? 'bg-neutral-900 text-white border-neutral-900'
+                          : 'bg-white hover:bg-neutral-100 border-neutral-200 text-neutral-700'
                       }`}
                       title={isSpeakingEmail && speakingSource === 'email' ? 'A ouvir e-mail...' : 'Ouvir e-mail em áudio'}
                       aria-label="Ouvir e-mail"
@@ -5981,7 +5981,7 @@ function WebmailContent() {
                       type="button"
                       onClick={handleSummarizeWithAI}
                       disabled={isGeneratingSummary}
-                      className="p-2 bg-white/10 hover:bg-white/20 border border-white/10 text-white rounded-xl transition flex items-center justify-center disabled:opacity-50 cursor-pointer"
+                      className="p-2 bg-white hover:bg-neutral-100 border border-neutral-200 text-neutral-700 rounded-xl transition flex items-center justify-center disabled:opacity-50 cursor-pointer"
                       title={isGeneratingSummary ? 'A resumir...' : 'Resumir e-mail'}
                       aria-label="Resumir e-mail"
                     >
@@ -5994,7 +5994,7 @@ function WebmailContent() {
                       type="button"
                       onClick={handleSummarizeWithAI}
                       disabled={isGeneratingSummary}
-                      className="px-3 py-1.5 bg-white hover:bg-neutral-100 text-neutral-900 rounded-xl text-[11px] font-semibold transition shadow-xs cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                      className="px-3.5 py-1.5 bg-neutral-900 hover:bg-black text-white rounded-full text-[11px] font-semibold transition shadow-2xs cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
                       title="Resumir e-mail com IA"
                     >
                       {isGeneratingSummary ? (
@@ -6086,18 +6086,18 @@ function WebmailContent() {
                   }
 
                   return (
-                    <div className="p-3.5 sm:p-4 bg-white/[0.07] rounded-xl border border-white/15 text-xs text-neutral-100 relative space-y-2.5">
+                    <div className="p-4 bg-white rounded-2xl border border-neutral-200 text-xs text-neutral-800 relative space-y-2.5 shadow-2xs">
                       <div className="flex items-center justify-between pr-6">
                         <div className="flex items-center space-x-2">
-                          <Pin className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
-                          <span className="font-bold text-white tracking-wide text-xs sm:text-[13px]">
+                          <Pin className="h-3.5 w-3.5 text-neutral-900 shrink-0" />
+                          <span className="font-bold text-neutral-900 tracking-wide text-xs sm:text-[13px]">
                             Resumo Inteligente da Mensagem
                           </span>
                         </div>
                         <button
                           type="button"
                           onClick={() => setAiSummary(null)}
-                          className="absolute top-3 right-3 text-white/50 hover:text-white transition p-1 rounded-lg hover:bg-white/10"
+                          className="absolute top-3 right-3 text-neutral-400 hover:text-neutral-900 transition p-1 rounded-lg hover:bg-neutral-100 cursor-pointer"
                           title="Fechar resumo"
                         >
                           <X className="h-3.5 w-3.5" />
@@ -6106,18 +6106,18 @@ function WebmailContent() {
 
                       <ul className="space-y-1.5 pl-1">
                         {bulletLines.map((item, idx) => (
-                          <li key={idx} className="flex items-start space-x-2 text-neutral-200 leading-relaxed">
-                            <span className="text-emerald-400 font-bold mt-0.5 shrink-0">•</span>
+                          <li key={idx} className="flex items-start space-x-2 text-neutral-700 leading-relaxed">
+                            <span className="text-neutral-900 font-bold mt-0.5 shrink-0">•</span>
                             <span className="flex-1">{item}</span>
                           </li>
                         ))}
                       </ul>
 
                       {actionLine && (
-                        <div className="pt-2 mt-2 border-t border-white/10 flex items-start space-x-2 text-[11px] sm:text-xs text-amber-200/95">
-                          <Lightbulb className="h-3.5 w-3.5 text-amber-400 shrink-0 mt-0.5" />
+                        <div className="pt-2.5 mt-2 border-t border-neutral-200 flex items-start space-x-2 text-[11px] sm:text-xs text-neutral-700">
+                          <Lightbulb className="h-3.5 w-3.5 text-neutral-900 shrink-0 mt-0.5" />
                           <div>
-                            <span className="font-bold text-white">Ação recomendada: </span>
+                            <span className="font-bold text-neutral-900">Ação recomendada: </span>
                             <span>{actionLine}</span>
                           </div>
                         </div>
