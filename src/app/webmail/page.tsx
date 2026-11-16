@@ -5911,7 +5911,8 @@ function WebmailContent() {
                 );
               })()}
 
-              {/* AI Assistant Smart Bar (Clean Minimalist Black & White) */}
+              {/* AI Assistant Smart Bar (Apenas quando o conteúdo do e-mail está aberto) */}
+              {!!selectedMessage.body && (
               <div className="bg-neutral-50 border-y border-neutral-200 px-4 sm:px-6 py-2.5 text-neutral-900 space-y-2.5">
                 <div className="flex flex-wrap items-center justify-between gap-1.5">
                   <div className="flex flex-wrap items-center gap-1.5">
@@ -6129,6 +6130,7 @@ function WebmailContent() {
                   );
                 })()}
               </div>
+              )}
 
               {/* Body section */}
               <div className={`bg-white ${selectedMessage.body ? 'p-4 sm:p-6 flex-1 space-y-4' : 'px-4 sm:px-6 py-4'}`}>
@@ -6252,7 +6254,8 @@ function WebmailContent() {
                 )}
               </div>
 
-              {/* Quick Reply Form */}
+              {/* Quick Reply Form (Apenas quando o conteúdo do e-mail está aberto) */}
+              {!!selectedMessage.body && (
               <div className="bg-slate-50/75 p-4 sm:p-5 space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="text-xs font-bold text-neutral-700 flex items-center space-x-1.5">
@@ -6460,6 +6463,7 @@ function WebmailContent() {
                   </button>
                 </div>
               </div>
+              )}
               </div>
             </div>
           ) : isAccountPending ? (
