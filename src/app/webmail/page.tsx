@@ -6115,7 +6115,7 @@ function WebmailContent() {
               </div>
 
               {/* Body section */}
-              <div className="p-4 sm:p-6 bg-white flex-1 space-y-4">
+              <div className={`bg-white ${selectedMessage.body ? 'p-4 sm:p-6 flex-1 space-y-4' : 'px-4 sm:px-6 py-4'}`}>
                 {translatedEmail && translatedEmail.msgId === selectedMessage.id ? (
                   <div className="space-y-3">
                     <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 bg-emerald-50/90 border border-emerald-200 rounded-2xl text-xs">
@@ -6151,9 +6151,20 @@ function WebmailContent() {
                     </div>
                   </div>
                 ) : isLoadingMessageBody && !selectedMessage.body ? (
-                  <div className="flex flex-col items-center justify-center py-12 text-neutral-500">
-                    <Loader2 className="w-6 h-6 animate-spin text-primary-600 mb-2" />
-                    <span className="text-sm">A carregar conteúdo do e-mail...</span>
+                  <div className="flex items-center justify-center gap-2 py-4 text-neutral-500">
+                    <Loader2 className="w-4 h-4 animate-spin text-neutral-900" />
+                    <span className="text-xs font-medium">A carregar conteúdo do e-mail...</span>
+                  </div>
+                ) : !selectedMessage.body ? (
+                  <div className="flex items-center justify-between gap-3 py-1">
+                    <span className="text-xs text-neutral-500">O conteúdo completo deste e-mail ainda não foi carregado.</span>
+                    <button
+                      type="button"
+                      onClick={() => handleSelectMessage(selectedMessage)}
+                      className="px-4 py-1.5 bg-neutral-900 hover:bg-black text-white rounded-full text-xs font-semibold transition cursor-pointer shrink-0"
+                    >
+                      Abrir e-mail
+                    </button>
                   </div>
                 ) : (() => {
                   let cleanBody = stripRawHeaders(selectedMessage.body);
