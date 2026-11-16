@@ -6,6 +6,7 @@ import { EmailMailbox } from '@/models/EmailMailbox';
 import EmailAccountModel from '@/lib/models/EmailAccount';
 import { getEmailProvider } from '@/lib/emailProviders/base';
 import { cascadeDeleteDomain } from '@/lib/cascadeDelete';
+import { isAdminRole, requireAuth } from '@/lib/serverAuth';
 
 let FALLBACK_SITES: any[] = [];
 
@@ -20,9 +21,14 @@ async function tryMongo() {
 }
 
 export async function GET(req: NextRequest) {
+  const auth = await requireAuth(req);
+  if (auth.error) return auth.error;
+
   try {
+    const isAdmin = isAdminRole(auth.user.role);
     const { searchParams } = new URL(req.url);
-    const filterUserEmail = searchParams.get('userEmail')?.toLowerCase().trim();
+    const requestedEmail = searchParams.get('userEmail')?.toLowerCase().trim();
+    const filterUserEmail = isAdmin ? requestedEmail : auth.user.email.toLowerCase().trim();
 
     if (await tryMongo()) {
       const [sites, emailDomains, emailAccounts] = await Promise.all([
@@ -102,13 +108,21 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ sites: FALLBACK_SITES });
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+  const auth = await requireAuth(req);
+  if (auth.error) return auth.error;
+
   try {
+    const isAdmin = isAdminRole(auth.user.role);
+    const callerEmail = auth.user.email.toLowerCase().trim();
     const body = await req.json();
     const { action, site, siteId, status, domain, sites } = body;
     const useMongo = await tryMongo();
 
     if (action === 'sync_all' && Array.isArray(sites)) {
+      if (!isAdmin) {
+        return NextResponse.json({ error: 'Acesso negado.' }, { status: 403 });
+      }
       if (useMongo) {
         for (const s of sites) {
           const key = (s.domain || s.id || '').toLowerCase();
@@ -128,6 +142,19 @@ export async function POST(req: Request) {
       const tId = (siteId || '').toLowerCase().trim();
       const tDomain = (domain || '').toLowerCase().trim();
       if (useMongo) {
+        if (!isAdmin) {
+          const ownerOr: any[] = [];
+          if (tId) ownerOr.push({ id: tId }, { domain: new RegExp(`^${tId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') });
+          if (tDomain) ownerOr.push({ id: tDomain }, { domain: new RegExp(`^${tDomain.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') });
+          const ownedSite: any = ownerOr.length > 0 ? await SiteModel.findOne({ $or: ownerOr }).lean() : null;
+          const domainCheck = (tDomain && tDomain.includes('.')) ? tDomain : (tId && tId.includes('.')) ? tId : '';
+          const ownedDomain: any = domainCheck ? await EmailDomain.findOne({ domainName: new RegExp(`^${domainCheck.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') }).lean() : null;
+          const siteOwner = String(ownedSite?.userEmail || '').toLowerCase().trim();
+          const domainOwner = String(ownedDomain?.customerId || '').toLowerCase().trim();
+          if (siteOwner !== callerEmail && domainOwner !== callerEmail) {
+            return NextResponse.json({ error: 'Sem permissão para eliminar este domínio.' }, { status: 403 });
+          }
+        }
         const deleteConditions: any[] = [];
         if (tId) {
           deleteConditions.push({ id: tId });
@@ -167,6 +194,9 @@ export async function POST(req: Request) {
     }
 
     if (action === 'update_status') {
+      if (!isAdmin) {
+        return NextResponse.json({ error: 'Apenas administradores podem alterar o estado.' }, { status: 403 });
+      }
       const target = (siteId || domain || '').toLowerCase();
       const updateUserEmail = body.userEmail;
       const update: any = { status };
@@ -188,7 +218,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true, sites: FALLBACK_SITES });
     }
 
-    const siteData = site ? { ...site, userEmail: site.userEmail || body.userEmail } : { id: body.id || Date.now().toString(), name: body.name || body.domain, domain: body.domain, status: body.status || 'pending', userEmail: body.userEmail, createdAt: body.createdAt || new Date().toISOString(), storage: body.storage || 10, bandwidth: body.bandwidth || 100 };
+    const rawSiteData = site ? { ...site, userEmail: site.userEmail || body.userEmail } : { id: body.id || Date.now().toString(), name: body.name || body.domain, domain: body.domain, status: body.status || 'pending', userEmail: body.userEmail, createdAt: body.createdAt || new Date().toISOString(), storage: body.storage || 10, bandwidth: body.bandwidth || 100 };
+    const siteData = isAdmin ? rawSiteData : { ...rawSiteData, userEmail: callerEmail, status: 'pending' };
     const targetKey = (siteData.domain || '').toLowerCase();
 
     if (useMongo) {

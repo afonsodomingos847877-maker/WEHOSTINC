@@ -1,10 +1,11 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import EmailAccountModel from '@/lib/models/EmailAccount';
 import { EmailMailbox } from '@/models/EmailMailbox';
 import { EmailDomain } from '@/models/EmailDomain';
 import { getEmailProvider } from '@/lib/emailProviders/base';
 import { cascadeDeleteDomain, cascadeDeleteMailbox } from '@/lib/cascadeDelete';
+import { isAdminRole, requireAuth } from '@/lib/serverAuth';
 
 let FALLBACK_EMAILS: any[] = [];
 
@@ -18,10 +19,15 @@ async function tryMongo() {
   }
 }
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
+  const auth = await requireAuth(request);
+  if (auth.error) return auth.error;
+
   try {
+    const isAdmin = isAdminRole(auth.user.role);
     const { searchParams } = new URL(request.url);
-    const filterUserEmail = searchParams.get('userEmail')?.trim().toLowerCase();
+    const requestedEmail = searchParams.get('userEmail')?.trim().toLowerCase();
+    const filterUserEmail = isAdmin ? requestedEmail : auth.user.email.trim().toLowerCase();
 
     if (await tryMongo()) {
       const [emailAccounts, dbMailboxes, dbDomains] = await Promise.all([
@@ -175,13 +181,21 @@ export async function GET(request: Request) {
   return NextResponse.json({ emails: FALLBACK_EMAILS });
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+  const auth = await requireAuth(req);
+  if (auth.error) return auth.error;
+
   try {
+    const isAdmin = isAdminRole(auth.user.role);
+    const callerEmail = auth.user.email.trim().toLowerCase();
     const body = await req.json();
     const { action, email, emailId, status, domain, emails, emailStr } = body;
     const useMongo = await tryMongo();
 
     if (action === 'sync_all' && Array.isArray(emails)) {
+      if (!isAdmin) {
+        return NextResponse.json({ error: 'Acesso negado.' }, { status: 403 });
+      }
       if (useMongo) {
         for (const e of emails) {
           const key = (e.email || e.id || '').toLowerCase();
@@ -215,6 +229,27 @@ export async function POST(req: Request) {
           }
         }
 
+        if (!isAdmin) {
+          const esc = (v: string) => v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const domToCheck = tDomain || (emailAddress.includes('@') ? emailAddress.split('@')[1] : '');
+          let hasOwnership = false;
+          if (domToCheck) {
+            const SiteModel = (await import('@/lib/models/Site')).default;
+            const [ownedDom, ownedSite] = await Promise.all([
+              EmailDomain.findOne({ domainName: new RegExp(`^${esc(domToCheck)}$`, 'i'), customerId: new RegExp(`^${esc(callerEmail)}$`, 'i') }).lean(),
+              SiteModel.findOne({ domain: new RegExp(`^${esc(domToCheck)}$`, 'i'), userEmail: new RegExp(`^${esc(callerEmail)}$`, 'i') }).lean(),
+            ]);
+            if (ownedDom || ownedSite) hasOwnership = true;
+          }
+          if (!hasOwnership && emailAddress) {
+            const ownedAcc = await EmailAccountModel.findOne({ email: new RegExp(`^${esc(emailAddress)}$`, 'i'), userEmail: new RegExp(`^${esc(callerEmail)}$`, 'i') }).lean();
+            if (ownedAcc) hasOwnership = true;
+          }
+          if (!hasOwnership) {
+            return NextResponse.json({ error: 'Sem permissão para eliminar esta conta/domínio.' }, { status: 403 });
+          }
+        }
+
         if (tDomain) {
           await cascadeDeleteDomain(tDomain);
         } else if (emailAddress) {
@@ -239,6 +274,9 @@ export async function POST(req: Request) {
     }
 
     if (action === 'update_status') {
+      if (!isAdmin) {
+        return NextResponse.json({ error: 'Apenas administradores podem alterar o estado.' }, { status: 403 });
+      }
       const target = (emailId || emailStr || '').toLowerCase();
       if (useMongo) {
         await EmailAccountModel.findOneAndUpdate({ $or: [{ id: target }, { email: target }] }, { status });
@@ -248,7 +286,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true, emails: FALLBACK_EMAILS });
     }
 
-    const emailData = email ? { ...email, userEmail: email.userEmail || body.userEmail } : { id: body.id || Date.now().toString(), email: body.email, domain: body.domain || (body.email?.split('@')[1] || ''), status: body.status || 'pending', quotaGB: body.quotaGB || 5, userEmail: body.userEmail, createdAt: body.createdAt || new Date().toISOString() };
+    const rawEmailData = email ? { ...email, userEmail: email.userEmail || body.userEmail } : { id: body.id || Date.now().toString(), email: body.email, domain: body.domain || (body.email?.split('@')[1] || ''), status: body.status || 'pending', quotaGB: body.quotaGB || 5, userEmail: body.userEmail, createdAt: body.createdAt || new Date().toISOString() };
+    const emailData = isAdmin ? rawEmailData : { ...rawEmailData, userEmail: callerEmail, status: 'pending' };
     const targetKey = (emailData.email || '').toLowerCase();
 
     if (useMongo) {
