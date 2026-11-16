@@ -6,10 +6,10 @@ export const DEFAULT_FROM_NAME = 'WEHOSTHERE';
 
 // Gradiente mesh oficial WEHOSTHERE compatível com clientes de e-mail
 export const WEHOSTHERE_EMAIL_BANNER =
-  `<div style="background:#fcfdf9;border-bottom:1px solid #e2e8f0;"><img src="https://www.wehosthere.com/socialbanner.jpg" alt="WEHOSTHERE" style="width:100%;max-width:100%;height:auto;display:block;" /></div>`;
+  `<div style="background:#fcfdf9;border-bottom:1px solid #e5e7eb;"><img src="https://www.wehosthere.com/socialbanner.jpg" alt="WEHOSTHERE" style="width:100%;max-width:100%;height:auto;display:block;" /></div>`;
 
 export const WEHOSTHERE_MESH_HEADER_BG =
-  'background-color:#ffffff;border-bottom:1px solid #f1f5f9;';
+  'background-color:#ffffff;border-bottom:1px solid #e5e7eb;';
 
 export interface SendEmailOptions {
   to: string;
@@ -106,19 +106,19 @@ export async function sendWelcomeEmail(toEmail: string, userName: string, plan: 
       <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;color:#111;">
         ${WEHOSTHERE_EMAIL_BANNER}
         <div style="${WEHOSTHERE_MESH_HEADER_BG}padding:40px 32px;border-radius:16px 16px 0 0;text-align:center;">
-          <p style="color:#334155;margin:8px 0 0;font-size:14px;">Plataforma de Hospedagem Profissional</p>
+          <p style="color:#374151;margin:8px 0 0;font-size:14px;">Plataforma de Hospedagem Profissional</p>
         </div>
-        <div style="background:#f8fafc;padding:40px 32px;border-radius:0 0 16px 16px;border:1px solid #e2e8f0;">
+        <div style="background:#f9fafb;padding:40px 32px;border-radius:0 0 16px 16px;border:1px solid #e5e7eb;">
           <h2 style="color:#1e3a8a;font-size:22px;margin-top:0;">Bem-vindo, ${userName}!</h2>
-          <p style="color:#475569;line-height:1.7;">A sua conta foi criada com sucesso. Plano: <strong>${planNames[plan] || plan}</strong>.</p>
-          <p style="color:#475569;line-height:1.7;">Para ativar sua conta, insira o código de 6 dígitos abaixo na página de confirmação:</p>
+          <p style="color:#4b5563;line-height:1.7;">A sua conta foi criada com sucesso. Plano: <strong>${planNames[plan] || plan}</strong>.</p>
+          <p style="color:#4b5563;line-height:1.7;">Para ativar sua conta, insira o código de 6 dígitos abaixo na página de confirmação:</p>
           <div style="background:#1e3a8a;color:white;font-size:32px;font-weight:700;letter-spacing:8px;text-align:center;padding:20px;border-radius:10px;margin:24px 0;">
             ${confirmationCode || '------'}
           </div>
           <div style="text-align:center;margin:24px 0;">
-            <a href="${confirmPageLink}" style="background:#2563eb;color:white;font-weight:700;padding:14px 32px;border-radius:10px;text-decoration:none;font-size:15px;display:inline-block;">Ir para página de confirmação →</a>
+            <a href="${confirmPageLink}" style="display:inline-block;min-width:240px;padding:13px 24px;background:#111827;color:#ffffff;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">Ir para página de confirmação →</a>
           </div>
-          <p style="color:#94a3b8;font-size:12px;margin:0;">Este código expira em 24 horas. Equipa WEHOSTHERE - Hospedagem Profissional em Moçambique</p>
+          <p style="color:#6b7280;font-size:12px;margin:0;">Este código expira em 24 horas. Equipa WEHOSTHERE - Hospedagem Profissional em Moçambique</p>
         </div>
       </div>`,
   });
@@ -133,19 +133,19 @@ export async function sendInvoiceEmail(toEmail: string, userName: string, invoic
       <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;color:#111;">
         ${WEHOSTHERE_EMAIL_BANNER}
         <div style="${WEHOSTHERE_MESH_HEADER_BG}padding:40px 32px;border-radius:16px 16px 0 0;text-align:center;">
-          <p style="color:#334155;margin:8px 0 0;font-size:13px;">Fatura ${invoiceRef}</p>
+          <p style="color:#374151;margin:8px 0 0;font-size:13px;">Fatura ${invoiceRef}</p>
         </div>
-        <div style="background:#f8fafc;padding:40px 32px;border-radius:0 0 16px 16px;border:1px solid #e2e8f0;">
+        <div style="background:#f9fafb;padding:40px 32px;border-radius:0 0 16px 16px;border:1px solid #e5e7eb;">
           <p>Olá <strong>${userName}</strong>, o seu pagamento foi confirmado.</p>
           <table style="width:100%;border-collapse:collapse;margin:20px 0;">
-            <tr style="background:#eff6ff;"><td style="padding:12px;font-weight:700;color:#1e3a8a;">Plano</td><td style="padding:12px;">${plan}</td></tr>
+            <tr style="background:#f9fafb;"><td style="padding:12px;font-weight:700;color:#1e3a8a;">Plano</td><td style="padding:12px;">${plan}</td></tr>
             <tr><td style="padding:12px;font-weight:700;color:#1e3a8a;">Valor</td><td style="padding:12px;">${amount}</td></tr>
-            <tr style="background:#eff6ff;"><td style="padding:12px;font-weight:700;color:#1e3a8a;">Referência</td><td style="padding:12px;">${invoiceRef}</td></tr>
+            <tr style="background:#f9fafb;"><td style="padding:12px;font-weight:700;color:#1e3a8a;">Referência</td><td style="padding:12px;">${invoiceRef}</td></tr>
           </table>
           <div style="text-align:center;margin:24px 0;">
-            <a href="${SITE_URL}/dashboard/billing" style="background:#2563eb;color:white;font-weight:700;padding:14px 32px;border-radius:10px;text-decoration:none;font-size:15px;">Ver Faturamento →</a>
+            <a href="${SITE_URL}/dashboard/billing" style="display:inline-block;min-width:240px;padding:13px 24px;background:#111827;color:#ffffff;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">Ver Faturamento →</a>
           </div>
-          <p style="color:#94a3b8;font-size:12px;margin:0;">WEHOSTHERE - info@wehosthere.com</p>
+          <p style="color:#6b7280;font-size:12px;margin:0;">WEHOSTHERE - info@wehosthere.com</p>
         </div>
       </div>`,
   });
@@ -185,7 +185,7 @@ export async function sendInvoiceIssuedEmail(opts: SendInvoiceIssuedEmailOptions
   const isOverdue = opts.status === 'overdue';
 
   const statusLabel = isPaid ? 'PAGO / LIQUIDADO' : isOverdue ? 'VENCIDO' : 'PAGAMENTO PENDENTE';
-  const statusBg = isPaid ? '#ecfdf5' : isOverdue ? '#fef2f2' : '#fffbeb';
+  const statusBg = isPaid ? '#f9fafb' : isOverdue ? '#f9fafb' : '#f9fafb';
   const statusColor = isPaid ? '#047857' : isOverdue ? '#b91c1c' : '#b45309';
   const statusBorder = isPaid ? '#a7f3d0' : isOverdue ? '#fecaca' : '#fde68a';
 
@@ -219,26 +219,26 @@ export async function sendInvoiceIssuedEmail(opts: SendInvoiceIssuedEmailOptions
 
   const itemsHtml = opts.items && opts.items.length > 0
     ? opts.items.map((it, idx) => `
-      <tr style="border-bottom:1px solid #e2e8f0;background:${idx % 2 === 0 ? '#ffffff' : '#f8fafc'};">
-        <td style="padding:12px 14px;color:#0f172a;font-size:13px;line-height:1.4;">
+      <tr style="border-bottom:1px solid #e5e7eb;background:${idx % 2 === 0 ? '#ffffff' : '#f9fafb'};">
+        <td style="padding:12px 14px;color:#111827;font-size:13px;line-height:1.4;">
           <div style="font-weight:700;">${it.service}</div>
-          ${it.description ? `<div style="font-size:11px;color:#64748b;margin-top:2px;">${it.description}</div>` : ''}
+          ${it.description ? `<div style="font-size:11px;color:#6b7280;margin-top:2px;">${it.description}</div>` : ''}
         </td>
-        <td align="center" style="padding:12px 14px;color:#334155;font-size:13px;font-weight:600;">
+        <td align="center" style="padding:12px 14px;color:#374151;font-size:13px;font-weight:600;">
           ${it.quantity}
         </td>
-        <td align="right" style="padding:12px 14px;color:#0f172a;font-size:13px;font-weight:700;">
+        <td align="right" style="padding:12px 14px;color:#111827;font-size:13px;font-weight:700;">
           ${it.subtotal.toLocaleString('pt-MZ')} MT
         </td>
       </tr>
     `).join('')
     : `
-      <tr style="border-bottom:1px solid #e2e8f0;background:#ffffff;">
-        <td style="padding:12px 14px;color:#0f172a;font-size:13px;line-height:1.4;">
+      <tr style="border-bottom:1px solid #e5e7eb;background:#ffffff;">
+        <td style="padding:12px 14px;color:#111827;font-size:13px;line-height:1.4;">
           <div style="font-weight:700;">Serviços de Hospedagem & Cloud</div>
         </td>
-        <td align="center" style="padding:12px 14px;color:#334155;font-size:13px;font-weight:600;">1</td>
-        <td align="right" style="padding:12px 14px;color:#0f172a;font-size:13px;font-weight:700;">
+        <td align="center" style="padding:12px 14px;color:#374151;font-size:13px;font-weight:600;">1</td>
+        <td align="right" style="padding:12px 14px;color:#111827;font-size:13px;font-weight:700;">
           ${opts.total.toLocaleString('pt-MZ')} MT
         </td>
       </tr>
@@ -247,56 +247,56 @@ export async function sendInvoiceIssuedEmail(opts: SendInvoiceIssuedEmailOptions
   const billingDashboardUrl = `${SITE_URL}/dashboard/billing`;
 
   const html = `
-    <div style="font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif;max-width:620px;margin:0 auto;color:#0f172a;background:#ffffff;">
+    <div style="font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif;max-width:620px;margin:0 auto;color:#111827;background:#ffffff;">
       <!-- Cabeçalho com Branding WEHOSTHERE -->
       ${WEHOSTHERE_EMAIL_BANNER}
         <div style="${WEHOSTHERE_MESH_HEADER_BG}padding:36px 32px 30px;border-radius:18px 18px 0 0;text-align:center;">
-        <span style="display:inline-block;background:#f1f5f9;color:#0f172a;font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:5px 14px;border-radius:20px;border:1px solid rgba(15,23,42,0.12);">
+        <span style="display:inline-block;background:#f9fafb;color:#111827;font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:5px 14px;border-radius:20px;border:1px solid rgba(15,23,42,0.12);">
           Fatura Comercial Oficial
         </span>
-        <h1 style="color:#0f172a;font-size:22px;font-weight:800;margin:12px 0 4px;letter-spacing:-0.5px;">
+        <h1 style="color:#111827;font-size:22px;font-weight:800;margin:12px 0 4px;letter-spacing:-0.5px;">
           ${opts.invoiceNumber}
         </h1>
-        <p style="color:#334155;margin:0;font-size:13px;">
+        <p style="color:#374151;margin:0;font-size:13px;">
           WEHOSTHERE Infraestruturas & Cloud Moçambique
         </p>
       </div>
 
       <!-- Corpo da Fatura -->
-      <div style="background:#f8fafc;padding:32px 28px;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 18px 18px;">
+      <div style="background:#f9fafb;padding:32px 28px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 18px 18px;">
         <!-- Saudação -->
-        <p style="color:#334155;font-size:15px;line-height:1.6;margin:0 0 16px;">
+        <p style="color:#374151;font-size:15px;line-height:1.6;margin:0 0 16px;">
           Prezado(a) <strong>${opts.customerName}</strong>,
         </p>
-        <p style="color:#475569;font-size:14px;line-height:1.6;margin:0 0 24px;">
+        <p style="color:#4b5563;font-size:14px;line-height:1.6;margin:0 0 24px;">
           ${isPaid 
             ? 'Confirmamos a receção e quitação da sua fatura. Abaixo encontra os dados oficiais do documento emitido:' 
             : 'Informamos que foi gerada uma nova fatura referente aos seus serviços contratados. Seguem os detalhes para conferência e liquidação:'}
         </p>
 
         <!-- Metadados do Documento -->
-        <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:14px;padding:18px;margin-bottom:24px;">
+        <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:14px;padding:18px;margin-bottom:24px;">
           <table style="width:100%;border-collapse:collapse;font-size:13px;">
             <tr>
-              <td style="padding:6px 0;color:#64748b;font-weight:600;width:40%;">Data de Emissão:</td>
-              <td style="padding:6px 0;color:#0f172a;font-weight:700;">${formattedIssued}</td>
+              <td style="padding:6px 0;color:#6b7280;font-weight:600;width:40%;">Data de Emissão:</td>
+              <td style="padding:6px 0;color:#111827;font-weight:700;">${formattedIssued}</td>
             </tr>
             <tr>
-              <td style="padding:6px 0;color:#64748b;font-weight:600;">Data de Vencimento:</td>
-              <td style="padding:6px 0;color:#0f172a;font-weight:700;">${formattedDue}</td>
+              <td style="padding:6px 0;color:#6b7280;font-weight:600;">Data de Vencimento:</td>
+              <td style="padding:6px 0;color:#111827;font-weight:700;">${formattedDue}</td>
             </tr>
             ${formattedPeriod ? `
             <tr>
-              <td style="padding:6px 0;color:#64748b;font-weight:600;">Período do Serviço:</td>
-              <td style="padding:6px 0;color:#0f172a;font-weight:700;">${formattedPeriod}</td>
+              <td style="padding:6px 0;color:#6b7280;font-weight:600;">Período do Serviço:</td>
+              <td style="padding:6px 0;color:#111827;font-weight:700;">${formattedPeriod}</td>
             </tr>
             ` : ''}
             <tr>
-              <td style="padding:6px 0;color:#64748b;font-weight:600;">Método Indicado:</td>
-              <td style="padding:6px 0;color:#0f172a;font-weight:700;">${methodLabel}</td>
+              <td style="padding:6px 0;color:#6b7280;font-weight:600;">Método Indicado:</td>
+              <td style="padding:6px 0;color:#111827;font-weight:700;">${methodLabel}</td>
             </tr>
             <tr>
-              <td style="padding:8px 0 2px;color:#64748b;font-weight:600;">Estado do Pagamento:</td>
+              <td style="padding:8px 0 2px;color:#6b7280;font-weight:600;">Estado do Pagamento:</td>
               <td style="padding:8px 0 2px;">
                 <span style="display:inline-block;background:${statusBg};color:${statusColor};border:1px solid ${statusBorder};font-size:11px;font-weight:800;padding:3px 10px;border-radius:12px;text-transform:uppercase;letter-spacing:0.5px;">
                   ${statusLabel}
@@ -307,13 +307,13 @@ export async function sendInvoiceIssuedEmail(opts: SendInvoiceIssuedEmailOptions
         </div>
 
         <!-- Tabela de Itens -->
-        <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:14px;overflow:hidden;margin-bottom:24px;">
+        <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:14px;overflow:hidden;margin-bottom:24px;">
           <table style="width:100%;border-collapse:collapse;text-align:left;">
             <thead>
-              <tr style="background:#f1f5f9;border-bottom:1px solid #e2e8f0;">
-                <th style="padding:10px 14px;font-size:11px;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:0.5px;">Descrição</th>
-                <th style="padding:10px 14px;font-size:11px;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:0.5px;text-align:center;">Qtd</th>
-                <th style="padding:10px 14px;font-size:11px;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:0.5px;text-align:right;">Subtotal</th>
+              <tr style="background:#f9fafb;border-bottom:1px solid #e5e7eb;">
+                <th style="padding:10px 14px;font-size:11px;font-weight:800;color:#4b5563;text-transform:uppercase;letter-spacing:0.5px;">Descrição</th>
+                <th style="padding:10px 14px;font-size:11px;font-weight:800;color:#4b5563;text-transform:uppercase;letter-spacing:0.5px;text-align:center;">Qtd</th>
+                <th style="padding:10px 14px;font-size:11px;font-weight:800;color:#4b5563;text-transform:uppercase;letter-spacing:0.5px;text-align:right;">Subtotal</th>
               </tr>
             </thead>
             <tbody>
@@ -322,18 +322,18 @@ export async function sendInvoiceIssuedEmail(opts: SendInvoiceIssuedEmailOptions
           </table>
 
           <!-- Totais -->
-          <div style="background:#f8fafc;padding:16px;border-top:1px solid #e2e8f0;">
+          <div style="background:#f9fafb;padding:16px;border-top:1px solid #e5e7eb;">
             <table style="width:100%;font-size:13px;border-collapse:collapse;">
               <tr>
-                <td style="color:#64748b;padding:4px 0;">Subtotal (sem IVA):</td>
-                <td align="right" style="color:#334155;font-weight:600;">${(opts.total * 0.84).toLocaleString('pt-MZ', { maximumFractionDigits: 2 })} MT</td>
+                <td style="color:#6b7280;padding:4px 0;">Subtotal (sem IVA):</td>
+                <td align="right" style="color:#374151;font-weight:600;">${(opts.total * 0.84).toLocaleString('pt-MZ', { maximumFractionDigits: 2 })} MT</td>
               </tr>
               <tr>
-                <td style="color:#64748b;padding:4px 0;">IVA (16% legal):</td>
-                <td align="right" style="color:#334155;font-weight:600;">${(opts.total * 0.16).toLocaleString('pt-MZ', { maximumFractionDigits: 2 })} MT</td>
+                <td style="color:#6b7280;padding:4px 0;">IVA (16% legal):</td>
+                <td align="right" style="color:#374151;font-weight:600;">${(opts.total * 0.16).toLocaleString('pt-MZ', { maximumFractionDigits: 2 })} MT</td>
               </tr>
-              <tr style="border-top:1px solid #cbd5e1;">
-                <td style="padding:10px 0 2px;font-weight:800;font-size:15px;color:#0f172a;">
+              <tr style="border-top:1px solid #e5e7eb;">
+                <td style="padding:10px 0 2px;font-weight:800;font-size:15px;color:#111827;">
                   ${isPaid ? 'TOTAL PAGO:' : 'TOTAL A PAGAR:'}
                 </td>
                 <td align="right" style="padding:10px 0 2px;font-weight:900;font-size:18px;color:${isPaid ? '#047857' : '#0052cc'};">
@@ -346,46 +346,46 @@ export async function sendInvoiceIssuedEmail(opts: SendInvoiceIssuedEmailOptions
 
         <!-- Instruções de Pagamento (Se não estiver pago) -->
         ${!isPaid ? `
-        <div style="background:#ffffff;border:1px solid #cbd5e1;border-left:4px solid #0052cc;border-radius:12px;padding:18px;margin-bottom:24px;">
-          <h3 style="margin:0 0 10px;font-size:14px;font-weight:800;color:#0f172a;">
+        <div style="background:#ffffff;border:1px solid #e5e7eb;border-left:4px solid #e5e7eb;border-radius:12px;padding:18px;margin-bottom:24px;">
+          <h3 style="margin:0 0 10px;font-size:14px;font-weight:800;color:#111827;">
             Coordenadas de Pagamento Rápidas:
           </h3>
-          <ul style="margin:0;padding-left:18px;color:#334155;font-size:13px;line-height:1.8;">
+          <ul style="margin:0;padding-left:18px;color:#374151;font-size:13px;line-height:1.8;">
             <li><strong>M-Pesa:</strong> +258 84 833 5618 (Titular: WEHOSTHERE / Afonso Domingos)</li>
             <li><strong>e-Mola:</strong> +258 86 833 5618 / +258 84 833 5618</li>
             <li><strong>Millennium BIM:</strong> NIB: <code>433372004293948</code></li>
           </ul>
-          <p style="margin:10px 0 0;font-size:12px;color:#64748b;">
+          <p style="margin:10px 0 0;font-size:12px;color:#6b7280;">
             Após efetuar o pagamento, o comprovativo pode ser enviado para <a href="mailto:info@wehosthere.com" style="color:#0052cc;">info@wehosthere.com</a> ou via WhatsApp para <strong>+258 84 833 5618</strong>.
           </p>
         </div>
         ` : ''}
 
         ${opts.notes ? `
-        <div style="background:#f1f5f9;border-radius:10px;padding:12px 16px;margin-bottom:24px;font-size:12px;color:#475569;">
+        <div style="background:#f9fafb;border-radius:10px;padding:12px 16px;margin-bottom:24px;font-size:12px;color:#4b5563;">
           <strong>Observações:</strong> ${opts.notes}
         </div>
         ` : ''}
 
         <!-- Botão de Ação -->
         <div style="text-align:center;margin:30px 0 16px;">
-          <a href="${billingDashboardUrl}" style="background:#0f172a;color:#0f172a;font-weight:800;padding:15px 36px;border-radius:12px;text-decoration:none;font-size:14px;display:inline-block;letter-spacing:0.2px;">
+          <a href="${billingDashboardUrl}" style="display:inline-block;min-width:240px;padding:13px 24px;background:#111827;color:#ffffff;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">
             Aceder ao Painel & Ver Fatura / Recibo →
           </a>
         </div>
 
-        <p style="text-align:center;color:#475569;font-size:12px;margin:20px 0 0;">
+        <p style="text-align:center;color:#4b5563;font-size:12px;margin:20px 0 0;">
           A fatura e recibo em formato PDF estão disponíveis a qualquer momento no seu painel em <strong>${billingDashboardUrl}</strong>.
         </p>
       </div>
 
       <!-- Rodapé Oficial -->
-      <div style="padding:24px 20px;text-align:center;color:#475569;font-size:11px;line-height:1.6;">
-        <p style="margin:0 0 4px;font-weight:600;color:#64748b;">
+      <div style="padding:24px 20px;text-align:center;color:#4b5563;font-size:11px;line-height:1.6;">
+        <p style="margin:0 0 4px;font-weight:600;color:#6b7280;">
           WEHOSTHERE Infraestruturas & Cloud Moçambique
         </p>
         <p style="margin:0 0 6px;">
-          Maputo, Moçambique • <a href="mailto:info@wehosthere.com" style="color:#64748b;text-decoration:none;">info@wehosthere.com</a> • +258 84 833 5618
+          Maputo, Moçambique • <a href="mailto:info@wehosthere.com" style="color:#6b7280;text-decoration:none;">info@wehosthere.com</a> • +258 84 833 5618
         </p>
         <p style="margin:0;font-size:10px;color:#cbd5e1;">
           Processado por computador ao abrigo do Código do IVA. Documento válido como comprovativo após boa cobrança.
@@ -409,16 +409,16 @@ export async function sendWebmailMessage(fromEmail: string, toEmail: string, sub
     fromName: `${fromEmail} via WEHOSTHERE Webmail`,
     subject,
     html: `
-      <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;">
+      <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;">
         <div style="background:#1e3a8a;padding:24px;text-align:center;">
           </div>
         <div style="padding:32px 24px;">
-          <p style="margin:0 0 6px;color:#64748b;font-size:12px;"><strong>De:</strong> ${fromEmail}</p>
-          <p style="margin:0 0 24px;color:#64748b;font-size:12px;"><strong>Para:</strong> ${toEmail}</p>
-          <hr style="border:none;border-top:1px solid #e2e8f0;margin-bottom:24px;">
-          <div style="white-space:pre-line;line-height:1.8;color:#1e293b;font-size:15px;">${body}</div>
+          <p style="margin:0 0 6px;color:#6b7280;font-size:12px;"><strong>De:</strong> ${fromEmail}</p>
+          <p style="margin:0 0 24px;color:#6b7280;font-size:12px;"><strong>Para:</strong> ${toEmail}</p>
+          <hr style="border:none;border-top:1px solid #e5e7eb;margin-bottom:24px;">
+          <div style="white-space:pre-line;line-height:1.8;color:#111827;font-size:15px;">${body}</div>
         </div>
-        <div style="background:#f1f5f9;padding:14px 24px;font-size:11px;color:#94a3b8;">
+        <div style="background:#f9fafb;padding:14px 24px;font-size:11px;color:#6b7280;">
           Enviado via WEHOSTHERE Webmail Corporativo - ${SITE_URL.replace('https://', '')}
         </div>
       </div>`,
@@ -434,17 +434,17 @@ export async function sendSupportTicketEmail(toEmail: string, userName: string, 
       <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;">
         ${WEHOSTHERE_EMAIL_BANNER}
         <div style="${WEHOSTHERE_MESH_HEADER_BG}padding:40px 32px;border-radius:16px 16px 0 0;text-align:center;">
-          <p style="color:#334155;margin:8px 0 0;font-size:13px;">#${ticketId}</p>
+          <p style="color:#374151;margin:8px 0 0;font-size:13px;">#${ticketId}</p>
         </div>
-        <div style="background:#f8fafc;padding:40px 32px;border-radius:0 0 16px 16px;border:1px solid #e2e8f0;">
+        <div style="background:#f9fafb;padding:40px 32px;border-radius:0 0 16px 16px;border:1px solid #e5e7eb;">
           <p>Olá <strong>${userName}</strong>, o seu pedido foi registado:</p>
-          <div style="background:#f3f0ff;border-left:4px solid #7c3aed;padding:16px;border-radius:8px;margin:16px 0;">
-            <p style="margin:0;font-weight:700;color:#5b21b6;">${subject}</p>
+          <div style="background:#f3f0ff;border-left:4px solid #e5e7eb;padding:16px;border-radius:8px;margin:16px 0;">
+            <p style="margin:0;font-weight:700;color:#111827;">${subject}</p>
           </div>
           <div style="text-align:center;margin:24px 0;">
-            <a href="${SITE_URL}/dashboard/tickets" style="background:#7c3aed;color:white;font-weight:700;padding:14px 32px;border-radius:10px;text-decoration:none;font-size:15px;">Ver Ticket →</a>
+            <a href="${SITE_URL}/dashboard/tickets" style="display:inline-block;min-width:240px;padding:13px 24px;background:#111827;color:#ffffff;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">Ver Ticket →</a>
           </div>
-          <p style="color:#94a3b8;font-size:12px;margin:0;">WEHOSTHERE - info@wehosthere.com</p>
+          <p style="color:#6b7280;font-size:12px;margin:0;">WEHOSTHERE - info@wehosthere.com</p>
         </div>
       </div>`,
   });
@@ -461,16 +461,16 @@ export async function sendPasswordResetEmail(toEmail: string, userName: string, 
       <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;color:#111;">
         ${WEHOSTHERE_EMAIL_BANNER}
         <div style="background:#ffffff;border-bottom:1px solid #e5e7eb;padding:32px;text-align:center;">
-          <p style="color:#475569;margin:8px 0 0;font-size:13px;">Recuperação de Senha</p>
+          <p style="color:#4b5563;margin:8px 0 0;font-size:13px;">Recuperação de Senha</p>
         </div>
-        <div style="background:#f8fafc;padding:40px 32px;border-radius:0 0 16px 16px;border:1px solid #e2e8f0;">
-          <p style="color:#475569;line-height:1.7;">Olá <strong>${userName}</strong>,</p>
-          <p style="color:#475569;line-height:1.7;">Recebemos um pedido para redefinir a sua senha. Se não fez este pedido, pode ignorar este email.</p>
+        <div style="background:#f9fafb;padding:40px 32px;border-radius:0 0 16px 16px;border:1px solid #e5e7eb;">
+          <p style="color:#4b5563;line-height:1.7;">Olá <strong>${userName}</strong>,</p>
+          <p style="color:#4b5563;line-height:1.7;">Recebemos um pedido para redefinir a sua senha. Se não fez este pedido, pode ignorar este email.</p>
           <div style="text-align:center;margin:32px 0;">
-            <a href="${resetUrl}" style="background:#f59e0b;color:white;font-weight:700;padding:16px 40px;border-radius:10px;text-decoration:none;font-size:16px;display:inline-block;">Redefinir Senha →</a>
+            <a href="${resetUrl}" style="display:inline-block;min-width:240px;padding:13px 24px;background:#111827;color:#ffffff;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">Redefinir Senha →</a>
           </div>
-          <p style="color:#94a3b8;font-size:12px;margin:0;">Este link expira em 1 hora por segurança.</p>
-          <p style="color:#94a3b8;font-size:12px;margin:16px 0 0;">Equipa WEHOSTHERE - Hospedagem Profissional em Moçambique</p>
+          <p style="color:#6b7280;font-size:12px;margin:0;">Este link expira em 1 hora por segurança.</p>
+          <p style="color:#6b7280;font-size:12px;margin:16px 0 0;">Equipa WEHOSTHERE - Hospedagem Profissional em Moçambique</p>
         </div>
       </div>`,
   });
@@ -487,26 +487,26 @@ export async function sendAccountDeletionEmail(toEmail: string, userName: string
         <div style="background:#ffffff;border-bottom:1px solid #e5e7eb;padding:32px;text-align:center;">
           <p style="color:#fecaca;margin:8px 0 0;font-size:13px;">Conta Eliminada</p>
         </div>
-        <div style="background:#f8fafc;padding:40px 32px;border-radius:0 0 16px 16px;border:1px solid #e2e8f0;">
-          <p style="color:#475569;line-height:1.7;">Olá <strong>${userName}</strong>,</p>
-          <p style="color:#475569;line-height:1.7;">Informamos que a sua conta na plataforma WEHOSTHERE foi eliminada pela administração.</p>
+        <div style="background:#f9fafb;padding:40px 32px;border-radius:0 0 16px 16px;border:1px solid #e5e7eb;">
+          <p style="color:#4b5563;line-height:1.7;">Olá <strong>${userName}</strong>,</p>
+          <p style="color:#4b5563;line-height:1.7;">Informamos que a sua conta na plataforma WEHOSTHERE foi eliminada pela administração.</p>
           ${reason ? `
-          <div style="background:#fef2f2;border-left:4px solid #dc2626;padding:16px;border-radius:8px;margin:16px 0;">
-            <p style="margin:0;font-weight:700;color:#dc2626;">Motivo:</p>
-            <p style="margin:8px 0 0;color:#475569;">${reason}</p>
+          <div style="background:#f9fafb;border-left:4px solid #e5e7eb;padding:16px;border-radius:8px;margin:16px 0;">
+            <p style="margin:0;font-weight:700;color:#111827;">Motivo:</p>
+            <p style="margin:8px 0 0;color:#4b5563;">${reason}</p>
           </div>
           ` : ''}
-          <p style="color:#475569;line-height:1.7;">Todos os seus dados, serviços e informações associados a esta conta foram removidos permanentemente.</p>
-          <p style="color:#475569;line-height:1.7;">Se acredita que esta ação foi um erro ou tem alguma dúvida, entre em contacto com o nosso suporte:</p>
-          <div style="background:#eff6ff;padding:16px;border-radius:8px;margin:16px 0;">
+          <p style="color:#4b5563;line-height:1.7;">Todos os seus dados, serviços e informações associados a esta conta foram removidos permanentemente.</p>
+          <p style="color:#4b5563;line-height:1.7;">Se acredita que esta ação foi um erro ou tem alguma dúvida, entre em contacto com o nosso suporte:</p>
+          <div style="background:#f9fafb;padding:16px;border-radius:8px;margin:16px 0;">
             <p style="margin:0;color:#1e3a8a;font-weight:700;">Email:</p>
-            <p style="margin:4px 0 0;color:#475569;">info@wehosthere.com</p>
+            <p style="margin:4px 0 0;color:#4b5563;">info@wehosthere.com</p>
             <p style="margin:8px 0 0;color:#1e3a8a;font-weight:700;">Telefone Principal:</p>
-            <p style="margin:4px 0 0;color:#475569;">+258 84 833 5618</p>
+            <p style="margin:4px 0 0;color:#4b5563;">+258 84 833 5618</p>
             <p style="margin:8px 0 0;color:#1e3a8a;font-weight:700;">Telefone Secundário:</p>
-            <p style="margin:4px 0 0;color:#475569;">+258 84 833 5618</p>
+            <p style="margin:4px 0 0;color:#4b5563;">+258 84 833 5618</p>
           </div>
-          <p style="color:#94a3b8;font-size:12px;margin:16px 0 0;">Equipa WEHOSTHERE - Hospedagem Profissional em Moçambique</p>
+          <p style="color:#6b7280;font-size:12px;margin:16px 0 0;">Equipa WEHOSTHERE - Hospedagem Profissional em Moçambique</p>
         </div>
       </div>`,
   });
@@ -523,14 +523,14 @@ export async function sendAccountActivatedEmail(toEmail: string, userName: strin
       <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;color:#111;">
         ${WEHOSTHERE_EMAIL_BANNER}
         <div style="${WEHOSTHERE_MESH_HEADER_BG}padding:40px 32px;border-radius:16px 16px 0 0;text-align:center;">
-          <p style="color:#334155;margin:8px 0 0;font-size:13px;">Conta Ativada</p>
+          <p style="color:#374151;margin:8px 0 0;font-size:13px;">Conta Ativada</p>
         </div>
-        <div style="background:#f8fafc;padding:40px 32px;border-radius:0 0 16px 16px;border:1px solid #e2e8f0;">
-          <p style="color:#475569;line-height:1.7;">Parabéns, <strong>${userName}</strong>!</p>
-          <p style="color:#475569;line-height:1.7;">A sua conta na plataforma WEHOSTHERE foi ativada com sucesso. Você já pode começar a utilizar todos os nossos serviços.</p>
-          <div style="background:#ecfdf5;border-left:4px solid #10b981;padding:16px;border-radius:8px;margin:16px 0;">
-            <p style="margin:0;font-weight:700;color:#059669;">O que você pode fazer agora:</p>
-            <ul style="margin:8px 0 0;padding-left:20px;color:#475569;">
+        <div style="background:#f9fafb;padding:40px 32px;border-radius:0 0 16px 16px;border:1px solid #e5e7eb;">
+          <p style="color:#4b5563;line-height:1.7;">Parabéns, <strong>${userName}</strong>!</p>
+          <p style="color:#4b5563;line-height:1.7;">A sua conta na plataforma WEHOSTHERE foi ativada com sucesso. Você já pode começar a utilizar todos os nossos serviços.</p>
+          <div style="background:#f9fafb;border-left:4px solid #e5e7eb;padding:16px;border-radius:8px;margin:16px 0;">
+            <p style="margin:0;font-weight:700;color:#111827;">O que você pode fazer agora:</p>
+            <ul style="margin:8px 0 0;padding-left:20px;color:#4b5563;">
               <li style="margin:4px 0;">Fazer login na sua conta</li>
               <li style="margin:4px 0;">Acessar o painel de controlo</li>
               <li style="margin:4px 0;">Configurar o seu site</li>
@@ -538,10 +538,10 @@ export async function sendAccountActivatedEmail(toEmail: string, userName: strin
             </ul>
           </div>
           <div style="text-align:center;margin:32px 0;">
-            <a href="${loginUrl}" style="background:#10b981;color:white;font-weight:700;padding:16px 40px;border-radius:10px;text-decoration:none;font-size:16px;display:inline-block;">Fazer Login Agora →</a>
+            <a href="${loginUrl}" style="display:inline-block;min-width:240px;padding:13px 24px;background:#111827;color:#ffffff;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">Fazer Login Agora →</a>
           </div>
-          <p style="color:#94a3b8;font-size:12px;margin:0;">Se tiver alguma dúvida, entre em contacto com o nosso suporte.</p>
-          <p style="color:#94a3b8;font-size:12px;margin:16px 0 0;">Equipa WEHOSTHERE - Hospedagem Profissional em Moçambique</p>
+          <p style="color:#6b7280;font-size:12px;margin:0;">Se tiver alguma dúvida, entre em contacto com o nosso suporte.</p>
+          <p style="color:#6b7280;font-size:12px;margin:16px 0 0;">Equipa WEHOSTHERE - Hospedagem Profissional em Moçambique</p>
         </div>
       </div>`,
   });
@@ -558,29 +558,29 @@ export async function sendLoginNotificationEmail(toEmail: string, userName: stri
       <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;color:#111;">
         ${WEHOSTHERE_EMAIL_BANNER}
         <div style="${WEHOSTHERE_MESH_HEADER_BG}padding:40px 32px;border-radius:16px 16px 0 0;text-align:center;">
-          <p style="color:#334155;margin:8px 0 0;font-size:13px;">Notificação de Login</p>
+          <p style="color:#374151;margin:8px 0 0;font-size:13px;">Notificação de Login</p>
         </div>
-        <div style="background:#f8fafc;padding:40px 32px;border-radius:0 0 16px 16px;border:1px solid #e2e8f0;">
-          <p style="color:#475569;line-height:1.7;">Olá, <strong>${userName}</strong>!</p>
-          <p style="color:#475569;line-height:1.7;">Informamos que uma nova sessão foi iniciada na sua conta WEHOSTHERE.</p>
+        <div style="background:#f9fafb;padding:40px 32px;border-radius:0 0 16px 16px;border:1px solid #e5e7eb;">
+          <p style="color:#4b5563;line-height:1.7;">Olá, <strong>${userName}</strong>!</p>
+          <p style="color:#4b5563;line-height:1.7;">Informamos que uma nova sessão foi iniciada na sua conta WEHOSTHERE.</p>
           
-          <div style="background:#eff6ff;border-left:4px solid #3b82f6;padding:16px;border-radius:8px;margin:16px 0;">
-            <p style="margin:0;font-weight:700;color:#1d4ed8;">Detalhes do login:</p>
-            <ul style="margin:8px 0 0;padding-left:20px;color:#475569;">
+          <div style="background:#f9fafb;border-left:4px solid #e5e7eb;padding:16px;border-radius:8px;margin:16px 0;">
+            <p style="margin:0;font-weight:700;color:#111827;">Detalhes do login:</p>
+            <ul style="margin:8px 0 0;padding-left:20px;color:#4b5563;">
               <li style="margin:4px 0;"><strong>Data e hora:</strong> ${loginTime}</li>
               ${ipAddress ? `<li style="margin:4px 0;"><strong>Endereço IP:</strong> ${ipAddress}</li>` : ''}
               ${device ? `<li style="margin:4px 0;"><strong>Dispositivo:</strong> ${device}</li>` : ''}
             </ul>
           </div>
           
-          <p style="color:#475569;line-height:1.7;margin-top:16px;">Se você reconhece esta atividade, não é necessário tomar nenhuma ação.</p>
-          <p style="color:#dc2626;line-height:1.7;margin-top:8px;">Se você não reconhece este login, por favor altere a sua senha imediatamente e entre em contacto com o nosso suporte.</p>
+          <p style="color:#4b5563;line-height:1.7;margin-top:16px;">Se você reconhece esta atividade, não é necessário tomar nenhuma ação.</p>
+          <p style="color:#111827;line-height:1.7;margin-top:8px;">Se você não reconhece este login, por favor altere a sua senha imediatamente e entre em contacto com o nosso suporte.</p>
           
           <div style="text-align:center;margin:32px 0;">
-            <a href="${dashboardUrl}" style="background:#3b82f6;color:white;font-weight:700;padding:16px 40px;border-radius:10px;text-decoration:none;font-size:16px;display:inline-block;">Acessar Painel →</a>
+            <a href="${dashboardUrl}" style="display:inline-block;min-width:240px;padding:13px 24px;background:#111827;color:#ffffff;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">Acessar Painel →</a>
           </div>
-          <p style="color:#94a3b8;font-size:12px;margin:0;">Se tiver alguma dúvida, entre em contacto com o nosso suporte.</p>
-          <p style="color:#94a3b8;font-size:12px;margin:16px 0 0;">Equipa WEHOSTHERE - Hospedagem Profissional em Moçambique</p>
+          <p style="color:#6b7280;font-size:12px;margin:0;">Se tiver alguma dúvida, entre em contacto com o nosso suporte.</p>
+          <p style="color:#6b7280;font-size:12px;margin:16px 0 0;">Equipa WEHOSTHERE - Hospedagem Profissional em Moçambique</p>
         </div>
       </div>`,
   });
@@ -597,18 +597,18 @@ export async function sendNewsletterEmail(toEmail: string, subject: string, cont
         <div style="${WEHOSTHERE_MESH_HEADER_BG}padding:40px 32px;border-radius:16px 16px 0 0;text-align:center;">
           <p style="color:#e9d5ff;margin:8px 0 0;font-size:13px;">Newsletter</p>
         </div>
-        <div style="background:#f8fafc;padding:40px 32px;border-radius:0 0 16px 16px;border:1px solid #e2e8f0;">
+        <div style="background:#f9fafb;padding:40px 32px;border-radius:0 0 16px 16px;border:1px solid #e5e7eb;">
           ${content}
           
-          <div style="text-align:center;margin:32px 0;padding-top:24px;border-top:1px solid #e2e8f0;">
-            <p style="color:#94a3b8;font-size:12px;margin:0;">
+          <div style="text-align:center;margin:32px 0;padding-top:24px;border-top:1px solid #e5e7eb;">
+            <p style="color:#6b7280;font-size:12px;margin:0;">
               Recebe este email porque subscreveu à newsletter WEHOSTHERE.
             </p>
-            <a href="${unsubscribeUrl}" style="color:#64748b;font-size:12px;text-decoration:underline;margin-top:8px;display:inline-block;">
+            <a href="${unsubscribeUrl}" style="color:#6b7280;font-size:12px;text-decoration:underline;margin-top:8px;display:inline-block;">
               Cancelar subscrição
             </a>
           </div>
-          <p style="color:#94a3b8;font-size:12px;margin:16px 0 0;">Equipa WEHOSTHERE - Hospedagem Profissional em Moçambique</p>
+          <p style="color:#6b7280;font-size:12px;margin:16px 0 0;">Equipa WEHOSTHERE - Hospedagem Profissional em Moçambique</p>
         </div>
       </div>`,
   });
@@ -625,17 +625,17 @@ export async function sendCourseEnrollmentEmail(toEmail: string, userName: strin
       <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;color:#111;">
         ${WEHOSTHERE_EMAIL_BANNER}
         <div style="${WEHOSTHERE_MESH_HEADER_BG}padding:40px 32px;border-radius:16px 16px 0 0;text-align:center;">
-          <p style="color:#334155;margin:8px 0 0;font-size:14px;font-weight:600;">Academia Web WEHOSTHERE</p>
+          <p style="color:#374151;margin:8px 0 0;font-size:14px;font-weight:600;">Academia Web WEHOSTHERE</p>
         </div>
-        <div style="background:#f8fafc;padding:40px 32px;border-radius:0 0 16px 16px;border:1px solid #e2e8f0;">
-          <p style="color:#334155;font-size:16px;line-height:1.7;">Olá, <strong>${userName}</strong>!</p>
-          <p style="color:#334155;font-size:15px;line-height:1.7;">
+        <div style="background:#f9fafb;padding:40px 32px;border-radius:0 0 16px 16px;border:1px solid #e5e7eb;">
+          <p style="color:#374151;font-size:16px;line-height:1.7;">Olá, <strong>${userName}</strong>!</p>
+          <p style="color:#374151;font-size:15px;line-height:1.7;">
             A sua inscrição no curso <strong>${courseTitle}</strong> foi confirmada com sucesso!
           </p>
           
-          <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:20px;margin:24px 0;">
-            <p style="margin:0 0 8px;font-weight:800;color:#1d4ed8;font-size:15px;">O que está disponível para si agora:</p>
-            <ul style="margin:0;padding-left:20px;color:#475569;font-size:14px;line-height:1.8;">
+          <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin:24px 0;">
+            <p style="margin:0 0 8px;font-weight:800;color:#111827;font-size:15px;">O que está disponível para si agora:</p>
+            <ul style="margin:0;padding-left:20px;color:#4b5563;font-size:14px;line-height:1.8;">
               <li>Acesso completo à <strong>Aula 1 (Introdução e Conceitos)</strong> gratuita.</li>
               <li>Estrutura passo a passo e visão geral dos 13 módulos.</li>
               <li>Acesso à comunidade e suporte da plataforma.</li>
@@ -643,10 +643,10 @@ export async function sendCourseEnrollmentEmail(toEmail: string, userName: strin
           </div>
           
           <div style="text-align:center;margin:32px 0;">
-            <a href="${academyUrl}" style="${WEHOSTHERE_MESH_HEADER_BG}color:#0f172a;font-weight:700;padding:16px 36px;border-radius:10px;text-decoration:none;font-size:15px;display:inline-block;">Começar a Assistir Agora →</a>
+            <a href="${academyUrl}" style="display:inline-block;min-width:240px;padding:13px 24px;background:#111827;color:#ffffff;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">Começar a Assistir Agora →</a>
           </div>
           
-          <p style="color:#94a3b8;font-size:12px;margin:24px 0 0;text-align:center;">Equipa WEHOSTHERE - Academia de Desenvolvimento Web</p>
+          <p style="color:#6b7280;font-size:12px;margin:24px 0 0;text-align:center;">Equipa WEHOSTHERE - Academia de Desenvolvimento Web</p>
         </div>
       </div>`,
   });
@@ -663,16 +663,16 @@ export async function sendCoursePurchaseEmail(toEmail: string, userName: string,
       <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;color:#111;">
         ${WEHOSTHERE_EMAIL_BANNER}
         <div style="${WEHOSTHERE_MESH_HEADER_BG}padding:40px 32px;border-radius:16px 16px 0 0;text-align:center;">
-          <p style="color:#334155;margin:8px 0 0;font-size:14px;font-weight:600;">Pagamento Confirmado</p>
+          <p style="color:#374151;margin:8px 0 0;font-size:14px;font-weight:600;">Pagamento Confirmado</p>
         </div>
-        <div style="background:#f8fafc;padding:40px 32px;border-radius:0 0 16px 16px;border:1px solid #e2e8f0;">
-          <p style="color:#334155;font-size:16px;line-height:1.7;">Olá, <strong>${userName}</strong>!</p>
-          <p style="color:#334155;font-size:15px;line-height:1.7;">
+        <div style="background:#f9fafb;padding:40px 32px;border-radius:0 0 16px 16px;border:1px solid #e5e7eb;">
+          <p style="color:#374151;font-size:16px;line-height:1.7;">Olá, <strong>${userName}</strong>!</p>
+          <p style="color:#374151;font-size:15px;line-height:1.7;">
             Confirmamos a receção do seu pagamento de <strong>${amount} MT</strong> para o curso <strong>${courseTitle}</strong>.
           </p>
           
-          <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:20px;margin:24px 0;">
-            <p style="margin:0 0 8px;font-weight:800;color:#15803d;font-size:15px;">O seu curso completo está 100% desbloqueado:</p>
+          <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin:24px 0;">
+            <p style="margin:0 0 8px;font-weight:800;color:#111827;font-size:15px;">O seu curso completo está 100% desbloqueado:</p>
             <ul style="margin:0;padding-left:20px;color:#374151;font-size:14px;line-height:1.8;">
               <li>Acesso vitalício aos <strong>13 módulos práticos</strong>.</li>
               <li>Downloads de modelos de código e materiais em PDF.</li>
@@ -681,10 +681,10 @@ export async function sendCoursePurchaseEmail(toEmail: string, userName: string,
           </div>
           
           <div style="text-align:center;margin:32px 0;">
-            <a href="${academyUrl}" style="${WEHOSTHERE_MESH_HEADER_BG}color:#0f172a;font-weight:700;padding:16px 36px;border-radius:10px;text-decoration:none;font-size:15px;display:inline-block;">${claimToken ? 'Ativar Acesso & Assistir Aulas →' : 'Acessar Todas as Aulas →'}</a>
+            <a href="${academyUrl}" style="display:inline-block;min-width:240px;padding:13px 24px;background:#111827;color:#ffffff;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">${claimToken ? 'Ativar Acesso & Assistir Aulas →' : 'Acessar Todas as Aulas →'}</a>
           </div>
           
-          <p style="color:#94a3b8;font-size:12px;margin:24px 0 0;text-align:center;">Equipa WEHOSTHERE - Academia de Desenvolvimento Web</p>
+          <p style="color:#6b7280;font-size:12px;margin:24px 0 0;text-align:center;">Equipa WEHOSTHERE - Academia de Desenvolvimento Web</p>
         </div>
       </div>`,
   });
@@ -699,27 +699,27 @@ export async function sendCourseCompletionEmail(toEmail: string, userName: strin
       <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;color:#111;">
         ${WEHOSTHERE_EMAIL_BANNER}
         <div style="${WEHOSTHERE_MESH_HEADER_BG}padding:40px 32px;border-radius:16px 16px 0 0;text-align:center;">
-          <p style="color:#334155;margin:8px 0 0;font-size:14px;font-weight:600;">Certificado Oficial de Conclusão</p>
+          <p style="color:#374151;margin:8px 0 0;font-size:14px;font-weight:600;">Certificado Oficial de Conclusão</p>
         </div>
-        <div style="background:#f8fafc;padding:40px 32px;border-radius:0 0 16px 16px;border:1px solid #e2e8f0;">
-          <p style="color:#334155;font-size:16px;line-height:1.7;">Parabéns, <strong>${userName}</strong>! </p>
-          <p style="color:#334155;font-size:15px;line-height:1.7;">
+        <div style="background:#f9fafb;padding:40px 32px;border-radius:0 0 16px 16px;border:1px solid #e5e7eb;">
+          <p style="color:#374151;font-size:16px;line-height:1.7;">Parabéns, <strong>${userName}</strong>! </p>
+          <p style="color:#374151;font-size:15px;line-height:1.7;">
             Você concluiu com distinção todas as lições e módulos do curso <strong>${courseTitle}</strong>.
           </p>
           
-          <div style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:12px;padding:20px;margin:24px 0;text-align:center;">
+          <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin:24px 0;text-align:center;">
             <p style="margin:0;font-size:13px;color:#6b21a8;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Código de Autenticidade do Certificado</p>
             <p style="margin:8px 0 0;font-family:monospace;font-size:22px;font-weight:900;color:#581c87;letter-spacing:2px;">${certificateNumber}</p>
           </div>
           
           <div style="text-align:center;margin:32px 0;">
-            <a href="${verificationUrl}" style="${WEHOSTHERE_MESH_HEADER_BG}color:#0f172a;font-weight:700;padding:16px 36px;border-radius:10px;text-decoration:none;font-size:15px;display:inline-block;">Visualizar e Imprimir Certificado →</a>
+            <a href="${verificationUrl}" style="display:inline-block;min-width:240px;padding:13px 24px;background:#111827;color:#ffffff;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">Visualizar e Imprimir Certificado →</a>
           </div>
           
-          <p style="color:#64748b;font-size:13px;line-height:1.6;margin:16px 0 0;">
+          <p style="color:#6b7280;font-size:13px;line-height:1.6;margin:16px 0 0;">
             Pode adicionar este certificado ao seu currículo e perfil do LinkedIn através do link oficial de validação.
           </p>
-          <p style="color:#94a3b8;font-size:12px;margin:24px 0 0;text-align:center;">Equipa WEHOSTHERE - Academia de Desenvolvimento Web</p>
+          <p style="color:#6b7280;font-size:12px;margin:24px 0 0;text-align:center;">Equipa WEHOSTHERE - Academia de Desenvolvimento Web</p>
         </div>
       </div>`,
   });
@@ -743,7 +743,7 @@ export async function sendRoleChangeEmail(toEmail: string, userName: string, new
     ? 'linear-gradient(135deg, #4c1d95, #6b21a8, #c026d3)' // Roxo Real Luxuoso
     : isAdmin
       ? 'linear-gradient(135deg, #1e40af, #3b82f6, #0284c7)' // Azul Índigo Operacional
-      : 'linear-gradient(135deg, #475569, #334155)'; // Neutro
+      : 'linear-gradient(135deg, #4b5563, #374151)'; // Neutro
 
   return sendEmail({
     to: toEmail,
@@ -755,16 +755,16 @@ export async function sendRoleChangeEmail(toEmail: string, userName: string, new
             ${isSuperAdmin ? 'NÍVEL MÁXIMO DE ACESSO' : isAdmin ? 'GESTÃO OPERACIONAL' : 'ATUALIZAÇÃO DE PERFIL'}
           </p>
         </div>
-        <div style="background:#ffffff;padding:40px 32px;border-radius:0 0 16px 16px;border:1px solid #e2e8f0;border-top:none;">
-          <p style="color:#334155;font-size:16px;line-height:1.7;">Olá, <strong>${userName}</strong>,</p>
+        <div style="background:#ffffff;padding:40px 32px;border-radius:0 0 16px 16px;border:1px solid #e5e7eb;border-top:none;">
+          <p style="color:#374151;font-size:16px;line-height:1.7;">Olá, <strong>${userName}</strong>,</p>
           
           ${isSuperAdmin ? `
-            <p style="color:#334155;font-size:15px;line-height:1.7;">
+            <p style="color:#374151;font-size:15px;line-height:1.7;">
               Informamos com grande honra que a sua conta recebeu privilégios de <strong>Super Administrador da plataforma WEHOSTHERE </strong>.
             </p>
-            <div style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:12px;padding:22px;margin:24px 0;">
+            <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:22px;margin:24px 0;">
               <p style="margin:0 0 10px;font-weight:800;color:#581c87;font-size:15px;">Privilégios Totais Concedidos:</p>
-              <ul style="margin:0;padding-left:20px;color:#475569;font-size:14px;line-height:1.9;">
+              <ul style="margin:0;padding-left:20px;color:#4b5563;font-size:14px;line-height:1.9;">
                 <li>Acesso irrestrito a todas as abas do <strong>Painel Administrativo (/admin)</strong>.</li>
                 <li><strong>Gestão Financeira &amp; Payouts:</strong> Autorização e execução de transferências B2C.</li>
                 <li><strong>Gestão de Administradores:</strong> Promover, delegar e revogar cargos de outros utilizadores.</li>
@@ -772,15 +772,15 @@ export async function sendRoleChangeEmail(toEmail: string, userName: string, new
               </ul>
             </div>
             <div style="text-align:center;margin:32px 0;">
-              <a href="${targetUrl}" style="background:#0f172a;color:white;font-weight:800;padding:16px 36px;border-radius:10px;text-decoration:none;font-size:15px;display:inline-block;">Aceder como Super Admin →</a>
+              <a href="${targetUrl}" style="display:inline-block;min-width:240px;padding:13px 24px;background:#111827;color:#ffffff;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">Aceder como Super Admin →</a>
             </div>
           ` : isAdmin ? `
-            <p style="color:#334155;font-size:15px;line-height:1.7;">
+            <p style="color:#374151;font-size:15px;line-height:1.7;">
               Informamos que a sua conta foi promovida para <strong>Administrador da plataforma WEHOSTHERE </strong>.
             </p>
-            <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:22px;margin:24px 0;">
-              <p style="margin:0 0 10px;font-weight:800;color:#1e40af;font-size:15px;">Privilégios Operacionais Ativados:</p>
-              <ul style="margin:0;padding-left:20px;color:#475569;font-size:14px;line-height:1.9;">
+            <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:22px;margin:24px 0;">
+              <p style="margin:0 0 10px;font-weight:800;color:#111827;font-size:15px;">Privilégios Operacionais Ativados:</p>
+              <ul style="margin:0;padding-left:20px;color:#4b5563;font-size:14px;line-height:1.9;">
                 <li>Acesso ao <strong>Painel Administrativo (/admin)</strong> para gestão diária.</li>
                 <li>Gestão de clientes, encomendas de sites e serviços ativos.</li>
                 <li>Atendimento e resposta a <strong>tickets de suporte</strong> técnico.</li>
@@ -788,21 +788,21 @@ export async function sendRoleChangeEmail(toEmail: string, userName: string, new
               </ul>
             </div>
             <div style="text-align:center;margin:32px 0;">
-              <a href="${targetUrl}" style="background:#0f172a;color:white;font-weight:700;padding:16px 36px;border-radius:10px;text-decoration:none;font-size:15px;display:inline-block;">Aceder ao Painel Administrativo →</a>
+              <a href="${targetUrl}" style="display:inline-block;min-width:240px;padding:13px 24px;background:#111827;color:#ffffff;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">Aceder ao Painel Administrativo →</a>
             </div>
           ` : `
-            <p style="color:#334155;font-size:15px;line-height:1.7;">
+            <p style="color:#374151;font-size:15px;line-height:1.7;">
               Informamos que as permissões administrativas da sua conta foram atualizadas. A sua conta funciona agora no modo de <strong>Utilizador / Cliente</strong>.
             </p>
-            <p style="color:#64748b;font-size:14px;line-height:1.6;">
+            <p style="color:#6b7280;font-size:14px;line-height:1.6;">
               Continua a ter acesso total a todos os seus sites, contas de e-mail, domínios, faturas e cursos na Academia.
             </p>
             <div style="text-align:center;margin:32px 0;">
-              <a href="${targetUrl}" style="background:#334155;color:white;font-weight:700;padding:16px 36px;border-radius:10px;text-decoration:none;font-size:15px;display:inline-block;">Aceder ao Dashboard do Cliente →</a>
+              <a href="${targetUrl}" style="display:inline-block;min-width:240px;padding:13px 24px;background:#111827;color:#ffffff;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">Aceder ao Dashboard do Cliente →</a>
             </div>
           `}
           
-          <p style="color:#94a3b8;font-size:12px;margin:28px 0 0;text-align:center;border-top:1px solid #f1f5f9;padding-top:16px;">
+          <p style="color:#6b7280;font-size:12px;margin:28px 0 0;text-align:center;border-top:1px solid #e5e7eb;padding-top:16px;">
             Equipa de Segurança &amp; Infraestrutura WEHOSTHERE
           </p>
         </div>
@@ -836,7 +836,7 @@ export async function sendDomainSearchAlertEmail(toEmail: string, data: DomainSe
   }).format(data.searchedAt);
 
   const statusColor = data.isAvailable ? '#059669' : '#dc2626';
-  const statusBg = data.isAvailable ? '#ecfdf5' : '#fef2f2';
+  const statusBg = data.isAvailable ? '#f9fafb' : '#f9fafb';
   const statusBorder = data.isAvailable ? '#a7f3d0' : '#fecaca';
   const statusText = data.isAvailable ? 'DISPONÍVEL PARA REGISTO' : 'OCUPADO / JÁ REGISTADO';
 
@@ -854,19 +854,19 @@ export async function sendDomainSearchAlertEmail(toEmail: string, data: DomainSe
     to: toEmail,
     subject,
     html: `
-      <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:620px;margin:0 auto;color:#111;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e2e8f0;box-shadow:0 4px 20px rgba(0,0,0,0.06);">
+      <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:620px;margin:0 auto;color:#111;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e5e7eb;box-shadow:0 4px 20px rgba(0,0,0,0.06);">
         ${WEHOSTHERE_EMAIL_BANNER}
         <div style="${WEHOSTHERE_MESH_HEADER_BG}padding:32px 28px;text-align:center;">
-          <div style="display:inline-block;background:#f1f5f9;backdrop-filter:blur(8px);padding:6px 14px;border-radius:20px;margin-top:6px;">
+          <div style="display:inline-block;background:#f9fafb;backdrop-filter:blur(8px);padding:6px 14px;border-radius:20px;margin-top:6px;">
             <span style="color:#38bdf8;font-size:12px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;">Alerta de Pesquisa em Tempo Real</span>
           </div>
         </div>
 
         <div style="padding:32px 28px;background:#ffffff;">
-          <h2 style="color:#0f172a;font-size:20px;font-weight:800;margin:0 0 8px;text-align:center;">
+          <h2 style="color:#111827;font-size:20px;font-weight:800;margin:0 0 8px;text-align:center;">
             Alguém acabou de pesquisar um domínio!
           </h2>
-          <p style="color:#64748b;font-size:14px;text-align:center;margin:0 0 24px;">
+          <p style="color:#6b7280;font-size:14px;text-align:center;margin:0 0 24px;">
             Um visitante realizou uma consulta no verificador de domínios da plataforma.
           </p>
 
@@ -875,54 +875,54 @@ export async function sendDomainSearchAlertEmail(toEmail: string, data: DomainSe
             <p style="font-size:12px;font-weight:700;color:${statusColor};text-transform:uppercase;letter-spacing:1px;margin:0 0 6px;">
               ${statusText}
             </p>
-            <p style="font-family:monospace;font-size:26px;font-weight:900;color:#0f172a;margin:0 0 8px;letter-spacing:0.5px;">
+            <p style="font-family:monospace;font-size:26px;font-weight:900;color:#111827;margin:0 0 8px;letter-spacing:0.5px;">
               ${data.domain}
             </p>
-            ${data.price ? `<p style="color:#059669;font-weight:700;font-size:15px;margin:0;">Preço Estimado: ${data.price.toLocaleString('pt-MZ')} MT/ano</p>` : ''}
+            ${data.price ? `<p style="color:#111827;font-weight:700;font-size:15px;margin:0;">Preço Estimado: ${data.price.toLocaleString('pt-MZ')} MT/ano</p>` : ''}
           </div>
 
           <!-- Informações Detalhadas -->
-          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:24px;">
-            <p style="color:#0f172a;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 14px;">
+          <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:24px;">
+            <p style="color:#111827;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 14px;">
               Detalhes da Consulta
             </p>
             <table style="width:100%;border-collapse:collapse;font-size:13px;">
-              <tr style="border-bottom:1px solid #e2e8f0;">
-                <td style="padding:8px 0;color:#64748b;font-weight:600;">Visitante:</td>
-                <td style="padding:8px 0;color:#0f172a;text-align:right;font-weight:700;">
+              <tr style="border-bottom:1px solid #e5e7eb;">
+                <td style="padding:8px 0;color:#6b7280;font-weight:600;">Visitante:</td>
+                <td style="padding:8px 0;color:#111827;text-align:right;font-weight:700;">
                   ${data.userEmail ? `${data.userName ? `${data.userName} (` : ''}${data.userEmail}${data.userName ? ')' : ''}` : 'Visitante Anónimo'}
                 </td>
               </tr>
-              <tr style="border-bottom:1px solid #e2e8f0;">
-                <td style="padding:8px 0;color:#64748b;font-weight:600;">Endereço IP:</td>
-                <td style="padding:8px 0;color:#0f172a;text-align:right;font-family:monospace;">${data.ip || 'Desconhecido'}</td>
+              <tr style="border-bottom:1px solid #e5e7eb;">
+                <td style="padding:8px 0;color:#6b7280;font-weight:600;">Endereço IP:</td>
+                <td style="padding:8px 0;color:#111827;text-align:right;font-family:monospace;">${data.ip || 'Desconhecido'}</td>
               </tr>
-              <tr style="border-bottom:1px solid #e2e8f0;">
-                <td style="padding:8px 0;color:#64748b;font-weight:600;">Dispositivo:</td>
-                <td style="padding:8px 0;color:#0f172a;text-align:right;">${userAgentShort}</td>
+              <tr style="border-bottom:1px solid #e5e7eb;">
+                <td style="padding:8px 0;color:#6b7280;font-weight:600;">Dispositivo:</td>
+                <td style="padding:8px 0;color:#111827;text-align:right;">${userAgentShort}</td>
               </tr>
-              <tr style="border-bottom:1px solid #e2e8f0;">
-                <td style="padding:8px 0;color:#64748b;font-weight:600;">Total de Buscas deste Domínio:</td>
-                <td style="padding:8px 0;color:#0f172a;text-align:right;font-weight:700;">
-                  <span style="background:#e0e7ff;color:#3730a3;padding:2px 8px;border-radius:6px;">${data.searchCount}x</span>
+              <tr style="border-bottom:1px solid #e5e7eb;">
+                <td style="padding:8px 0;color:#6b7280;font-weight:600;">Total de Buscas deste Domínio:</td>
+                <td style="padding:8px 0;color:#111827;text-align:right;font-weight:700;">
+                  <span style="background:#f9fafb;color:#111827;padding:2px 8px;border-radius:6px;">${data.searchCount}x</span>
                 </td>
               </tr>
               <tr>
-                <td style="padding:8px 0;color:#64748b;font-weight:600;">Data e Hora:</td>
-                <td style="padding:8px 0;color:#0f172a;text-align:right;">${formattedDate}</td>
+                <td style="padding:8px 0;color:#6b7280;font-weight:600;">Data e Hora:</td>
+                <td style="padding:8px 0;color:#111827;text-align:right;">${formattedDate}</td>
               </tr>
             </table>
           </div>
 
           <!-- Botão de Ação -->
           <div style="text-align:center;margin:32px 0 16px;">
-            <a href="${adminUrl}" style="background:#0f172a;color:#ffffff;font-weight:700;padding:16px 36px;border-radius:10px;text-decoration:none;font-size:15px;display:inline-block;">
+            <a href="${adminUrl}" style="display:inline-block;min-width:240px;padding:13px 24px;background:#111827;color:#ffffff;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">
               Abrir Painel de Pesquisas de Domínio →
             </a>
           </div>
         </div>
 
-        <div style="background:#f8fafc;padding:20px 28px;text-align:center;border-top:1px solid #e2e8f0;font-size:12px;color:#94a3b8;">
+        <div style="background:#f9fafb;padding:20px 28px;text-align:center;border-top:1px solid #e5e7eb;font-size:12px;color:#6b7280;">
           <p style="margin:0 0 4px;">WEHOSTHERE &mdash; Plataforma de Hospedagem Profissional em Moçambique</p>
           <p style="margin:0;">Notificação interna automática gerada pelo sistema de inteligência de domínios.</p>
         </div>
@@ -968,68 +968,68 @@ export async function sendDomainLeadAlertEmail(toEmail: string, data: DomainLead
     to: toEmail,
     subject,
     html: `
-      <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:620px;margin:0 auto;color:#111;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e2e8f0;box-shadow:0 4px 20px rgba(0,0,0,0.06);">
+      <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:620px;margin:0 auto;color:#111;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e5e7eb;box-shadow:0 4px 20px rgba(0,0,0,0.06);">
         ${WEHOSTHERE_EMAIL_BANNER}
         <div style="background:#ffffff;border-bottom:1px solid #e5e7eb;padding:28px;text-align:center;">
           <div style="display:inline-block;background:rgba(255,255,255,0.18);backdrop-filter:blur(8px);padding:6px 16px;border-radius:20px;margin-top:6px;">
-            <span style="color:#0f172a;font-size:12px;font-weight:800;letter-spacing:0.8px;text-transform:uppercase;">NOVO LEAD QUENTE - TENTATIVA DE COMPRA</span>
+            <span style="color:#111827;font-size:12px;font-weight:800;letter-spacing:0.8px;text-transform:uppercase;">NOVO LEAD QUENTE - TENTATIVA DE COMPRA</span>
           </div>
         </div>
 
         <div style="padding:32px 28px;background:#ffffff;">
-          <h2 style="color:#0f172a;font-size:22px;font-weight:800;margin:0 0 8px;text-align:center;">
+          <h2 style="color:#111827;font-size:22px;font-weight:800;margin:0 0 8px;text-align:center;">
             Um cliente avançou para o checkout!
           </h2>
-          <p style="color:#64748b;font-size:14px;text-align:center;margin:0 0 24px;">
+          <p style="color:#6b7280;font-size:14px;text-align:center;margin:0 0 24px;">
             O cliente preencheu os dados de contacto e iniciou o processo de checkout para registar o domínio abaixo.
           </p>
 
           <!-- Card do Domínio -->
-          <div style="background:#fff7ed;border:2px solid #fed7aa;border-radius:12px;padding:20px;text-align:center;margin-bottom:24px;">
-            <p style="font-size:11px;font-weight:800;color:#c2410c;text-transform:uppercase;letter-spacing:1px;margin:0 0 6px;">
+          <div style="background:#f9fafb;border:2px solid #e5e7eb;border-radius:12px;padding:20px;text-align:center;margin-bottom:24px;">
+            <p style="font-size:11px;font-weight:800;color:#111827;text-transform:uppercase;letter-spacing:1px;margin:0 0 6px;">
               Domínio Solicitado
             </p>
-            <p style="font-family:monospace;font-size:26px;font-weight:900;color:#0f172a;margin:0 0 6px;letter-spacing:0.5px;">
+            <p style="font-family:monospace;font-size:26px;font-weight:900;color:#111827;margin:0 0 6px;letter-spacing:0.5px;">
               ${data.domain}
             </p>
-            ${data.checkoutOrderId ? `<p style="font-size:12px;color:#64748b;margin:0;">Ref. Pagamento: <strong style="color:#0f172a;">${data.checkoutOrderId}</strong></p>` : ''}
+            ${data.checkoutOrderId ? `<p style="font-size:12px;color:#6b7280;margin:0;">Ref. Pagamento: <strong style="color:#111827;">${data.checkoutOrderId}</strong></p>` : ''}
           </div>
 
           <!-- Informações de Contacto do Lead -->
-          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:24px;">
-            <p style="color:#0f172a;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 14px;">
+          <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:24px;">
+            <p style="color:#111827;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 14px;">
               Dados de Contacto do Cliente
             </p>
             <table style="width:100%;border-collapse:collapse;font-size:14px;">
-              <tr style="border-bottom:1px solid #e2e8f0;">
-                <td style="padding:10px 0;color:#64748b;font-weight:600;">Nome Completo:</td>
-                <td style="padding:10px 0;color:#0f172a;text-align:right;font-weight:700;">
-                  ${data.userName || '<span style="color:#94a3b8;font-weight:normal;">Não informado</span>'}
+              <tr style="border-bottom:1px solid #e5e7eb;">
+                <td style="padding:10px 0;color:#6b7280;font-weight:600;">Nome Completo:</td>
+                <td style="padding:10px 0;color:#111827;text-align:right;font-weight:700;">
+                  ${data.userName || '<span style="color:#6b7280;font-weight:normal;">Não informado</span>'}
                 </td>
               </tr>
-              <tr style="border-bottom:1px solid #e2e8f0;">
-                <td style="padding:10px 0;color:#64748b;font-weight:600;">Telefone / Celular:</td>
-                <td style="padding:10px 0;color:#0f172a;text-align:right;font-weight:700;">
-                  ${data.userPhone ? `<a href="tel:${data.userPhone}" style="color:#2563eb;text-decoration:none;">${data.userPhone}</a>` : '<span style="color:#94a3b8;font-weight:normal;">Não informado</span>'}
+              <tr style="border-bottom:1px solid #e5e7eb;">
+                <td style="padding:10px 0;color:#6b7280;font-weight:600;">Telefone / Celular:</td>
+                <td style="padding:10px 0;color:#111827;text-align:right;font-weight:700;">
+                  ${data.userPhone ? `<a href="tel:${data.userPhone}" style="color:#111827;text-decoration:none;">${data.userPhone}</a>` : '<span style="color:#6b7280;font-weight:normal;">Não informado</span>'}
                 </td>
               </tr>
-              <tr style="border-bottom:1px solid #e2e8f0;">
-                <td style="padding:10px 0;color:#64748b;font-weight:600;">E-mail:</td>
-                <td style="padding:10px 0;color:#0f172a;text-align:right;font-weight:700;">
-                  ${data.userEmail ? `<a href="mailto:${data.userEmail}" style="color:#2563eb;text-decoration:none;">${data.userEmail}</a>` : '<span style="color:#94a3b8;font-weight:normal;">Não informado</span>'}
+              <tr style="border-bottom:1px solid #e5e7eb;">
+                <td style="padding:10px 0;color:#6b7280;font-weight:600;">E-mail:</td>
+                <td style="padding:10px 0;color:#111827;text-align:right;font-weight:700;">
+                  ${data.userEmail ? `<a href="mailto:${data.userEmail}" style="color:#111827;text-decoration:none;">${data.userEmail}</a>` : '<span style="color:#6b7280;font-weight:normal;">Não informado</span>'}
                 </td>
               </tr>
-              <tr style="border-bottom:1px solid #e2e8f0;">
-                <td style="padding:10px 0;color:#64748b;font-weight:600;">Status do Checkout:</td>
-                <td style="padding:10px 0;color:#0f172a;text-align:right;">
-                  <span style="background:#fef3c7;color:#92400e;font-weight:700;font-size:12px;padding:3px 10px;border-radius:6px;text-transform:uppercase;">
+              <tr style="border-bottom:1px solid #e5e7eb;">
+                <td style="padding:10px 0;color:#6b7280;font-weight:600;">Status do Checkout:</td>
+                <td style="padding:10px 0;color:#111827;text-align:right;">
+                  <span style="background:#f9fafb;color:#92400e;font-weight:700;font-size:12px;padding:3px 10px;border-radius:6px;text-transform:uppercase;">
                     ${data.checkoutStatus || 'Pendente'}
                   </span>
                 </td>
               </tr>
               <tr>
-                <td style="padding:10px 0;color:#64748b;font-weight:600;">Data e Hora:</td>
-                <td style="padding:10px 0;color:#0f172a;text-align:right;">${formattedDate}</td>
+                <td style="padding:10px 0;color:#6b7280;font-weight:600;">Data e Hora:</td>
+                <td style="padding:10px 0;color:#111827;text-align:right;">${formattedDate}</td>
               </tr>
             </table>
           </div>
@@ -1037,17 +1037,17 @@ export async function sendDomainLeadAlertEmail(toEmail: string, data: DomainLead
           <!-- Ações Rápidas de Fechamento -->
           <div style="margin:24px 0 16px;text-align:center;">
             ${whatsappUrl ? `
-              <a href="${whatsappUrl}" target="_blank" style="background:#22c55e;color:#ffffff;font-weight:800;padding:14px 28px;border-radius:10px;text-decoration:none;font-size:15px;display:inline-block;margin:6px 4px;">
+              <a href="${whatsappUrl}" target="_blank" style="display:inline-block;min-width:240px;padding:13px 24px;background:#111827;color:#ffffff;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">
                 Falar com Cliente no WhatsApp →
               </a>
             ` : ''}
-            <a href="${adminUrl}" style="background:#0f172a;color:#ffffff;font-weight:700;padding:14px 28px;border-radius:10px;text-decoration:none;font-size:15px;display:inline-block;margin:6px 4px;">
+            <a href="${adminUrl}" style="display:inline-block;min-width:240px;padding:13px 24px;background:#ffffff;color:#111827;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">
               Ver no Painel de Leads →
             </a>
           </div>
         </div>
 
-        <div style="background:#f8fafc;padding:20px 28px;text-align:center;border-top:1px solid #e2e8f0;font-size:12px;color:#94a3b8;">
+        <div style="background:#f9fafb;padding:20px 28px;text-align:center;border-top:1px solid #e5e7eb;font-size:12px;color:#6b7280;">
           <p style="margin:0 0 4px;">WEHOSTHERE &mdash; Gestão Inteligente de Vendas e Leads</p>
           <p style="margin:0;">Notificação gerada automaticamente para recuperação de carrinho e leads quentes.</p>
         </div>
@@ -1103,63 +1103,63 @@ export async function sendSiteQuoteAlertEmail(toEmail: string, data: SiteQuoteAl
     to: toEmail,
     subject,
     html: `
-      <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:620px;margin:0 auto;color:#111;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e2e8f0;box-shadow:0 4px 20px rgba(0,0,0,0.06);">
+      <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:620px;margin:0 auto;color:#111;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e5e7eb;box-shadow:0 4px 20px rgba(0,0,0,0.06);">
         ${WEHOSTHERE_EMAIL_BANNER}
         <div style="${WEHOSTHERE_MESH_HEADER_BG}padding:32px 28px;text-align:center;">
-          <div style="display:inline-block;background:#f1f5f9;backdrop-filter:blur(8px);padding:6px 16px;border-radius:20px;margin-top:6px;">
-            <span style="color:#0f172a;font-size:12px;font-weight:800;letter-spacing:0.8px;text-transform:uppercase;">NOVO LEAD DE CRIAÇÃO DE SITE</span>
+          <div style="display:inline-block;background:#f9fafb;backdrop-filter:blur(8px);padding:6px 16px;border-radius:20px;margin-top:6px;">
+            <span style="color:#111827;font-size:12px;font-weight:800;letter-spacing:0.8px;text-transform:uppercase;">NOVO LEAD DE CRIAÇÃO DE SITE</span>
           </div>
         </div>
 
         <div style="padding:32px 28px;background:#ffffff;">
-          <h2 style="color:#0f172a;font-size:22px;font-weight:800;margin:0 0 8px;text-align:center;">
+          <h2 style="color:#111827;font-size:22px;font-weight:800;margin:0 0 8px;text-align:center;">
             Interesse em Projeto de Alto Valor!
           </h2>
-          <p style="color:#64748b;font-size:14px;text-align:center;margin:0 0 24px;">
+          <p style="color:#6b7280;font-size:14px;text-align:center;margin:0 0 24px;">
             Um potencial cliente acabou de solicitar cotação ou avançar para contratação de desenvolvimento de website.
           </p>
 
           <!-- Card do Projeto -->
-          <div style="background:#eef2ff;border:2px solid #c7d2fe;border-radius:12px;padding:20px;text-align:center;margin-bottom:24px;">
-            <p style="font-size:11px;font-weight:800;color:#4338ca;text-transform:uppercase;letter-spacing:1px;margin:0 0 6px;">
+          <div style="background:#f9fafb;border:2px solid #e5e7eb;border-radius:12px;padding:20px;text-align:center;margin-bottom:24px;">
+            <p style="font-size:11px;font-weight:800;color:#111827;text-transform:uppercase;letter-spacing:1px;margin:0 0 6px;">
               Tipo de Projeto
             </p>
             <p style="font-size:24px;font-weight:900;color:#1e1b4b;margin:0 0 6px;">
               ${data.projectName}
             </p>
-            <p style="font-size:18px;font-weight:800;color:#059669;margin:0 0 6px;">
+            <p style="font-size:18px;font-weight:800;color:#111827;margin:0 0 6px;">
               Investimento Estimado: ${priceFormatted}
             </p>
-            ${data.domain ? `<p style="font-size:13px;color:#4f46e5;margin:0;font-family:monospace;font-weight:bold;">Domínio Atrelado: ${data.domain}</p>` : ''}
+            ${data.domain ? `<p style="font-size:13px;color:#111827;margin:0;font-family:monospace;font-weight:bold;">Domínio Atrelado: ${data.domain}</p>` : ''}
           </div>
 
           <!-- Informações de Contacto do Lead -->
-          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:24px;">
-            <h3 style="color:#334155;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:0.8px;margin:0 0 14px;border-bottom:1px solid #e2e8f0;padding-bottom:8px;">
+          <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:24px;">
+            <h3 style="color:#374151;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:0.8px;margin:0 0 14px;border-bottom:1px solid #e5e7eb;padding-bottom:8px;">
               Detalhes do Lead
             </h3>
             <table style="width:100%;border-collapse:collapse;font-size:14px;">
               <tr>
-                <td style="padding:7px 0;color:#64748b;width:120px;">Cliente:</td>
-                <td style="padding:7px 0;font-weight:700;color:#0f172a;">${data.userName || '<em style="color:#94a3b8;font-weight:normal;">Não informado (visitante anónimo)</em>'}</td>
+                <td style="padding:7px 0;color:#6b7280;width:120px;">Cliente:</td>
+                <td style="padding:7px 0;font-weight:700;color:#111827;">${data.userName || '<em style="color:#6b7280;font-weight:normal;">Não informado (visitante anónimo)</em>'}</td>
               </tr>
               ${data.userEmail ? `
               <tr>
-                <td style="padding:7px 0;color:#64748b;">E-mail:</td>
-                <td style="padding:7px 0;font-weight:600;color:#2563eb;font-family:monospace;"><a href="mailto:${data.userEmail}" style="color:#2563eb;text-decoration:none;">${data.userEmail}</a></td>
+                <td style="padding:7px 0;color:#6b7280;">E-mail:</td>
+                <td style="padding:7px 0;font-weight:600;color:#111827;font-family:monospace;"><a href="mailto:${data.userEmail}" style="color:#111827;text-decoration:none;">${data.userEmail}</a></td>
               </tr>` : ''}
               ${data.userPhone ? `
               <tr>
-                <td style="padding:7px 0;color:#64748b;">WhatsApp / Tel:</td>
-                <td style="padding:7px 0;font-weight:700;color:#059669;font-family:monospace;"><a href="tel:${data.userPhone}" style="color:#059669;text-decoration:none;">${data.userPhone}</a></td>
+                <td style="padding:7px 0;color:#6b7280;">WhatsApp / Tel:</td>
+                <td style="padding:7px 0;font-weight:700;color:#111827;font-family:monospace;"><a href="tel:${data.userPhone}" style="color:#111827;text-decoration:none;">${data.userPhone}</a></td>
               </tr>` : ''}
               <tr>
-                <td style="padding:7px 0;color:#64748b;">Canal de Origem:</td>
-                <td style="padding:7px 0;font-weight:700;color:#4338ca;">${channelLabel}</td>
+                <td style="padding:7px 0;color:#6b7280;">Canal de Origem:</td>
+                <td style="padding:7px 0;font-weight:700;color:#111827;">${channelLabel}</td>
               </tr>
               <tr>
-                <td style="padding:7px 0;color:#64748b;">Data & Hora:</td>
-                <td style="padding:7px 0;color:#64748b;font-size:12px;">${formattedDate}</td>
+                <td style="padding:7px 0;color:#6b7280;">Data & Hora:</td>
+                <td style="padding:7px 0;color:#6b7280;font-size:12px;">${formattedDate}</td>
               </tr>
             </table>
           </div>
@@ -1167,17 +1167,17 @@ export async function sendSiteQuoteAlertEmail(toEmail: string, data: SiteQuoteAl
           <!-- Ações Rápidas -->
           <div style="margin:24px 0 16px;text-align:center;">
             ${whatsappUrl ? `
-              <a href="${whatsappUrl}" target="_blank" style="background:#22c55e;color:#ffffff;font-weight:800;padding:14px 28px;border-radius:10px;text-decoration:none;font-size:15px;display:inline-block;margin:6px 4px;">
+              <a href="${whatsappUrl}" target="_blank" style="display:inline-block;min-width:240px;padding:13px 24px;background:#111827;color:#ffffff;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">
                 Falar com o Lead no WhatsApp →
               </a>
             ` : ''}
-            <a href="${adminUrl}" style="background:#0f172a;color:#ffffff;font-weight:700;padding:14px 28px;border-radius:10px;text-decoration:none;font-size:15px;display:inline-block;margin:6px 4px;">
+            <a href="${adminUrl}" style="display:inline-block;min-width:240px;padding:13px 24px;background:#ffffff;color:#111827;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">
               Ver no Painel de Cotações →
             </a>
           </div>
         </div>
 
-        <div style="background:#f8fafc;padding:20px 28px;text-align:center;border-top:1px solid #e2e8f0;font-size:12px;color:#94a3b8;">
+        <div style="background:#f9fafb;padding:20px 28px;text-align:center;border-top:1px solid #e5e7eb;font-size:12px;color:#6b7280;">
           <p style="margin:0 0 4px;">WEHOSTHERE &mdash; Gestão Inteligente de Projetos e Vendas</p>
           <p style="margin:0;">Alerta gerado automaticamente ao cotar desenvolvimento de site.</p>
         </div>
@@ -1212,14 +1212,14 @@ export async function sendAnalyticsMilestoneEmail(data: AnalyticsMilestoneEmailD
     : `Marco de ${formattedMilestone} Visitantes Únicos`;
 
   const subtitle = isViews
-    ? `O seu site WEHOSTHERE ultrapassou a marca de <strong style="color:#0f172a;">${formattedMilestone} páginas vistas</strong> (+100 visualizações).`
-    : `O seu site registou <strong style="color:#0f172a;">${formattedMilestone} visitantes únicos</strong> (+10 novos utilizadores).`;
+    ? `O seu site WEHOSTHERE ultrapassou a marca de <strong style="color:#111827;">${formattedMilestone} páginas vistas</strong> (+100 visualizações).`
+    : `O seu site registou <strong style="color:#111827;">${formattedMilestone} visitantes únicos</strong> (+10 novos utilizadores).`;
 
   const topPagesRows = (data.topPages || []).slice(0, 4).map((p, idx) => `
-    <tr style="border-bottom:1px solid #f1f5f9;">
-      <td style="padding:10px 8px;color:#64748b;font-weight:700;width:32px;font-size:12px;">0${idx + 1}</td>
-      <td style="padding:10px 8px;color:#0f172a;font-family:'SFMono-Regular',Consolas,monospace;font-size:12px;font-weight:600;">${p.page}</td>
-      <td style="padding:10px 8px;color:#4f46e5;text-align:right;font-weight:700;font-size:12px;">${new Intl.NumberFormat('pt-MZ').format(p.count)} vistas</td>
+    <tr style="border-bottom:1px solid #e5e7eb;">
+      <td style="padding:10px 8px;color:#6b7280;font-weight:700;width:32px;font-size:12px;">0${idx + 1}</td>
+      <td style="padding:10px 8px;color:#111827;font-family:'SFMono-Regular',Consolas,monospace;font-size:12px;font-weight:600;">${p.page}</td>
+      <td style="padding:10px 8px;color:#111827;text-align:right;font-weight:700;font-size:12px;">${new Intl.NumberFormat('pt-MZ').format(p.count)} vistas</td>
     </tr>
   `).join('');
 
@@ -1229,66 +1229,66 @@ export async function sendAnalyticsMilestoneEmail(data: AnalyticsMilestoneEmailD
       ? `[WEHOSTHERE Analytics] Novo Marco: ${formattedMilestone} Visualizações`
       : `[WEHOSTHERE Analytics] Novo Marco: ${formattedMilestone} Visitantes Únicos`,
     html: `
-      <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;color:#0f172a;border-radius:16px;overflow:hidden;box-shadow:0 12px 36px rgba(15,23,42,0.08);border:1px solid #e2e8f0;background:#ffffff;">
+      <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;color:#111827;border-radius:16px;overflow:hidden;box-shadow:0 12px 36px rgba(15,23,42,0.08);border:1px solid #e5e7eb;background:#ffffff;">
         ${WEHOSTHERE_EMAIL_BANNER}
-        <div style="${WEHOSTHERE_MESH_HEADER_BG}padding:36px 28px;text-align:center;color:#0f172a;">
-          <div style="display:inline-block;padding:5px 14px;background:#f1f5f9;border:1px solid rgba(15,23,42,0.12);border-radius:999px;font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:14px;color:#0f172a;">
+        <div style="${WEHOSTHERE_MESH_HEADER_BG}padding:36px 28px;text-align:center;color:#111827;">
+          <div style="display:inline-block;padding:5px 14px;background:#f9fafb;border:1px solid rgba(15,23,42,0.12);border-radius:999px;font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:14px;color:#111827;">
             ${isViews ? 'Marco de Visualizações • +100' : 'Marco de Audiência • +10'}
           </div>
-          <h1 style="margin:0 0 8px;font-size:24px;font-weight:800;letter-spacing:-0.4px;color:#0f172a;">
+          <h1 style="margin:0 0 8px;font-size:24px;font-weight:800;letter-spacing:-0.4px;color:#111827;">
             ${title}
           </h1>
-          <p style="margin:0;font-size:14px;color:#334155;line-height:1.55;">
+          <p style="margin:0;font-size:14px;color:#374151;line-height:1.55;">
             ${subtitle}
           </p>
         </div>
 
         <div style="padding:30px 28px;">
-          <div style="background:#f8fafc;border-radius:14px;padding:24px;text-align:center;border:1px solid #e2e8f0;margin-bottom:20px;">
-            <div style="font-size:11px;text-transform:uppercase;letter-spacing:1.4px;color:#64748b;font-weight:700;margin-bottom:8px;">
+          <div style="background:#f9fafb;border-radius:14px;padding:24px;text-align:center;border:1px solid #e5e7eb;margin-bottom:20px;">
+            <div style="font-size:11px;text-transform:uppercase;letter-spacing:1.4px;color:#6b7280;font-weight:700;margin-bottom:8px;">
               ${isViews ? 'Total de Páginas Vistas' : 'Total de Visitantes Únicos'}
             </div>
-            <div style="font-size:44px;font-weight:900;color:#0f172a;line-height:1;margin-bottom:10px;letter-spacing:-1px;">
+            <div style="font-size:44px;font-weight:900;color:#111827;line-height:1;margin-bottom:10px;letter-spacing:-1px;">
               ${formattedMilestone}
             </div>
-            <div style="display:inline-block;background:${isViews ? '#eef2ff' : '#ecfdf5'};color:${isViews ? '#4338ca' : '#047857'};border:1px solid ${isViews ? '#c7d2fe' : '#a7f3d0'};font-size:12px;font-weight:600;padding:4px 12px;border-radius:999px;">
+            <div style="display:inline-block;background:${isViews ? '#f9fafb' : '#f9fafb'};color:${isViews ? '#4338ca' : '#047857'};border:1px solid ${isViews ? '#c7d2fe' : '#a7f3d0'};font-size:12px;font-weight:600;padding:4px 12px;border-radius:999px;">
               ${isViews ? '+100 páginas vistas acumuladas' : '+10 novos utilizadores distintos'}
             </div>
           </div>
 
           <table style="width:100%;border-collapse:separate;border-spacing:0;margin-bottom:24px;">
             <tr>
-              <td style="width:50%;padding:14px;background:#ffffff;border-radius:12px 0 0 12px;border:1px solid #e2e8f0;border-right:none;text-align:center;">
-                <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:0.6px;font-weight:700;">Visualizações Totais</div>
-                <div style="font-size:20px;font-weight:800;color:#0f172a;margin-top:4px;">${formattedTotalViews}</div>
+              <td style="width:50%;padding:14px;background:#ffffff;border-radius:12px 0 0 12px;border:1px solid #e5e7eb;border-right:none;text-align:center;">
+                <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:0.6px;font-weight:700;">Visualizações Totais</div>
+                <div style="font-size:20px;font-weight:800;color:#111827;margin-top:4px;">${formattedTotalViews}</div>
               </td>
-              <td style="width:50%;padding:14px;background:#ffffff;border-radius:0 12px 12px 0;border:1px solid #e2e8f0;text-align:center;">
-                <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:0.6px;font-weight:700;">Visitantes Únicos</div>
-                <div style="font-size:20px;font-weight:800;color:#009e7f;margin-top:4px;">${formattedUniqueVisitors}</div>
+              <td style="width:50%;padding:14px;background:#ffffff;border-radius:0 12px 12px 0;border:1px solid #e5e7eb;text-align:center;">
+                <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:0.6px;font-weight:700;">Visitantes Únicos</div>
+                <div style="font-size:20px;font-weight:800;color:#111827;margin-top:4px;">${formattedUniqueVisitors}</div>
               </td>
             </tr>
           </table>
 
           ${topPagesRows ? `
             <div style="margin-bottom:26px;">
-              <h3 style="margin:0 0 10px;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#64748b;font-weight:700;">
+              <h3 style="margin:0 0 10px;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#6b7280;font-weight:700;">
                 Páginas Mais Acedidas
               </h3>
-              <table style="width:100%;border-collapse:collapse;border:1px solid #f1f5f9;border-radius:10px;">
+              <table style="width:100%;border-collapse:collapse;border:1px solid #e5e7eb;border-radius:10px;">
                 ${topPagesRows}
               </table>
             </div>
           ` : ''}
 
           <div style="text-align:center;padding:8px 0 4px;">
-            <a href="${adminUrl}" style="background:#0f172a;color:#ffffff;font-weight:700;padding:13px 26px;border-radius:10px;text-decoration:none;font-size:13px;display:inline-block;">
+            <a href="${adminUrl}" style="display:inline-block;min-width:240px;padding:13px 24px;background:#111827;color:#ffffff;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">
               Abrir Painel de Visitantes &rarr;
             </a>
           </div>
         </div>
 
-        <div style="background:#f8fafc;padding:18px 28px;text-align:center;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8;line-height:1.5;">
-          <p style="margin:0 0 3px;font-weight:600;color:#64748b;">WEHOSTHERE &mdash; Monitoramento de Tráfego &amp; Audiência</p>
+        <div style="background:#f9fafb;padding:18px 28px;text-align:center;border-top:1px solid #e5e7eb;font-size:11px;color:#6b7280;line-height:1.5;">
+          <p style="margin:0 0 3px;font-weight:600;color:#6b7280;">WEHOSTHERE &mdash; Monitoramento de Tráfego &amp; Audiência</p>
           <p style="margin:0;">Notificação automática gerada a cada marco de +100 visualizações e +10 visitantes únicos.</p>
         </div>
       </div>
@@ -1328,14 +1328,14 @@ export async function sendStoryBroadcastEmail(opts: StoryBroadcastOptions): Prom
 
   const coverBlock = opts.coverImageUrl
     ? `<img src="${opts.coverImageUrl}" alt="${opts.storyTitle}" style="width:100%;height:220px;object-fit:cover;display:block;border-radius:12px 12px 0 0;" />`
-    : `<div style="width:100%;height:180px;background:linear-gradient(135deg,#0f172a,#1e3a8a,#312e81);border-radius:12px 12px 0 0;display:flex;align-items:center;justify-content:center;">
+    : `<div style="width:100%;height:180px;background:#f9fafb;border-radius:12px 12px 0 0;display:flex;align-items:center;justify-content:center;">
         <span style="font-size:48px;"></span>
        </div>`;
 
   const unsubscribeBlock = opts.unsubscribeUrl
-    ? `<p style="color:#94a3b8;font-size:11px;margin:12px 0 0;text-align:center;">
+    ? `<p style="color:#6b7280;font-size:11px;margin:12px 0 0;text-align:center;">
         Recebe este email porque subscreveu à newsletter ou criou uma conta na WEHOSTHERE.&nbsp;
-        <a href="${opts.unsubscribeUrl}" style="color:#64748b;text-decoration:underline;">Cancelar subscrição</a>
+        <a href="${opts.unsubscribeUrl}" style="color:#6b7280;text-decoration:underline;">Cancelar subscrição</a>
        </p>`
     : '';
 
@@ -1348,37 +1348,37 @@ export async function sendStoryBroadcastEmail(opts: StoryBroadcastOptions): Prom
         <!-- Header -->
         ${WEHOSTHERE_EMAIL_BANNER}
         <div style="${WEHOSTHERE_MESH_HEADER_BG}padding:28px 32px 20px;border-radius:16px 16px 0 0;text-align:center;">
-          <div style="display:inline-block;background:#f1f5f9;border:1px solid rgba(15,23,42,0.12);padding:5px 14px;border-radius:20px;">
+          <div style="display:inline-block;background:#f9fafb;border:1px solid rgba(15,23,42,0.12);padding:5px 14px;border-radius:20px;">
             <span style="color:#a5b4fc;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;">Codando Histórias · Nova Publicação</span>
           </div>
         </div>
 
         <!-- Cover / story card -->
-        <div style="background:#f8fafc;border-left:1px solid #e2e8f0;border-right:1px solid #e2e8f0;padding:24px 28px;">
+        <div style="background:#f9fafb;border-left:1px solid #e5e7eb;border-right:1px solid #e5e7eb;padding:24px 28px;">
 
           <!-- Category + read time pill -->
           <div style="margin-bottom:16px;display:flex;gap:8px;flex-wrap:wrap;">
-            <span style="background:#eff6ff;color:#1d4ed8;font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;padding:4px 12px;border-radius:20px;">${categoryTag}</span>
-            ${readTimeLabel ? `<span style="background:#f1f5f9;color:#64748b;font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px;">⏱ ${readTimeLabel}</span>` : ''}
+            <span style="background:#f9fafb;color:#111827;font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;padding:4px 12px;border-radius:20px;">${categoryTag}</span>
+            ${readTimeLabel ? `<span style="background:#f9fafb;color:#6b7280;font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px;">⏱ ${readTimeLabel}</span>` : ''}
           </div>
 
           <!-- Cover image (if available) -->
           <div style="border-radius:12px;overflow:hidden;margin-bottom:20px;">${coverBlock}</div>
 
           <!-- Greeting -->
-          <p style="color:#475569;font-size:14px;margin:0 0 8px;">Olá, <strong>${recipientLabel}</strong>!</p>
-          <p style="color:#475569;font-size:14px;line-height:1.6;margin:0 0 20px;">
+          <p style="color:#4b5563;font-size:14px;margin:0 0 8px;">Olá, <strong>${recipientLabel}</strong>!</p>
+          <p style="color:#4b5563;font-size:14px;line-height:1.6;margin:0 0 20px;">
             Uma nova história foi publicada na <strong>Revista Codando Histórias</strong> - leituras sobre tech, empreendedorismo e inovação em Moçambique.
           </p>
 
           <!-- Story card -->
-          <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:14px;overflow:hidden;margin-bottom:24px;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+          <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:14px;overflow:hidden;margin-bottom:24px;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
             <div style="padding:24px 22px;">
-              <h2 style="color:#0f172a;font-size:20px;font-weight:800;margin:0 0 10px;line-height:1.3;">${opts.storyTitle}</h2>
-              <p style="color:#64748b;font-size:13px;margin:0 0 6px;">Por <strong style="color:#334155;">${opts.authorName}</strong></p>
-              <p style="color:#475569;font-size:14px;line-height:1.7;margin:14px 0 20px;">${opts.storyExcerpt.length > 220 ? opts.storyExcerpt.slice(0, 220) + '…' : opts.storyExcerpt}</p>
+              <h2 style="color:#111827;font-size:20px;font-weight:800;margin:0 0 10px;line-height:1.3;">${opts.storyTitle}</h2>
+              <p style="color:#6b7280;font-size:13px;margin:0 0 6px;">Por <strong style="color:#374151;">${opts.authorName}</strong></p>
+              <p style="color:#4b5563;font-size:14px;line-height:1.7;margin:14px 0 20px;">${opts.storyExcerpt.length > 220 ? opts.storyExcerpt.slice(0, 220) + '…' : opts.storyExcerpt}</p>
               <div style="text-align:center;">
-                <a href="${storyUrl}" style="background:#0f172a;color:#ffffff;font-weight:700;font-size:14px;padding:14px 32px;border-radius:10px;text-decoration:none;display:inline-block;">
+                <a href="${storyUrl}" style="display:inline-block;min-width:240px;padding:13px 24px;background:#111827;color:#ffffff;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">
                   Ler história completa →
                 </a>
               </div>
@@ -1387,15 +1387,15 @@ export async function sendStoryBroadcastEmail(opts: StoryBroadcastOptions): Prom
 
           <!-- CTA secondary -->
           <div style="text-align:center;margin-bottom:8px;">
-            <a href="${SITE_URL}/revista" style="color:#4f46e5;font-size:13px;font-weight:600;text-decoration:none;">
+            <a href="${SITE_URL}/revista" style="color:#111827;font-size:13px;font-weight:600;text-decoration:none;">
               Ver todas as histórias na revista
             </a>
           </div>
         </div>
 
         <!-- Footer -->
-        <div style="background:#f1f5f9;padding:18px 28px;border-radius:0 0 16px 16px;border:1px solid #e2e8f0;border-top:none;text-align:center;">
-          <p style="color:#64748b;font-size:12px;margin:0 0 4px;">
+        <div style="background:#f9fafb;padding:18px 28px;border-radius:0 0 16px 16px;border:1px solid #e5e7eb;border-top:none;text-align:center;">
+          <p style="color:#6b7280;font-size:12px;margin:0 0 4px;">
             WEHOSTHERE · Plataforma de Hospedagem Profissional em Moçambique
           </p>
           ${unsubscribeBlock}
@@ -1431,28 +1431,28 @@ export async function sendBirthdayEmail(opts: BirthdayEmailOptions): Promise<{ s
     to: opts.toEmail,
     subject: `Parabéns pelo seu Aniversário, ${firstName}! | WEHOSTHERE`,
     html: `
-      <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:620px;margin:0 auto;color:#1e293b;background:#ffffff;border-radius:18px;overflow:hidden;border:1px solid #e2e8f0;box-shadow:0 8px 30px rgba(0,0,0,0.08);">
+      <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:620px;margin:0 auto;color:#111827;background:#ffffff;border-radius:18px;overflow:hidden;border:1px solid #e5e7eb;box-shadow:0 8px 30px rgba(0,0,0,0.08);">
 
         <!-- Header Festivo com Gradiente Dourado / Roxo / Azul -->
         ${WEHOSTHERE_EMAIL_BANNER}
         <div style="${WEHOSTHERE_MESH_HEADER_BG}padding:36px 28px 28px;text-align:center;">
-          <div style="display:inline-block;background:#f1f5f9;backdrop-filter:blur(10px);border:1px solid rgba(15,23,42,0.12);padding:6px 18px;border-radius:30px;">
-            <span style="color:#0f172a;font-size:12px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;">DIA ESPECIAL · FELIZ ANIVERSÁRIO! </span>
+          <div style="display:inline-block;background:#f9fafb;backdrop-filter:blur(10px);border:1px solid rgba(15,23,42,0.12);padding:6px 18px;border-radius:30px;">
+            <span style="color:#111827;font-size:12px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;">DIA ESPECIAL · FELIZ ANIVERSÁRIO! </span>
           </div>
         </div>
 
         <!-- Corpo Principal -->
         <div style="padding:32px 28px;background:#ffffff;">
 
-          <h1 style="color:#0f172a;font-size:24px;font-weight:900;margin:0 0 12px;text-align:center;line-height:1.3;">
+          <h1 style="color:#111827;font-size:24px;font-weight:900;margin:0 0 12px;text-align:center;line-height:1.3;">
             Parabéns, ${fullName}! </h1>
 
-          <p style="color:#475569;font-size:15px;line-height:1.7;margin:0 0 20px;text-align:center;">
+          <p style="color:#4b5563;font-size:15px;line-height:1.7;margin:0 0 20px;text-align:center;">
             Hoje é o seu dia! Em nome de toda a equipa e da família <strong>WEHOSTHERE</strong>, queremos desejar-lhe um <strong>Feliz Aniversário</strong> repleto de saúde, alegria, grandes realizações e muito sucesso em todos os seus projetos digitais e pessoais.
           </p>
 
           <!-- Imagem Oficial de Felicitações (Wehosthere Felicitacoes de Aniversário.png) -->
-          <div style="text-align:center;margin:24px 0 28px;border-radius:16px;overflow:hidden;box-shadow:0 6px 20px rgba(0,0,0,0.1);border:1px solid #e2e8f0;">
+          <div style="text-align:center;margin:24px 0 28px;border-radius:16px;overflow:hidden;box-shadow:0 6px 20px rgba(0,0,0,0.1);border:1px solid #e5e7eb;">
             <img 
               src="${birthdayImageUrl}" 
               alt="Wehosthere Felicitações de Aniversário" 
@@ -1461,11 +1461,11 @@ export async function sendBirthdayEmail(opts: BirthdayEmailOptions): Promise<{ s
           </div>
 
           <!-- Mensagem Personalizada / Destaque -->
-          <div style="background:linear-gradient(135deg,#fdf4ff 0%,#f5f3ff 100%);border:1px solid #e9d5ff;border-radius:14px;padding:20px 22px;margin-bottom:28px;">
+          <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:14px;padding:20px 22px;margin-bottom:28px;">
             <p style="margin:0 0 8px;font-weight:800;color:#6b21a8;font-size:14px;text-transform:uppercase;letter-spacing:0.5px;">
               Uma mensagem especial para si:
             </p>
-            <p style="margin:0;color:#475569;font-size:14px;line-height:1.7;">
+            <p style="margin:0;color:#4b5563;font-size:14px;line-height:1.7;">
               ${opts.customMessage || 'É uma honra e um privilégio tê-lo(a) connosco na nossa plataforma. Que este novo ano de vida traga horizontes ainda maiores, prosperidade e novos marcos conquistados! Conte sempre connosco para apoiar a sua jornada.'}
             </p>
           </div>
@@ -1474,7 +1474,7 @@ export async function sendBirthdayEmail(opts: BirthdayEmailOptions): Promise<{ s
           <div style="text-align:center;margin:32px 0 16px;">
             <a 
               href="${dashboardUrl}" 
-              style="background:#0f172a;color:#ffffff;font-weight:800;font-size:15px;padding:15px 38px;border-radius:12px;text-decoration:none;display:inline-block;"
+              style="display:inline-block;min-width:240px;padding:13px 24px;background:#111827;color:#ffffff;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;"
             >
               Aceder ao meu Painel WEHOSTHERE →
             </a>
@@ -1483,11 +1483,11 @@ export async function sendBirthdayEmail(opts: BirthdayEmailOptions): Promise<{ s
         </div>
 
         <!-- Rodapé Corporativo -->
-        <div style="background:#f8fafc;padding:22px 28px;border-top:1px solid #e2e8f0;text-align:center;">
-          <p style="color:#0f172a;font-weight:700;font-size:13px;margin:0 0 4px;">
+        <div style="background:#f9fafb;padding:22px 28px;border-top:1px solid #e5e7eb;text-align:center;">
+          <p style="color:#111827;font-weight:700;font-size:13px;margin:0 0 4px;">
             Equipa WEHOSTHERE &mdash; Moçambique
           </p>
-          <p style="color:#94a3b8;font-size:12px;margin:0 0 12px;">
+          <p style="color:#6b7280;font-size:12px;margin:0 0 12px;">
             A apoiar a sua presença digital e os seus projetos todos os dias do ano.
           </p>
           <p style="color:#cbd5e1;font-size:11px;margin:0;">
@@ -1519,33 +1519,33 @@ export async function sendStorySubmissionReceivedEmail(opts: StorySubmissionNoti
     to: opts.toEmail,
     subject: `Recebemos a tua história: "${opts.storyTitle}" | Revista Codando Histórias`,
     html: `
-      <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;color:#0f172a;background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;overflow:hidden;">
+      <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;color:#111827;background:#ffffff;border:1px solid #e5e7eb;border-radius:16px;overflow:hidden;">
         ${WEHOSTHERE_EMAIL_BANNER}
         <div style="${WEHOSTHERE_MESH_HEADER_BG}padding:28px 32px;text-align:center;">
-          <h2 style="color:#0f172a;margin:0;font-size:22px;font-weight:800;letter-spacing:-0.02em;">Codando Histórias</h2>
+          <h2 style="color:#111827;margin:0;font-size:22px;font-weight:800;letter-spacing:-0.02em;">Codando Histórias</h2>
           <p style="color:#E0AAFF;margin:6px 0 0;font-size:13px;font-weight:600;">Revista Digital WEHOSTHERE</p>
         </div>
         <div style="padding:32px 28px;">
           <p style="font-size:16px;line-height:1.6;margin:0 0 16px;">
             Olá, <strong>${opts.authorName}</strong>! </p>
-          <p style="font-size:14px;color:#334155;line-height:1.6;margin:0 0 20px;">
+          <p style="font-size:14px;color:#374151;line-height:1.6;margin:0 0 20px;">
             A tua história <strong>"${opts.storyTitle}"</strong> foi submetida com sucesso para análise editorial da nossa equipa.
           </p>
-          <div style="background:#FAF5FF;border:1px solid #E0AAFF;border-radius:12px;padding:18px;margin-bottom:24px;">
-            <p style="font-size:13px;color:#5A189A;font-weight:700;margin:0 0 6px;">O que acontece a seguir?</p>
-            <ul style="margin:0;padding-left:18px;font-size:13px;color:#475569;line-height:1.6;">
+          <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:18px;margin-bottom:24px;">
+            <p style="font-size:13px;color:#111827;font-weight:700;margin:0 0 6px;">O que acontece a seguir?</p>
+            <ul style="margin:0;padding-left:18px;font-size:13px;color:#4b5563;line-height:1.6;">
               <li>A nossa equipa editorial irá rever a formatação e conteúdo.</li>
               <li>Podemos fazer pequenos ajustes de revisão ortográfica para manter o padrão da revista.</li>
               <li>Assim que for aprovada e publicada, receberás um e-mail com o link ao vivo para partilhares com a comunidade.</li>
             </ul>
           </div>
-          <p style="font-size:13px;color:#64748b;margin:0;">
+          <p style="font-size:13px;color:#6b7280;margin:0;">
             Obrigado por enriqueceres o ecossistema tech de Moçambique com a tua jornada!
           </p>
         </div>
-        <div style="background:#f8fafc;padding:18px 28px;border-top:1px solid #e2e8f0;text-align:center;">
-          <p style="color:#94a3b8;font-size:12px;margin:0;">
-            WEHOSTHERE &bull; Codando Histórias &bull; <a href="${SITE_URL}/revista" style="color:#7B2CBF;text-decoration:none;font-weight:600;">wehosthere.com/revista</a>
+        <div style="background:#f9fafb;padding:18px 28px;border-top:1px solid #e5e7eb;text-align:center;">
+          <p style="color:#6b7280;font-size:12px;margin:0;">
+            WEHOSTHERE &bull; Codando Histórias &bull; <a href="${SITE_URL}/revista" style="color:#111827;text-decoration:none;font-weight:600;">wehosthere.com/revista</a>
           </p>
         </div>
       </div>`,
@@ -1569,22 +1569,22 @@ export async function sendAdminNewSubmissionEmail(opts: {
     to: adminEmail,
     subject: `[Revista] Nova história submetida: "${opts.storyTitle}" por ${opts.authorName}`,
     html: `
-      <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;color:#0f172a;background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;overflow:hidden;">
-        <div style="background:#0f172a;padding:24px 32px;text-align:center;">
+      <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;color:#111827;background:#ffffff;border:1px solid #e5e7eb;border-radius:16px;overflow:hidden;">
+        <div style="background:#111827;padding:24px 32px;text-align:center;">
           <h2 style="color:#ffffff;margin:0;font-size:20px;">Nova Submissão na Revista</h2>
-          <p style="color:#94a3b8;margin:4px 0 0;font-size:13px;">Codando Histórias &bull; Painel de Moderação</p>
+          <p style="color:#6b7280;margin:4px 0 0;font-size:13px;">Codando Histórias &bull; Painel de Moderação</p>
         </div>
         <div style="padding:28px;">
-          <p style="font-size:14px;color:#334155;line-height:1.6;margin:0 0 16px;">
+          <p style="font-size:14px;color:#374151;line-height:1.6;margin:0 0 16px;">
             Um novo artigo foi submetido pela comunidade e aguarda aprovação:
           </p>
-          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px;margin-bottom:24px;">
+          <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-bottom:24px;">
             <p style="margin:0 0 8px;font-size:14px;"><strong>Título:</strong> ${opts.storyTitle}</p>
             <p style="margin:0 0 8px;font-size:13px;"><strong>Autor:</strong> ${opts.authorName} (${opts.authorEmail})</p>
             <p style="margin:0;font-size:13px;"><strong>Categoria:</strong> ${opts.category}</p>
           </div>
           <div style="text-align:center;">
-            <a href="${adminReviewUrl}" style="background:#7B2CBF;color:#ffffff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px;display:inline-block;">
+            <a href="${adminReviewUrl}" style="display:inline-block;min-width:240px;padding:13px 24px;background:#111827;color:#ffffff;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">
               Rever & Aprovar no Painel →
             </a>
           </div>
@@ -1608,25 +1608,25 @@ export async function sendStoryApprovedEmail(opts: {
     to: opts.toEmail,
     subject: `Parabéns! A tua história foi publicada: "${opts.storyTitle}" | Codando Histórias`,
     html: `
-      <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;color:#0f172a;background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;overflow:hidden;">
+      <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;color:#111827;background:#ffffff;border:1px solid #e5e7eb;border-radius:16px;overflow:hidden;">
         ${WEHOSTHERE_EMAIL_BANNER}
         <div style="${WEHOSTHERE_MESH_HEADER_BG}padding:28px 32px;text-align:center;">
-                    <h2 style="color:#0f172a;margin:8px 0 0;font-size:22px;font-weight:800;">A tua história está no ar!</h2>
-          <p style="color:#334155;margin:4px 0 0;font-size:13px;">Revista Codando Histórias &bull; WEHOSTHERE</p>
+                    <h2 style="color:#111827;margin:8px 0 0;font-size:22px;font-weight:800;">A tua história está no ar!</h2>
+          <p style="color:#374151;margin:4px 0 0;font-size:13px;">Revista Codando Histórias &bull; WEHOSTHERE</p>
         </div>
         <div style="padding:32px 28px;text-align:center;">
           <p style="font-size:16px;line-height:1.6;margin:0 0 16px;">
             Olá, <strong>${opts.authorName}</strong>! Temos excelentes notícias.
           </p>
-          <p style="font-size:14px;color:#334155;line-height:1.6;margin:0 0 24px;">
+          <p style="font-size:14px;color:#374151;line-height:1.6;margin:0 0 24px;">
             A tua história <strong>"${opts.storyTitle}"</strong> foi aprovada pela equipa editorial e já está publicada e visível para toda a comunidade.
           </p>
           <div style="margin-bottom:28px;">
-            <a href="${storyUrl}" style="background:#7B2CBF;color:#ffffff;font-weight:700;font-size:15px;padding:14px 32px;border-radius:10px;text-decoration:none;display:inline-block;">
+            <a href="${storyUrl}" style="display:inline-block;min-width:240px;padding:13px 24px;background:#111827;color:#ffffff;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">
               Ver a minha história ao vivo →
             </a>
           </div>
-          <p style="font-size:13px;color:#64748b;margin:0;">
+          <p style="font-size:13px;color:#6b7280;margin:0;">
             Partilha com os teus colegas, no LinkedIn, Twitter ou grupos de desenvolvedores!
           </p>
         </div>
@@ -1657,55 +1657,55 @@ export async function sendRevistaInviteEmail(opts: {
     to: opts.toEmail,
     subject: `Convite Editorial: Partilha a tua jornada na Revista "Codando Histórias" | WEHOSTHERE`,
     html: `
-      <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;color:#0f172a;background:#ffffff;border:1px solid #E0AAFF;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(123,44,191,0.08);">
+      <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;color:#111827;background:#ffffff;border:1px solid #e5e7eb;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(123,44,191,0.08);">
         ${WEHOSTHERE_EMAIL_BANNER}
         <div style="${WEHOSTHERE_MESH_HEADER_BG}padding:36px 32px;text-align:center;">
-          <div style="display:inline-block;background:#f1f5f9;padding:6px 14px;border-radius:9999px;color:#FAF5FF;font-size:12px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:12px;">
+          <div style="display:inline-block;background:#f9fafb;padding:6px 14px;border-radius:9999px;color:#f9fafb;font-size:12px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:12px;">
             Convite Especial da Redacção
           </div>
-          <h1 style="color:#0f172a;margin:0;font-size:24px;font-weight:800;line-height:1.3;">
+          <h1 style="color:#111827;margin:0;font-size:24px;font-weight:800;line-height:1.3;">
             Queremos destacar a tua história na Codando Histórias
           </h1>
-          <p style="color:#FAF5FF;margin:8px 0 0;font-size:13px;">Revista Digital WEHOSTHERE &bull; Moçambique</p>
+          <p style="color:#f9fafb;margin:8px 0 0;font-size:13px;">Revista Digital WEHOSTHERE &bull; Moçambique</p>
         </div>
 
         <div style="padding:32px 28px;">
           <p style="font-size:16px;line-height:1.6;margin:0 0 16px;">
             Olá, <strong>${opts.inviteeName}</strong>! </p>
-          <p style="font-size:14px;color:#334155;line-height:1.7;margin:0 0 18px;">
+          <p style="font-size:14px;color:#374151;line-height:1.7;margin:0 0 18px;">
             A nossa equipa editorial tem acompanhado a tua trajectória e gostaríamos muito de te convidar a publicar uma história ou relato de experiência na <strong>Codando Histórias</strong>.
           </p>
 
           ${opts.proposedTopic ? `
-          <div style="background:#FAF5FF;border-left:4px solid #7B2CBF;border-radius:0 10px 10px 0;padding:14px 18px;margin:20px 0;">
-            <p style="margin:0 0 4px;font-size:11px;font-weight:800;color:#7B2CBF;text-transform:uppercase;letter-spacing:0.05em;">
+          <div style="background:#f9fafb;border-left:4px solid #e5e7eb;border-radius:0 10px 10px 0;padding:14px 18px;margin:20px 0;">
+            <p style="margin:0 0 4px;font-size:11px;font-weight:800;color:#111827;text-transform:uppercase;letter-spacing:0.05em;">
               Pauta / Tema Sugerido pela Redacção:
             </p>
-            <p style="margin:0;font-size:14px;font-weight:600;color:#0f172a;">
+            <p style="margin:0;font-size:14px;font-weight:600;color:#111827;">
               "${opts.proposedTopic}"
             </p>
           </div>` : ''}
 
           ${opts.customNote ? `
-          <div style="background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px;padding:14px 18px;margin:18px 0;font-size:13px;color:#475569;line-height:1.6;">
+          <div style="background:#f9fafb;border:1px dashed #cbd5e1;border-radius:10px;padding:14px 18px;margin:18px 0;font-size:13px;color:#4b5563;line-height:1.6;">
             <strong>Mensagem do Editor:</strong><br>
             "${opts.customNote.replace(/\n/g, '<br>')}"
           </div>` : ''}
 
-          <p style="font-size:14px;color:#334155;line-height:1.7;margin:0 0 24px;">
+          <p style="font-size:14px;color:#374151;line-height:1.7;margin:0 0 24px;">
             Criámos um formulário simples com <strong>Copiloto IA integrado</strong> para te ajudar a estruturar e polir os parágrafos em minutos, sem perderes tempo com formatação técnica.
           </p>
 
           <div style="text-align:center;margin:30px 0;">
-            <a href="${inviteUrl}" style="${WEHOSTHERE_MESH_HEADER_BG}color:#0f172a;font-weight:700;font-size:15px;padding:15px 36px;border-radius:12px;text-decoration:none;display:inline-block;">
+            <a href="${inviteUrl}" style="display:inline-block;min-width:240px;padding:13px 24px;background:#111827;color:#ffffff;border:1px solid #111827;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;text-align:center;box-sizing:border-box;">
               Abrir Formulário Pré-Preenchido →
             </a>
-            <p style="font-size:11px;color:#475569;margin:8px 0 0;">O teu nome e e-mail já serão preenchidos automaticamente.</p>
+            <p style="font-size:11px;color:#4b5563;margin:8px 0 0;">O teu nome e e-mail já serão preenchidos automaticamente.</p>
           </div>
 
-          <hr style="border:none;border-top:1px solid #f1f5f9;margin:24px 0;">
+          <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;">
 
-          <p style="font-size:12px;color:#64748b;line-height:1.6;margin:0;">
+          <p style="font-size:12px;color:#6b7280;line-height:1.6;margin:0;">
             Tens alguma dúvida ou preferes uma conversa prévia? Responde directamente a este e-mail.<br>
             <strong>Equipa Editorial &bull; WEHOSTHERE Codando Histórias</strong>
           </p>
