@@ -1519,50 +1519,52 @@ function CheckoutContent() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white rounded-3xl shadow-2xl p-6 sm:p-8 text-center border border-gray-100 animate-in fade-in zoom-in duration-200">
-          <div className={`w-16 h-16 ${orderWithoutPayment ? 'bg-amber-100 text-amber-600' : 'bg-emerald-100 text-emerald-600'} rounded-full flex items-center justify-center mx-auto mb-4`}>
-            {orderWithoutPayment ? <Clock className="h-10 w-10" /> : <CheckCircle2 className="h-10 w-10" />}
-          </div>
-          <h2 className="text-2xl font-extrabold text-gray-900 mb-1">
-            {orderWithoutPayment ? 'Encomenda Recebida!' : (isCoursePayment ? t.coursePaymentConfirmed : (isAffiliateVerification ? t.verificationConfirmed : t.paymentConfirmed))}
-          </h2>
-          <p className="text-gray-600 text-xs sm:text-sm mb-5">
-            {orderWithoutPayment 
-              ? 'Obrigado por escolher a WEHOSTHERE. Registámos a sua encomenda. O pagamento ainda não foi efetuado.'
-              : (isCoursePayment 
-                ? t.coursePaymentSuccess
-                : isAffiliateVerification 
-                ? t.verificationSuccess
-                : t.paymentSuccess)}
-          </p>
-
-          <div className="bg-gray-50 rounded-2xl p-4 mb-5 text-left border border-gray-200 space-y-2 text-xs text-gray-700">
-            <div className="flex justify-between">
-              <span className="text-gray-500 font-medium">Cliente:</span>
-              <span className="font-bold text-gray-900">{name}</span>
+      <div className="min-h-screen bg-neutral-50 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-3xl shadow-xl p-5 sm:p-6 text-center border border-neutral-200/90 space-y-3.5 animate-in fade-in zoom-in duration-200">
+          <div className="space-y-1.5">
+            <div className={`w-11 h-11 ${orderWithoutPayment ? 'bg-neutral-100 text-neutral-700 border border-neutral-200' : 'bg-neutral-950 text-white'} rounded-full flex items-center justify-center mx-auto`}>
+              {orderWithoutPayment ? <Clock className="h-5 w-5" /> : <CheckCircle2 className="h-5 w-5" />}
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500 font-medium">E-mail:</span>
-              <span className="font-semibold text-gray-900 font-mono">{email}</span>
+            <h2 className="text-xl font-extrabold text-neutral-950 tracking-tight">
+              {orderWithoutPayment ? 'Encomenda Recebida!' : (isCoursePayment ? t.coursePaymentConfirmed : (isAffiliateVerification ? t.verificationConfirmed : t.paymentConfirmed))}
+            </h2>
+            <p className="text-neutral-500 text-xs">
+              {orderWithoutPayment 
+                ? 'Registámos a sua encomenda. O pagamento ainda não foi efetuado.'
+                : (isCoursePayment 
+                  ? t.coursePaymentSuccess
+                  : isAffiliateVerification 
+                  ? t.verificationSuccess
+                  : t.paymentSuccess)}
+            </p>
+          </div>
+
+          <div className="bg-neutral-50 rounded-2xl p-3.5 text-left border border-neutral-200 space-y-1.5 text-xs text-neutral-700">
+            <div className="flex justify-between gap-2">
+              <span className="text-neutral-500">Cliente</span>
+              <span className="font-bold text-neutral-900 truncate">{name}</span>
+            </div>
+            <div className="flex justify-between gap-2">
+              <span className="text-neutral-500">E-mail</span>
+              <span className="font-medium text-neutral-900 font-mono truncate">{email}</span>
             </div>
             {currentOrderData && (
               <>
-                <div className="flex justify-between">
-                  <span className="text-gray-500 font-medium">Referência:</span>
-                  <span className="font-bold text-gray-900 font-mono">{currentOrderData.id}</span>
+                <div className="flex justify-between gap-2">
+                  <span className="text-neutral-500">Referência</span>
+                  <span className="font-bold text-neutral-900 font-mono">{currentOrderData.id}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500 font-medium">Estado:</span>
-                  <span className={`font-bold ${orderWithoutPayment ? 'text-amber-600' : 'text-emerald-600'}`}>
-                    {orderWithoutPayment ? 'Pagamento Pendente' : 'Pago'}
+                <div className="flex justify-between gap-2 items-center">
+                  <span className="text-neutral-500">Estado</span>
+                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-white border border-neutral-200 text-neutral-900">
+                    {orderWithoutPayment ? 'Pendente' : 'Pago'}
                   </span>
                 </div>
               </>
             )}
-            <div className="flex justify-between border-t border-gray-200 pt-2 font-extrabold text-sm">
-              <span>{orderWithoutPayment ? 'Valor a Pagar:' : 'Total Pago:'}</span>
-              <span className={`${orderWithoutPayment ? 'text-amber-600' : 'text-emerald-600'} font-black text-base`}>{grandTotal.toLocaleString('pt-MZ')} MT</span>
+            <div className="flex justify-between items-center border-t border-neutral-200 pt-2 font-extrabold text-xs text-neutral-950">
+              <span>{orderWithoutPayment ? 'Valor a Pagar' : 'Total Pago'}</span>
+              <span className="text-sm font-black">{grandTotal.toLocaleString('pt-MZ')} MT</span>
             </div>
           </div>
 
@@ -1571,7 +1573,6 @@ function CheckoutContent() {
             <button
               type="button"
               onClick={() => {
-                // Redirecionar para checkout com dados pré-preenchidos para continuar pagamento
                 const params = new URLSearchParams();
                 if (selectedPlan) params.set('plan', selectedPlan.id);
                 if (domainParam) params.set('domain', domainParam);
@@ -1583,9 +1584,9 @@ function CheckoutContent() {
                 params.set('continuePayment', currentOrderData.id);
                 router.push(`/checkout?${params.toString()}`);
               }}
-              className="w-full mb-4 py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-2xl transition flex items-center justify-center space-x-2 text-xs sm:text-sm shadow-md cursor-pointer"
+              className="w-full py-2.5 bg-neutral-950 hover:bg-neutral-800 text-white font-bold rounded-full transition flex items-center justify-center space-x-2 text-xs cursor-pointer"
             >
-              <CreditCard className="h-4 w-4" />
+              <CreditCard className="h-3.5 w-3.5" />
               <span>Continuar para Pagamento</span>
             </button>
           )}
@@ -1595,56 +1596,51 @@ function CheckoutContent() {
             <button
               type="button"
               onClick={() => setSelectedReceipt(currentOrderData)}
-              className="w-full mb-4 py-3 bg-white border-2 border-emerald-500 hover:bg-emerald-50 text-emerald-700 font-bold rounded-2xl transition flex items-center justify-center space-x-2 text-xs sm:text-sm shadow-xs cursor-pointer"
+              className="w-full py-2.5 bg-white border border-neutral-300 hover:bg-neutral-50 text-neutral-900 font-bold rounded-full transition flex items-center justify-center space-x-2 text-xs cursor-pointer"
             >
-              <FileText className="h-4 w-4 text-emerald-600" />
-              <span>Baixar / Imprimir Recibo Oficial (PDF)</span>
+              <FileText className="h-3.5 w-3.5 text-neutral-600" />
+              <span>Baixar / Imprimir Recibo (PDF)</span>
             </button>
           )}
 
-          {/* Guia de Primeiros Passos & DNS do Domínio */}
+          {/* Guia Compacto de DNS do Domínio */}
           {domainParam && (
-            <div className="bg-gradient-to-br from-slate-900 to-slate-950 text-white rounded-2xl p-4 sm:p-5 mb-4 text-left border border-slate-800 shadow-xl space-y-3">
-              <div className="flex items-center gap-2">
-                <Globe className="w-4 h-4 text-emerald-400" />
-                <span className="text-xs font-bold text-white uppercase tracking-wider">Ativação & DNS do Domínio</span>
+            <div className="bg-neutral-50 rounded-2xl p-3.5 text-left border border-neutral-200 space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5">
+                  <Globe className="w-3.5 h-3.5 text-neutral-700" />
+                  <span className="text-[11px] font-extrabold text-neutral-900 uppercase tracking-wide">Nameservers ({domainParam})</span>
+                </div>
+                <span className="text-[10px] text-neutral-500 font-medium">15min–2h</span>
               </div>
-              <p className="text-xs text-slate-300">
-                O domínio <strong className="text-emerald-400 font-mono">{domainParam}</strong> foi registrado! Configure os Nameservers da WEHOSTHERE:
-              </p>
 
-              <div className="space-y-2 bg-slate-950/80 p-3 rounded-xl border border-slate-800/80 text-xs font-mono">
+              <div className="space-y-1.5 bg-white p-2.5 rounded-xl border border-neutral-200 text-xs font-mono">
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-400">NS1:</span>
+                  <span className="text-neutral-400">NS1</span>
                   <div className="flex items-center gap-2">
-                    <span className="text-emerald-300 font-bold">ns1.wehosthere.com</span>
+                    <span className="text-neutral-900 font-semibold">ns1.wehosthere.com</span>
                     <button
                       type="button"
                       onClick={() => copyToClipboard('ns1.wehosthere.com')}
-                      className="text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-200 px-2 py-0.5 rounded cursor-pointer transition"
+                      className="text-[10px] bg-neutral-100 hover:bg-neutral-200 text-neutral-800 px-2 py-0.5 rounded-md cursor-pointer transition font-sans font-semibold"
                     >
-                      {copiedNs === 'ns1.wehosthere.com' ? '✓ Copiado' : 'Copiar'}
+                      {copiedNs === 'ns1.wehosthere.com' ? '✓' : 'Copiar'}
                     </button>
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-400">NS2:</span>
+                  <span className="text-neutral-400">NS2</span>
                   <div className="flex items-center gap-2">
-                    <span className="text-emerald-300 font-bold">ns2.wehosthere.com</span>
+                    <span className="text-neutral-900 font-semibold">ns2.wehosthere.com</span>
                     <button
                       type="button"
                       onClick={() => copyToClipboard('ns2.wehosthere.com')}
-                      className="text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-200 px-2 py-0.5 rounded cursor-pointer transition"
+                      className="text-[10px] bg-neutral-100 hover:bg-neutral-200 text-neutral-800 px-2 py-0.5 rounded-md cursor-pointer transition font-sans font-semibold"
                     >
-                      {copiedNs === 'ns2.wehosthere.com' ? '✓ Copiado' : 'Copiar'}
+                      {copiedNs === 'ns2.wehosthere.com' ? '✓' : 'Copiar'}
                     </button>
                   </div>
                 </div>
-              </div>
-
-              <div className="flex items-center justify-between text-[11px] text-slate-400 pt-0.5">
-                <span>⚡ Propagação de DNS estimada:</span>
-                <span className="text-amber-400 font-semibold">15min a 2h</span>
               </div>
             </div>
           )}
@@ -1654,47 +1650,39 @@ function CheckoutContent() {
             <button
               type="button"
               onClick={() => isCoursePayment ? router.push('/dashboard/academy') : router.push('/dashboard')}
-              className="w-full py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-2xl shadow-lg transition flex items-center justify-center space-x-2 cursor-pointer text-sm"
+              className="w-full py-3 bg-neutral-950 hover:bg-neutral-800 text-white font-bold rounded-full transition flex items-center justify-center space-x-2 cursor-pointer text-xs"
             >
               <span>{isCoursePayment ? 'Ir para a Academia' : 'Ir para o meu Painel'}</span>
             </button>
           )}
 
           {checkoutAccountStatus === 'account_exists' && (
-            <div className="space-y-3 bg-blue-50/80 border border-blue-200 p-4 rounded-2xl text-left">
-              <div className="flex items-start space-x-2.5">
-                <Lock className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
-                <div>
-                  <strong className="block text-xs font-extrabold text-blue-900 uppercase tracking-wider">Já possui uma conta cadastrada!</strong>
-                  <p className="text-xs text-blue-800 mt-1">
-                    Identificámos que o e-mail <strong className="font-mono text-blue-950">{email}</strong> já tem uma conta na WEHOSTHERE. Faça login para aceder ao seu painel e visualizar os seus serviços sincronizados.
-                  </p>
-                </div>
+            <div className="space-y-2.5 bg-neutral-50 border border-neutral-200 p-3.5 rounded-2xl text-left">
+              <div className="flex items-start space-x-2">
+                <Lock className="h-4 w-4 text-neutral-700 shrink-0 mt-0.5" />
+                <p className="text-xs text-neutral-600 leading-relaxed">
+                  A conta <strong className="font-mono text-neutral-900">{email}</strong> já existe. Faça login para aceder aos seus serviços.
+                </p>
               </div>
               <button
                 type="button"
                 onClick={() => router.push(`/login?email=${encodeURIComponent(email)}`)}
-                className="w-full py-3 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-xl shadow transition text-xs sm:text-sm flex items-center justify-center space-x-2 cursor-pointer"
+                className="w-full py-2.5 bg-neutral-950 hover:bg-neutral-800 text-white font-bold rounded-full transition text-xs flex items-center justify-center cursor-pointer"
               >
-                <span>Fazer Login para Sincronizar</span>
+                <span>Fazer Login</span>
               </button>
             </div>
           )}
 
           {checkoutAccountStatus === 'no_account' && (
-            <div className="space-y-3 bg-emerald-50/80 border border-emerald-200 p-4 rounded-2xl text-left">
-              <div className="flex items-start space-x-2.5">
-                <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
-                <div>
-                  <strong className="block text-xs font-extrabold text-emerald-950 uppercase tracking-wider">
-                    {isCoursePayment ? 'Matrícula Criada com Sucesso!' : 'Criar Conta para Aceder ao Painel'}
-                  </strong>
-                  <p className="text-xs text-emerald-900 mt-1">
-                    {isCoursePayment
-                      ? 'O teu curso está pronto. Define a tua senha em 1 passo para começares a assistir de imediato às tuas aulas!'
-                      : <>Registámos a compra para o e-mail <strong className="font-mono text-emerald-950">{email}</strong>. Crie a sua conta usando este mesmo e-mail.</>}
-                  </p>
-                </div>
+            <div className="space-y-2.5 bg-neutral-50 border border-neutral-200 p-3.5 rounded-2xl text-left">
+              <div className="flex items-start space-x-2">
+                <CheckCircle2 className="h-4 w-4 text-neutral-800 shrink-0 mt-0.5" />
+                <p className="text-xs text-neutral-600 leading-relaxed">
+                  {isCoursePayment
+                    ? 'Matrícula criada! Defina a sua senha para assistir de imediato às aulas.'
+                    : <>Crie a sua conta com <strong className="font-mono text-neutral-900">{email}</strong> para gerir o serviço no painel.</>}
+                </p>
               </div>
               <button
                 type="button"
@@ -1707,9 +1695,9 @@ function CheckoutContent() {
                     router.push(`/register?email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}`);
                   }
                 }}
-                className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-xl shadow transition text-xs sm:text-sm flex items-center justify-center space-x-2 cursor-pointer"
+                className="w-full py-2.5 bg-neutral-950 hover:bg-neutral-800 text-white font-bold rounded-full transition text-xs flex items-center justify-center cursor-pointer"
               >
-                <span>{isCoursePayment ? 'Ativar Acesso & Começar Curso Agora →' : 'Criar Conta Agora com este E-mail'}</span>
+                <span>{isCoursePayment ? 'Ativar Acesso ao Curso →' : 'Criar Conta Agora →'}</span>
               </button>
             </div>
           )}
