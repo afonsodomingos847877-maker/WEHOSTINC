@@ -5623,7 +5623,7 @@ function WebmailContent() {
               })() : null}
 
               {/* Cartão Unificado do E-mail (Cabeçalho + Barra IA + Corpo + Resposta Rápida) */}
-              <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-sm border border-slate-200/90 overflow-hidden divide-y divide-slate-100 flex-1 flex flex-col animate-in fade-in duration-300">
+              <div className={`bg-white/95 backdrop-blur-md rounded-2xl shadow-sm border border-slate-200/90 overflow-hidden divide-y divide-slate-100 flex flex-col animate-in fade-in duration-300 ${selectedMessage.body ? 'flex-1' : ''}`}>
               {!(floatingBriefing && floatingBriefing.isOpen && mailboxPassword) && (
               <div className="p-3 sm:p-4 space-y-2.5 bg-white">
                 <div className="flex items-start justify-between gap-2.5">
