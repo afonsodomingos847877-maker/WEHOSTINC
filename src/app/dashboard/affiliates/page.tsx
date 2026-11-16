@@ -832,7 +832,7 @@ export default function AffiliatesPage() {
                 </button>
               </div>
 
-              <div className="p-6 max-h-[60vh] overflow-y-auto space-y-3.5 text-xs sm:text-sm text-slate-600 leading-relaxed">
+              <div className="p-5 sm:p-6 max-h-[48vh] overflow-y-auto space-y-3 text-xs sm:text-sm text-slate-600 leading-relaxed">
                 <div>
                   <h3 className="font-bold text-slate-900">1. Ativação e Verificação</h3>
                   <p>Para participar, é necessária uma verificação única de 2 MZN para validar o seu número M-Pesa/e-Mola.</p>
@@ -853,7 +853,10 @@ export default function AffiliatesPage() {
                   <h3 className="font-bold text-slate-900">5. Atualizações</h3>
                   <p>A WEHOSTHERE reserva-se o direito de ajustar regras ou percentuais mediante aviso prévio no painel.</p>
                 </div>
-                <div className="mt-2 p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+              </div>
+
+              <div className="px-5 sm:px-6 pb-4 pt-1">
+                <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                   <div>
                     <h3 className="font-bold text-emerald-950 text-xs sm:text-sm">Comunidade Oficial no WhatsApp</h3>
                     <p className="text-[11px] sm:text-xs text-emerald-800">Entre no grupo para receber dicas, materiais e suporte direto.</p>
