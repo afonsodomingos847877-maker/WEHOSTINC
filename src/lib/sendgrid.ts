@@ -464,7 +464,8 @@ export async function sendPasswordResetEmail(toEmail: string, userName: string, 
     subject: '🔐 Recuperação de Senha - WEHOSTHERE',
     html: `
       <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;color:#111;">
-        <div style="background:linear-gradient(135deg,#f59e0b,#d97706);padding:40px 32px;border-radius:16px 16px 0 0;text-align:center;">
+        ${WEHOSTHERE_EMAIL_BANNER}
+        <div style="background:linear-gradient(135deg,#f59e0b,#d97706);padding:32px;text-align:center;">
           <img src="${SITE_URL}/logo.png" alt="WEHOSTHERE Logo" style="width:180px;height:auto;margin:0 auto 16px;display:block;" />
           <p style="color:#fef3c7;margin:8px 0 0;font-size:13px;">Recuperação de Senha</p>
         </div>
@@ -488,7 +489,8 @@ export async function sendAccountDeletionEmail(toEmail: string, userName: string
     subject: '⚠️ Sua conta WEHOSTHERE foi eliminada',
     html: `
       <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;color:#111;">
-        <div style="background:linear-gradient(135deg,#dc2626,#ef4444);padding:40px 32px;border-radius:16px 16px 0 0;text-align:center;">
+        ${WEHOSTHERE_EMAIL_BANNER}
+        <div style="background:linear-gradient(135deg,#dc2626,#ef4444);padding:32px;text-align:center;">
           <img src="${SITE_URL}/logo.png" alt="WEHOSTHERE Logo" style="width:180px;height:auto;margin:0 auto 16px;display:block;" />
           <p style="color:#fecaca;margin:8px 0 0;font-size:13px;">Conta Eliminada</p>
         </div>
@@ -982,7 +984,8 @@ export async function sendDomainLeadAlertEmail(toEmail: string, data: DomainLead
     subject,
     html: `
       <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:620px;margin:0 auto;color:#111;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e2e8f0;box-shadow:0 4px 20px rgba(0,0,0,0.06);">
-        <div style="background:linear-gradient(135deg,#7c2d12,#ea580c);padding:32px 28px;text-align:center;">
+        ${WEHOSTHERE_EMAIL_BANNER}
+        <div style="background:linear-gradient(135deg,#7c2d12,#ea580c);padding:28px;text-align:center;">
           <img src="${SITE_URL}/logo.png" alt="WEHOSTHERE Logo" style="width:160px;height:auto;margin:0 auto 12px;display:block;" />
           <div style="display:inline-block;background:rgba(255,255,255,0.18);backdrop-filter:blur(8px);padding:6px 16px;border-radius:20px;margin-top:6px;">
             <span style="color:#ffffff;font-size:12px;font-weight:800;letter-spacing:0.8px;text-transform:uppercase;">NOVO LEAD QUENTE - TENTATIVA DE COMPRA</span>

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
-import { sendEmail } from '@/lib/sendgrid';
+import { sendEmail, WEHOSTHERE_EMAIL_BANNER } from '@/lib/sendgrid';
 import { SITE_URL } from '@/lib/siteConfig';
 import { requireCronSecret } from '@/lib/serverAuth';
 
@@ -67,19 +67,20 @@ export async function GET(req: Request) {
 
     await sendEmail({
       to: adminEmail,
-      subject: `📊 Relatório Semanal WEHOSTHERE - ${weekLabel}`,
+      subject: `[WEHOSTHERE] Relatório Semanal - ${weekLabel}`,
       html: `
         <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:680px;margin:0 auto;color:#111;background:#fff;border-radius:16px;overflow:hidden;border:1px solid #e2e8f0;">
           <!-- Header -->
-          <div style="background:linear-gradient(135deg,#0f172a,#1e3a8a);padding:32px 28px;text-align:center;">
-            <img src="${SITE_URL}/logo.png" alt="WEHOSTHERE" style="width:150px;height:auto;display:block;margin:0 auto 12px;" />
-            <h1 style="color:#fff;font-size:20px;font-weight:800;margin:0 0 4px;">Relatório Semanal de Desempenho</h1>
-            <p style="color:#93c5fd;font-size:13px;margin:0;">${weekLabel}</p>
+          ${WEHOSTHERE_EMAIL_BANNER}
+          <div style="background:#ffffff;border-bottom:1px solid #f1f5f9;padding:24px 28px;text-align:center;">
+
+            <h1 style="color:#0f172a;font-size:20px;font-weight:800;margin:0 0 4px;">Relatório Semanal de Desempenho</h1>
+            <p style="color:#475569;font-size:13px;margin:0;">${weekLabel}</p>
           </div>
 
           <div style="padding:28px;">
             <!-- KPI Grid -->
-            <h3 style="color:#0f172a;font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 16px;padding-bottom:8px;border-bottom:2px solid #f1f5f9;">📈 Destaques da Semana</h3>
+            <h3 style="color:#0f172a;font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 16px;padding-bottom:8px;border-bottom:2px solid #f1f5f9;">Destaques da Semana</h3>
             
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px;">
               <!-- Novos Utilizadores -->
