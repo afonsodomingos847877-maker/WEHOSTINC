@@ -381,7 +381,8 @@ export const webmailManager = {
     attachments?: WebmailAttachment[],
     priority: 'high' | 'normal' | 'low' = 'normal',
     cc?: string,
-    bcc?: string
+    bcc?: string,
+    inReplyTo?: string
   ): Promise<WebmailMessage> => {
     let res: Response;
 
@@ -398,6 +399,7 @@ export const webmailManager = {
       formData.append('subject', subject);
       formData.append('body', body);
       formData.append('priority', priority);
+      if (inReplyTo) formData.append('inReplyTo', inReplyTo);
 
       const remoteAtts: WebmailAttachment[] = [];
       for (const att of attachments) {
@@ -431,6 +433,7 @@ export const webmailManager = {
           body,
           priority,
           attachments,
+          inReplyTo,
         }),
       });
     }

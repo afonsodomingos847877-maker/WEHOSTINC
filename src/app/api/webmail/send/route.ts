@@ -72,6 +72,7 @@ export async function POST(request: NextRequest) {
     let subject = '';
     let emailBody = '';
     let priority: 'high' | 'normal' | 'low' = 'normal';
+    let inReplyTo = '';
     let processedAttachments: Array<{
       filename: string;
       content: Buffer;
@@ -88,6 +89,7 @@ export async function POST(request: NextRequest) {
       subject = String(formData.get('subject') || '');
       emailBody = String(formData.get('body') || '');
       priority = (String(formData.get('priority') || 'normal') as 'high' | 'normal' | 'low');
+      inReplyTo = String(formData.get('inReplyTo') || '').trim();
 
       const files = formData.getAll('files');
       for (const item of files) {
@@ -124,6 +126,7 @@ export async function POST(request: NextRequest) {
       subject = body.subject;
       emailBody = body.body;
       priority = body.priority || 'normal';
+      inReplyTo = typeof body.inReplyTo === 'string' ? body.inReplyTo.trim() : '';
 
       if (Array.isArray(body.attachments) && body.attachments.length > 0) {
         const resolved = await Promise.all(body.attachments.map(resolveAttachmentToBuffer));
@@ -226,6 +229,8 @@ export async function POST(request: NextRequest) {
       ? emailBody.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
       : '';
 
+    const validInReplyTo = inReplyTo && !inReplyTo.startsWith('uid:') ? inReplyTo : undefined;
+
     await migaduImapSmtp.sendEmail({
       from: cleanEmail,
       to: parseRecipients(to),
@@ -235,6 +240,8 @@ export async function POST(request: NextRequest) {
       text: plainText || emailBody || '(Anexo enviado)',
       html: emailBody || `<p>${plainText || '(Anexo enviado)'}</p>`,
       priority: priority || 'normal',
+      inReplyTo: validInReplyTo,
+      references: validInReplyTo ? [validInReplyTo] : undefined,
       attachments: processedAttachments.length > 0 ? processedAttachments : undefined,
     }, password);
 

@@ -887,6 +887,8 @@ function WebmailContent() {
   const [internalChatOnline, setInternalChatOnline] = useState(0);
   const [showAnalyticsDashboard, setShowAnalyticsDashboard] = useState(false);
   const [closedMessageIds, setClosedMessageIds] = useState<Set<string>>(new Set());
+  const [composeInReplyTo, setComposeInReplyTo] = useState<string>('');
+  const [composeMode, setComposeMode] = useState<'new' | 'reply' | 'replyAll' | 'forward'>('new');
 
   // Attachment preview state
   const [previewAttachment, setPreviewAttachment] = useState<WebmailAttachment | null>(null);
@@ -1496,6 +1498,8 @@ function WebmailContent() {
     setComposeCc('');
     setComposeBcc('');
     setComposeAttachments([]);
+    setComposeInReplyTo(selectedMessage.id && !selectedMessage.id.startsWith('uid:') ? selectedMessage.id : '');
+    setComposeMode('reply');
     setShowCompose(true);
   };
 
@@ -1509,6 +1513,8 @@ function WebmailContent() {
     setComposeBody(`<p><br></p><p><br></p>${sigBlock}<hr style="border:0;border-top:1px solid #e5e7eb;margin:15px 0;"/><p><strong>De:</strong> ${selectedMessage.fromName} &lt;${selectedMessage.fromEmail}&gt;<br/><strong>Para:</strong> ${selectedMessage.toEmail}<br/><strong>Data:</strong> ${new Date(selectedMessage.date).toLocaleString()}<br/><strong>Assunto:</strong> ${selectedMessage.subject}</p><blockquote>${selectedMessage.body}</blockquote>`);
     setComposeBcc('');
     setComposeAttachments([]);
+    setComposeInReplyTo(selectedMessage.id && !selectedMessage.id.startsWith('uid:') ? selectedMessage.id : '');
+    setComposeMode('replyAll');
     setShowCompose(true);
   };
 
@@ -1521,6 +1527,8 @@ function WebmailContent() {
     setComposeBody(`<p><br></p><p><br></p>${sigBlock}<hr style="border:0;border-top:1px solid #e5e7eb;margin:15px 0;"/><p><strong>--- Mensagem Encaminhada ---</strong><br/><strong>De:</strong> ${selectedMessage.fromName} &lt;${selectedMessage.fromEmail}&gt;<br/><strong>Para:</strong> ${selectedMessage.toEmail}<br/><strong>Data:</strong> ${new Date(selectedMessage.date).toLocaleString()}<br/><strong>Assunto:</strong> ${selectedMessage.subject}</p><blockquote>${selectedMessage.body}</blockquote>`);
     setComposeCc('');
     setComposeBcc('');
+    setComposeInReplyTo('');
+    setComposeMode('forward');
     setComposeAttachments(selectedMessage.attachments || []);
     setShowCompose(true);
   };
@@ -1871,6 +1879,8 @@ function WebmailContent() {
       openLoginModal();
       return;
     }
+    setComposeInReplyTo('');
+    setComposeMode('new');
     const sig = getSignatureHtml();
     if (sig && signatureForm.autoInsert && (!composeBody || composeBody === '<p><br></p>' || composeBody === '')) {
       setComposeBody('<p><br></p><p><br></p><p><br></p>' + sig);
@@ -2743,6 +2753,8 @@ function WebmailContent() {
         setComposeError('');
         setComposeTo('');
         setComposeCc('');
+        setComposeInReplyTo('');
+        setComposeMode('new');
         setComposeBcc('');
         setComposeSubject('');
         setComposeBody('');
@@ -2984,7 +2996,8 @@ function WebmailContent() {
         composeAttachments,
         composePriority,
         normalizeRecipients(composeCc),
-        normalizeRecipients(composeBcc)
+        normalizeRecipients(composeBcc),
+        composeInReplyTo || undefined
       );
 
       // 2. Remover rascunho se existir
@@ -3003,6 +3016,8 @@ function WebmailContent() {
         setComposeError('');
         setComposeTo('');
         setComposeCc('');
+        setComposeInReplyTo('');
+        setComposeMode('new');
         setComposeBcc('');
         setComposeSubject('');
         setComposeBody('');
@@ -3144,7 +3159,12 @@ function WebmailContent() {
         mailboxPassword,
         selectedMessage.fromEmail,
         `Re: ${selectedMessage.subject}`,
-        replyBodyWithSig
+        replyBodyWithSig,
+        undefined,
+        'normal',
+        undefined,
+        undefined,
+        selectedMessage.id && !selectedMessage.id.startsWith('uid:') ? selectedMessage.id : undefined
       );
 
       soundEffects.playSendEmailSound();
@@ -6739,8 +6759,16 @@ function WebmailContent() {
                   <div className="flex items-center space-x-2">
                     <Edit3 className="h-5 w-5 text-neutral-900" />
                     <h2 className="text-lg font-bold text-neutral-900 flex items-center">
-                      <span>{typedComposeTitle}</span>
-                      <span className="inline-block w-[2px] h-5 bg-primary-600 ml-0.5 animate-pulse" aria-hidden="true" />
+                      <span>
+                        {composeMode === 'reply' || composeMode === 'replyAll'
+                          ? 'Responder E-mail'
+                          : composeMode === 'forward'
+                          ? 'Encaminhar E-mail'
+                          : typedComposeTitle}
+                      </span>
+                      {composeMode === 'new' && (
+                        <span className="inline-block w-[2px] h-5 bg-primary-600 ml-0.5 animate-pulse" aria-hidden="true" />
+                      )}
                     </h2>
                   </div>
                   <div className="flex items-center space-x-1.5">
