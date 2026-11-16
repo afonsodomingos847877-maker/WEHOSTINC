@@ -5236,7 +5236,7 @@ function WebmailContent() {
                     onClick={() => handleSelectMessage(msg)}
                     className={`p-3.5 sm:p-4 cursor-pointer transition-all duration-150 flex items-start space-x-2.5 sm:space-x-3 rounded-2xl mx-2 my-1.5 ${
                       isSelected
-                        ? 'bg-neutral-100 border-l-4 border-l-neutral-900 border-y border-r border-neutral-200 shadow-2xs'
+                        ? 'bg-blue-50/50 border-l-4 border-l-blue-600 border-y border-r border-blue-200/70 shadow-2xs'
                         : msg.pinned
                         ? 'bg-neutral-50 border border-neutral-200 shadow-2xs hover:bg-neutral-100/70'
                         : msg.isRead
