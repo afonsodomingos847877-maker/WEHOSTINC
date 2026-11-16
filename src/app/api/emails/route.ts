@@ -4,6 +4,7 @@ import EmailAccountModel from '@/lib/models/EmailAccount';
 import { EmailMailbox } from '@/models/EmailMailbox';
 import { EmailDomain } from '@/models/EmailDomain';
 import { getEmailProvider } from '@/lib/emailProviders/base';
+import { cascadeDeleteDomain, cascadeDeleteMailbox } from '@/lib/cascadeDelete';
 
 let FALLBACK_EMAILS: any[] = [];
 
@@ -215,51 +216,14 @@ export async function POST(req: Request) {
         }
 
         if (tDomain) {
-          const domainRegex = new RegExp(`^${tDomain}$`, 'i');
-          const emailRegex = { $regex: `@${tDomain}$`, $options: 'i' };
-
-          await Promise.all([
-            EmailAccountModel.deleteMany({
-              $or: [{ domain: domainRegex }, { email: emailRegex }]
-            }),
-            EmailMailbox.deleteMany({ email: emailRegex })
-          ]);
-
-          try {
-            const provider = getEmailProvider();
-            if (provider.isConfigured()) {
-              const liveMbs = await provider.listMailboxes(tDomain).catch(() => []);
-              if (Array.isArray(liveMbs)) {
-                for (const mb of liveMbs) {
-                  const lp = mb.localPart || mb.email?.split('@')[0];
-                  if (lp) await provider.deleteMailbox(tDomain, lp).catch(() => {});
-                }
-              }
-            }
-          } catch (provErr) {
-            console.warn('[Emails DELETE Domain] Provider warning:', provErr);
-          }
+          await cascadeDeleteDomain(tDomain);
         } else if (emailAddress) {
-          const emailRegex = new RegExp(`^${emailAddress}$`, 'i');
-          const conditions: any[] = [{ email: emailRegex }];
-          if (tId) conditions.push({ id: tId });
-
-          await Promise.all([
-            EmailAccountModel.deleteMany({ $or: conditions }),
-            EmailMailbox.deleteMany({ email: emailRegex })
-          ]);
-
-          if (emailAddress.includes('@')) {
-            const [localPart, domainPart] = emailAddress.split('@');
-            try {
-              const provider = getEmailProvider();
-              if (provider.isConfigured() && domainPart && localPart) {
-                await provider.deleteMailbox(domainPart, localPart).catch(() => {});
-              }
-            } catch (provErr) {
-              console.warn('[Emails DELETE Mailbox] Provider delete warning:', provErr);
-            }
+          await cascadeDeleteMailbox(emailAddress);
+          if (tId) {
+            await EmailAccountModel.deleteMany({ id: tId });
           }
+        } else if (tId) {
+          await EmailAccountModel.deleteMany({ id: tId });
         }
 
         return NextResponse.json({ success: true, emails: await EmailAccountModel.find({}).lean() });

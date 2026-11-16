@@ -142,6 +142,8 @@ export async function PUT(
   }
 }
 
+import { cascadeDeleteMailbox } from '@/lib/cascadeDelete';
+
 // DELETE - Delete mailbox
 export async function DELETE(
   request: NextRequest,
@@ -154,22 +156,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Não autorizado a eliminar caixas de correio deste domínio' }, { status: 401 });
     }
     await connectDB();
-    const email = `${localPart}@${domain}`;
-
-    const provider = getEmailProvider();
-    try {
-      if (provider.isConfigured()) {
-        await provider.deleteMailbox(domain, localPart);
-      }
-    } catch (provErr) {
-      console.warn('[Migadu Mailbox DELETE] Provider delete warning:', provErr);
-    }
-
-    // Delete from both EmailMailbox and EmailAccountModel
-    await Promise.all([
-      EmailMailbox.deleteMany({ email: new RegExp(`^${email}$`, 'i') }),
-      EmailAccountModel.deleteMany({ email: new RegExp(`^${email}$`, 'i') })
-    ]);
+    await cascadeDeleteMailbox(`${localPart}@${domain}`);
 
     return NextResponse.json({
       success: true,

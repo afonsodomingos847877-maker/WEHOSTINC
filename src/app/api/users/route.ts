@@ -6,6 +6,7 @@ import { addAdminNotification, dispatchMessage } from '@/lib/notifications';
 import { rateLimit, getRateLimitIdentifier } from '@/lib/rateLimiter';
 import bcrypt from 'bcryptjs';
 import { sendAccountDeletionEmail, sendRoleChangeEmail } from '@/lib/sendgrid';
+import { cascadeDeleteUser } from '@/lib/cascadeDelete';
 import { getSessionUser, hasValidInternalAuth, isAdminRole, requireAdmin, requireAuth, setSessionCookie } from '@/lib/serverAuth';
 import { DomainInvitation } from '@/models/DomainInvitation';
 import { EmailDomain } from '@/models/EmailDomain';
@@ -774,7 +775,7 @@ export async function POST(req: Request) {
           }
           
           if (orDel.length > 0) {
-            await UserModel.deleteMany({ $or: orDel });
+            await cascadeDeleteUser(userToDelete, orDel);
           }
         }
         const users = await UserModel.find({}).lean();

@@ -129,8 +129,7 @@ export async function PUT(
   }
 }
 
-import SiteModel from '@/lib/models/Site';
-import EmailAccountModel from '@/lib/models/EmailAccount';
+import { cascadeDeleteDomain } from '@/lib/cascadeDelete';
 
 // DELETE - Delete domain
 export async function DELETE(
@@ -143,43 +142,8 @@ export async function DELETE(
   try {
     await connectDB();
     const domainName = params.domain;
-    
-    console.log('[Migadu Domain DELETE] Starting deletion for domain:', domainName);
 
-    const domain = await EmailDomain.findOne({ domainName });
-    console.log('[Migadu Domain DELETE] Domain found in DB:', !!domain);
-
-    const provider = getEmailProvider();
-    try {
-      if (provider.isConfigured()) {
-        console.log('[Migadu Domain DELETE] Deleting from provider...');
-        await provider.deleteDomain(domainName);
-        console.log('[Migadu Domain DELETE] Provider deletion successful');
-      }
-    } catch (provErr) {
-      console.warn('[Migadu Domain DELETE] Provider delete warning (may already be removed on provider):', provErr);
-    }
-
-    // Cascaded removal from all MongoDB collections
-    console.log('[Migadu Domain DELETE] Starting cascaded MongoDB deletion...');
-    const results = await Promise.all([
-      EmailDomain.deleteMany({ domainName: new RegExp(`^${domainName}$`, 'i') }),
-      SiteModel.deleteMany({ domain: new RegExp(`^${domainName}$`, 'i') }),
-      EmailMailbox.deleteMany({ 
-        $or: [
-          { email: { $regex: `@${domainName}$`, $options: 'i' } },
-          ...(domain ? [{ domainId: domain._id.toString() }] : [])
-        ] 
-      }),
-      EmailAccountModel.deleteMany({
-        $or: [
-          { domain: new RegExp(`^${domainName}$`, 'i') },
-          { email: { $regex: `@${domainName}$`, $options: 'i' } }
-        ]
-      })
-    ]);
-    
-    console.log('[Migadu Domain DELETE] MongoDB deletion results:', results);
+    await cascadeDeleteDomain(domainName);
 
     return NextResponse.json({
       success: true,

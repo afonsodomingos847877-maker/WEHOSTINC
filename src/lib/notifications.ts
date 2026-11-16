@@ -1,4 +1,4 @@
-import { sendEmail } from '@/lib/sendgrid';
+import { sendEmail, WEHOSTHERE_MESH_HEADER_BG } from '@/lib/sendgrid';
 
 export type CommunicationChannel = 'email' | 'whatsapp' | 'sms';
 
@@ -67,7 +67,7 @@ export const DEFAULT_TEMPLATES: CommunicationTemplate[] = [
     id: 'welcome',
     name: 'Conta criada com sucesso',
     category: 'Boas-Vindas',
-    subject: '🎉 Bem-vindo à {{nome_empresa}}! A sua conta está pronta.',
+    subject: 'Bem-vindo à {{nome_empresa}}! A sua conta está pronta.',
     body: `Olá {{nome_cliente}},
 
 Seja muito bem-vindo à {{nome_empresa}}! A sua conta foi criada com sucesso.
@@ -298,7 +298,7 @@ Direção {{nome_empresa}}`,
     id: 'platform-update',
     name: 'Atualizações da plataforma',
     category: 'Geral',
-    subject: '🚀 Novas Funcionalidades e Atualizações na {{nome_empresa}}',
+    subject: 'Novas Funcionalidades e Atualizações na {{nome_empresa}}',
     body: `Olá {{nome_cliente}},
 
 Temos novidades incríveis para partilhar com você!
@@ -508,7 +508,7 @@ Equipa WEHOSTHERE`,
 
 Notámos que já faz algum tempo desde a sua última interação com a WEHOSTHERE.
 
-📊 Seu histórico:
+Seu histórico:
 - Total gasto: {{total_gasto}} MZN
 - Pedidos realizados: {{total_pedidos}}
 - Plano atual: {{plano_atual}}
@@ -544,7 +544,7 @@ Equipa WEHOSTHERE`,
 
 Aqui está o seu relatório mensal de disponibilidade do site {{nome_site}} ({{url_site}}).
 
-📊 **Estatísticas de {{mes_relatorio}} de {{ano_relatorio}}:**
+**Estatísticas de {{mes_relatorio}} de {{ano_relatorio}}:**
 
 - **Uptime:** {{uptime_percentual}}%
 - **Total de verificações:** {{total_checks}}
@@ -567,7 +567,7 @@ Equipa WEHOSTHERE`,
     id: 'sale-notification',
     name: 'Notificação de Venda',
     category: 'Vendas',
-    subject: '🎉 Nova Venda Realizada - Pedido #{{numero_pedido}}',
+    subject: 'Nova Venda Realizada - Pedido #{{numero_pedido}}',
     body: `Olá {{nome_cliente}},
 
 Temos uma ótima notícia! Uma nova venda foi realizada com sucesso.
@@ -628,7 +628,7 @@ Equipa WEHOSTHERE`,
 
 Parabéns! Você fez um upgrade no seu plano com sucesso.
 
-🚀 **Detalhes do Upgrade:**
+**Detalhes do Upgrade:**
 
 - **Novo Plano:** {{nome_plano}}
 - **Valor:** {{valor_total}}
@@ -704,7 +704,7 @@ Equipa WEHOSTHERE`,
     id: 'affiliate-commission-earned',
     name: 'Nova Comissão de Afiliado',
     category: 'Afiliados',
-    subject: '🎉 Nova Comissão Ganha - {{valor_comissao}} MZN!',
+    subject: 'Nova Comissão Ganha - {{valor_comissao}} MZN!',
     body: `Olá {{nome_afiliado}},
 
 Parabéns! Você ganhou uma nova comissão através do seu programa de afiliados!
@@ -791,7 +791,7 @@ Equipa WEHOSTHERE`,
     id: 'affiliate-welcome',
     name: 'Bem-vindo ao Programa de Afiliados',
     category: 'Afiliados',
-    subject: '🎉 Bem-vindo ao Programa de Afiliados WEHOSTHERE!',
+    subject: 'Bem-vindo ao Programa de Afiliados WEHOSTHERE!',
     body: `Olá {{nome_afiliado}},
 
 Parabéns! Você agora é um afiliado oficial da WEHOSTHERE!
@@ -806,7 +806,7 @@ Parabéns! Você agora é um afiliado oficial da WEHOSTHERE!
 3. Acompanhe suas comissões no painel
 4. Solicite saques quando atingir o mínimo de 1.000 MZN
 
-📊 Seus Dados:
+Seus Dados:
 
 - Código de Afiliado: {{codigo_afiliado}}
 - Taxa de Comissão: 30%
@@ -1185,7 +1185,7 @@ export async function dispatchMessage(payload: SendMessagePayload): Promise<{ su
         subject: finalSubject,
         text: finalBody,
         html: `<div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;color:#1e293b;line-height:1.7;">
-          <div style="background:linear-gradient(135deg,#1d4ed8,#2563eb);padding:28px 24px 24px;border-radius:12px 12px 0 0;text-align:center;">
+          <div style="${WEHOSTHERE_MESH_HEADER_BG}padding:28px 24px 24px;border-radius:12px 12px 0 0;text-align:center;">
             <img
               src="https://wehosthere.com/logo.png"
               alt="WEHOSTHERE"
@@ -1194,7 +1194,7 @@ export async function dispatchMessage(payload: SendMessagePayload): Promise<{ su
               onerror="this.style.display='none';document.getElementById('wh-logo-text').style.display='block';"
             />
             <span id="wh-logo-text" style="display:none;color:white;font-size:22px;font-weight:800;letter-spacing:1px;">WEHOSTHERE</span>
-            <p style="color:#bfdbfe;margin:10px 0 0;font-size:13px;">Hospedagem &amp; Serviços de Nuvem</p>
+            <p style="color:rgba(255,255,255,0.9);margin:10px 0 0;font-size:13px;">Hospedagem &amp; Serviços de Nuvem</p>
           </div>
           <div style="background:#ffffff;padding:32px 24px;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 12px 12px;">
             <div style="white-space:pre-line;font-size:15px;color:#334155;line-height:1.8;">${finalBody}</div>

@@ -1145,7 +1145,7 @@ export const dataManager = {
     return newEmail;
   },
 
-  deleteEmail: (id: string, ownerEmail?: string, emailStr?: string): void => {
+  deleteEmail: async (id: string, ownerEmail?: string, emailStr?: string): Promise<boolean> => {
     const targetEmailStr = (emailStr || '').toLowerCase();
     
     if (typeof window !== 'undefined') {
@@ -1185,12 +1185,19 @@ export const dataManager = {
       }
 
       // 4. Delete from Server API
-      fetch(apiEndpoint('/api/emails'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'delete', emailId: id, emailStr: targetEmailStr })
-      }).catch(err => console.error('Erro de exclusão de e-mail no servidor:', err));
+      try {
+        const res = await fetch(apiEndpoint('/api/emails'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'delete', emailId: id, emailStr: targetEmailStr })
+        });
+        return res.ok;
+      } catch (err) {
+        console.error('Erro de exclusão de e-mail no servidor:', err);
+        return false;
+      }
     }
+    return true;
   },
 
 

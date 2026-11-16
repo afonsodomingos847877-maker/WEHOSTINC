@@ -1391,11 +1391,15 @@ export default function AdminPage() {
       title: 'Eliminar Conta de E-mail',
       message: `Tem certeza que deseja ELIMINAR permanentemente a conta de e-mail "${emailAddr}"?`,
       variant: 'danger',
-      onConfirm: () => {
-        dataManager.deleteEmail(emailId, ownerEmail, emailAddr);
-        setEmails(prev => prev.filter(e => e.id !== emailId && e.email !== emailAddr));
+      onConfirm: async () => {
+        const ok = await dataManager.deleteEmail(emailId, ownerEmail, emailAddr);
         setConfirmModalData(null);
-        setToastMsg({ title: 'E-mail Removido', message: `Conta ${emailAddr} eliminada com sucesso.`, type: 'success' });
+        if (ok) {
+          setEmails(prev => prev.filter(e => e.id !== emailId && e.email !== emailAddr));
+          setToastMsg({ title: 'E-mail Removido', message: `Conta ${emailAddr} eliminada com sucesso.`, type: 'success' });
+        } else {
+          setToastMsg({ title: 'Erro ao Eliminar', message: `Não foi possível eliminar ${emailAddr} no servidor.`, type: 'error' });
+        }
       }
     });
   };

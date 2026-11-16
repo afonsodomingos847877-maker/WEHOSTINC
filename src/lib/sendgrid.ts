@@ -4,6 +4,10 @@ import { SITE_URL } from '@/lib/siteConfig';
 export const DEFAULT_FROM = process.env.EMAIL_USER || 'info@wehosthere.com';
 export const DEFAULT_FROM_NAME = 'WEHOSTHERE';
 
+// Gradiente mesh oficial WEHOSTHERE compatível com clientes de e-mail
+export const WEHOSTHERE_MESH_HEADER_BG =
+  'background-color:#4f46e5;background-image:radial-gradient(circle at 86% 18%, rgba(0,191,165,0.88) 0%, rgba(45,212,191,0) 54%),radial-gradient(circle at 14% 84%, rgba(79,70,229,0.96) 0%, rgba(109,93,252,0) 58%),linear-gradient(135deg,#4f46e5 0%,#0284c7 52%,#009e7f 100%);';
+
 export interface SendEmailOptions {
   to: string;
   fromEmail?: string;
@@ -1203,94 +1207,87 @@ export async function sendAnalyticsMilestoneEmail(data: AnalyticsMilestoneEmailD
   const formattedUniqueVisitors = new Intl.NumberFormat('pt-MZ').format(data.totalUniqueVisitors);
 
   const title = isViews
-    ? `🎉 Marco de ${formattedMilestone} Visualizações Atingido!`
-    : `🚀 Novo Marco: ${formattedMilestone} Visitantes Únicos!`;
+    ? `Marco de ${formattedMilestone} Visualizações Atingido`
+    : `Marco de ${formattedMilestone} Visitantes Únicos`;
 
   const subtitle = isViews
-    ? `O seu site WEHOSTHERE acaba de ultrapassar a marca de <strong>${formattedMilestone} páginas vistas</strong> (+100 visualizações)!`
-    : `O seu site acaba de receber a visita de <strong>${formattedMilestone} sessões/visitantes únicos</strong> (+10 novos visitantes)!`;
+    ? `O seu site WEHOSTHERE ultrapassou a marca de <strong style="color:#ffffff;">${formattedMilestone} páginas vistas</strong> (+100 visualizações).`
+    : `O seu site registou <strong style="color:#ffffff;">${formattedMilestone} visitantes únicos</strong> (+10 novos utilizadores).`;
 
   const topPagesRows = (data.topPages || []).slice(0, 4).map((p, idx) => `
     <tr style="border-bottom:1px solid #f1f5f9;">
-      <td style="padding:8px 6px;color:#64748b;font-weight:700;width:28px;">#${idx + 1}</td>
-      <td style="padding:8px 6px;color:#0f172a;font-family:monospace;font-size:13px;font-weight:600;">${p.page}</td>
-      <td style="padding:8px 6px;color:#2563eb;text-align:right;font-weight:700;">${new Intl.NumberFormat('pt-MZ').format(p.count)} vistas</td>
+      <td style="padding:10px 8px;color:#64748b;font-weight:700;width:32px;font-size:12px;">0${idx + 1}</td>
+      <td style="padding:10px 8px;color:#0f172a;font-family:'SFMono-Regular',Consolas,monospace;font-size:12px;font-weight:600;">${p.page}</td>
+      <td style="padding:10px 8px;color:#4f46e5;text-align:right;font-weight:700;font-size:12px;">${new Intl.NumberFormat('pt-MZ').format(p.count)} vistas</td>
     </tr>
   `).join('');
 
   return sendEmail({
     to: adminEmail,
     subject: isViews
-      ? `📈 [Crescimento] Novo Marco: +100 Visualizações (${formattedMilestone} vistas no total)!`
-      : `👥 [Audiência] Novo Marco: +10 Visitantes Únicos (${formattedMilestone} pessoas)!`,
+      ? `[WEHOSTHERE Analytics] Novo Marco: ${formattedMilestone} Visualizações`
+      : `[WEHOSTHERE Analytics] Novo Marco: ${formattedMilestone} Visitantes Únicos`,
     html: `
-      <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:620px;margin:0 auto;color:#0f172a;border-radius:18px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,0.08);border:1px solid #e2e8f0;background:#ffffff;">
-        <!-- Cabeçalho -->
-        <div style="background:linear-gradient(135deg, ${isViews ? '#2563eb, #1d4ed8, #0ea5e9' : '#059669, #10b981, #065f46'});padding:36px 30px;text-align:center;color:#ffffff;">
-          <div style="display:inline-block;padding:6px 14px;background:rgba(255,255,255,0.2);border-radius:999px;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;backdrop-blur-sm:10px;">
-            ${isViews ? '📊 Marco de Visualizações (+100)' : '👥 Marco de Audiência Única (+10)'}
+      <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;color:#0f172a;border-radius:16px;overflow:hidden;box-shadow:0 12px 36px rgba(15,23,42,0.08);border:1px solid #e2e8f0;background:#ffffff;">
+        <div style="${WEHOSTHERE_MESH_HEADER_BG}padding:36px 28px;text-align:center;color:#ffffff;">
+          <div style="display:inline-block;padding:5px 14px;background:rgba(255,255,255,0.16);border:1px solid rgba(255,255,255,0.28);border-radius:999px;font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:14px;color:#ffffff;">
+            ${isViews ? 'Marco de Visualizações • +100' : 'Marco de Audiência • +10'}
           </div>
-          <h1 style="margin:0 0 8px;font-size:26px;font-weight:800;letter-spacing:-0.5px;color:#ffffff;">
+          <h1 style="margin:0 0 8px;font-size:24px;font-weight:800;letter-spacing:-0.4px;color:#ffffff;">
             ${title}
           </h1>
-          <p style="margin:0;font-size:14px;color:${isViews ? '#bfdbfe' : '#a7f3d0'};line-height:1.5;">
+          <p style="margin:0;font-size:14px;color:rgba(255,255,255,0.88);line-height:1.55;">
             ${subtitle}
           </p>
         </div>
 
-        <!-- Conteúdo Principal -->
-        <div style="padding:32px 28px;">
-          <!-- Cartão Central com o Grande Número -->
-          <div style="background:linear-gradient(180deg,#f8fafc,#f1f5f9);border-radius:14px;padding:24px;text-align:center;border:1px solid #e2e8f0;margin-bottom:24px;">
-            <div style="font-size:12px;text-transform:uppercase;letter-spacing:1.5px;color:#64748b;font-weight:700;margin-bottom:6px;">
+        <div style="padding:30px 28px;">
+          <div style="background:#f8fafc;border-radius:14px;padding:24px;text-align:center;border:1px solid #e2e8f0;margin-bottom:20px;">
+            <div style="font-size:11px;text-transform:uppercase;letter-spacing:1.4px;color:#64748b;font-weight:700;margin-bottom:8px;">
               ${isViews ? 'Total de Páginas Vistas' : 'Total de Visitantes Únicos'}
             </div>
-            <div style="font-size:46px;font-weight:900;color:${isViews ? '#1d4ed8' : '#059669'};line-height:1;margin-bottom:8px;letter-spacing:-1px;">
+            <div style="font-size:44px;font-weight:900;color:#0f172a;line-height:1;margin-bottom:10px;letter-spacing:-1px;">
               ${formattedMilestone}
             </div>
-            <div style="display:inline-block;background:${isViews ? '#dbeafe' : '#d1fae5'};color:${isViews ? '#1e40af' : '#065f46'};font-size:12px;font-weight:700;padding:4px 12px;border-radius:999px;">
-              ${isViews ? '🔥 +100 páginas vistas acumuladas' : '🎯 +10 novos utilizadores distintos'}
+            <div style="display:inline-block;background:${isViews ? '#eef2ff' : '#ecfdf5'};color:${isViews ? '#4338ca' : '#047857'};border:1px solid ${isViews ? '#c7d2fe' : '#a7f3d0'};font-size:12px;font-weight:600;padding:4px 12px;border-radius:999px;">
+              ${isViews ? '+100 páginas vistas acumuladas' : '+10 novos utilizadores distintos'}
             </div>
           </div>
 
-          <!-- Grade de Comparação -->
-          <table style="width:100%;border-collapse:collapse;margin-bottom:24px;">
+          <table style="width:100%;border-collapse:separate;border-spacing:0;margin-bottom:24px;">
             <tr>
-              <td style="width:50%;padding:14px;background:#f8fafc;border-radius:12px 0 0 12px;border:1px solid #e2e8f0;border-right:none;text-align:center;">
-                <div style="font-size:11px;color:#64748b;text-transform:uppercase;font-weight:700;">Visualizações Totais</div>
-                <div style="font-size:22px;font-weight:800;color:#0f172a;margin-top:4px;">${formattedTotalViews}</div>
+              <td style="width:50%;padding:14px;background:#ffffff;border-radius:12px 0 0 12px;border:1px solid #e2e8f0;border-right:none;text-align:center;">
+                <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:0.6px;font-weight:700;">Visualizações Totais</div>
+                <div style="font-size:20px;font-weight:800;color:#0f172a;margin-top:4px;">${formattedTotalViews}</div>
               </td>
-              <td style="width:50%;padding:14px;background:#f8fafc;border-radius:0 12px 12px 0;border:1px solid #e2e8f0;text-align:center;">
-                <div style="font-size:11px;color:#64748b;text-transform:uppercase;font-weight:700;">Visitantes Únicos</div>
-                <div style="font-size:22px;font-weight:800;color:#059669;margin-top:4px;">${formattedUniqueVisitors}</div>
+              <td style="width:50%;padding:14px;background:#ffffff;border-radius:0 12px 12px 0;border:1px solid #e2e8f0;text-align:center;">
+                <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:0.6px;font-weight:700;">Visitantes Únicos</div>
+                <div style="font-size:20px;font-weight:800;color:#009e7f;margin-top:4px;">${formattedUniqueVisitors}</div>
               </td>
             </tr>
           </table>
 
           ${topPagesRows ? `
-            <!-- Top Páginas Acedidas -->
-            <div style="margin-bottom:28px;">
-              <h3 style="margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:#64748b;font-weight:700;">
-                🔥 Páginas Mais Acedidas
+            <div style="margin-bottom:26px;">
+              <h3 style="margin:0 0 10px;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#64748b;font-weight:700;">
+                Páginas Mais Acedidas
               </h3>
-              <table style="width:100%;border-collapse:collapse;font-size:13px;">
+              <table style="width:100%;border-collapse:collapse;border:1px solid #f1f5f9;border-radius:10px;">
                 ${topPagesRows}
               </table>
             </div>
           ` : ''}
 
-          <!-- Ação do Admin -->
-          <div style="text-align:center;padding:12px 0 8px;">
-            <a href="${adminUrl}" style="background:#0f172a;color:#ffffff;font-weight:700;padding:14px 28px;border-radius:12px;text-decoration:none;font-size:14px;display:inline-block;box-shadow:0 4px 14px rgba(15,23,42,0.25);">
-              📊 Abrir Painel de Visitantes em Tempo Real →
+          <div style="text-align:center;padding:8px 0 4px;">
+            <a href="${adminUrl}" style="background:#0f172a;color:#ffffff;font-weight:700;padding:13px 26px;border-radius:10px;text-decoration:none;font-size:13px;display:inline-block;">
+              Abrir Painel de Visitantes &rarr;
             </a>
           </div>
         </div>
 
-        <!-- Rodapé -->
-        <div style="background:#f8fafc;padding:20px 28px;text-align:center;border-top:1px solid #e2e8f0;font-size:12px;color:#94a3b8;">
-          <p style="margin:0 0 4px;">WEHOSTHERE &mdash; Monitoramento Inteligente de Tráfego & Audiência</p>
-          <p style="margin:0;">Notificação gerada automaticamente a cada marco de +100 visualizações e +10 visitantes únicos.</p>
+        <div style="background:#f8fafc;padding:18px 28px;text-align:center;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8;line-height:1.5;">
+          <p style="margin:0 0 3px;font-weight:600;color:#64748b;">WEHOSTHERE &mdash; Monitoramento de Tráfego &amp; Audiência</p>
+          <p style="margin:0;">Notificação automática gerada a cada marco de +100 visualizações e +10 visitantes únicos.</p>
         </div>
       </div>
     `,
