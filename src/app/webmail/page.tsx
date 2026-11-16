@@ -574,7 +574,7 @@ function WebmailContent() {
     return () => clearTimeout(t);
   }, [selectedMessage?.id, selectedMessage?.body, updateViewerScroll]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [deleteConfirmModal, setDeleteConfirmModal] = useState<{ isOpen: boolean; msgId: string; msgIds?: string[]; subject: string; isPermanent: boolean } | null>(null);
+  const [deleteConfirmModal, setDeleteConfirmModal] = useState<{ isOpen: boolean; msgId: string; msgIds?: string[]; subject: string; isPermanent: boolean; emptyFolder?: 'inbox' | 'sent' | 'trash' | 'drafts' | 'scheduled' | 'junk' | 'archive' } | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 
@@ -2410,7 +2410,7 @@ function WebmailContent() {
     }
   };
 
-  const handleEmptyFolder = async () => {
+  const handleEmptyFolder = () => {
     if (!['inbox', 'sent', 'trash', 'drafts', 'scheduled', 'junk', 'archive'].includes(currentFolder)) return;
     const folderLabels: Record<string, string> = {
       inbox: 'Entrada (INBOX)',
@@ -2422,23 +2422,26 @@ function WebmailContent() {
       archive: 'Arquivo',
     };
     const label = folderLabels[currentFolder] || currentFolder;
-    if (
-      !window.confirm(
-        `Tem a certeza que deseja ELIMINAR PERMANENTEMENTE todas as mensagens da pasta "${label}"? Esta ação não pode ser desfeita.`
-      )
-    ) {
-      return;
-    }
+    setDeleteConfirmModal({
+      isOpen: true,
+      msgId: '',
+      subject: `Todas as mensagens da pasta "${label}"`,
+      isPermanent: true,
+      emptyFolder: currentFolder as 'inbox' | 'sent' | 'trash' | 'drafts' | 'scheduled' | 'junk' | 'archive',
+    });
+  };
 
+  const executeEmptyFolder = async (folder: 'inbox' | 'sent' | 'trash' | 'drafts' | 'scheduled' | 'junk' | 'archive') => {
+    setDeleteConfirmModal(null);
     setIsBulkDeleting(true);
     try {
       const res = await webmailManager.deleteAllMessages(
         selectedAccountEmail,
         mailboxPassword,
-        currentFolder as 'inbox' | 'sent' | 'drafts' | 'trash' | 'scheduled' | 'junk' | 'archive'
+        folder
       );
       if (!res.success) {
-        alert(res.error || 'Não foi possível esvaziar a pasta.');
+        setMessagesLoadError(res.error || 'Não foi possível esvaziar a pasta.');
         return;
       }
       setMessages([]);
@@ -2446,11 +2449,11 @@ function WebmailContent() {
       setSelectedIds(new Set());
       setFolderStats(prev => ({
         ...prev,
-        ...(currentFolder === 'inbox' ? { inbox: 0, notifications: 0 } : {}),
-        ...(currentFolder === 'sent' ? { sent: 0 } : {}),
-        ...(currentFolder === 'trash' ? { trash: 0 } : {}),
-        ...(currentFolder === 'drafts' ? { drafts: 0 } : {}),
-        ...(currentFolder === 'scheduled' ? { scheduled: 0 } : {}),
+        ...(folder === 'inbox' ? { inbox: 0, inboxUnread: 0, notifications: 0, notificationsUnread: 0 } : {}),
+        ...(folder === 'sent' ? { sent: 0 } : {}),
+        ...(folder === 'trash' ? { trash: 0 } : {}),
+        ...(folder === 'drafts' ? { drafts: 0 } : {}),
+        ...(folder === 'scheduled' ? { scheduled: 0 } : {}),
       }));
       soundEffects.playDeleteEmailSound?.();
     } finally {
@@ -8708,7 +8711,7 @@ function WebmailContent() {
               </button>
               <button
                 type="button"
-                onClick={() => deleteConfirmModal.msgIds && deleteConfirmModal.msgIds.length > 0 ? executeBulkDelete(deleteConfirmModal.msgIds) : executeDeleteMessage(deleteConfirmModal.msgId)}
+                onClick={() => deleteConfirmModal.emptyFolder ? executeEmptyFolder(deleteConfirmModal.emptyFolder) : (deleteConfirmModal.msgIds && deleteConfirmModal.msgIds.length > 0 ? executeBulkDelete(deleteConfirmModal.msgIds) : executeDeleteMessage(deleteConfirmModal.msgId))}
                 className={`flex-1 py-3 text-white font-black text-xs rounded-2xl transition cursor-pointer shadow-md flex items-center justify-center space-x-2 ${deleteConfirmModal.isPermanent ? 'bg-rose-600 hover:bg-rose-700' : 'bg-amber-600 hover:bg-amber-700'}`}
               >
                 <Trash2 className="h-4 w-4" />
