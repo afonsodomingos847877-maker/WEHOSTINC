@@ -345,6 +345,43 @@ export default function AffiliatesPage() {
 
 
 
+  const [joiningAffiliate, setJoiningAffiliate] = useState(false);
+
+  const handleJoinAffiliate = async () => {
+    if (!acceptedAffiliateTerms) {
+      setTermsWarning(true);
+      return;
+    }
+
+    const userId = session?.user?.id || getUserId(session?.user?.id);
+    if (!userId) {
+      router.push('/login');
+      return;
+    }
+
+    setJoiningAffiliate(true);
+    try {
+      const res = await fetch('/api/affiliates/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        if (typeof window !== 'undefined') {
+          window.history.replaceState({}, '', '/dashboard/affiliates?skipVerification=true');
+        }
+        await fetchAffiliateData();
+      } else {
+        setErrorMessage(data.error || 'Não foi possível entrar no programa de afiliados.');
+      }
+    } catch {
+      setErrorMessage('Erro de ligação ao servidor. Tente novamente.');
+    } finally {
+      setJoiningAffiliate(false);
+    }
+  };
+
   const fetchAffiliateData = useCallback(async () => {
     // Aguardar o NextAuth resolver a sessão antes de qualquer verificação.
     // Enquanto status === 'loading', session.user ainda é undefined - chamar
@@ -640,8 +677,8 @@ export default function AffiliatesPage() {
                   <ShieldCheck className="h-4 w-4 text-emerald-600 flex-shrink-0" />
                   <p className="leading-snug text-xs font-medium">
                     {errorMessage.includes('já é afiliado')
-                      ? 'Verificação de 2 MZN para vincular o seu número.'
-                      : 'Verificação única de 2 MZN para ativar os pagamentos.'}
+                      ? 'A sua conta de afiliado já está criada — entre no painel para verificar o seu número quando desejar.'
+                      : 'Inscrição gratuita — ative a verificação de pagamentos M-Pesa mais tarde dentro do seu painel.'}
                   </p>
                 </div>
               </div>
@@ -689,31 +726,24 @@ export default function AffiliatesPage() {
                   </p>
                 )}
 
-                <Link
-                  href={`/checkout?service=affiliate_verification&amount=2&duration=1&domain=affiliate&userId=${encodeURIComponent(session?.user?.id || '')}`}
-                  onClick={(e) => {
-                    if (!acceptedAffiliateTerms) {
-                      e.preventDefault();
-                      setTermsWarning(true);
-                    }
-                  }}
-                  className={`btn-cta-orbit group w-full flex items-center justify-center gap-2.5 py-3 px-6 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-extrabold rounded-2xl text-sm sm:text-base shadow-md hover:shadow-lg transition-all ${
+                <button
+                  type="button"
+                  onClick={handleJoinAffiliate}
+                  disabled={joiningAffiliate}
+                  className={`btn-cta-orbit group w-full flex items-center justify-center gap-2.5 py-3 px-6 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-extrabold rounded-2xl text-sm sm:text-base shadow-md hover:shadow-lg transition-all cursor-pointer disabled:opacity-60 ${
                     !acceptedAffiliateTerms ? 'opacity-80' : ''
                   }`}
                 >
                   <Users className="h-5 w-5" />
-                  <span>{errorMessage.includes('já é afiliado') ? 'Verificar Telefone - 2 MZN' : 'Tornar-se Afiliado - 2 MZN'}</span>
+                  <span>
+                    {joiningAffiliate
+                      ? 'A entrar no painel...'
+                      : errorMessage.includes('já é afiliado')
+                      ? 'Entrar no Painel de Afiliado'
+                      : 'Tornar-se Afiliado Gratuitamente'}
+                  </span>
                   <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
-                </Link>
-
-                <div className="text-center">
-                  <button
-                    onClick={() => router.push('/dashboard/affiliates?skipVerification=true')}
-                    className="text-xs text-slate-400 hover:text-slate-600 transition underline cursor-pointer"
-                  >
-                    Pagar depois
-                  </button>
-                </div>
+                </button>
               </div>
             </div>
 
@@ -758,8 +788,8 @@ export default function AffiliatesPage() {
               <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 border border-slate-100">
                 <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-600 text-white text-[11px] font-black shrink-0">1</span>
                 <div className="min-w-0">
-                  <h3 className="text-xs font-bold text-slate-900 leading-tight">Ative a conta</h3>
-                  <p className="text-[11px] text-slate-500 truncate">Taxa de 2 MZN</p>
+                  <h3 className="text-xs font-bold text-slate-900 leading-tight">Crie a conta</h3>
+                  <p className="text-[11px] text-slate-500 truncate">Inscrição gratuita</p>
                 </div>
               </div>
               <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 border border-slate-100">
