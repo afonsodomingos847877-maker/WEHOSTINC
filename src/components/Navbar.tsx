@@ -4,11 +4,10 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
-import { Menu, X, LayoutDashboard, LogOut, User as UserIcon, LogIn, UserPlus, Sun, Moon } from 'lucide-react';
+import { Menu, X, Check, LayoutDashboard, LogOut, User as UserIcon, LogIn, UserPlus, Sun, Moon } from 'lucide-react';
 import BrandLogo from '@/components/BrandLogo';
 import PageLoader from '@/components/PageLoader';
 import LanguageSelector from '@/components/LanguageSelector';
-import Toast from '@/components/Toast';
 import { useLanguage } from '@/context/LanguageContext';
 import { useTheme } from '@/context/ThemeContext';
 import { soundEffects } from '@/lib/soundEffects';
@@ -23,6 +22,12 @@ export default function Navbar() {
   const [user, setUser] = useState<User | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [showLogoutToast, setShowLogoutToast] = useState(false);
+
+  useEffect(() => {
+    if (!showLogoutToast) return;
+    const timer = setTimeout(() => setShowLogoutToast(false), 3800);
+    return () => clearTimeout(timer);
+  }, [showLogoutToast]);
 
   useEffect(() => {
     // Verificar se acabou de fazer logout via URL ou sessionStorage
@@ -102,14 +107,26 @@ export default function Navbar() {
   return (
     <>
       {showLogoutToast && (
-        <Toast
-          type="success"
-          title="Sessão Encerrada"
-          message="A sua conta foi desvinculada com segurança. Até breve!"
-          onClose={() => setShowLogoutToast(false)}
-          duration={3800}
-          position="bottom-right"
-        />
+        <div
+          role="status"
+          className="fixed top-16 right-4 sm:right-6 z-50 max-w-xs bg-white/95 backdrop-blur-md border border-neutral-200/90 rounded-2xl shadow-lg px-3.5 py-2.5 flex items-center gap-2.5 animate-in fade-in slide-in-from-top-2 duration-200"
+        >
+          <span className="w-6 h-6 rounded-full bg-neutral-950 text-white flex items-center justify-center shrink-0">
+            <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-bold text-neutral-900 leading-tight">Sessão Encerrada</p>
+            <p className="text-[11px] text-neutral-500 leading-tight mt-0.5 truncate">Conta desvinculada com segurança.</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowLogoutToast(false)}
+            aria-label="Fechar aviso"
+            className="p-1 text-neutral-400 hover:text-neutral-700 rounded-lg transition cursor-pointer shrink-0"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
       )}
       <header className="sticky top-0 z-50 bg-white/95 dark:bg-black/85 backdrop-blur-md border-b border-gray-100/90 dark:border-white/10 shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-[0_1px_5px_rgba(0,0,0,0.6)] transition-colors duration-300">
       {isLoggingOut && <PageLoader text="A encerrar a sua sessão com segurança..." />}
