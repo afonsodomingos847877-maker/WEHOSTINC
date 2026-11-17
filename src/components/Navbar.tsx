@@ -9,7 +9,6 @@ import BrandLogo from '@/components/BrandLogo';
 import PageLoader from '@/components/PageLoader';
 import LanguageSelector from '@/components/LanguageSelector';
 import { useLanguage } from '@/context/LanguageContext';
-import { useCurrency } from '@/context/CurrencyContext';
 import { useTheme } from '@/context/ThemeContext';
 import { soundEffects } from '@/lib/soundEffects';
 import { auth, User } from '@/lib/auth';
@@ -17,7 +16,6 @@ import { auth, User } from '@/lib/auth';
 export default function Navbar() {
   const router = useRouter();
   const { t } = useLanguage();
-  const { currency, setCurrency } = useCurrency();
   const { theme, toggleTheme } = useTheme();
   const { data: session } = useSession();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -194,35 +192,6 @@ export default function Navbar() {
           <div className="hidden md:flex items-center space-x-2 lg:space-x-2.5 shrink-0">
             {/* Seletor de Idioma */}
             <LanguageSelector />
-            {/* Seletor de Moeda (MZN / USD) */}
-            <div
-              className="inline-flex items-center rounded-lg border border-gray-200/80 dark:border-white/10 bg-gray-100 dark:bg-white/10 p-0.5 text-[11px] font-semibold"
-              role="group"
-              aria-label="Selecionar moeda"
-            >
-              <button
-                type="button"
-                onClick={() => setCurrency('MZN')}
-                className={`px-2 py-1 rounded-md transition ${
-                  currency === 'MZN'
-                    ? 'bg-white dark:bg-gray-900 text-primary-600 dark:text-blue-400 shadow-sm'
-                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
-                }`}
-              >
-                MZN
-              </button>
-              <button
-                type="button"
-                onClick={() => setCurrency('USD')}
-                className={`px-2 py-1 rounded-md transition ${
-                  currency === 'USD'
-                    ? 'bg-white dark:bg-gray-900 text-primary-600 dark:text-blue-400 shadow-sm'
-                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
-                }`}
-              >
-                USD
-              </button>
-            </div>
 
             {/* Botão de Alternar Modo Claro / Modo Escuro (Apple Style) */}
             <button
@@ -295,14 +264,6 @@ export default function Navbar() {
           {/* Mobile Hamburger & Theme Button */}
           <div className="flex md:hidden items-center space-x-1 sm:space-x-1.5">
             <LanguageSelector />
-            <button
-              type="button"
-              onClick={() => setCurrency(currency === 'MZN' ? 'USD' : 'MZN')}
-              className="px-2 py-1 rounded-lg text-[11px] font-bold text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-white/10 border border-gray-200/80 dark:border-white/10 transition"
-              title="Alternar moeda (MZN / USD)"
-            >
-              {currency === 'MZN' ? 'MZN' : 'USD'}
-            </button>
             <button
               type="button"
               onClick={handleToggleTheme}

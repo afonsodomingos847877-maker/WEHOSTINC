@@ -24,7 +24,7 @@ import { soundEffects } from '@/lib/soundEffects';
 
 export default function Home() {
   const { t, language } = useLanguage();
-  const { formatPrice } = useCurrency();
+  const { formatPrice, currency, setCurrency } = useCurrency();
   const [durationMonths, setDurationMonths] = useState<number>(1);
   const [activePricingPlan, setActivePricingPlan] = useState<'basic' | 'pro' | 'enterprise'>('pro');
   const [isPricingInteracted, setIsPricingInteracted] = useState(false);
@@ -460,8 +460,9 @@ export default function Home() {
               highlightWords={['Hospedagem', 'Hosting', 'Planos', 'Plans']}
             />
 
-            {/* Seleção de Duração / Período da Hospedagem */}
-            <div className="inline-flex flex-wrap items-center justify-center bg-gray-200 p-1.5 rounded-2xl border border-gray-300 shadow-inner gap-1 max-w-full">
+            {/* Seleção de Duração / Período da Hospedagem + Moeda */}
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <div className="inline-flex flex-wrap items-center justify-center bg-gray-200 p-1.5 rounded-2xl border border-gray-300 shadow-inner gap-1 max-w-full">
               <button
                 type="button"
                 onClick={() => {
@@ -523,6 +524,39 @@ export default function Home() {
                   {t('pricing.2months_free')}
                 </span>
               </button>
+              </div>
+
+              {/* Seletor rápido de Moeda (MZN / USD) */}
+              <div
+                className="inline-flex items-center bg-gray-200 p-1.5 rounded-2xl border border-gray-300 shadow-inner gap-1"
+                role="group"
+                aria-label="Selecionar moeda nos planos"
+              >
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundEffects.playClickSound();
+                    setCurrency('MZN');
+                  }}
+                  className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-[10px] sm:text-xs font-bold transition-all duration-300 cursor-pointer hover:scale-105 active:scale-95 ${
+                    currency === 'MZN' ? 'bg-white text-gray-900 shadow-md scale-105' : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  🇲🇿 MZN
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundEffects.playClickSound();
+                    setCurrency('USD');
+                  }}
+                  className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-[10px] sm:text-xs font-bold transition-all duration-300 cursor-pointer hover:scale-105 active:scale-95 ${
+                    currency === 'USD' ? 'bg-white text-gray-900 shadow-md scale-105' : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  🇺🇸 USD
+                </button>
+              </div>
             </div>
           </div>
 
