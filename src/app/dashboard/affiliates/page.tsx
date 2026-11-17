@@ -348,6 +348,7 @@ export default function AffiliatesPage() {
   const [joiningAffiliate, setJoiningAffiliate] = useState(false);
   const [copyProduct, setCopyProduct] = useState<'dominios' | 'emails' | 'sites' | 'hospedagem' | 'cursos'>('dominios');
   const [copyChannel, setCopyChannel] = useState<'whatsapp' | 'social' | 'status' | 'email'>('whatsapp');
+  const [copyTargetNiche, setCopyTargetNiche] = useState<string>('');
   const [copyVariantIndex, setCopyVariantIndex] = useState(0);
   const [copiedGeneratedCopy, setCopiedGeneratedCopy] = useState(false);
 
@@ -1669,88 +1670,122 @@ export default function AffiliatesPage() {
                   ? baseAffiliateLink
                   : `${baseAffiliateLink}?to=${encodeURIComponent(destPath)}`;
 
+              const nicheTag = copyTargetNiche.trim()
+                ? ` para ${copyTargetNiche.trim()}`
+                : '';
+
               const copyTemplates: Record<
                 typeof copyProduct,
                 Record<typeof copyChannel, string[]>
               > = {
                 dominios: {
                   whatsapp: [
-                    `Olá! Sabia que pode registar o domínio oficial da sua empresa (.co.mz ou .com) em poucos minutos e com pagamento direto via M-Pesa ou Cartão? Garanta já o nome da sua marca antes que outra pessoa registe:\n👉 ${finalAffiliateLink}`,
-                    `Bom dia! Para dar mais credibilidade ao seu negócio em Moçambique, recomendo registar o seu domínio próprio .co.mz ou .com na WEHOSTHERE. A ativação é rápida e o suporte é local:\n👉 ${finalAffiliateLink}`,
-                    `Olá! Está a pensar criar o site ou e-mail da sua empresa? O primeiro passo é garantir o seu domínio .co.mz ou .com. Veja se o nome da sua empresa está disponível aqui:\n👉 ${finalAffiliateLink}`,
+                    `Olá! Sabia que pode registar o domínio oficial da sua empresa${nicheTag} (.co.mz ou .com) em poucos minutos e com pagamento direto via M-Pesa ou Cartão? Garanta já o nome da sua marca antes que outra pessoa registe:\n👉 ${finalAffiliateLink}`,
+                    `Bom dia! Para dar mais credibilidade ao seu negócio${nicheTag} em Moçambique, recomendo registar o seu domínio próprio .co.mz ou .com na WEHOSTHERE. A ativação é rápida e o suporte é local:\n👉 ${finalAffiliateLink}`,
+                    `Olá! Está a pensar criar o site ou e-mail da sua empresa${nicheTag}? O primeiro passo é garantir o seu domínio .co.mz ou .com. Veja se o nome da sua empresa está disponível aqui:\n👉 ${finalAffiliateLink}`,
+                    `Olá! Muitos clientes pesquisam no Google antes de fechar negócio${nicheTag}. Já verificou se o domínio .co.mz ou .com da sua empresa ainda está livre? Consulte e registe em 2 minutos:\n👉 ${finalAffiliateLink}`,
+                    `Dica rápida para proteger a sua marca${nicheTag}: registe hoje o seu domínio oficial .co.mz ou .com na WEHOSTHERE com pagamento simples via M-Pesa:\n👉 ${finalAffiliateLink}`,
                   ],
                   social: [
-                    `🌐 A sua marca já tem endereço próprio na internet?\n\nNão deixe que outra pessoa registe o nome da sua empresa! Garanta hoje o seu domínio .co.mz ou .com na WEHOSTHERE com ativação rápida e pagamento via M-Pesa ou Cartão.\n\n👇 Pesquise e registe aqui:\n${finalAffiliateLink}`,
-                    `💡 Um domínio .co.mz transmite confiança imediata aos seus clientes em Moçambique.\n\nRegiste o domínio da sua empresa em minutos na WEHOSTHERE:\n👉 ${finalAffiliateLink}`,
+                    `🌐 A sua marca${nicheTag} já tem endereço próprio na internet?\n\nNão deixe que outra pessoa registe o nome da sua empresa! Garanta hoje o seu domínio .co.mz ou .com na WEHOSTHERE com ativação rápida e pagamento via M-Pesa ou Cartão.\n\n👇 Pesquise e registe aqui:\n${finalAffiliateLink}`,
+                    `💡 Um domínio .co.mz transmite confiança imediata aos seus clientes${nicheTag} em Moçambique.\n\nRegiste o domínio da sua empresa em minutos na WEHOSTHERE:\n👉 ${finalAffiliateLink}`,
+                    `🚀 Toda grande empresa${nicheTag} começa com um nome forte na internet!\n\n✅ Domínios .co.mz, .com, .org e .net\n✅ Registo rápido e seguro\n✅ Pagamento local via M-Pesa ou Cartão\n\n👇 Garanta já o seu:\n${finalAffiliateLink}`,
+                    `⚠️ Não corra o risco de perder o nome da sua empresa${nicheTag} na web! Verifique agora a disponibilidade do seu domínio .co.mz ou .com na WEHOSTHERE:\n👉 ${finalAffiliateLink}`,
                   ],
                   status: [
-                    `🔥 Garanta o domínio .co.mz ou .com da sua empresa hoje mesmo! Pagamento fácil via M-Pesa 👇\n${finalAffiliateLink}`,
-                    `🌐 Verifique se o nome da sua empresa está disponível (.co.mz / .com) clicando aqui:\n${finalAffiliateLink}`,
+                    `🔥 Garanta o domínio .co.mz ou .com da sua empresa${nicheTag} hoje mesmo! Pagamento fácil via M-Pesa 👇\n${finalAffiliateLink}`,
+                    `🌐 Verifique se o nome da sua empresa${nicheTag} está disponível (.co.mz / .com) clicando aqui:\n${finalAffiliateLink}`,
+                    `🚀 Registe o domínio oficial do seu negócio${nicheTag} em minutos na WEHOSTHERE 👇\n${finalAffiliateLink}`,
+                    `💼 Proteja o nome da sua marca${nicheTag} na internet (.co.mz e .com):\n${finalAffiliateLink}`,
                   ],
                   email: [
-                    `Assunto: Registo do domínio oficial (.co.mz / .com) da sua empresa\n\nOlá,\n\nPara proteger a identidade da sua marca na internet e transmitir maior credibilidade comercial, recomendo o registo do domínio oficial (.co.mz ou .com) através da plataforma WEHOSTHERE.\n\nPode verificar a disponibilidade e concluir o registo em minutos pelo link abaixo:\n${finalAffiliateLink}\n\nMelhores cumprimentos`,
+                    `Assunto: Registo do domínio oficial (.co.mz / .com) da sua empresa${nicheTag}\n\nOlá,\n\nPara proteger a identidade da sua marca na internet e transmitir maior credibilidade comercial, recomendo o registo do domínio oficial (.co.mz ou .com) através da plataforma WEHOSTHERE.\n\nPode verificar a disponibilidade e concluir o registo em minutos pelo link abaixo:\n${finalAffiliateLink}\n\nMelhores cumprimentos`,
+                    `Assunto: O domínio .co.mz da sua empresa${nicheTag} já está registado?\n\nOlá,\n\nTer um endereço próprio (.co.mz ou .com) valoriza a imagem da sua empresa e permite criar e-mails corporativos e website oficial. Na WEHOSTHERE o processo é imediato e aceita M-Pesa ou Cartão.\n\nVerifique a disponibilidade aqui:\n${finalAffiliateLink}\n\nAtenciosamente`,
+                    `Assunto: Garanta a presença digital oficial da sua marca${nicheTag}\n\nOlá,\n\nPartilho consigo o link oficial da WEHOSTHERE onde pode registar o domínio .co.mz ou .com da sua instituição com suporte técnico local 24/7:\n${finalAffiliateLink}\n\nCumprimentos`,
                   ],
                 },
                 emails: {
                   whatsapp: [
-                    `Olá! Reparou que usar @gmail.com em propostas comerciais pode fazer a sua empresa perder credibilidade? Na WEHOSTHERE consegue criar e-mails profissionais com o nome da sua empresa (ex: info@suaempresa.co.mz) a partir de 550 MT/mês:\n👉 ${finalAffiliateLink}`,
-                    `Bom dia! Quer passar uma imagem 100% profissional aos seus clientes? Ative o E-mail Corporativo da sua empresa (contato@suaempresa.co.mz, comercial@suaempresa.co.mz) com webmail e proteção anti-spam na WEHOSTHERE:\n👉 ${finalAffiliateLink}`,
-                    `Olá! Sabia que pode ter contas de e-mail profissionais com o domínio da sua empresa e abrir diretamente no telemóvel ou computador? Veja como ativar na WEHOSTHERE:\n👉 ${finalAffiliateLink}`,
+                    `Olá! Reparou que usar @gmail.com em propostas comerciais${nicheTag} pode fazer a sua empresa perder credibilidade? Na WEHOSTHERE consegue criar e-mails profissionais com o nome da sua empresa (ex: info@suaempresa.co.mz) a partir de 550 MT/mês:\n👉 ${finalAffiliateLink}`,
+                    `Bom dia! Quer passar uma imagem 100% profissional aos seus clientes${nicheTag}? Ative o E-mail Corporativo da sua empresa (contato@suaempresa.co.mz, comercial@suaempresa.co.mz) com webmail e proteção anti-spam na WEHOSTHERE:\n👉 ${finalAffiliateLink}`,
+                    `Olá! Sabia que pode ter contas de e-mail profissionais${nicheTag} com o domínio da sua empresa e abrir diretamente no telemóvel ou computador? Veja como ativar na WEHOSTHERE:\n👉 ${finalAffiliateLink}`,
+                    `Olá! Quando envia uma fatura ou cotação${nicheTag}, o cliente repara logo no seu endereço de e-mail. Crie hoje o seu e-mail @suaempresa.co.mz na WEHOSTHERE com pagamento via M-Pesa:\n👉 ${finalAffiliateLink}`,
+                    `Dica profissional${nicheTag}: organize toda a comunicação da sua equipa com e-mails corporativos personalizados (geral@, financeiro@, vendas@) na WEHOSTHERE:\n👉 ${finalAffiliateLink}`,
                   ],
                   social: [
-                    `📧 A sua empresa ainda envia orçamentos usando @gmail.com?\n\nPasse mais confiança e feche mais negócios com um E-mail Corporativo próprio (ex: info@suaempresa.co.mz).\n\n✅ Webmail no telemóvel e PC\n✅ Proteção Anti-Spam\n✅ Pagamento via M-Pesa ou Cartão\n\n👇 Ative agora na WEHOSTHERE:\n${finalAffiliateLink}`,
-                    `💼 Destaque a sua empresa em cada mensagem enviada! Crie os seus e-mails corporativos (@suaempresa.co.mz) na WEHOSTHERE:\n👉 ${finalAffiliateLink}`,
+                    `📧 A sua empresa${nicheTag} ainda envia orçamentos usando @gmail.com?\n\nPasse mais confiança e feche mais negócios com um E-mail Corporativo próprio (ex: info@suaempresa.co.mz).\n\n✅ Webmail no telemóvel e PC\n✅ Proteção Anti-Spam\n✅ Pagamento via M-Pesa ou Cartão\n\n👇 Ative agora na WEHOSTHERE:\n${finalAffiliateLink}`,
+                    `💼 Destaque a sua empresa${nicheTag} em cada mensagem enviada! Crie os seus e-mails corporativos (@suaempresa.co.mz) na WEHOSTHERE:\n👉 ${finalAffiliateLink}`,
+                    `🚀 Clientes confiam muito mais em empresas${nicheTag} que comunicam com domínio próprio (@suaempresa.co.mz)!\n\nAtive o seu E-mail Corporativo em poucos cliques:\n👇 ${finalAffiliateLink}`,
+                    `✨ Dê um passo de profissionalismo no seu negócio${nicheTag}: contas de e-mail corporativo com suporte 24/7 na WEHOSTHERE:\n👉 ${finalAffiliateLink}`,
                   ],
                   status: [
-                    `📧 Troque o @gmail.com por @suaempresa.co.mz hoje mesmo! E-mail profissional na WEHOSTHERE 👇\n${finalAffiliateLink}`,
-                    `💼 Mais credibilidade para o seu negócio com E-mail Corporativo profissional:\n${finalAffiliateLink}`,
+                    `📧 Troque o @gmail.com por @suaempresa.co.mz hoje mesmo! E-mail profissional${nicheTag} na WEHOSTHERE 👇\n${finalAffiliateLink}`,
+                    `💼 Mais credibilidade para o seu negócio${nicheTag} com E-mail Corporativo profissional:\n${finalAffiliateLink}`,
+                    `🚀 Crie e-mails profissionais para a sua equipa${nicheTag} (info@, comercial@) com pagamento via M-Pesa 👇\n${finalAffiliateLink}`,
                   ],
                   email: [
-                    `Assunto: E-mail Corporativo Profissional (@suaempresa.co.mz) para a sua equipa\n\nOlá,\n\nPara reforçar a imagem institucional da sua empresa junto de clientes e parceiros, recomendo a solução de E-mail Corporativo da WEHOSTHERE, com domínio próprio, proteção anti-spam e acesso em qualquer dispositivo.\n\nConsulte os planos e ative aqui:\n${finalAffiliateLink}\n\nMelhores cumprimentos`,
+                    `Assunto: E-mail Corporativo Profissional (@suaempresa.co.mz) para a sua equipa${nicheTag}\n\nOlá,\n\nPara reforçar a imagem institucional da sua empresa junto de clientes e parceiros, recomendo a solução de E-mail Corporativo da WEHOSTHERE, com domínio próprio, proteção anti-spam e acesso em qualquer dispositivo.\n\nConsulte os planos e ative aqui:\n${finalAffiliateLink}\n\nMelhores cumprimentos`,
+                    `Assunto: Profissionalize a comunicação da sua empresa${nicheTag}\n\nOlá,\n\nSubstituir contas gratuitas (@gmail.com) por e-mails corporativos (@suaempresa.co.mz) aumenta significativamente a taxa de resposta em propostas comerciais. Conheça os planos da WEHOSTHERE:\n${finalAffiliateLink}\n\nAtenciosamente`,
                   ],
                 },
                 sites: {
                   whatsapp: [
-                    `Olá! Precisa de um Website Profissional ou Loja Online pronta para vender 24h por dia com M-Pesa integrado? Na WEHOSTHERE desenvolvemos sites modernos para empresas, clínicas, escolas, lojas e escritórios:\n👉 ${finalAffiliateLink}`,
-                    `Bom dia! Sabia que ter um site profissional aumenta a confiança dos clientes e atrai novos pedidos todos os dias no Google? Veja os modelos e peça o seu site na WEHOSTHERE:\n👉 ${finalAffiliateLink}`,
-                    `Olá! Se quer colocar o seu negócio online com design moderno, rápido no telemóvel e domínio incluído, recomendo a criação de sites da WEHOSTHERE. Confira aqui:\n👉 ${finalAffiliateLink}`,
+                    `Olá! Precisa de um Website Profissional ou Loja Online${nicheTag} pronta para vender 24h por dia com M-Pesa integrado? Na WEHOSTHERE desenvolvemos sites modernos para empresas, clínicas, escolas, lojas e escritórios:\n👉 ${finalAffiliateLink}`,
+                    `Bom dia! Sabia que ter um site profissional${nicheTag} aumenta a confiança dos clientes e atrai novos pedidos todos os dias no Google? Veja os modelos e peça o seu site na WEHOSTHERE:\n👉 ${finalAffiliateLink}`,
+                    `Olá! Se quer colocar o seu negócio${nicheTag} online com design moderno, rápido no telemóvel e domínio incluído, recomendo a criação de sites da WEHOSTHERE. Confira aqui:\n👉 ${finalAffiliateLink}`,
+                    `Olá! Hoje em dia quem não aparece no Google perde clientes para a concorrência${nicheTag}. Veja como ter o site oficial da sua empresa pronto em poucos dias na WEHOSTHERE:\n👉 ${finalAffiliateLink}`,
+                    `Quer receber pedidos e orçamentos automáticos no WhatsApp através de um site profissional${nicheTag}? Conheça os pacotes de criação de sites da WEHOSTHERE:\n👉 ${finalAffiliateLink}`,
                   ],
                   social: [
-                    `💻 O seu negócio merece um Website Profissional que vende por si 24 horas por dia!\n\nNa WEHOSTHERE criamos:\n✅ Sites Institucionais para Empresas\n✅ Lojas Online com M-Pesa\n✅ Landing Pages de Alta Conversão\n\n👇 Simule e peça o seu site agora:\n${finalAffiliateLink}`,
-                    `🚀 Transforme visitantes em clientes com um Website Profissional ou Loja Online na WEHOSTHERE! Veja os pacotes:\n👉 ${finalAffiliateLink}`,
+                    `💻 O seu negócio${nicheTag} merece um Website Profissional que vende por si 24 horas por dia!\n\nNa WEHOSTHERE criamos:\n✅ Sites Institucionais para Empresas\n✅ Lojas Online com M-Pesa\n✅ Landing Pages de Alta Conversão\n\n👇 Simule e peça o seu site agora:\n${finalAffiliateLink}`,
+                    `🚀 Transforme visitantes em clientes com um Website Profissional ou Loja Online${nicheTag} na WEHOSTHERE! Veja os pacotes:\n👉 ${finalAffiliateLink}`,
+                    `🌍 Seja encontrado no Google por quem procura os seus serviços${nicheTag}!\n\nDesign moderno, adaptado para telemóvel, otimizado para SEO e com botão direto para o seu WhatsApp.\n\n👇 Peça o seu site na WEHOSTHERE:\n${finalAffiliateLink}`,
+                    `🔥 Quer vender online em Moçambique com pagamentos automáticos via M-Pesa? Crie a sua Loja Online ou Site Empresarial${nicheTag} na WEHOSTHERE:\n👉 ${finalAffiliateLink}`,
                   ],
                   status: [
-                    `💻 Precisa de um Site Profissional ou Loja Online com M-Pesa? Peça já na WEHOSTHERE 👇\n${finalAffiliateLink}`,
-                    `🚀 Coloque a sua empresa no Google com um site moderno e rápido:\n${finalAffiliateLink}`,
+                    `💻 Precisa de um Site Profissional ou Loja Online com M-Pesa${nicheTag}? Peça já na WEHOSTHERE 👇\n${finalAffiliateLink}`,
+                    `🚀 Coloque a sua empresa${nicheTag} no Google com um site moderno e rápido:\n${finalAffiliateLink}`,
+                    `🌟 Criação de Websites, Lojas Online e Sistemas${nicheTag} em Moçambique 👇\n${finalAffiliateLink}`,
                   ],
                   email: [
-                    `Assunto: Criação de Website Profissional / Loja Online para a sua empresa\n\nOlá,\n\nPara expandir a presença digital da sua empresa e captar clientes através do Google e redes sociais, recomendo os serviços de Criação de Websites Profissionais da WEHOSTHERE.\n\nPode conhecer os pacotes e solicitar o seu projeto diretamente neste link:\n${finalAffiliateLink}\n\nMelhores cumprimentos`,
+                    `Assunto: Criação de Website Profissional / Loja Online para a sua empresa${nicheTag}\n\nOlá,\n\nPara expandir a presença digital da sua empresa e captar clientes através do Google e redes sociais, recomendo os serviços de Criação de Websites Profissionais da WEHOSTHERE.\n\nPode conhecer os pacotes e solicitar o seu projeto diretamente neste link:\n${finalAffiliateLink}\n\nMelhores cumprimentos`,
+                    `Assunto: Proposta de modernização digital e Website Oficial${nicheTag}\n\nOlá,\n\nTer um website rápido, seguro e otimizado para telemóveis é essencial para apresentar o portfólio e serviços da sua empresa. Veja os pacotes chave-na-mão da WEHOSTHERE:\n${finalAffiliateLink}\n\nAtenciosamente`,
                   ],
                 },
                 hospedagem: {
                   whatsapp: [
-                    `Olá! Procura hospedagem de sites rápida, segura e com pagamento fácil em Meticais (M-Pesa) ou Cartão? Conheça os planos da WEHOSTHERE com cPanel, SSD NVMe e SSL gratuito a partir de 550 MT/mês:\n👉 ${finalAffiliateLink}`,
-                    `Bom dia! Se já tem um site ou sistema e precisa de um servidor rápido com suporte 24/7 e certificado SSL grátis, recomendo a Hospedagem Web da WEHOSTHERE:\n👉 ${finalAffiliateLink}`,
+                    `Olá! Procura hospedagem de sites rápida, segura e com pagamento fácil em Meticais (M-Pesa) ou Cartão${nicheTag}? Conheça os planos da WEHOSTHERE com cPanel, SSD NVMe e SSL gratuito a partir de 550 MT/mês:\n👉 ${finalAffiliateLink}`,
+                    `Bom dia! Se já tem um site ou sistema${nicheTag} e precisa de um servidor rápido com suporte 24/7 e certificado SSL grátis, recomendo a Hospedagem Web da WEHOSTHERE:\n👉 ${finalAffiliateLink}`,
+                    `Olá! Cansado de servidores lentos ou de dificuldade para pagar alojamento web em moeda estrangeira? Na WEHOSTHERE paga em M-Pesa ou Cartão e tem cPanel + SSL grátis:\n👉 ${finalAffiliateLink}`,
+                    `Dica para programadores, agências e empresas${nicheTag}: hospedagem WordPress e cPanel ultra-rápida em Moçambique é na WEHOSTHERE. Confira os planos:\n👉 ${finalAffiliateLink}`,
                   ],
                   social: [
-                    `🚀 Hospedagem de Sites de Alta Performance na WEHOSTHERE!\n\n✅ Discos SSD NVMe ultra-rápidos\n✅ Certificado SSL Gratuito\n✅ Painel cPanel + E-mails incluídos\n✅ Pagamento via M-Pesa ou Cartão\n\n👇 Escolha o seu plano a partir de 550 MT/mês:\n${finalAffiliateLink}`,
+                    `🚀 Hospedagem de Sites de Alta Performance${nicheTag} na WEHOSTHERE!\n\n✅ Discos SSD NVMe ultra-rápidos\n✅ Certificado SSL Gratuito\n✅ Painel cPanel + E-mails incluídos\n✅ Pagamento via M-Pesa ou Cartão\n\n👇 Escolha o seu plano a partir de 550 MT/mês:\n${finalAffiliateLink}`,
+                    `⚡ O seu site está lento ou fora do ar? Migre para a WEHOSTHERE e tenha 99.9% de uptime, SSL grátis e suporte técnico sempre disponível!\n\n👉 ${finalAffiliateLink}`,
+                    `💻 Alojamento Web profissional em Moçambique sem complicações: ative em minutos com M-Pesa na WEHOSTHERE:\n👉 ${finalAffiliateLink}`,
                   ],
                   status: [
                     `🚀 Hospedagem de Sites com SSL Grátis, cPanel e pagamento via M-Pesa a partir de 550 MT/mês 👇\n${finalAffiliateLink}`,
+                    `⚡ Servidor rápido e seguro para o seu site ou sistema na WEHOSTHERE 👇\n${finalAffiliateLink}`,
                   ],
                   email: [
-                    `Assunto: Alojamento Web de Alta Performance com cPanel e SSL Gratuito\n\nOlá,\n\nPara alojar o site e os e-mails da sua empresa com máxima velocidade, segurança e suporte técnico dedicado, recomendo os planos de Hospedagem da WEHOSTHERE.\n\nConfira os planos disponíveis aqui:\n${finalAffiliateLink}\n\nMelhores cumprimentos`,
+                    `Assunto: Alojamento Web de Alta Performance com cPanel e SSL Gratuito${nicheTag}\n\nOlá,\n\nPara alojar o site e os e-mails da sua empresa com máxima velocidade, segurança e suporte técnico dedicado, recomendo os planos de Hospedagem da WEHOSTHERE.\n\nConfira os planos disponíveis aqui:\n${finalAffiliateLink}\n\nMelhores cumprimentos`,
+                    `Assunto: Solução de Hospedagem Web e Servidores VPS em Moçambique\n\nOlá,\n\nPartilho os planos de alojamento web da WEHOSTHERE com armazenamento SSD NVMe, certificado SSL gratuito e faturação local simplificada:\n${finalAffiliateLink}\n\nAtenciosamente`,
                   ],
                 },
                 cursos: {
                   whatsapp: [
                     `Olá! Quer aprender na prática a criar sites, programar e dominar ferramentas digitais com certificado oficial? Conheça os cursos da Academia WEHOSTHERE (pode até pagar em 2 parcelas via M-Pesa):\n👉 ${finalAffiliateLink}`,
+                    `Bom dia! Sabia que pode aprender a criar sites profissionais do zero e ganhar dinheiro prestando serviços digitais? Veja os cursos práticos da Academia WEHOSTHERE:\n👉 ${finalAffiliateLink}`,
+                    `Olá! Se procura formação prática em tecnologia com certificado reconhecido e acesso imediato às aulas, recomendo a Academia WEHOSTHERE:\n👉 ${finalAffiliateLink}`,
                   ],
                   social: [
                     `🎓 Aprenda tecnologia na prática e impulsione a sua carreira na Academia WEHOSTHERE!\n\n✅ Aulas 100% práticas\n✅ Certificado Oficial de Conclusão\n✅ Opção de pagamento parcelado via M-Pesa\n\n👇 Inscreva-se aqui:\n${finalAffiliateLink}`,
+                    `💻 Quer dominar Criação de Sites e Marketing Digital em Moçambique? Comece hoje na Academia WEHOSTHERE e receba o seu Certificado Oficial:\n👉 ${finalAffiliateLink}`,
                   ],
                   status: [
                     `🎓 Cursos práticos de tecnologia com Certificado Oficial na Academia WEHOSTHERE 👇\n${finalAffiliateLink}`,
+                    `🚀 Aprenda a criar sites e projetos digitais passo a passo (pagamento fácil via M-Pesa):\n${finalAffiliateLink}`,
                   ],
                   email: [
                     `Assunto: Cursos Práticos com Certificado Oficial — Academia WEHOSTHERE\n\nOlá,\n\nRecomendo conhecer os cursos práticos da Academia WEHOSTHERE, com acesso imediato e certificado oficial de conclusão:\n${finalAffiliateLink}\n\nMelhores cumprimentos`,
@@ -1768,30 +1803,33 @@ export default function AffiliatesPage() {
                 setTimeout(() => setCopiedGeneratedCopy(false), 2500);
               };
 
+              const handleRequestMoreCopy = () => {
+                setCopyVariantIndex((prev) => prev + 1);
+                setCopiedGeneratedCopy(false);
+              };
+
               return (
                 <div className="mb-8 p-4 sm:p-6 rounded-2xl bg-gradient-to-br from-purple-50/80 via-white to-indigo-50/60 border-2 border-purple-200/80 shadow-sm">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                     <div>
                       <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-purple-100 text-purple-800 mb-1">
-                        ✨ Gerador Automático de Copys
+                        ✨ Gerador Automático de Copys ({safeIndex + 1} de {variants.length} opções)
                       </span>
                       <h4 className="text-base sm:text-lg font-extrabold text-gray-900">
                         Gere textos prontos para vender com o seu Link de Afiliado incluído
                       </h4>
                       <p className="text-xs text-gray-600 mt-0.5">
-                        Escolha o serviço e o canal abaixo — todas as copys já incluem automaticamente o seu link de afiliado no final.
+                        Não gostou de uma copy? Clique em <strong>&ldquo;Pedir Outra Copy&rdquo;</strong> para gerar novas ideias instantaneamente.
                       </p>
                     </div>
-                    {variants.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => setCopyVariantIndex((prev) => prev + 1)}
-                        className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-white hover:bg-purple-50 text-purple-700 border border-purple-200 rounded-xl text-xs font-bold transition cursor-pointer shrink-0 shadow-xs"
-                      >
-                        <RefreshCw className="h-3.5 w-3.5" />
-                        <span>Outra Variação ({safeIndex + 1}/{variants.length})</span>
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      onClick={handleRequestMoreCopy}
+                      className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition cursor-pointer shrink-0 shadow-sm"
+                    >
+                      <RefreshCw className="h-3.5 w-3.5" />
+                      <span>Pedir Outra Copy ({safeIndex + 1}/{variants.length})</span>
+                    </button>
                   </div>
 
                   {/* Product Pills */}
@@ -1827,7 +1865,7 @@ export default function AffiliatesPage() {
                   </div>
 
                   {/* Channel Pills */}
-                  <div className="mb-4">
+                  <div className="mb-3">
                     <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1.5">
                       2. Onde você vai enviar ou publicar?
                     </label>
@@ -1857,11 +1895,42 @@ export default function AffiliatesPage() {
                     </div>
                   </div>
 
+                  {/* Optional Niche / Client Target Customization */}
+                  <div className="mb-4">
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1.5">
+                      3. Adaptar para um público / nicho específico (opcional):
+                    </label>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {[
+                        { label: 'Geral (Todos)', value: '' },
+                        { label: 'Clínicas & Farmácias', value: 'Clínicas e Farmácias' },
+                        { label: 'Advogados & Consultorias', value: 'Escritórios e Consultorias' },
+                        { label: 'Lojas & Comércio', value: 'Lojas e Comércio' },
+                        { label: 'Escolas & Colégios', value: 'Escolas e Instituições de Ensino' },
+                        { label: 'Restaurantes & Hotéis', value: 'Restaurantes e Hotéis' },
+                        { label: 'Construção & Engenharia', value: 'Empresas de Construção e Engenharia' },
+                      ].map((niche) => (
+                        <button
+                          key={niche.label}
+                          type="button"
+                          onClick={() => setCopyTargetNiche(niche.value)}
+                          className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition cursor-pointer ${
+                            copyTargetNiche === niche.value
+                              ? 'bg-purple-100 text-purple-800 border border-purple-300'
+                              : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          {niche.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
                   {/* Generated Copy Box */}
                   <div className="bg-white rounded-xl border border-purple-200 p-3.5 sm:p-4 mb-3">
-                    <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
                       <span className="text-[11px] font-bold text-purple-700">
-                        Copy Gerada (com o seu link de afiliado incluído):
+                        Opção {safeIndex + 1} de {variants.length} (com o seu link de afiliado incluído):
                       </span>
                       <span className="text-[11px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 truncate max-w-[220px] sm:max-w-xs">
                         {finalAffiliateLink}
@@ -1890,6 +1959,14 @@ export default function AffiliatesPage() {
                           <span>Copiar Copy com o Meu Link</span>
                         </>
                       )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleRequestMoreCopy}
+                      className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white hover:bg-purple-50 text-purple-700 border-2 border-purple-200 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer"
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                      <span>Pedir Mais Outra Copy</span>
                     </button>
                     <a
                       href={`https://wa.me/?text=${encodeURIComponent(activeCopyText)}`}
