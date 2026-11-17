@@ -1809,41 +1809,19 @@ export default function AffiliatesPage() {
               };
 
               return (
-                <div className="mb-8 p-4 sm:p-6 rounded-2xl bg-gradient-to-br from-purple-50/80 via-white to-indigo-50/60 border-2 border-purple-200/80 shadow-sm">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-                    <div>
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-purple-100 text-purple-800 mb-1">
-                        ✨ Gerador Automático de Copys ({safeIndex + 1} de {variants.length} opções)
+                <div className="mb-6 p-4 rounded-2xl bg-white border border-gray-200 shadow-xs">
+                  {/* Top Bar: Title + Product Pills + Channel Select + Mudar Copy */}
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-3">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="text-xs font-extrabold text-gray-900 mr-1.5">
+                        ✨ Gerador de Copys:
                       </span>
-                      <h4 className="text-base sm:text-lg font-extrabold text-gray-900">
-                        Gere textos prontos para vender com o seu Link de Afiliado incluído
-                      </h4>
-                      <p className="text-xs text-gray-600 mt-0.5">
-                        Não gostou de uma copy? Clique em <strong>&ldquo;Pedir Outra Copy&rdquo;</strong> para gerar novas ideias instantaneamente.
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleRequestMoreCopy}
-                      className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition cursor-pointer shrink-0 shadow-sm"
-                    >
-                      <RefreshCw className="h-3.5 w-3.5" />
-                      <span>Pedir Outra Copy ({safeIndex + 1}/{variants.length})</span>
-                    </button>
-                  </div>
-
-                  {/* Product Pills */}
-                  <div className="mb-3">
-                    <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1.5">
-                      1. O que você quer vender agora?
-                    </label>
-                    <div className="flex flex-wrap gap-2">
                       {[
-                        { id: 'dominios', label: '🌐 Vender Domínios (.co.mz / .com)' },
-                        { id: 'emails', label: '📧 Vender E-mails Corporativos' },
-                        { id: 'sites', label: '💻 Vender Criação de Sites' },
-                        { id: 'hospedagem', label: '🚀 Vender Hospedagem Web' },
-                        { id: 'cursos', label: '🎓 Vender Cursos' },
+                        { id: 'dominios', label: 'Domínios' },
+                        { id: 'emails', label: 'E-mails' },
+                        { id: 'sites', label: 'Sites' },
+                        { id: 'hospedagem', label: 'Hospedagem' },
+                        { id: 'cursos', label: 'Cursos' },
                       ].map((item) => (
                         <button
                           key={item.id}
@@ -1852,131 +1830,77 @@ export default function AffiliatesPage() {
                             setCopyProduct(item.id as any);
                             setCopyVariantIndex(0);
                           }}
-                          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
                             copyProduct === item.id
-                              ? 'bg-purple-600 text-white shadow-sm'
-                              : 'bg-white text-gray-700 border border-gray-200 hover:border-purple-300'
+                              ? 'bg-neutral-900 text-white'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                           }`}
                         >
                           {item.label}
                         </button>
                       ))}
                     </div>
-                  </div>
 
-                  {/* Channel Pills */}
-                  <div className="mb-3">
-                    <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1.5">
-                      2. Onde você vai enviar ou publicar?
-                    </label>
-                    <div className="flex flex-wrap gap-2">
-                      {[
-                        { id: 'whatsapp', label: '💬 WhatsApp (Abordagem Direta)' },
-                        { id: 'social', label: '📱 Feed (Instagram / Facebook / LinkedIn)' },
-                        { id: 'status', label: '⚡ Status / Stories (Curta)' },
-                        { id: 'email', label: '✉️ E-mail / Proposta Comercial' },
-                      ].map((ch) => (
-                        <button
-                          key={ch.id}
-                          type="button"
-                          onClick={() => {
-                            setCopyChannel(ch.id as any);
-                            setCopyVariantIndex(0);
-                          }}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
-                            copyChannel === ch.id
-                              ? 'bg-gray-900 text-white'
-                              : 'bg-white text-gray-600 border border-gray-200 hover:text-gray-900'
-                          }`}
-                        >
-                          {ch.label}
-                        </button>
-                      ))}
+                    <div className="flex items-center gap-2 shrink-0">
+                      <select
+                        value={copyChannel}
+                        onChange={(e) => {
+                          setCopyChannel(e.target.value as any);
+                          setCopyVariantIndex(0);
+                        }}
+                        aria-label="Formato da copy"
+                        className="px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-semibold text-gray-700 focus:outline-none focus:border-gray-400 cursor-pointer"
+                      >
+                        <option value="whatsapp">Formato: WhatsApp</option>
+                        <option value="social">Formato: Redes Sociais</option>
+                        <option value="status">Formato: Status / Stories</option>
+                        <option value="email">Formato: E-mail</option>
+                      </select>
+
+                      <button
+                        type="button"
+                        onClick={handleRequestMoreCopy}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-lg text-xs font-bold transition cursor-pointer"
+                      >
+                        <RefreshCw className="h-3.5 w-3.5" />
+                        <span>Outra Copy ({safeIndex + 1}/{variants.length})</span>
+                      </button>
                     </div>
                   </div>
 
-                  {/* Optional Niche / Client Target Customization */}
-                  <div className="mb-4">
-                    <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1.5">
-                      3. Adaptar para um público / nicho específico (opcional):
-                    </label>
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      {[
-                        { label: 'Geral (Todos)', value: '' },
-                        { label: 'Clínicas & Farmácias', value: 'Clínicas e Farmácias' },
-                        { label: 'Advogados & Consultorias', value: 'Escritórios e Consultorias' },
-                        { label: 'Lojas & Comércio', value: 'Lojas e Comércio' },
-                        { label: 'Escolas & Colégios', value: 'Escolas e Instituições de Ensino' },
-                        { label: 'Restaurantes & Hotéis', value: 'Restaurantes e Hotéis' },
-                        { label: 'Construção & Engenharia', value: 'Empresas de Construção e Engenharia' },
-                      ].map((niche) => (
-                        <button
-                          key={niche.label}
-                          type="button"
-                          onClick={() => setCopyTargetNiche(niche.value)}
-                          className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition cursor-pointer ${
-                            copyTargetNiche === niche.value
-                              ? 'bg-purple-100 text-purple-800 border border-purple-300'
-                              : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
-                          }`}
-                        >
-                          {niche.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Generated Copy Box */}
-                  <div className="bg-white rounded-xl border border-purple-200 p-3.5 sm:p-4 mb-3">
-                    <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
-                      <span className="text-[11px] font-bold text-purple-700">
-                        Opção {safeIndex + 1} de {variants.length} (com o seu link de afiliado incluído):
-                      </span>
-                      <span className="text-[11px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 truncate max-w-[220px] sm:max-w-xs">
-                        {finalAffiliateLink}
-                      </span>
-                    </div>
-                    <pre className="whitespace-pre-wrap font-sans text-xs sm:text-sm text-gray-800 leading-relaxed select-all">
+                  {/* Copy Box + Inline Actions */}
+                  <div className="bg-gray-50 rounded-xl border border-gray-200 p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <pre className="whitespace-pre-wrap font-sans text-xs sm:text-sm text-gray-800 leading-relaxed select-all flex-1">
                       {activeCopyText}
                     </pre>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex flex-col sm:flex-row gap-2.5">
-                    <button
-                      type="button"
-                      onClick={handleCopyGenerated}
-                      className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs sm:text-sm font-bold shadow-sm transition cursor-pointer"
-                    >
-                      {copiedGeneratedCopy ? (
-                        <>
-                          <CheckCircle2 className="h-4 w-4" />
-                          <span>Copy + Link de Afiliado Copiados!</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="h-4 w-4" />
-                          <span>Copiar Copy com o Meu Link</span>
-                        </>
-                      )}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleRequestMoreCopy}
-                      className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white hover:bg-purple-50 text-purple-700 border-2 border-purple-200 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer"
-                    >
-                      <RefreshCw className="h-4 w-4" />
-                      <span>Pedir Mais Outra Copy</span>
-                    </button>
-                    <a
-                      href={`https://wa.me/?text=${encodeURIComponent(activeCopyText)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs sm:text-sm font-bold shadow-sm transition"
-                    >
-                      <Share2 className="h-4 w-4" />
-                      <span>Enviar no WhatsApp</span>
-                    </a>
+                    <div className="flex sm:flex-col gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={handleCopyGenerated}
+                        className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition cursor-pointer whitespace-nowrap"
+                      >
+                        {copiedGeneratedCopy ? (
+                          <>
+                            <CheckCircle2 className="h-3.5 w-3.5" />
+                            <span>Copiado!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="h-3.5 w-3.5" />
+                            <span>Copiar Copy</span>
+                          </>
+                        )}
+                      </button>
+                      <a
+                        href={`https://wa.me/?text=${encodeURIComponent(activeCopyText)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition whitespace-nowrap"
+                      >
+                        <Share2 className="h-3.5 w-3.5" />
+                        <span>WhatsApp</span>
+                      </a>
+                    </div>
                   </div>
                 </div>
               );
