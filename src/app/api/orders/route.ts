@@ -602,10 +602,23 @@ export async function POST(req: Request) {
       await OrderModel.findOneAndUpdate({ id: orderData.id }, orderData, { upsert: true, new: true });
 
       if (isNew) {
+        const methodLabels: Record<string, string> = {
+          mpesa: 'M-Pesa',
+          emola: 'eMola',
+          card: 'Cartão (Stripe)',
+          bank_transfer: 'Comprovativo / Transferência',
+          manual: 'Manual',
+        };
+        const rawMethod = String(orderData.paymentMethod || '').toLowerCase().trim();
+        const paymentMethodLabel = methodLabels[rawMethod] || (rawMethod ? rawMethod.toUpperCase() : 'N/A');
+        const orderAmountVal = (orderData.valorFaturado || orderData.valorPorFaturar || orderData.amount || 0);
+        const isAlreadyPaid = orderData.status === 'completed' || orderData.status === 'paid' || orderData.status === 'approved';
+        const statusSummary = isAlreadyPaid ? 'PAGO' : (orderData.status || 'Pendente');
+
         // Notificar admin de novo pedido
         addAdminNotification({
-          title: `📦 Novo Pedido: #${orderData.id}`,
-          message: `${orderData.clientName || orderData.userEmail || 'Cliente'} criou um novo pedido de ${orderData.serviceName || 'serviço'} no valor de ${(orderData.valorPorFaturar || orderData.amount || 0).toLocaleString('pt-MZ')} MT.`,
+          title: `📦 Novo Pedido: #${orderData.id} (${paymentMethodLabel})`,
+          message: `${orderData.clientName || orderData.userEmail || 'Cliente'} · ${orderData.serviceName || 'serviço'} · ${orderAmountVal.toLocaleString('pt-MZ')} MT via ${paymentMethodLabel} (${statusSummary}).`,
           type: 'order_new',
           userEmail: orderData.clientEmail || orderData.userEmail,
           userName: orderData.clientName || orderData.userName,
@@ -616,8 +629,8 @@ export async function POST(req: Request) {
         try {
           const { sendPushToAdmins } = await import('@/lib/pushService');
           await sendPushToAdmins({
-            title: `📦 Novo Pedido: ${orderData.serviceName || 'Serviço'}`,
-            message: `${orderData.clientName || orderData.clientEmail || 'Cliente'} fez um pedido de ${(orderData.valorPorFaturar || orderData.amount || 0).toLocaleString('pt-MZ')} MT.`,
+            title: `📦 Pedido (${paymentMethodLabel}): ${orderData.serviceName || 'Serviço'}`,
+            message: `${orderData.clientName || orderData.clientEmail || 'Cliente'} · ${orderAmountVal.toLocaleString('pt-MZ')} MT via ${paymentMethodLabel} [${statusSummary}].`,
             url: '/admin?tab=orders',
             tag: `new-order-${orderData.id}`
           });
@@ -648,8 +661,8 @@ export async function POST(req: Request) {
           for (const recipient of Array.from(adminEmailsSet)) {
             await sendEmail({
               to: recipient,
-              subject: `🛒 Novo Pedido #${orderData.id}: ${orderData.clientName || 'Cliente'} - ${orderData.serviceName || 'Serviço'}`,
-              text: `Olá Administrador,\n\nUm novo pedido foi registado na plataforma:\n\n• Pedido: #${orderData.id}\n• Cliente: ${orderData.clientName || 'Cliente'} (${orderData.clientEmail || orderData.userEmail || 'N/A'})\n• Serviço: ${orderData.serviceName || 'Plano de Hospedagem / Domínio'}\n• Valor: ${(orderData.valorPorFaturar || orderData.amount || 0).toLocaleString('pt-MZ')} MT\n• Método de Pagamento: ${orderData.paymentMethod || 'N/A'}\n• Estado: ${orderData.status || 'Pendente'}\n• Data: ${new Date().toLocaleString('pt-MZ')}\n\nAceda ao painel administrativo para verificar:\nhttps://wehosthere.com/admin?tab=orders\n\nAtenciosamente,\nSistema de Notificações WEHOSTHERE`
+              subject: `🛒 Pedido #${orderData.id} [${paymentMethodLabel} • ${statusSummary}]: ${orderData.clientName || 'Cliente'}`,
+              text: `Olá Administrador,\n\nUm novo pedido foi registado na plataforma:\n\n• Pedido: #${orderData.id}\n• Cliente: ${orderData.clientName || 'Cliente'} (${orderData.clientEmail || orderData.userEmail || 'N/A'})\n• Serviço: ${orderData.serviceName || 'Plano de Hospedagem / Domínio'}\n• Valor: ${orderAmountVal.toLocaleString('pt-MZ')} MT\n• Método de Pagamento: ${paymentMethodLabel}\n• Estado: ${statusSummary}\n• Data: ${new Date().toLocaleString('pt-MZ')}\n\nAceda ao painel administrativo para verificar:\nhttps://wehosthere.com/admin?tab=orders\n\nAtenciosamente,\nSistema de Notificações WEHOSTHERE`
             });
           }
         } catch (adminMailErr) {

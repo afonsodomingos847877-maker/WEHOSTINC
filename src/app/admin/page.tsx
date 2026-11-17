@@ -1482,6 +1482,22 @@ export default function AdminPage() {
   const mpesaRevenue = orders.filter(o => isMpesa(o.paymentMethod) && o.status !== 'cancelled').reduce((acc, o) => acc + getOrderAmount(o), 0);
   const emolaRevenue = orders.filter(o => isEmola(o.paymentMethod) && o.status !== 'cancelled').reduce((acc, o) => acc + getOrderAmount(o), 0);
   const cardRevenue = orders.filter(o => isCard(o.paymentMethod) && o.status !== 'cancelled').reduce((acc, o) => acc + getOrderAmount(o), 0);
+  const renderPaymentMethodBadge = (method?: string) => {
+    if (isMpesa(method)) {
+      return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">M-Pesa</span>;
+    }
+    if (isEmola(method)) {
+      return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-orange-50 text-orange-700 border border-orange-200">eMola</span>;
+    }
+    if (isCard(method)) {
+      return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">Cartão (Stripe)</span>;
+    }
+    const raw = (method || '').toLowerCase();
+    if (raw === 'bank_transfer' || raw.includes('comprov') || raw.includes('transfer')) {
+      return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">Comprovativo</span>;
+    }
+    return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-neutral-100 text-neutral-700 border border-neutral-200">{method || 'Manual'}</span>;
+  };
   const validOrdersTotal = (mpesaRevenue + emolaRevenue + cardRevenue) || actualOrdersRevenue || 1;
 
   const getUserStatus = (user: User) => {
@@ -3312,7 +3328,7 @@ export default function AdminPage() {
                           </td>
                           <td className="py-3 px-2 text-xs text-gray-700 max-w-[180px] truncate">{order.serviceName}</td>
                           <td className="py-3 px-2 text-xs font-bold text-emerald-700">{order.amount?.toLocaleString('pt-MZ')} MT</td>
-                          <td className="py-3 px-2 text-xs text-gray-600 capitalize">{order.paymentMethod}</td>
+                          <td className="py-3 px-2">{renderPaymentMethodBadge(order.paymentMethod)}</td>
                           <td className="py-3 px-2">
                             <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
                               order.status === 'completed' ? 'bg-emerald-100 text-emerald-700' :
@@ -3483,7 +3499,7 @@ export default function AdminPage() {
                       </td>
                       <td className="py-2.5 sm:py-3.5 px-2 sm:px-4">
                         <span className="font-bold text-gray-900 text-[10px] sm:text-sm block">{getOrderAmount(order).toLocaleString('pt-MZ')} MT</span>
-                        <span className="text-[9px] sm:text-xs text-gray-500 block uppercase font-mono">{order.paymentMethod || 'mpesa'}</span>
+                        <div className="mt-1">{renderPaymentMethodBadge(order.paymentMethod)}</div>
                         {order.proofUrl && (
                           <a
                             href={order.proofUrl}
