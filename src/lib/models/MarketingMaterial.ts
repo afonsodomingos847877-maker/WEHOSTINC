@@ -15,7 +15,7 @@ export type MarketingMaterialType =
 export interface IMarketingMaterial extends Document {
   title: string;
   description: string;
-  type: MarketingMaterialType;
+  type: MarketingMaterialType | string;
   content: string;
   imageUrl?: string;
   imageUrlDark?: string;
@@ -32,40 +32,34 @@ export interface IMarketingMaterial extends Document {
   updatedAt: string;
 }
 
-const MarketingMaterialSchema = new Schema<IMarketingMaterial>({
-  title: { type: String, required: true },
-  description: { type: String, required: true },
-  type: {
-    type: String,
-    enum: [
-      'logo',
-      'banner',
-      'social_media',
-      'story_status',
-      'whatsapp_script',
-      'email_template',
-      'landing_page',
-      'video',
-      'text_ad',
-      'brand_kit',
-    ],
-    required: true,
+const MarketingMaterialSchema = new Schema<IMarketingMaterial>(
+  {
+    title: { type: String, required: true },
+    description: { type: String, required: true },
+    type: { type: String, required: true },
+    content: { type: String, required: true },
+    imageUrl: String,
+    imageUrlDark: String,
+    dimensions: {
+      width: Number,
+      height: Number,
+    },
+    platform: { type: String },
+    category: { type: String, required: true },
+    isActive: { type: Boolean, default: true },
+    language: { type: String, default: 'pt' },
+    createdBy: { type: String, required: true },
+    createdAt: { type: String, default: () => new Date().toISOString() },
+    updatedAt: { type: String, default: () => new Date().toISOString() },
   },
-  content: { type: String, required: true },
-  imageUrl: String,
-  imageUrlDark: String,
-  dimensions: {
-    width: Number,
-    height: Number,
-  },
-  platform: { type: String },
-  category: { type: String, required: true },
-  isActive: { type: Boolean, default: true },
-  language: { type: String, default: 'pt' },
-  createdBy: { type: String, required: true },
-  createdAt: { type: String, default: () => new Date().toISOString() },
-  updatedAt: { type: String, default: () => new Date().toISOString() },
-}, { timestamps: false, versionKey: false });
+  { timestamps: false, versionKey: false }
+);
 
-const MarketingMaterialModel: Model<IMarketingMaterial> = mongoose.models.MarketingMaterial || mongoose.model<IMarketingMaterial>('MarketingMaterial', MarketingMaterialSchema);
+if (mongoose.models.MarketingMaterial) {
+  delete mongoose.models.MarketingMaterial;
+}
+
+const MarketingMaterialModel: Model<IMarketingMaterial> =
+  mongoose.model<IMarketingMaterial>('MarketingMaterial', MarketingMaterialSchema);
+
 export default MarketingMaterialModel;

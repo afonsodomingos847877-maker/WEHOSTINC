@@ -510,7 +510,8 @@ export default function AdminAffiliatesPage() {
 
   const handleSaveMaterial = async () => {
     try {
-      const adminId = localStorage.getItem('userId');
+      const currentUser = auth.getCurrentUser();
+      const adminId = localStorage.getItem('userId') || currentUser?.id || currentUser?.email || 'admin';
       console.log('handleSaveMaterial - adminId:', adminId);
       console.log('handleSaveMaterial - materialForm:', materialForm);
       
@@ -527,16 +528,45 @@ export default function AdminAffiliatesPage() {
       
       console.log('handleSaveMaterial - Payload:', payload);
       
-      const res = await fetch(url, {
+      let res = await fetch(url, {
         method,
-        headers: { 
-          'Content-Type': 'application/json'
+        headers: {
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify(payload),
       });
-      
-      const data = await res.json();
+
+      let data = await res.json();
       console.log('handleSaveMaterial - Response:', data);
+
+      // Fallback automático caso o servidor Render ainda esteja com o schema antigo (enum estrito em type/platform)
+      if (!res.ok && res.status === 500) {
+        const legacyTypeMap: Record<string, string> = {
+          logo: 'banner',
+          brand_kit: 'banner',
+          story_status: 'social_media',
+          whatsapp_script: 'text_ad',
+        };
+        const rawPlat = (payload.platform || '').toLowerCase();
+        const validLegacyPlatforms = ['facebook', 'instagram', 'twitter', 'linkedin', 'email', 'website', 'whatsapp'];
+        const matchedPlat = validLegacyPlatforms.find((p) => rawPlat.includes(p)) || 'website';
+
+        const fallbackPayload = {
+          ...payload,
+          type: legacyTypeMap[payload.type] || payload.type || 'banner',
+          platform: matchedPlat,
+        };
+
+        res = await fetch(url, {
+          method,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(fallbackPayload),
+        });
+        data = await res.json();
+        console.log('handleSaveMaterial - Fallback Response:', data);
+      }
       
       if (res.ok) {
         setShowMaterialModal(false);
