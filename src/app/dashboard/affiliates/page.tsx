@@ -346,6 +346,10 @@ export default function AffiliatesPage() {
 
 
   const [joiningAffiliate, setJoiningAffiliate] = useState(false);
+  const [copyProduct, setCopyProduct] = useState<'dominios' | 'emails' | 'sites' | 'hospedagem' | 'cursos'>('dominios');
+  const [copyChannel, setCopyChannel] = useState<'whatsapp' | 'social' | 'status' | 'email'>('whatsapp');
+  const [copyVariantIndex, setCopyVariantIndex] = useState(0);
+  const [copiedGeneratedCopy, setCopiedGeneratedCopy] = useState(false);
 
   const handleJoinAffiliate = async () => {
     if (!acceptedAffiliateTerms) {
@@ -1642,6 +1646,264 @@ export default function AffiliatesPage() {
                 Abrir Guia de Serviços →
               </Link>
             </div>
+
+            {/* Gerador Inteligente de Copys com Link de Afiliado */}
+            {(() => {
+              const baseAffiliateLink =
+                affiliate?.affiliateLink ||
+                (affiliate?.affiliateCode
+                  ? `https://www.wehosthere.com/ref/${affiliate.affiliateCode}`
+                  : 'https://www.wehosthere.com/?ref=SEU_CODIGO');
+
+              const productDestMap: Record<typeof copyProduct, string> = {
+                dominios: '/dominios',
+                emails: '/email-corporativo',
+                sites: '/#criacao-sites',
+                hospedagem: '/hospedagem',
+                cursos: '/academy',
+              };
+
+              const destPath = productDestMap[copyProduct];
+              const finalAffiliateLink =
+                destPath === '/'
+                  ? baseAffiliateLink
+                  : `${baseAffiliateLink}?to=${encodeURIComponent(destPath)}`;
+
+              const copyTemplates: Record<
+                typeof copyProduct,
+                Record<typeof copyChannel, string[]>
+              > = {
+                dominios: {
+                  whatsapp: [
+                    `Olá! Sabia que pode registar o domínio oficial da sua empresa (.co.mz ou .com) em poucos minutos e com pagamento direto via M-Pesa ou Cartão? Garanta já o nome da sua marca antes que outra pessoa registe:\n👉 ${finalAffiliateLink}`,
+                    `Bom dia! Para dar mais credibilidade ao seu negócio em Moçambique, recomendo registar o seu domínio próprio .co.mz ou .com na WEHOSTHERE. A ativação é rápida e o suporte é local:\n👉 ${finalAffiliateLink}`,
+                    `Olá! Está a pensar criar o site ou e-mail da sua empresa? O primeiro passo é garantir o seu domínio .co.mz ou .com. Veja se o nome da sua empresa está disponível aqui:\n👉 ${finalAffiliateLink}`,
+                  ],
+                  social: [
+                    `🌐 A sua marca já tem endereço próprio na internet?\n\nNão deixe que outra pessoa registe o nome da sua empresa! Garanta hoje o seu domínio .co.mz ou .com na WEHOSTHERE com ativação rápida e pagamento via M-Pesa ou Cartão.\n\n👇 Pesquise e registe aqui:\n${finalAffiliateLink}`,
+                    `💡 Um domínio .co.mz transmite confiança imediata aos seus clientes em Moçambique.\n\nRegiste o domínio da sua empresa em minutos na WEHOSTHERE:\n👉 ${finalAffiliateLink}`,
+                  ],
+                  status: [
+                    `🔥 Garanta o domínio .co.mz ou .com da sua empresa hoje mesmo! Pagamento fácil via M-Pesa 👇\n${finalAffiliateLink}`,
+                    `🌐 Verifique se o nome da sua empresa está disponível (.co.mz / .com) clicando aqui:\n${finalAffiliateLink}`,
+                  ],
+                  email: [
+                    `Assunto: Registo do domínio oficial (.co.mz / .com) da sua empresa\n\nOlá,\n\nPara proteger a identidade da sua marca na internet e transmitir maior credibilidade comercial, recomendo o registo do domínio oficial (.co.mz ou .com) através da plataforma WEHOSTHERE.\n\nPode verificar a disponibilidade e concluir o registo em minutos pelo link abaixo:\n${finalAffiliateLink}\n\nMelhores cumprimentos`,
+                  ],
+                },
+                emails: {
+                  whatsapp: [
+                    `Olá! Reparou que usar @gmail.com em propostas comerciais pode fazer a sua empresa perder credibilidade? Na WEHOSTHERE consegue criar e-mails profissionais com o nome da sua empresa (ex: info@suaempresa.co.mz) a partir de 550 MT/mês:\n👉 ${finalAffiliateLink}`,
+                    `Bom dia! Quer passar uma imagem 100% profissional aos seus clientes? Ative o E-mail Corporativo da sua empresa (contato@suaempresa.co.mz, comercial@suaempresa.co.mz) com webmail e proteção anti-spam na WEHOSTHERE:\n👉 ${finalAffiliateLink}`,
+                    `Olá! Sabia que pode ter contas de e-mail profissionais com o domínio da sua empresa e abrir diretamente no telemóvel ou computador? Veja como ativar na WEHOSTHERE:\n👉 ${finalAffiliateLink}`,
+                  ],
+                  social: [
+                    `📧 A sua empresa ainda envia orçamentos usando @gmail.com?\n\nPasse mais confiança e feche mais negócios com um E-mail Corporativo próprio (ex: info@suaempresa.co.mz).\n\n✅ Webmail no telemóvel e PC\n✅ Proteção Anti-Spam\n✅ Pagamento via M-Pesa ou Cartão\n\n👇 Ative agora na WEHOSTHERE:\n${finalAffiliateLink}`,
+                    `💼 Destaque a sua empresa em cada mensagem enviada! Crie os seus e-mails corporativos (@suaempresa.co.mz) na WEHOSTHERE:\n👉 ${finalAffiliateLink}`,
+                  ],
+                  status: [
+                    `📧 Troque o @gmail.com por @suaempresa.co.mz hoje mesmo! E-mail profissional na WEHOSTHERE 👇\n${finalAffiliateLink}`,
+                    `💼 Mais credibilidade para o seu negócio com E-mail Corporativo profissional:\n${finalAffiliateLink}`,
+                  ],
+                  email: [
+                    `Assunto: E-mail Corporativo Profissional (@suaempresa.co.mz) para a sua equipa\n\nOlá,\n\nPara reforçar a imagem institucional da sua empresa junto de clientes e parceiros, recomendo a solução de E-mail Corporativo da WEHOSTHERE, com domínio próprio, proteção anti-spam e acesso em qualquer dispositivo.\n\nConsulte os planos e ative aqui:\n${finalAffiliateLink}\n\nMelhores cumprimentos`,
+                  ],
+                },
+                sites: {
+                  whatsapp: [
+                    `Olá! Precisa de um Website Profissional ou Loja Online pronta para vender 24h por dia com M-Pesa integrado? Na WEHOSTHERE desenvolvemos sites modernos para empresas, clínicas, escolas, lojas e escritórios:\n👉 ${finalAffiliateLink}`,
+                    `Bom dia! Sabia que ter um site profissional aumenta a confiança dos clientes e atrai novos pedidos todos os dias no Google? Veja os modelos e peça o seu site na WEHOSTHERE:\n👉 ${finalAffiliateLink}`,
+                    `Olá! Se quer colocar o seu negócio online com design moderno, rápido no telemóvel e domínio incluído, recomendo a criação de sites da WEHOSTHERE. Confira aqui:\n👉 ${finalAffiliateLink}`,
+                  ],
+                  social: [
+                    `💻 O seu negócio merece um Website Profissional que vende por si 24 horas por dia!\n\nNa WEHOSTHERE criamos:\n✅ Sites Institucionais para Empresas\n✅ Lojas Online com M-Pesa\n✅ Landing Pages de Alta Conversão\n\n👇 Simule e peça o seu site agora:\n${finalAffiliateLink}`,
+                    `🚀 Transforme visitantes em clientes com um Website Profissional ou Loja Online na WEHOSTHERE! Veja os pacotes:\n👉 ${finalAffiliateLink}`,
+                  ],
+                  status: [
+                    `💻 Precisa de um Site Profissional ou Loja Online com M-Pesa? Peça já na WEHOSTHERE 👇\n${finalAffiliateLink}`,
+                    `🚀 Coloque a sua empresa no Google com um site moderno e rápido:\n${finalAffiliateLink}`,
+                  ],
+                  email: [
+                    `Assunto: Criação de Website Profissional / Loja Online para a sua empresa\n\nOlá,\n\nPara expandir a presença digital da sua empresa e captar clientes através do Google e redes sociais, recomendo os serviços de Criação de Websites Profissionais da WEHOSTHERE.\n\nPode conhecer os pacotes e solicitar o seu projeto diretamente neste link:\n${finalAffiliateLink}\n\nMelhores cumprimentos`,
+                  ],
+                },
+                hospedagem: {
+                  whatsapp: [
+                    `Olá! Procura hospedagem de sites rápida, segura e com pagamento fácil em Meticais (M-Pesa) ou Cartão? Conheça os planos da WEHOSTHERE com cPanel, SSD NVMe e SSL gratuito a partir de 550 MT/mês:\n👉 ${finalAffiliateLink}`,
+                    `Bom dia! Se já tem um site ou sistema e precisa de um servidor rápido com suporte 24/7 e certificado SSL grátis, recomendo a Hospedagem Web da WEHOSTHERE:\n👉 ${finalAffiliateLink}`,
+                  ],
+                  social: [
+                    `🚀 Hospedagem de Sites de Alta Performance na WEHOSTHERE!\n\n✅ Discos SSD NVMe ultra-rápidos\n✅ Certificado SSL Gratuito\n✅ Painel cPanel + E-mails incluídos\n✅ Pagamento via M-Pesa ou Cartão\n\n👇 Escolha o seu plano a partir de 550 MT/mês:\n${finalAffiliateLink}`,
+                  ],
+                  status: [
+                    `🚀 Hospedagem de Sites com SSL Grátis, cPanel e pagamento via M-Pesa a partir de 550 MT/mês 👇\n${finalAffiliateLink}`,
+                  ],
+                  email: [
+                    `Assunto: Alojamento Web de Alta Performance com cPanel e SSL Gratuito\n\nOlá,\n\nPara alojar o site e os e-mails da sua empresa com máxima velocidade, segurança e suporte técnico dedicado, recomendo os planos de Hospedagem da WEHOSTHERE.\n\nConfira os planos disponíveis aqui:\n${finalAffiliateLink}\n\nMelhores cumprimentos`,
+                  ],
+                },
+                cursos: {
+                  whatsapp: [
+                    `Olá! Quer aprender na prática a criar sites, programar e dominar ferramentas digitais com certificado oficial? Conheça os cursos da Academia WEHOSTHERE (pode até pagar em 2 parcelas via M-Pesa):\n👉 ${finalAffiliateLink}`,
+                  ],
+                  social: [
+                    `🎓 Aprenda tecnologia na prática e impulsione a sua carreira na Academia WEHOSTHERE!\n\n✅ Aulas 100% práticas\n✅ Certificado Oficial de Conclusão\n✅ Opção de pagamento parcelado via M-Pesa\n\n👇 Inscreva-se aqui:\n${finalAffiliateLink}`,
+                  ],
+                  status: [
+                    `🎓 Cursos práticos de tecnologia com Certificado Oficial na Academia WEHOSTHERE 👇\n${finalAffiliateLink}`,
+                  ],
+                  email: [
+                    `Assunto: Cursos Práticos com Certificado Oficial — Academia WEHOSTHERE\n\nOlá,\n\nRecomendo conhecer os cursos práticos da Academia WEHOSTHERE, com acesso imediato e certificado oficial de conclusão:\n${finalAffiliateLink}\n\nMelhores cumprimentos`,
+                  ],
+                },
+              };
+
+              const variants = copyTemplates[copyProduct][copyChannel] || copyTemplates[copyProduct].whatsapp;
+              const safeIndex = copyVariantIndex % variants.length;
+              const activeCopyText = variants[safeIndex];
+
+              const handleCopyGenerated = () => {
+                copyToClipboard(activeCopyText);
+                setCopiedGeneratedCopy(true);
+                setTimeout(() => setCopiedGeneratedCopy(false), 2500);
+              };
+
+              return (
+                <div className="mb-8 p-4 sm:p-6 rounded-2xl bg-gradient-to-br from-purple-50/80 via-white to-indigo-50/60 border-2 border-purple-200/80 shadow-sm">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+                    <div>
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-purple-100 text-purple-800 mb-1">
+                        ✨ Gerador Automático de Copys
+                      </span>
+                      <h4 className="text-base sm:text-lg font-extrabold text-gray-900">
+                        Gere textos prontos para vender com o seu Link de Afiliado incluído
+                      </h4>
+                      <p className="text-xs text-gray-600 mt-0.5">
+                        Escolha o serviço e o canal abaixo — todas as copys já incluem automaticamente o seu link de afiliado no final.
+                      </p>
+                    </div>
+                    {variants.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => setCopyVariantIndex((prev) => prev + 1)}
+                        className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-white hover:bg-purple-50 text-purple-700 border border-purple-200 rounded-xl text-xs font-bold transition cursor-pointer shrink-0 shadow-xs"
+                      >
+                        <RefreshCw className="h-3.5 w-3.5" />
+                        <span>Outra Variação ({safeIndex + 1}/{variants.length})</span>
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Product Pills */}
+                  <div className="mb-3">
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1.5">
+                      1. O que você quer vender agora?
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        { id: 'dominios', label: '🌐 Vender Domínios (.co.mz / .com)' },
+                        { id: 'emails', label: '📧 Vender E-mails Corporativos' },
+                        { id: 'sites', label: '💻 Vender Criação de Sites' },
+                        { id: 'hospedagem', label: '🚀 Vender Hospedagem Web' },
+                        { id: 'cursos', label: '🎓 Vender Cursos' },
+                      ].map((item) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => {
+                            setCopyProduct(item.id as any);
+                            setCopyVariantIndex(0);
+                          }}
+                          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                            copyProduct === item.id
+                              ? 'bg-purple-600 text-white shadow-sm'
+                              : 'bg-white text-gray-700 border border-gray-200 hover:border-purple-300'
+                          }`}
+                        >
+                          {item.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Channel Pills */}
+                  <div className="mb-4">
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1.5">
+                      2. Onde você vai enviar ou publicar?
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        { id: 'whatsapp', label: '💬 WhatsApp (Abordagem Direta)' },
+                        { id: 'social', label: '📱 Feed (Instagram / Facebook / LinkedIn)' },
+                        { id: 'status', label: '⚡ Status / Stories (Curta)' },
+                        { id: 'email', label: '✉️ E-mail / Proposta Comercial' },
+                      ].map((ch) => (
+                        <button
+                          key={ch.id}
+                          type="button"
+                          onClick={() => {
+                            setCopyChannel(ch.id as any);
+                            setCopyVariantIndex(0);
+                          }}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                            copyChannel === ch.id
+                              ? 'bg-gray-900 text-white'
+                              : 'bg-white text-gray-600 border border-gray-200 hover:text-gray-900'
+                          }`}
+                        >
+                          {ch.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Generated Copy Box */}
+                  <div className="bg-white rounded-xl border border-purple-200 p-3.5 sm:p-4 mb-3">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-[11px] font-bold text-purple-700">
+                        Copy Gerada (com o seu link de afiliado incluído):
+                      </span>
+                      <span className="text-[11px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 truncate max-w-[220px] sm:max-w-xs">
+                        {finalAffiliateLink}
+                      </span>
+                    </div>
+                    <pre className="whitespace-pre-wrap font-sans text-xs sm:text-sm text-gray-800 leading-relaxed select-all">
+                      {activeCopyText}
+                    </pre>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex flex-col sm:flex-row gap-2.5">
+                    <button
+                      type="button"
+                      onClick={handleCopyGenerated}
+                      className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs sm:text-sm font-bold shadow-sm transition cursor-pointer"
+                    >
+                      {copiedGeneratedCopy ? (
+                        <>
+                          <CheckCircle2 className="h-4 w-4" />
+                          <span>Copy + Link de Afiliado Copiados!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="h-4 w-4" />
+                          <span>Copiar Copy com o Meu Link</span>
+                        </>
+                      )}
+                    </button>
+                    <a
+                      href={`https://wa.me/?text=${encodeURIComponent(activeCopyText)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs sm:text-sm font-bold shadow-sm transition"
+                    >
+                      <Share2 className="h-4 w-4" />
+                      <span>Enviar no WhatsApp</span>
+                    </a>
+                  </div>
+                </div>
+              );
+            })()}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
               {materials.map((material) => (
                 <div key={material._id} className="border-2 border-gray-200 rounded-2xl p-4 md:p-5 hover:shadow-xl transition group">
