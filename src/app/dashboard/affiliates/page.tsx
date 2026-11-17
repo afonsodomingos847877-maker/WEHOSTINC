@@ -1655,21 +1655,47 @@ export default function AffiliatesPage() {
                   <h4 className="font-bold text-gray-900 mb-2 text-sm md:text-base">{material.title}</h4>
                   <p className="text-xs md:text-sm text-gray-600 mb-3">{material.description}</p>
                   <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500 mb-4">
-                    <span className="px-3 py-1 bg-gradient-to-r from-purple-100 to-purple-200 text-purple-700 rounded-full font-medium">{material.type}</span>
+                    <span className="px-3 py-1 bg-gradient-to-r from-purple-100 to-purple-200 text-purple-700 rounded-full font-medium">
+                      {{
+                        logo: 'Logótipo Oficial',
+                        banner: 'Banner',
+                        social_media: 'Redes Sociais',
+                        story_status: 'Story / Status',
+                        whatsapp_script: 'Script WhatsApp',
+                        email_template: 'Template E-mail',
+                        landing_page: 'Link / Página',
+                        video: 'Vídeo / Reels',
+                        text_ad: 'Copy Publicitária',
+                        brand_kit: 'Kit de Marca',
+                      }[material.type as string] || material.type}
+                    </span>
                     {material.platform && (
                       <span className="px-3 py-1 bg-gradient-to-r from-blue-100 to-blue-200 text-blue-700 rounded-full font-medium">{material.platform}</span>
                     )}
                   </div>
-                  <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-3 text-xs text-gray-600 max-h-24 overflow-y-auto mb-4">
-                    {material.content.substring(0, 150)}...
+                  <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-3 text-xs text-gray-600 max-h-24 overflow-y-auto mb-4 whitespace-pre-line">
+                    {material.content.length > 180 ? `${material.content.substring(0, 180)}...` : material.content}
                   </div>
-                  <button
-                    onClick={() => copyToClipboard(material.content)}
-                    className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl hover:from-primary-600 hover:to-primary-700 transition font-semibold shadow-md"
-                  >
-                    <Copy className="h-4 w-4" />
-                    <span>Copiar Código</span>
-                  </button>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <button
+                      onClick={() => copyToClipboard(material.content)}
+                      className="flex-1 flex items-center justify-center space-x-2 px-4 py-2.5 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl hover:from-primary-600 hover:to-primary-700 transition text-xs sm:text-sm font-semibold shadow-md cursor-pointer"
+                    >
+                      <Copy className="h-4 w-4" />
+                      <span>Copiar Copy / Link</span>
+                    </button>
+                    {material.imageUrl && (
+                      <a
+                        href={material.imageUrl}
+                        download
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center justify-center px-3.5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-xl transition text-xs sm:text-sm font-semibold border border-gray-200"
+                      >
+                        Baixar Imagem
+                      </a>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>

@@ -1,9 +1,21 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
+export type MarketingMaterialType =
+  | 'logo'
+  | 'banner'
+  | 'social_media'
+  | 'story_status'
+  | 'whatsapp_script'
+  | 'email_template'
+  | 'landing_page'
+  | 'video'
+  | 'text_ad'
+  | 'brand_kit';
+
 export interface IMarketingMaterial extends Document {
   title: string;
   description: string;
-  type: 'banner' | 'social_media' | 'email_template' | 'landing_page' | 'video' | 'text_ad';
+  type: MarketingMaterialType;
   content: string;
   imageUrl?: string;
   imageUrlDark?: string;
@@ -11,7 +23,7 @@ export interface IMarketingMaterial extends Document {
     width: number;
     height: number;
   };
-  platform?: 'facebook' | 'instagram' | 'twitter' | 'linkedin' | 'email' | 'website' | 'whatsapp';
+  platform?: string;
   category: string;
   isActive: boolean;
   language: string;
@@ -23,7 +35,22 @@ export interface IMarketingMaterial extends Document {
 const MarketingMaterialSchema = new Schema<IMarketingMaterial>({
   title: { type: String, required: true },
   description: { type: String, required: true },
-  type: { type: String, enum: ['banner', 'social_media', 'email_template', 'landing_page', 'video', 'text_ad'], required: true },
+  type: {
+    type: String,
+    enum: [
+      'logo',
+      'banner',
+      'social_media',
+      'story_status',
+      'whatsapp_script',
+      'email_template',
+      'landing_page',
+      'video',
+      'text_ad',
+      'brand_kit',
+    ],
+    required: true,
+  },
   content: { type: String, required: true },
   imageUrl: String,
   imageUrlDark: String,
@@ -31,7 +58,7 @@ const MarketingMaterialSchema = new Schema<IMarketingMaterial>({
     width: Number,
     height: Number,
   },
-  platform: { type: String, enum: ['facebook', 'instagram', 'twitter', 'linkedin', 'email', 'website', 'whatsapp'] },
+  platform: { type: String },
   category: { type: String, required: true },
   isActive: { type: Boolean, default: true },
   language: { type: String, default: 'pt' },

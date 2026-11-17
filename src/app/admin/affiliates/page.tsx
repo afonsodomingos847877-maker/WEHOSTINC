@@ -45,11 +45,126 @@ interface Commission {
   createdAt: string;
 }
 
+type MaterialType =
+  | 'logo'
+  | 'banner'
+  | 'social_media'
+  | 'story_status'
+  | 'whatsapp_script'
+  | 'email_template'
+  | 'landing_page'
+  | 'video'
+  | 'text_ad'
+  | 'brand_kit';
+
+const MATERIAL_TYPE_PRESETS: Record<
+  MaterialType,
+  {
+    label: string;
+    category: string;
+    platform: string;
+    defaultTitle: string;
+    defaultDescription: string;
+    defaultContent: string;
+  }
+> = {
+  logo: {
+    label: 'Logótipo / Identidade Visual',
+    category: 'Identidade Visual',
+    platform: 'Website, Redes Sociais, Criativos',
+    defaultTitle: 'Logótipo Oficial WEHOSTHERE',
+    defaultDescription: 'Logótipo oficial em alta resolução para usar nos seus criativos, posts e apresentações.',
+    defaultContent:
+      'Conheça a WEHOSTHERE — Hospedagem Web, Domínios .co.mz/.com, E-mail Profissional e Criação de Sites com pagamento via M-Pesa e Cartão: [AFFILIATE_LINK]',
+  },
+  banner: {
+    label: 'Banner Promocional',
+    category: 'Promoções',
+    platform: 'Instagram, Facebook, WhatsApp',
+    defaultTitle: 'Banner Oficial de Divulgação',
+    defaultDescription: 'Banner pronto para publicar no feed ou enviar aos seus contactos acompanhado do link de afiliado.',
+    defaultContent:
+      '🚀 Crie o seu site ou registe o domínio .co.mz/.com da sua empresa hoje mesmo na WEHOSTHERE! Hospedagem rápida com SSL grátis, cPanel e suporte 24/7. Ative agora: [AFFILIATE_LINK]',
+  },
+  social_media: {
+    label: 'Post para Redes Sociais (Feed)',
+    category: 'Redes Sociais',
+    platform: 'Instagram, Facebook, LinkedIn',
+    defaultTitle: 'Post Feed — Presença Digital Profissional',
+    defaultDescription: 'Legenda pronta para publicação em redes sociais com foco em empresas e empreendedores.',
+    defaultContent:
+      'A sua empresa ainda usa @gmail.com? 💡 Passe mais credibilidade aos seus clientes com um domínio próprio (.co.mz ou .com), e-mail corporativo e site profissional na WEHOSTHERE. Veja os planos aqui: [AFFILIATE_LINK]',
+  },
+  story_status: {
+    label: 'Story / Status (WhatsApp & Instagram)',
+    category: 'Stories & Status',
+    platform: 'WhatsApp Status, Instagram Stories',
+    defaultTitle: 'Criativo para Status / Stories',
+    defaultDescription: 'Arte vertical + chamada curta ideal para Status do WhatsApp e Stories do Instagram.',
+    defaultContent:
+      '🔥 Precisa de Site Profissional, Loja Online ou Domínio .co.mz? Faça tudo em minutos na WEHOSTHERE com pagamento via M-Pesa ou Cartão! 👇 Clique no link: [AFFILIATE_LINK]',
+  },
+  whatsapp_script: {
+    label: 'Script de Abordagem (WhatsApp)',
+    category: 'Vendas Diretas',
+    platform: 'WhatsApp',
+    defaultTitle: 'Script WhatsApp — Abordagem a Empresas',
+    defaultDescription: 'Mensagem pronta para enviar diretamente a clientes e negócios no WhatsApp.',
+    defaultContent:
+      'Olá! Tudo bem? Reparei que o vosso negócio tem excelente potencial e queria partilhar uma dica: na WEHOSTHERE conseguem registar o domínio .co.mz/.com, criar e-mails profissionais e ter um site completo com pagamento fácil via M-Pesa. Veja aqui os pacotes: [AFFILIATE_LINK]',
+  },
+  email_template: {
+    label: 'Template de E-mail Comercial',
+    category: 'E-mail Marketing',
+    platform: 'Email',
+    defaultTitle: 'E-mail de Apresentação Comercial',
+    defaultDescription: 'Modelo de e-mail pronto para enviar a empresas e potenciais clientes.',
+    defaultContent:
+      'Assunto: Domínio .co.mz, E-mail Corporativo e Site Profissional para a sua empresa\n\nOlá,\n\nPara destacar a sua marca com e-mail profissional (@suaempresa.co.mz), alojamento web rápido ou criação de website completo, recomendo a plataforma WEHOSTHERE.\n\nConsulte todos os planos e ative em minutos aqui: [AFFILIATE_LINK]\n\nMelhores cumprimentos',
+  },
+  landing_page: {
+    label: 'Link / Página de Destaque',
+    category: 'Links & Páginas',
+    platform: 'Bio, Website, YouTube',
+    defaultTitle: 'Link Oficial para Bio / Descrição',
+    defaultDescription: 'Chamada curta para colocar na bio do Instagram, descrição do YouTube ou botões de página.',
+    defaultContent:
+      '🌐 Hospedagem Web, Domínios .co.mz e Criação de Sites — Aceda pelo meu link oficial WEHOSTHERE: [AFFILIATE_LINK]',
+  },
+  video: {
+    label: 'Vídeo / Reels / TikTok',
+    category: 'Vídeos',
+    platform: 'TikTok, Reels, YouTube Shorts',
+    defaultTitle: 'Vídeo Promocional + Legenda',
+    defaultDescription: 'Roteiro/legenda para acompanhar vídeos curtos no Reels, TikTok ou Shorts.',
+    defaultContent:
+      'Como colocar o seu negócio online em Moçambique com domínio próprio e M-Pesa 🚀 Confira na WEHOSTHERE pelo link: [AFFILIATE_LINK]',
+  },
+  text_ad: {
+    label: 'Texto Publicitário (Copy Curta)',
+    category: 'Anúncios & Copy',
+    platform: 'Facebook Ads, Grupos, Telegram',
+    defaultTitle: 'Copy Publicitária de Conversão',
+    defaultDescription: 'Texto persuasivo pronto para grupos, anúncios ou publicações rápidas.',
+    defaultContent:
+      '✅ Hospedagem de Sites a partir de 550 MT/mês\n✅ Registo de Domínios .co.mz e .com\n✅ Criação de Sites e Lojas Online\nComece agora na WEHOSTHERE: [AFFILIATE_LINK]',
+  },
+  brand_kit: {
+    label: 'Kit de Marca / Guia Visual',
+    category: 'Identidade Visual',
+    platform: 'Geral',
+    defaultTitle: 'Kit Oficial da Marca WEHOSTHERE',
+    defaultDescription: 'Recursos visuais e guia rápido da marca para parceiros e afiliados.',
+    defaultContent:
+      'Parceiro Oficial WEHOSTHERE — Soluções completas de Hospedagem, Domínios, VPS e Websites: [AFFILIATE_LINK]',
+  },
+};
+
 interface MarketingMaterial {
   _id: string;
   title: string;
   description: string;
-  type: 'banner' | 'social_media' | 'email_template' | 'landing_page' | 'video' | 'text_ad';
+  type: MaterialType;
   content: string;
   imageUrl?: string;
   platform?: string;
@@ -171,15 +286,60 @@ export default function AdminAffiliatesPage() {
     }
   };
 
-  const [materialForm, setMaterialForm] = useState({
+  const [materialForm, setMaterialForm] = useState<{
+    title: string;
+    description: string;
+    type: MaterialType;
+    content: string;
+    imageUrl: string;
+    platform: string;
+    category: string;
+  }>({
     title: '',
     description: '',
-    type: 'banner' as 'banner' | 'social_media' | 'email_template' | 'landing_page' | 'video' | 'text_ad',
-    content: '',
+    type: 'banner',
+    content: MATERIAL_TYPE_PRESETS.banner.defaultContent,
     imageUrl: '',
-    platform: '',
-    category: '',
+    platform: MATERIAL_TYPE_PRESETS.banner.platform,
+    category: MATERIAL_TYPE_PRESETS.banner.category,
   });
+
+  const applyMaterialTypePreset = (nextType: MaterialType, forceOverwrite = false) => {
+    const preset = MATERIAL_TYPE_PRESETS[nextType];
+    if (!preset) return;
+    const allPresetContents = Object.values(MATERIAL_TYPE_PRESETS).map((p) => p.defaultContent);
+    const allPresetCategories = Object.values(MATERIAL_TYPE_PRESETS).map((p) => p.category);
+    const allPresetPlatforms = Object.values(MATERIAL_TYPE_PRESETS).map((p) => p.platform);
+    const allPresetDescriptions = Object.values(MATERIAL_TYPE_PRESETS).map((p) => p.defaultDescription);
+    const allPresetTitles = Object.values(MATERIAL_TYPE_PRESETS).map((p) => p.defaultTitle);
+
+    setMaterialForm((prev) => ({
+      ...prev,
+      type: nextType,
+      title:
+        forceOverwrite || !prev.title.trim() || allPresetTitles.includes(prev.title)
+          ? prev.title.trim() && !allPresetTitles.includes(prev.title) && !forceOverwrite
+            ? prev.title
+            : preset.defaultTitle
+          : prev.title,
+      description:
+        forceOverwrite || !prev.description.trim() || allPresetDescriptions.includes(prev.description)
+          ? preset.defaultDescription
+          : prev.description,
+      category:
+        forceOverwrite || !prev.category.trim() || allPresetCategories.includes(prev.category)
+          ? preset.category
+          : prev.category,
+      platform:
+        forceOverwrite || !prev.platform.trim() || allPresetPlatforms.includes(prev.platform)
+          ? preset.platform
+          : prev.platform,
+      content:
+        forceOverwrite || !prev.content.trim() || allPresetContents.includes(prev.content)
+          ? preset.defaultContent
+          : prev.content,
+    }));
+  };
 
   useEffect(() => {
     fetchData();
@@ -1260,13 +1420,13 @@ export default function AdminAffiliatesPage() {
                 onClick={() => {
                   setEditingMaterial(null);
                   setMaterialForm({
-                    title: '',
-                    description: '',
+                    title: MATERIAL_TYPE_PRESETS.banner.defaultTitle,
+                    description: MATERIAL_TYPE_PRESETS.banner.defaultDescription,
                     type: 'banner',
-                    content: '',
+                    content: MATERIAL_TYPE_PRESETS.banner.defaultContent,
                     imageUrl: '',
-                    platform: '',
-                    category: '',
+                    platform: MATERIAL_TYPE_PRESETS.banner.platform,
+                    category: MATERIAL_TYPE_PRESETS.banner.category,
                   });
                   setUploadedImageUrl('');
                   setShowMaterialModal(true);
@@ -1309,7 +1469,9 @@ export default function AdminAffiliatesPage() {
                         }`}>
                           {material.isActive ? 'Ativo' : 'Inativo'}
                         </span>
-                        <span className="text-xs text-gray-500">{material.type}</span>
+                        <span className="text-xs font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                          {MATERIAL_TYPE_PRESETS[material.type]?.label || material.type}
+                        </span>
                       </div>
                       <h3 className="font-semibold text-gray-900 mb-1">{material.title}</h3>
                       <p className="text-sm text-gray-600 mb-3 line-clamp-2">{material.description}</p>
@@ -1383,18 +1545,22 @@ export default function AdminAffiliatesPage() {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-sm font-medium text-gray-700">Tipo de Material</label>
+                  <span className="text-[11px] text-amber-700 font-semibold">
+                    Preenche copy e categoria automaticamente
+                  </span>
+                </div>
                 <select
                   value={materialForm.type}
-                  onChange={(e) => setMaterialForm({ ...materialForm, type: e.target.value as any })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  onChange={(e) => applyMaterialTypePreset(e.target.value as MaterialType, false)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white"
                 >
-                  <option value="banner">Banner</option>
-                  <option value="social_media">Social Media</option>
-                  <option value="email_template">Email Template</option>
-                  <option value="landing_page">Landing Page</option>
-                  <option value="video">Vídeo</option>
-                  <option value="text_ad">Texto Publicitário</option>
+                  {(Object.keys(MATERIAL_TYPE_PRESETS) as MaterialType[]).map((key) => (
+                    <option key={key} value={key}>
+                      {MATERIAL_TYPE_PRESETS[key].label}
+                    </option>
+                  ))}
                 </select>
               </div>
               
@@ -1405,7 +1571,7 @@ export default function AdminAffiliatesPage() {
                   value={materialForm.category}
                   onChange={(e) => setMaterialForm({ ...materialForm, category: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                  placeholder="Ex: Promoções"
+                  placeholder="Ex: Identidade Visual, Promoções, Redes Sociais"
                 />
               </div>
               
@@ -1416,19 +1582,33 @@ export default function AdminAffiliatesPage() {
                   value={materialForm.platform}
                   onChange={(e) => setMaterialForm({ ...materialForm, platform: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                  placeholder="Ex: Instagram, Facebook"
+                  placeholder="Ex: Instagram, Facebook, WhatsApp"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Conteúdo</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Conteúdo / Copy para o Afiliado
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => applyMaterialTypePreset(materialForm.type, true)}
+                    className="text-xs font-semibold text-amber-700 hover:text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-2.5 py-1 rounded-md transition cursor-pointer"
+                  >
+                    ✨ Gerar copy padrão deste tipo
+                  </button>
+                </div>
                 <textarea
                   value={materialForm.content}
                   onChange={(e) => setMaterialForm({ ...materialForm, content: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                   rows={4}
-                  placeholder="Conteúdo do material..."
+                  placeholder="Conteúdo do material (use [AFFILIATE_LINK] para inserir automaticamente o link do afiliado)..."
                 />
+                <p className="text-[11px] text-gray-500 mt-1">
+                  Dica: O marcador <code className="bg-gray-100 px-1 py-0.5 rounded font-mono text-gray-800">[AFFILIATE_LINK]</code> é substituído automaticamente pelo link de cada afiliado.
+                </p>
               </div>
               
               <div>
