@@ -204,7 +204,9 @@ export default function AdminAffiliatesPage() {
 
   // Reports states
   const [reportsData, setReportsData] = useState<any>(null);
-  const [reportsPeriod, setReportsPeriod] = useState('30');
+  const [reportsPeriod, setReportsPeriod] = useState('all');
+  const [reportsUpdatedAt, setReportsUpdatedAt] = useState<string>('');
+  const [refreshingReports, setRefreshingReports] = useState(false);
 
   // Adicionar / Promover Afiliado diretamente pelo Admin
   const [showAddAffiliateModal, setShowAddAffiliateModal] = useState(false);
@@ -343,7 +345,29 @@ export default function AdminAffiliatesPage() {
 
   useEffect(() => {
     fetchData();
-  }, [activeTab, filterStatus]);
+  }, [activeTab, filterStatus, reportsPeriod]);
+
+  useEffect(() => {
+    if (activeTab !== 'reports') return;
+    const interval = setInterval(async () => {
+      try {
+        setRefreshingReports(true);
+        const res = await fetch(`/api/admin/affiliates/reports?period=${reportsPeriod}&t=${Date.now()}`, {
+          cache: 'no-store',
+        });
+        const data = await res.json();
+        if (data.success) {
+          setReportsData(data.data);
+          setReportsUpdatedAt(new Date().toLocaleTimeString('pt-PT'));
+        }
+      } catch {
+        // Ignore background refresh errors
+      } finally {
+        setRefreshingReports(false);
+      }
+    }, 15000);
+    return () => clearInterval(interval);
+  }, [activeTab, reportsPeriod]);
 
   const fetchData = async () => {
     try {
@@ -366,9 +390,14 @@ export default function AdminAffiliatesPage() {
         const data = await res.json();
         if (data.success) setPayouts(data.affiliates);
       } else if (activeTab === 'reports') {
-        const res = await fetch(`/api/admin/affiliates/reports?period=${reportsPeriod}`);
+        const res = await fetch(`/api/admin/affiliates/reports?period=${reportsPeriod}&t=${Date.now()}`, {
+          cache: 'no-store',
+        });
         const data = await res.json();
-        if (data.success) setReportsData(data.data);
+        if (data.success) {
+          setReportsData(data.data);
+          setReportsUpdatedAt(new Date().toLocaleTimeString('pt-PT'));
+        }
       }
     } catch (error) {
       console.error('Erro ao buscar dados:', error);
@@ -1304,19 +1333,40 @@ export default function AdminAffiliatesPage() {
         <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-xl border border-white/50">
           <div className="p-6 border-b border-gray-200">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <h2 className="text-xl font-bold text-gray-900">Relatórios de Afiliados</h2>
-              <select
-                value={reportsPeriod}
-                onChange={(e) => {
-                  setReportsPeriod(e.target.value);
-                  fetchData();
-                }}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
-              >
-                <option value="7">Últimos 7 dias</option>
-                <option value="30">Últimos 30 dias</option>
-                <option value="90">Últimos 90 dias</option>
-              </select>
+              <div>
+                <div className="flex items-center gap-2.5">
+                  <h2 className="text-xl font-bold text-gray-900">Relatórios de Afiliados em Tempo Real</h2>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    Ao vivo
+                  </span>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Atualização automática a cada 15s{reportsUpdatedAt ? ` · Última sincronização às ${reportsUpdatedAt}` : ''}
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => fetchData()}
+                  disabled={refreshingReports || loading}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg text-xs font-semibold transition cursor-pointer disabled:opacity-50"
+                >
+                  <RefreshCw className={`h-3.5 w-3.5 ${refreshingReports ? 'animate-spin text-teal-600' : ''}`} />
+                  <span>Atualizar agora</span>
+                </button>
+                <select
+                  value={reportsPeriod}
+                  onChange={(e) => setReportsPeriod(e.target.value)}
+                  className="px-4 py-2 bg-white text-gray-900 font-medium border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
+                >
+                  <option value="all">Todo o Período (Tempo Real)</option>
+                  <option value="1">Últimas 24 horas (Hoje)</option>
+                  <option value="7">Últimos 7 dias</option>
+                  <option value="30">Últimos 30 dias</option>
+                  <option value="90">Últimos 90 dias</option>
+                </select>
+              </div>
             </div>
           </div>
           <div className="p-6">
@@ -1332,34 +1382,50 @@ export default function AdminAffiliatesPage() {
             ) : (
               <div className="space-y-6">
                 {/* Summary Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                   <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
-                    <div className="flex items-center space-x-3 mb-2">
+                    <div className="flex items-center space-x-2.5 mb-2">
                       <Users className="h-5 w-5 text-blue-600" />
-                      <span className="text-sm font-medium text-blue-800">Total de Afiliados</span>
+                      <span className="text-xs sm:text-sm font-medium text-blue-800">Total de Afiliados</span>
                     </div>
                     <p className="text-2xl font-bold text-blue-900">{reportsData.summary?.totalAffiliates || 0}</p>
+                    <p className="text-[11px] text-blue-700 mt-1">
+                      {reportsData.summary?.activeAffiliatesCount || 0} ativos · {reportsData.summary?.pendingAffiliatesCount || 0} pendentes
+                    </p>
                   </div>
                   <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-4 border border-emerald-200">
-                    <div className="flex items-center space-x-3 mb-2">
+                    <div className="flex items-center space-x-2.5 mb-2">
                       <Eye className="h-5 w-5 text-emerald-600" />
-                      <span className="text-sm font-medium text-emerald-800">Total de Cliques</span>
+                      <span className="text-xs sm:text-sm font-medium text-emerald-800">Total de Cliques</span>
                     </div>
                     <p className="text-2xl font-bold text-emerald-900">{reportsData.summary?.totalClicks || 0}</p>
+                    <p className="text-[11px] text-emerald-700 mt-1">Visitas via links de afiliado</p>
+                  </div>
+                  <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl p-4 border border-indigo-200">
+                    <div className="flex items-center space-x-2.5 mb-2">
+                      <Users className="h-5 w-5 text-indigo-600" />
+                      <span className="text-xs sm:text-sm font-medium text-indigo-800">Contas Criadas</span>
+                    </div>
+                    <p className="text-2xl font-bold text-indigo-900">{reportsData.summary?.totalSignups || 0}</p>
+                    <p className="text-[11px] text-indigo-700 mt-1">Clientes registados por indicação</p>
                   </div>
                   <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 border border-purple-200">
-                    <div className="flex items-center space-x-3 mb-2">
+                    <div className="flex items-center space-x-2.5 mb-2">
                       <ShoppingCart className="h-5 w-5 text-purple-600" />
-                      <span className="text-sm font-medium text-purple-800">Total de Conversões</span>
+                      <span className="text-xs sm:text-sm font-medium text-purple-800">Total de Conversões</span>
                     </div>
                     <p className="text-2xl font-bold text-purple-900">{reportsData.summary?.totalConversions || 0}</p>
+                    <p className="text-[11px] text-purple-700 mt-1">Vendas geradas por afiliados</p>
                   </div>
                   <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-4 border border-amber-200">
-                    <div className="flex items-center space-x-3 mb-2">
+                    <div className="flex items-center space-x-2.5 mb-2">
                       <DollarSign className="h-5 w-5 text-amber-600" />
-                      <span className="text-sm font-medium text-amber-800">Total de Ganhos</span>
+                      <span className="text-xs sm:text-sm font-medium text-amber-800">Total de Ganhos</span>
                     </div>
                     <p className="text-2xl font-bold text-amber-900">{(reportsData.summary?.totalEarnings || 0).toLocaleString('pt-MZ')} MZN</p>
+                    <p className="text-[11px] text-amber-700 mt-1">
+                      Saldo disponível: {(reportsData.summary?.totalAvailableBalance || 0).toLocaleString('pt-MZ')} MZN
+                    </p>
                   </div>
                 </div>
 
@@ -1370,19 +1436,25 @@ export default function AdminAffiliatesPage() {
                     <span className="text-sm font-medium text-teal-800">Taxa de Conversão Global</span>
                   </div>
                   <p className="text-3xl font-bold text-teal-900">{(reportsData.summary?.conversionRate || 0).toFixed(2)}%</p>
-                  <p className="text-xs text-teal-700 mt-1">Últimos {reportsData.summary?.period || 30} dias</p>
+                  <p className="text-xs text-teal-700 mt-1">
+                    {reportsData.summary?.period === 'all'
+                      ? 'Todo o período (histórico completo em tempo real)'
+                      : `Últimos ${reportsData.summary?.period || 30} dias`}
+                  </p>
                 </div>
 
                 {/* Individual Affiliate Reports */}
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-4">Relatório por Afiliado</h3>
+                  <h3 className="text-lg font-bold text-gray-900 mb-4">Relatório Real por Afiliado ({reportsData.affiliates?.length || 0})</h3>
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead className="bg-gray-100">
                         <tr>
                           <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Afiliado</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Estado</th>
                           <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Código</th>
                           <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Cliques</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Contas Criadas</th>
                           <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Conversões</th>
                           <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Ganhos</th>
                           <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Saldo</th>
@@ -1391,14 +1463,49 @@ export default function AdminAffiliatesPage() {
                       </thead>
                       <tbody className="divide-y divide-gray-200">
                         {reportsData.affiliates?.map((affiliate: any, index: number) => (
-                          <tr key={index} className="hover:bg-gray-50 transition">
-                            <td className="px-4 py-3 text-sm text-gray-900">{affiliate.userId}</td>
-                            <td className="px-4 py-3 text-sm text-gray-600">{affiliate.affiliateCode}</td>
-                            <td className="px-4 py-3 text-sm text-gray-900 font-medium">{affiliate.clicks}</td>
-                            <td className="px-4 py-3 text-sm text-gray-900 font-medium">{affiliate.conversions}</td>
-                            <td className="px-4 py-3 text-sm text-emerald-600 font-semibold">{affiliate.earnings.toLocaleString('pt-MZ')} MZN</td>
-                            <td className="px-4 py-3 text-sm text-gray-900 font-medium">{affiliate.availableBalance.toLocaleString('pt-MZ')} MZN</td>
-                            <td className="px-4 py-3 text-sm text-gray-600">{affiliate.conversionRate.toFixed(2)}%</td>
+                          <tr key={affiliate.affiliateId || index} className="hover:bg-gray-50 transition">
+                            <td className="px-4 py-3">
+                              <div className="text-sm font-semibold text-gray-900">
+                                {affiliate.userName || affiliate.userId}
+                              </div>
+                              {affiliate.userEmail && (
+                                <div className="text-xs text-gray-500">{affiliate.userEmail}</div>
+                              )}
+                              {affiliate.phone && (
+                                <div className="text-[11px] text-emerald-700 font-medium">M-Pesa: {affiliate.phone}</div>
+                              )}
+                            </td>
+                            <td className="px-4 py-3">
+                              <span
+                                className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                  affiliate.status === 'active'
+                                    ? 'bg-emerald-100 text-emerald-800'
+                                    : affiliate.status === 'suspended'
+                                    ? 'bg-red-100 text-red-800'
+                                    : 'bg-amber-100 text-amber-800'
+                                }`}
+                              >
+                                {affiliate.status === 'active'
+                                  ? 'Ativo'
+                                  : affiliate.status === 'suspended'
+                                  ? 'Suspenso'
+                                  : 'Pendente'}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-sm font-mono text-gray-700">{affiliate.affiliateCode}</td>
+                            <td className="px-4 py-3">
+                              <div className="text-sm text-gray-900 font-bold">{affiliate.clicks}</div>
+                              {affiliate.lastClickAt && (
+                                <div className="text-[10px] text-gray-400">
+                                  Último: {new Date(affiliate.lastClickAt).toLocaleString('pt-PT')}
+                                </div>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-indigo-700 font-bold">{affiliate.signups || 0}</td>
+                            <td className="px-4 py-3 text-sm text-purple-700 font-bold">{affiliate.conversions}</td>
+                            <td className="px-4 py-3 text-sm text-emerald-600 font-semibold">{(affiliate.earnings || 0).toLocaleString('pt-MZ')} MZN</td>
+                            <td className="px-4 py-3 text-sm text-gray-900 font-medium">{(affiliate.availableBalance || 0).toLocaleString('pt-MZ')} MZN</td>
+                            <td className="px-4 py-3 text-sm text-gray-600">{(affiliate.conversionRate || 0).toFixed(2)}%</td>
                           </tr>
                         ))}
                       </tbody>
