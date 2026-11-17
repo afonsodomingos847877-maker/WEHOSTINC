@@ -1595,6 +1595,23 @@ export default function AffiliatesPage() {
               </div>
               <span className="text-xs md:text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">Use [AFFILIATE_LINK] nos materiais</span>
             </div>
+            {/* Banner Permanente: Guia Completo de Serviços, Preços & Comissões */}
+            <div className="mb-6 p-4 sm:p-5 rounded-2xl bg-neutral-50 border border-neutral-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h4 className="text-sm sm:text-base font-extrabold text-neutral-950">
+                  Guia de Serviços, Preços &amp; Comissões (30%)
+                </h4>
+                <p className="text-xs text-neutral-600 mt-0.5">
+                  Consulte os valores oficiais de domínios, hospedagem, sites, VPS e quanto você ganha em cada venda + textos prontos para partilhar.
+                </p>
+              </div>
+              <Link
+                href="/dashboard/affiliates/guia"
+                className="px-4 py-2.5 bg-neutral-950 hover:bg-neutral-800 text-white text-xs font-bold rounded-full text-center shrink-0 transition"
+              >
+                Abrir Guia de Serviços →
+              </Link>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
               {materials.map((material) => (
                 <div key={material._id} className="border-2 border-gray-200 rounded-2xl p-4 md:p-5 hover:shadow-xl transition group">
