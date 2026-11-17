@@ -20,6 +20,7 @@ import { soundEffects } from '@/lib/soundEffects';
 import FacebookPixel from '@/lib/facebookPixel';
 import { trackAffiliateEvent } from '@/lib/affiliateEventsClient';
 import { useTranslation, getLanguage, setLanguage, Language } from '@/lib/i18n';
+import { useCurrency } from '@/context/CurrencyContext';
 import { useAnalytics } from '@/lib/analytics';
 
 const WHATSAPP_PLACEHOLDERS = [
@@ -78,6 +79,7 @@ function CheckoutContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [language, setLanguageState] = useState<Language>('pt');
+  const { formatPrice } = useCurrency();
   const t = useTranslation('pt');
   const analytics = useAnalytics();
   const rawPlanId = searchParams.get('plan');
@@ -2122,7 +2124,7 @@ function CheckoutContent() {
                   <div className="text-right shrink-0">
                     <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400 block">Total</span>
                     <span className="text-sm sm:text-base font-black text-emerald-600">
-                      {(isCoursePayment ? courseAmountParam : (isAffiliateVerification ? verificationAmount : grandTotal)).toLocaleString('pt-MZ')} MT
+                      {formatPrice(isCoursePayment ? courseAmountParam : (isAffiliateVerification ? verificationAmount : grandTotal))}
                     </span>
                   </div>
                 </div>
@@ -2690,7 +2692,7 @@ function CheckoutContent() {
                     >
                       <span className="text-[10px] font-bold text-gray-500 block uppercase">1 Mês</span>
                       <span className="text-sm font-bold text-gray-900 block mt-0.5">
-                        {selectedPlan.price.toLocaleString('pt-MZ')} MT
+                        {formatPrice(selectedPlan.price)}
                       </span>
                       <span className="text-[10px] text-gray-400 block font-normal">Mensal regular</span>
                     </button>
@@ -2713,7 +2715,7 @@ function CheckoutContent() {
                       </span>
                       <span className="text-[10px] font-bold text-gray-500 block uppercase">3 Meses</span>
                       <span className="text-sm font-bold text-gray-900 block mt-0.5">
-                        {Math.round(selectedPlan.price * 3 * 0.95).toLocaleString('pt-MZ')} MT
+                        {formatPrice(Math.round(selectedPlan.price * 3 * 0.95))}
                       </span>
                       <span className="text-[10px] text-emerald-700 block font-bold">5% Desconto</span>
                     </button>
@@ -2736,7 +2738,7 @@ function CheckoutContent() {
                       </span>
                       <span className="text-[10px] font-bold text-gray-500 block uppercase">6 Meses</span>
                       <span className="text-sm font-bold text-gray-900 block mt-0.5">
-                        {Math.round(selectedPlan.price * 6 * 0.90).toLocaleString('pt-MZ')} MT
+                        {formatPrice(Math.round(selectedPlan.price * 6 * 0.90))}
                       </span>
                       <span className="text-[10px] text-emerald-700 block font-bold">10% Desconto</span>
                     </button>
@@ -2759,7 +2761,7 @@ function CheckoutContent() {
                       </span>
                       <span className="text-[10px] font-bold text-emerald-800 block uppercase">1 Ano (12M)</span>
                       <span className="text-sm font-bold text-gray-900 block mt-0.5">
-                        {selectedPlan.priceAnnual.toLocaleString('pt-MZ')} MT
+                        {formatPrice(selectedPlan.priceAnnual)}
                       </span>
                       <span className="text-[10px] text-amber-700 block font-bold">2 Meses OFF</span>
                     </button>
@@ -2901,7 +2903,7 @@ function CheckoutContent() {
               {!summaryOpen && (
                 <div className="flex justify-between items-center text-sm font-bold text-gray-900 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200">
                   <span className="text-xs text-gray-500 font-normal">Total a Pagar</span>
-                  <span className="text-base text-emerald-600 font-black">{grandTotal.toLocaleString('pt-MZ')} MT</span>
+                  <span className="text-base text-emerald-600 font-black">{formatPrice(grandTotal)}</span>
                 </div>
               )}
 
@@ -2954,7 +2956,7 @@ function CheckoutContent() {
                                 ? (siteTypeName ? siteTypeName : 'Criação de Site Profissional')
                                 : `Plano ${selectedPlan.name} (${durationMonths === 1 ? '1 Mês' : `${durationMonths} Meses`})`}
                             </span>
-                            <span className="font-bold text-gray-900">{basePrice.toLocaleString('pt-MZ')} MT</span>
+                            <span className="font-bold text-gray-900">{formatPrice(basePrice)}</span>
                           </div>
                           <div className="text-xs text-gray-500">
                             {selectedPlan.id === 'website_creation'
@@ -2974,7 +2976,7 @@ function CheckoutContent() {
                             <span className="font-semibold text-gray-900 block">Registo de Domínio</span>
                             <span className="text-xs font-mono text-primary-700 font-bold">{domainParam}</span>
                           </div>
-                          <span className="font-bold text-emerald-700">{domainCost.toLocaleString('pt-MZ')} MT/ano</span>
+                          <span className="font-bold text-emerald-700">{formatPrice(domainCost)}/ano</span>
                         </div>
                       )}
 
@@ -2999,7 +3001,7 @@ function CheckoutContent() {
                         <Tag className="h-3 w-3" />
                         Desconto Cupom ({appliedCoupon.code})
                       </span>
-                      <span>-{appliedCoupon.discountAmount.toLocaleString('pt-MZ')} MT</span>
+                      <span>-{formatPrice(appliedCoupon.discountAmount)}</span>
                     </div>
                   )}
 
@@ -3061,7 +3063,7 @@ function CheckoutContent() {
 
                   <div className="flex justify-between items-center border-t border-gray-200 pt-3 mt-3 font-bold text-base text-gray-900">
                     <span>Total a Pagar</span>
-                    <span className="text-xl text-emerald-600 font-black">{grandTotal.toLocaleString('pt-MZ')} MT</span>
+                    <span className="text-xl text-emerald-600 font-black">{formatPrice(grandTotal)}</span>
                   </div>
                 </div>
               )}
@@ -3093,7 +3095,7 @@ function CheckoutContent() {
                   ) : (
                     <>
                       <Lock className="h-4 w-4" />
-                      <span>Finalizar Pagamento ({grandTotal.toLocaleString('pt-MZ')} MT)</span>
+                      <span>Finalizar Pagamento ({formatPrice(grandTotal)})</span>
                       <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
                     </>
                   )}

@@ -18,6 +18,7 @@ import {
 import { DOMAIN_PRICES } from '@/lib/domains';
 import { hostingPlans, websiteTypes } from '@/lib/data';
 import { auth } from '@/lib/auth';
+import { useCurrency } from '@/context/CurrencyContext';
 
 const COMMISSION_RATE = 0.3;
 
@@ -28,6 +29,7 @@ const VPS_PLANS = [
 ];
 
 export default function AffiliateServicesGuidePage() {
+  const { formatPrice } = useCurrency();
   const [affiliateLink, setAffiliateLink] = useState('https://www.wehosthere.com/?ref=SEU_CODIGO');
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -53,7 +55,7 @@ export default function AffiliateServicesGuidePage() {
   };
 
   const formatCommission = (amount: number) =>
-    `${Math.round(amount * COMMISSION_RATE).toLocaleString('pt-MZ')} MT`;
+    formatPrice(Math.round(amount * COMMISSION_RATE));
 
   const pitchScripts = [
     {
@@ -144,7 +146,7 @@ export default function AffiliateServicesGuidePage() {
                   </span>
                 </div>
                 <p className="text-xs text-neutral-500">
-                  Preço: <strong className="text-neutral-900">{d.price.toLocaleString('pt-MZ')} MT/ano</strong>
+                  Preço: <strong className="text-neutral-900">{formatPrice(d.price)}/ano</strong>
                 </p>
                 <p className="text-xs font-extrabold text-emerald-700">
                   Sua comissão: +{formatCommission(d.price)}
@@ -182,7 +184,7 @@ export default function AffiliateServicesGuidePage() {
                   <div className="space-y-1 text-xs border-t border-neutral-200 pt-2.5">
                     <div className="flex justify-between">
                       <span className="text-neutral-500">Mensal:</span>
-                      <span className="font-bold text-neutral-900">{plan.price.toLocaleString('pt-MZ')} MT</span>
+                      <span className="font-bold text-neutral-900">{formatPrice(plan.price)}</span>
                     </div>
                     <div className="flex justify-between text-emerald-700 font-bold">
                       <span>Comissão (Mensal):</span>
@@ -190,7 +192,7 @@ export default function AffiliateServicesGuidePage() {
                     </div>
                     <div className="flex justify-between pt-1">
                       <span className="text-neutral-500">Anual:</span>
-                      <span className="font-bold text-neutral-900">{plan.priceAnnual.toLocaleString('pt-MZ')} MT</span>
+                      <span className="font-bold text-neutral-900">{formatPrice(plan.priceAnnual)}</span>
                     </div>
                     <div className="flex justify-between text-emerald-700 font-extrabold">
                       <span>Comissão (Anual):</span>
@@ -220,7 +222,7 @@ export default function AffiliateServicesGuidePage() {
                 <div className="min-w-0">
                   <h3 className="text-sm font-extrabold text-neutral-950">{wt.name}</h3>
                   <p className="text-xs text-neutral-500">
-                    Preço base: <strong className="text-neutral-800">{wt.basePrice.toLocaleString('pt-MZ')} MT</strong> · {wt.deliveryDays} dias úteis
+                    Preço base: <strong className="text-neutral-800">{formatPrice(wt.basePrice)}</strong> · {wt.deliveryDays} dias úteis
                   </p>
                 </div>
                 <div className="text-right shrink-0">
@@ -249,7 +251,7 @@ export default function AffiliateServicesGuidePage() {
                     <span className="text-neutral-500 text-[11px]">{v.specs}</span>
                   </div>
                   <div className="text-right shrink-0">
-                    <span className="block font-bold text-neutral-900">{v.price.toLocaleString('pt-MZ')} MT/mês</span>
+                    <span className="block font-bold text-neutral-900">{formatPrice(v.price)}/mês</span>
                     <span className="font-extrabold text-emerald-700">+{formatCommission(v.price)}</span>
                   </div>
                 </div>
@@ -274,7 +276,7 @@ export default function AffiliateServicesGuidePage() {
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>Regras de Saque</span>
               </div>
-              <p>Comissões ficam disponíveis após confirmação do pagamento. Saque mínimo de <strong>1.000 MT</strong> via M-Pesa ou conversão em saldo na plataforma.</p>
+              <p>Comissões ficam disponíveis após confirmação do pagamento. Saque mínimo de <strong>{formatPrice(1000)}</strong> via M-Pesa ou conversão em saldo na plataforma.</p>
             </div>
           </section>
         </div>

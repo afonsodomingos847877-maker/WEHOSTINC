@@ -119,6 +119,7 @@ export const metadata: Metadata = {
 };
 
 import { LanguageProvider } from "@/context/LanguageContext";
+import { CurrencyProvider } from "@/context/CurrencyContext";
 import OfflineDetector from "@/components/OfflineDetector";
 import MaintenanceGate from "@/components/MaintenanceGate";
 import Providers from "@/components/Providers";
@@ -467,6 +468,7 @@ export default function RootLayout({
         </Script>
         <Providers>
           <ThemeProvider>
+          <CurrencyProvider>
           <LanguageProvider>
             <MaintenanceGate>
               <CinematicPageTransition>{children}</CinematicPageTransition>
@@ -481,6 +483,7 @@ export default function RootLayout({
             <AdminAiTopBar isGlobalRoot={true} />
             <SmartThemeSuggestion />
           </LanguageProvider>
+          </CurrencyProvider>
         </ThemeProvider>
         </Providers>
       </body>

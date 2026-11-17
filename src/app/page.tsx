@@ -7,6 +7,7 @@ import { Server, Mail, Shield, ShieldCheck, Activity, Smartphone, Zap, Globe, Us
 import { websiteTypes } from '@/lib/data';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import { useLanguage } from '@/context/LanguageContext';
+import { useCurrency } from '@/context/CurrencyContext';
 
 import Navbar from '@/components/Navbar';
 import DomainSearch from '@/components/DomainSearch';
@@ -23,6 +24,7 @@ import { soundEffects } from '@/lib/soundEffects';
 
 export default function Home() {
   const { t, language } = useLanguage();
+  const { formatPrice } = useCurrency();
   const [durationMonths, setDurationMonths] = useState<number>(1);
   const [activePricingPlan, setActivePricingPlan] = useState<'basic' | 'pro' | 'enterprise'>('pro');
   const [isPricingInteracted, setIsPricingInteracted] = useState(false);
@@ -543,13 +545,15 @@ export default function Home() {
                 <p className="text-sm sm:text-base text-gray-600 mb-4">{t('pricing.basic_desc')}</p>
                 <div className="mb-4 sm:mb-6">
                   <span className="text-2xl sm:text-4xl font-bold text-gray-900 group-hover:text-primary-600 transition-colors">
-                    {durationMonths === 12
-                      ? '5.500 MT'
-                      : durationMonths === 6
-                      ? '2.970 MT'
-                      : durationMonths === 3
-                      ? '1.568 MT'
-                      : '550 MT'}
+                    {formatPrice(
+                      durationMonths === 12
+                        ? 5500
+                        : durationMonths === 6
+                        ? 2970
+                        : durationMonths === 3
+                        ? 1568
+                        : 550
+                    )}
                   </span>
                   <span className="text-xs sm:text-sm text-gray-600 font-medium">
                     {durationMonths === 12 ? ` ${t('pricing.per_year')}` : ` /${durationMonths}M`}
@@ -557,10 +561,10 @@ export default function Home() {
                   {durationMonths > 1 && (
                     <div className="text-[10px] sm:text-xs font-semibold text-emerald-600 mt-1">
                       {durationMonths === 12
-                        ? `${t('pricing.save')} 1.100 MT (${t('pricing.2months_free')})`
+                        ? `${t('pricing.save')} ${formatPrice(1100)} (${t('pricing.2months_free')})`
                         : durationMonths === 6
-                        ? `${t('pricing.save')} 330 MT (10% ${t('pricing.discount')})`
-                        : `${t('pricing.save')} 82 MT (5% ${t('pricing.discount')})`}
+                        ? `${t('pricing.save')} ${formatPrice(330)} (10% ${t('pricing.discount')})`
+                        : `${t('pricing.save')} ${formatPrice(82)} (5% ${t('pricing.discount')})`}
                     </div>
                   )}
                 </div>
@@ -616,13 +620,15 @@ export default function Home() {
                 <p className="text-sm sm:text-base text-blue-100 mb-4">{t('pricing.pro_desc')}</p>
                 <div className="mb-4 sm:mb-6">
                   <span className="text-2xl sm:text-4xl font-bold text-white group-hover:text-blue-100 transition-colors">
-                    {durationMonths === 12
-                      ? '25.000 MT'
-                      : durationMonths === 6
-                      ? '13.500 MT'
-                      : durationMonths === 3
-                      ? '7.125 MT'
-                      : '2.500 MT'}
+                    {formatPrice(
+                      durationMonths === 12
+                        ? 25000
+                        : durationMonths === 6
+                        ? 13500
+                        : durationMonths === 3
+                        ? 7125
+                        : 2500
+                    )}
                   </span>
                   <span className="text-xs sm:text-sm text-blue-100 font-medium">
                     {durationMonths === 12 ? ` ${t('pricing.per_year')}` : ` /${durationMonths}M`}
@@ -630,10 +636,10 @@ export default function Home() {
                   {durationMonths > 1 && (
                     <div className="text-[10px] sm:text-xs font-semibold text-amber-300 mt-1">
                       {durationMonths === 12
-                        ? `${t('pricing.save')} 5.000 MT (${t('pricing.2months_free')})`
+                        ? `${t('pricing.save')} ${formatPrice(5000)} (${t('pricing.2months_free')})`
                         : durationMonths === 6
-                        ? `${t('pricing.save')} 1.500 MT (10% ${t('pricing.discount')})`
-                        : `${t('pricing.save')} 375 MT (5% ${t('pricing.discount')})`}
+                        ? `${t('pricing.save')} ${formatPrice(1500)} (10% ${t('pricing.discount')})`
+                        : `${t('pricing.save')} ${formatPrice(375)} (5% ${t('pricing.discount')})`}
                     </div>
                   )}
                 </div>
@@ -686,13 +692,15 @@ export default function Home() {
                 <p className="text-sm sm:text-base text-gray-600 mb-4">{t('pricing.enterprise_desc')}</p>
                 <div className="mb-4 sm:mb-6">
                   <span className="text-2xl sm:text-4xl font-bold text-gray-900 group-hover:text-primary-600 transition-colors">
-                    {durationMonths === 12
-                      ? '62.000 MT'
-                      : durationMonths === 6
-                      ? '33.480 MT'
-                      : durationMonths === 3
-                      ? '17.670 MT'
-                      : '6.200 MT'}
+                    {formatPrice(
+                      durationMonths === 12
+                        ? 62000
+                        : durationMonths === 6
+                        ? 33480
+                        : durationMonths === 3
+                        ? 17670
+                        : 6200
+                    )}
                   </span>
                   <span className="text-xs sm:text-sm text-gray-600 font-medium">
                     {durationMonths === 12 ? ` ${t('pricing.per_year')}` : ` /${durationMonths}M`}
@@ -700,10 +708,10 @@ export default function Home() {
                   {durationMonths > 1 && (
                     <div className="text-[10px] sm:text-xs font-semibold text-emerald-600 mt-1">
                       {durationMonths === 12
-                        ? `${t('pricing.save')} 12.400 MT (${t('pricing.2months_free')})`
+                        ? `${t('pricing.save')} ${formatPrice(12400)} (${t('pricing.2months_free')})`
                         : durationMonths === 6
-                        ? `${t('pricing.save')} 3.720 MT (10% ${t('pricing.discount')})`
-                        : `${t('pricing.save')} 930 MT (5% ${t('pricing.discount')})`}
+                        ? `${t('pricing.save')} ${formatPrice(3720)} (10% ${t('pricing.discount')})`
+                        : `${t('pricing.save')} ${formatPrice(930)} (5% ${t('pricing.discount')})`}
                     </div>
                   )}
                 </div>
@@ -800,7 +808,7 @@ export default function Home() {
                         </span>
                       </div>
                       <div className="text-xl sm:text-3xl sm:text-4xl font-black text-primary-700">
-                        {tickerTypes[tickerIndex]?.basePrice.toLocaleString('pt-MZ')} MT
+                        {formatPrice(tickerTypes[tickerIndex]?.basePrice || 0)}
                       </div>
                     </div>
                   </div>
