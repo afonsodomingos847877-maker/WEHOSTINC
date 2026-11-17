@@ -28,6 +28,7 @@ import { soundEffects } from '@/lib/soundEffects';
 import AdminAiTopBar from '@/components/AdminAiTopBar';
 import AdminSidebar from '@/components/AdminSidebar';
 import EmailAgentControl from '@/components/EmailAgentControl';
+import { useCurrency } from '@/context/CurrencyContext';
 
 const ADMIN_CANNED_RESPONSES = [
   {
@@ -545,6 +546,14 @@ export default function AdminPage() {
     variant?: 'danger' | 'warning' | 'info' | 'success';
   } | null>(null);
   const [hideSensitiveValues, setHideSensitiveValues] = useState(false);
+  const { currency, setCurrency, formatPrice } = useCurrency();
+
+  const formatSensitiveMoney = (amountMzn: number, isSensitive: boolean = true) => {
+    if (hideSensitiveValues && isSensitive) {
+      return currency === 'USD' ? '$***' : '*** MT';
+    }
+    return formatPrice(amountMzn);
+  };
 
   const formatSensitiveValue = (value: number | string, isSensitive: boolean = true) => {
     if (hideSensitiveValues && isSensitive) {
@@ -2065,7 +2074,7 @@ export default function AdminPage() {
                 <span className="text-[10px] sm:text-sm text-gray-500">A processar...</span>
               </div>
             ) : (
-              <p className="text-2xl sm:text-3xl font-bold text-gray-900">{formatSensitiveValue(totalRevenue)} MT</p>
+              <p className="text-2xl sm:text-3xl font-bold text-gray-900">{formatSensitiveMoney(totalRevenue)}</p>
             )}
             <p className="text-gray-500 text-[10px] sm:text-sm mt-1">Receita Total</p>
           </div>
@@ -2079,11 +2088,37 @@ export default function AdminPage() {
                 <DollarSign className="h-5 w-5 sm:h-6 sm:w-6 text-emerald-600" />
                 <span>Análise Financeira & Desempenho de Vendas</span>
               </h2>
-              <p className="text-gray-500 text-[10px] sm:text-sm mt-0.5">Métricas de faturamento em Meticais, ticket médio e liquidação via M-Pesa / eMola</p>
+              <p className="text-gray-500 text-[10px] sm:text-sm mt-0.5">Métricas de faturamento ({currency === 'USD' ? 'USD' : 'Meticais'}), ticket médio e liquidação via M-Pesa / eMola / Cartão</p>
             </div>
-            <span className="bg-emerald-100 text-emerald-800 text-[10px] sm:text-xs font-extrabold px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border border-emerald-300">
-              Projeção Anual: {formatSensitiveValue(mrr * 12)} MT
-            </span>
+            <div className="flex flex-wrap items-center gap-2">
+              <div
+                className="inline-flex items-center rounded-lg border border-gray-200 bg-gray-100 p-0.5 text-[11px] font-bold"
+                role="group"
+                aria-label="Selecionar moeda no painel"
+              >
+                <button
+                  type="button"
+                  onClick={() => setCurrency('MZN')}
+                  className={`px-2.5 py-1 rounded-md transition cursor-pointer ${
+                    currency === 'MZN' ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  MZN
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCurrency('USD')}
+                  className={`px-2.5 py-1 rounded-md transition cursor-pointer ${
+                    currency === 'USD' ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  USD
+                </button>
+              </div>
+              <span className="bg-emerald-100 text-emerald-800 text-[10px] sm:text-xs font-extrabold px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border border-emerald-300">
+                Projeção Anual: {formatSensitiveMoney(mrr * 12)}
+              </span>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6 pt-2">
@@ -2096,7 +2131,7 @@ export default function AdminPage() {
                   <span className="text-[10px] sm:text-xs font-semibold text-gray-500">A processar...</span>
                 </div>
               ) : (
-                <span className="text-xl sm:text-2xl font-black text-gray-900 block mt-1">{formatSensitiveValue(averageTicket)} MT</span>
+                <span className="text-xl sm:text-2xl font-black text-gray-900 block mt-1">{formatSensitiveMoney(averageTicket)}</span>
               )}
               <span className="text-[10px] sm:text-xs text-gray-500 mt-1 block">Média de gasto por contratação na plataforma</span>
             </div>
@@ -2110,7 +2145,7 @@ export default function AdminPage() {
                   <span className="text-[10px] sm:text-xs font-semibold text-red-600">A processar...</span>
                 </div>
               ) : (
-                <span className="text-xl sm:text-2xl font-black text-red-700 block mt-1">{formatSensitiveValue(mpesaRevenue)} MT</span>
+                <span className="text-xl sm:text-2xl font-black text-red-700 block mt-1">{formatSensitiveMoney(mpesaRevenue)}</span>
               )}
               <div className="w-full bg-red-200 h-1.5 sm:h-2 rounded-full mt-2 overflow-hidden">
                 <div className="bg-red-600 h-1.5 sm:h-2 rounded-full transition-all duration-700 animate-pulse" style={{ width: `${Math.round((mpesaRevenue / validOrdersTotal) * 100)}%` }}></div>
@@ -2127,7 +2162,7 @@ export default function AdminPage() {
                   <span className="text-[10px] sm:text-xs font-semibold text-orange-600">A processar...</span>
                 </div>
               ) : (
-                <span className="text-xl sm:text-2xl font-black text-orange-700 block mt-1">{formatSensitiveValue(emolaRevenue + cardRevenue)} MT</span>
+                <span className="text-xl sm:text-2xl font-black text-orange-700 block mt-1">{formatSensitiveMoney(emolaRevenue + cardRevenue)}</span>
               )}
               <div className="w-full bg-orange-200 h-1.5 sm:h-2 rounded-full mt-2 overflow-hidden">
                 <div className="bg-orange-600 h-1.5 sm:h-2 rounded-full transition-all duration-700 animate-pulse" style={{ width: `${Math.round(((emolaRevenue + cardRevenue) / validOrdersTotal) * 100)}%` }}></div>
@@ -3327,7 +3362,7 @@ export default function AdminPage() {
                             <p className="text-[10px] text-gray-400">{order.clientEmail}</p>
                           </td>
                           <td className="py-3 px-2 text-xs text-gray-700 max-w-[180px] truncate">{order.serviceName}</td>
-                          <td className="py-3 px-2 text-xs font-bold text-emerald-700">{order.amount?.toLocaleString('pt-MZ')} MT</td>
+                          <td className="py-3 px-2 text-xs font-bold text-emerald-700">{formatPrice(order.amount || 0)}</td>
                           <td className="py-3 px-2">{renderPaymentMethodBadge(order.paymentMethod)}</td>
                           <td className="py-3 px-2">
                             <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
