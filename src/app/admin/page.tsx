@@ -546,6 +546,7 @@ export default function AdminPage() {
     variant?: 'danger' | 'warning' | 'info' | 'success';
   } | null>(null);
   const [hideSensitiveValues, setHideSensitiveValues] = useState(false);
+  const [revenuePeriod, setRevenuePeriod] = useState<'today' | '7d' | 'month' | '30d' | 'year' | 'all'>('month');
   const { currency, setCurrency, formatPrice } = useCurrency();
 
   const formatSensitiveMoney = (amountMzn: number, isSensitive: boolean = true) => {
@@ -1436,22 +1437,77 @@ export default function AdminPage() {
     return status === 'completed' || status === 'approved' || status === 'active';
   };
 
-  const completedOrdersRevenue = orders
-    .filter(o => isCompletedOrder(o.status))
-    .reduce((acc, order) => acc + getOrderAmount(order), 0);
+  const nowDate = new Date();
+  const currentYear = nowDate.getFullYear();
+  const currentMonth = nowDate.getMonth() + 1;
 
-  const allNonCancelledOrdersRevenue = orders
-    .filter(o => o.status !== 'cancelled')
-    .reduce((acc, order) => acc + getOrderAmount(order), 0);
+  const revenuePeriodLabels: Record<typeof revenuePeriod, string> = {
+    today: 'Hoje',
+    '7d': 'Últimos 7 dias',
+    month: 'Mês Atual',
+    '30d': 'Últimos 30 dias',
+    year: 'Este Ano',
+    all: 'Todo o Período',
+  };
 
-  const actualOrdersRevenue = completedOrdersRevenue > 0 ? completedOrdersRevenue : allNonCancelledOrdersRevenue;
+  const isDateInRevenuePeriod = (dateVal?: string | Date) => {
+    if (revenuePeriod === 'all') return true;
+    if (!dateVal) return false;
+    const d = new Date(dateVal);
+    if (isNaN(d.getTime())) return false;
+    if (revenuePeriod === 'today') {
+      return (
+        d.getFullYear() === currentYear &&
+        d.getMonth() + 1 === currentMonth &&
+        d.getDate() === nowDate.getDate()
+      );
+    }
+    if (revenuePeriod === '7d') {
+      return nowDate.getTime() - d.getTime() <= 7 * 24 * 60 * 60 * 1000;
+    }
+    if (revenuePeriod === 'month') {
+      return d.getFullYear() === currentYear && d.getMonth() + 1 === currentMonth;
+    }
+    if (revenuePeriod === '30d') {
+      return nowDate.getTime() - d.getTime() <= 30 * 24 * 60 * 60 * 1000;
+    }
+    if (revenuePeriod === 'year') {
+      return d.getFullYear() === currentYear;
+    }
+    return true;
+  };
 
-  // Adicionar pagamentos mensais ao cálculo de receita
-  const currentYear = new Date().getFullYear();
-  const currentMonth = new Date().getMonth() + 1;
-  const monthlyPaymentsRevenue = monthlyPayments
-    .filter(p => p.year === currentYear && p.month === currentMonth && (p.status === 'paid' || p.status === 'partial'))
-    .reduce((acc, p) => acc + (p.paidAmount || 0), 0);
+  const isMonthlyPaymentInPeriod = (p: any) => {
+    if (revenuePeriod === 'all') return true;
+    if (p.paidAt) return isDateInRevenuePeriod(p.paidAt);
+    if (revenuePeriod === 'month') {
+      return p.year === currentYear && p.month === currentMonth;
+    }
+    if (revenuePeriod === 'year') {
+      return p.year === currentYear;
+    }
+    if (p.year && p.month) {
+      const approxDate = new Date(p.year, p.month - 1, 15);
+      return isDateInRevenuePeriod(approxDate);
+    }
+    return false;
+  };
+
+  const periodOrders = orders.filter(o => isDateInRevenuePeriod((o as any).paidAt || o.createdAt));
+  const paidPeriodOrders = periodOrders.filter(o => isCompletedOrder(o.status));
+  const pendingPeriodOrders = periodOrders.filter(o => !isCompletedOrder(o.status) && o.status !== 'cancelled');
+
+  const completedOrdersRevenue = paidPeriodOrders.reduce((acc, order) => acc + getOrderAmount(order), 0);
+  const pendingOrdersRevenue = pendingPeriodOrders.reduce((acc, order) => acc + getOrderAmount(order), 0);
+
+  // Adicionar pagamentos mensais confirmados dentro do período selecionado
+  const paidMonthlyPaymentsInPeriod = monthlyPayments.filter(
+    p => (p.status === 'paid' || p.status === 'partial') && isMonthlyPaymentInPeriod(p)
+  );
+  const monthlyPaymentsRevenue = paidMonthlyPaymentsInPeriod.reduce(
+    (acc, p) => acc + (p.paidAmount || 0),
+    0
+  );
 
   const clientUsers = users.filter(u => u.role !== 'admin' && u.email.toLowerCase() !== 'admin@wehosthere.com');
   const activeClients = clientUsers.filter(u => {
@@ -1468,12 +1524,12 @@ export default function AdminPage() {
     return acc + (planPrices[effectivePlan as keyof typeof planPrices] || 550);
   }, 0);
 
-  const totalRevenue = actualOrdersRevenue > 0 ? actualOrdersRevenue + monthlyPaymentsRevenue : mrr + monthlyPaymentsRevenue;
+  const totalRevenue = completedOrdersRevenue + monthlyPaymentsRevenue;
 
-  const validOrdersCount = orders.filter(o => o.status !== 'cancelled').length;
-  const averageTicket = validOrdersCount > 0 
-    ? Math.round(totalRevenue / validOrdersCount) 
-    : (activeClients.length > 0 ? Math.round(mrr / activeClients.length) : 0);
+  const paidTransactionsCount = paidPeriodOrders.length + paidMonthlyPaymentsInPeriod.length;
+  const averageTicket = paidTransactionsCount > 0
+    ? Math.round(totalRevenue / paidTransactionsCount)
+    : 0;
 
   const isMpesa = (method?: string) => {
     const m = (method || '').toLowerCase().replace(/[^a-z]/g, '');
@@ -1485,12 +1541,13 @@ export default function AdminPage() {
   };
   const isCard = (method?: string) => {
     const m = (method || '').toLowerCase().replace(/[^a-z]/g, '');
-    return m === 'card' || m.includes('card') || m.includes('cartao') || m.includes('visa') || m.includes('master');
+    return m === 'card' || m.includes('card') || m.includes('cartao') || m.includes('visa') || m.includes('master') || m.includes('stripe');
   };
 
-  const mpesaRevenue = orders.filter(o => isMpesa(o.paymentMethod) && o.status !== 'cancelled').reduce((acc, o) => acc + getOrderAmount(o), 0);
-  const emolaRevenue = orders.filter(o => isEmola(o.paymentMethod) && o.status !== 'cancelled').reduce((acc, o) => acc + getOrderAmount(o), 0);
-  const cardRevenue = orders.filter(o => isCard(o.paymentMethod) && o.status !== 'cancelled').reduce((acc, o) => acc + getOrderAmount(o), 0);
+  // Faturamento por método considera apenas vendas realmente confirmadas/pagas no período
+  const mpesaRevenue = paidPeriodOrders.filter(o => isMpesa(o.paymentMethod)).reduce((acc, o) => acc + getOrderAmount(o), 0);
+  const emolaRevenue = paidPeriodOrders.filter(o => isEmola(o.paymentMethod)).reduce((acc, o) => acc + getOrderAmount(o), 0);
+  const cardRevenue = paidPeriodOrders.filter(o => isCard(o.paymentMethod)).reduce((acc, o) => acc + getOrderAmount(o), 0);
   const renderPaymentMethodBadge = (method?: string) => {
     if (isMpesa(method)) {
       return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">M-Pesa</span>;
@@ -1507,7 +1564,8 @@ export default function AdminPage() {
     }
     return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-neutral-100 text-neutral-700 border border-neutral-200">{method || 'Manual'}</span>;
   };
-  const validOrdersTotal = (mpesaRevenue + emolaRevenue + cardRevenue) || actualOrdersRevenue || 1;
+  const paidMethodTotal = mpesaRevenue + emolaRevenue + cardRevenue;
+  const validOrdersTotal = paidMethodTotal > 0 ? paidMethodTotal : (completedOrdersRevenue > 0 ? completedOrdersRevenue : 1);
 
   const getUserStatus = (user: User) => {
     // Respeitar decisão explícita do Administrador
@@ -2066,7 +2124,9 @@ export default function AdminPage() {
           <div className="bg-white border border-gray-200 rounded-xl p-4 sm:p-6 shadow-sm hover:shadow-md transition">
             <div className="flex items-center justify-between mb-3 sm:mb-4">
               <DollarSign className="h-6 w-6 sm:h-8 sm:w-8 text-primary-600" />
-              <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-gray-500">Total</span>
+              <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                {revenuePeriodLabels[revenuePeriod]}
+              </span>
             </div>
             {isSyncingData ? (
               <div className="flex items-center space-x-2 text-primary-600 my-1 font-semibold">
@@ -2076,7 +2136,9 @@ export default function AdminPage() {
             ) : (
               <p className="text-2xl sm:text-3xl font-bold text-gray-900">{formatSensitiveMoney(totalRevenue)}</p>
             )}
-            <p className="text-gray-500 text-[10px] sm:text-sm mt-1">Receita Total</p>
+            <p className="text-gray-500 text-[10px] sm:text-sm mt-1">
+              Receita Confirmada ({paidTransactionsCount} {paidTransactionsCount === 1 ? 'venda' : 'vendas'})
+            </p>
           </div>
         </div>
 
@@ -2088,9 +2150,24 @@ export default function AdminPage() {
                 <DollarSign className="h-5 w-5 sm:h-6 sm:w-6 text-emerald-600" />
                 <span>Análise Financeira & Desempenho de Vendas</span>
               </h2>
-              <p className="text-gray-500 text-[10px] sm:text-sm mt-0.5">Métricas de faturamento ({currency === 'USD' ? 'USD' : 'Meticais'}), ticket médio e liquidação via M-Pesa / eMola / Cartão</p>
+              <p className="text-gray-500 text-[10px] sm:text-sm mt-0.5">
+                Vendas confirmadas em {revenuePeriodLabels[revenuePeriod]} ({currency === 'USD' ? 'USD' : 'Meticais'}) · Por faturar no período: <strong className="text-amber-700">{formatSensitiveMoney(pendingOrdersRevenue)}</strong> ({pendingPeriodOrders.length} pend.)
+              </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
+              <select
+                value={revenuePeriod}
+                onChange={(e) => setRevenuePeriod(e.target.value as any)}
+                aria-label="Filtrar faturamento por período"
+                className="px-2.5 py-1.5 bg-white text-gray-800 border border-gray-300 rounded-lg text-[11px] sm:text-xs font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+              >
+                <option value="today">Hoje</option>
+                <option value="7d">Últimos 7 dias</option>
+                <option value="month">Mês Atual</option>
+                <option value="30d">Últimos 30 dias</option>
+                <option value="year">Este Ano</option>
+                <option value="all">Todo o Período</option>
+              </select>
               <div
                 className="inline-flex items-center rounded-lg border border-gray-200 bg-gray-100 p-0.5 text-[11px] font-bold"
                 role="group"
