@@ -1477,17 +1477,28 @@ export default function AdminPage() {
     return true;
   };
 
+  const getMonthlyPaidAmount = (p: any) => {
+    const paid = Number(p.paidAmount);
+    if (!isNaN(paid) && paid > 0) return paid;
+    if (p.status === 'paid') {
+      const amt = Number(p.amount);
+      if (!isNaN(amt) && amt > 0) return amt;
+    }
+    return 0;
+  };
+
   const isMonthlyPaymentInPeriod = (p: any) => {
     if (revenuePeriod === 'all') return true;
-    if (p.paidAt) return isDateInRevenuePeriod(p.paidAt);
     if (revenuePeriod === 'month') {
-      return p.year === currentYear && p.month === currentMonth;
+      return Number(p.year) === currentYear && Number(p.month) === currentMonth;
     }
     if (revenuePeriod === 'year') {
-      return p.year === currentYear;
+      return Number(p.year) === currentYear;
     }
+    const rawDate = p.paymentDate || p.paidAt || p.createdAt;
+    if (rawDate) return isDateInRevenuePeriod(rawDate);
     if (p.year && p.month) {
-      const approxDate = new Date(p.year, p.month - 1, 15);
+      const approxDate = new Date(Number(p.year), Number(p.month) - 1, 15);
       return isDateInRevenuePeriod(approxDate);
     }
     return false;
@@ -1500,12 +1511,12 @@ export default function AdminPage() {
   const completedOrdersRevenue = paidPeriodOrders.reduce((acc, order) => acc + getOrderAmount(order), 0);
   const pendingOrdersRevenue = pendingPeriodOrders.reduce((acc, order) => acc + getOrderAmount(order), 0);
 
-  // Adicionar pagamentos mensais confirmados dentro do período selecionado
+  // Adicionar pagamentos mensais confirmados (/admin/pagamentos-mensais) dentro do período selecionado
   const paidMonthlyPaymentsInPeriod = monthlyPayments.filter(
     p => (p.status === 'paid' || p.status === 'partial') && isMonthlyPaymentInPeriod(p)
   );
   const monthlyPaymentsRevenue = paidMonthlyPaymentsInPeriod.reduce(
-    (acc, p) => acc + (p.paidAmount || 0),
+    (acc, p) => acc + getMonthlyPaidAmount(p),
     0
   );
 
@@ -1544,10 +1555,16 @@ export default function AdminPage() {
     return m === 'card' || m.includes('card') || m.includes('cartao') || m.includes('visa') || m.includes('master') || m.includes('stripe');
   };
 
-  // Faturamento por método considera apenas vendas realmente confirmadas/pagas no período
-  const mpesaRevenue = paidPeriodOrders.filter(o => isMpesa(o.paymentMethod)).reduce((acc, o) => acc + getOrderAmount(o), 0);
-  const emolaRevenue = paidPeriodOrders.filter(o => isEmola(o.paymentMethod)).reduce((acc, o) => acc + getOrderAmount(o), 0);
-  const cardRevenue = paidPeriodOrders.filter(o => isCard(o.paymentMethod)).reduce((acc, o) => acc + getOrderAmount(o), 0);
+  // Faturamento por método considera pedidos pagos + pagamentos mensais confirmados no período
+  const mpesaRevenue =
+    paidPeriodOrders.filter(o => isMpesa(o.paymentMethod)).reduce((acc, o) => acc + getOrderAmount(o), 0) +
+    paidMonthlyPaymentsInPeriod.filter(p => isMpesa(p.paymentMethod)).reduce((acc, p) => acc + getMonthlyPaidAmount(p), 0);
+  const emolaRevenue =
+    paidPeriodOrders.filter(o => isEmola(o.paymentMethod)).reduce((acc, o) => acc + getOrderAmount(o), 0) +
+    paidMonthlyPaymentsInPeriod.filter(p => isEmola(p.paymentMethod)).reduce((acc, p) => acc + getMonthlyPaidAmount(p), 0);
+  const cardRevenue =
+    paidPeriodOrders.filter(o => isCard(o.paymentMethod)).reduce((acc, o) => acc + getOrderAmount(o), 0) +
+    paidMonthlyPaymentsInPeriod.filter(p => isCard(p.paymentMethod)).reduce((acc, p) => acc + getMonthlyPaidAmount(p), 0);
   const renderPaymentMethodBadge = (method?: string) => {
     if (isMpesa(method)) {
       return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">M-Pesa</span>;
@@ -2151,7 +2168,11 @@ export default function AdminPage() {
                 <span>Análise Financeira & Desempenho de Vendas</span>
               </h2>
               <p className="text-gray-500 text-[10px] sm:text-sm mt-0.5">
-                Vendas confirmadas em {revenuePeriodLabels[revenuePeriod]} ({currency === 'USD' ? 'USD' : 'Meticais'}) · Por faturar no período: <strong className="text-amber-700">{formatSensitiveMoney(pendingOrdersRevenue)}</strong> ({pendingPeriodOrders.length} pend.)
+                Pedidos: <strong className="text-gray-800">{formatSensitiveMoney(completedOrdersRevenue)}</strong> +{' '}
+                <Link href="/admin/pagamentos-mensais" className="text-primary-600 hover:underline font-bold">
+                  Pagamentos Mensais: {formatSensitiveMoney(monthlyPaymentsRevenue)}
+                </Link>{' '}
+                · Por faturar: <strong className="text-amber-700">{formatSensitiveMoney(pendingOrdersRevenue)}</strong> ({pendingPeriodOrders.length} pend.)
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
