@@ -1923,11 +1923,22 @@ export default function AffiliatesPage() {
               {materials.map((material) => (
                 <div key={material._id} className="border-2 border-gray-200 rounded-2xl p-4 md:p-5 hover:shadow-xl transition group">
                   {material.imageUrl && (
-                    <img
-                      src={material.imageUrl}
-                      alt={material.title}
-                      className="w-full h-32 md:h-40 object-cover rounded-xl mb-4 group-hover:scale-105 transition"
-                    />
+                    <a
+                      href={material.imageUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="Abrir imagem em tamanho real"
+                      className="block w-full aspect-square bg-gray-50 border border-gray-100 rounded-xl overflow-hidden mb-4 p-2 flex items-center justify-center relative group/img"
+                    >
+                      <img
+                        src={material.imageUrl}
+                        alt={material.title}
+                        className="w-full h-full object-contain rounded-lg transition-transform duration-300 group-hover/img:scale-[1.03]"
+                      />
+                      <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded-md bg-black/65 text-white text-[10px] font-semibold opacity-0 group-hover/img:opacity-100 transition">
+                        Ver inteiro
+                      </span>
+                    </a>
                   )}
                   <h4 className="font-bold text-gray-900 mb-2 text-sm md:text-base">{material.title}</h4>
                   <p className="text-xs md:text-sm text-gray-600 mb-3">{material.description}</p>

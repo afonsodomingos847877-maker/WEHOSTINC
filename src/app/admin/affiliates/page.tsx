@@ -1591,11 +1591,11 @@ export default function AdminAffiliatesPage() {
                 {materials.map((material) => (
                   <div key={material._id} className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300">
                     {material.imageUrl && (
-                      <div className="h-40 bg-gray-100 overflow-hidden">
-                        <img 
-                          src={material.imageUrl} 
+                      <div className="w-full aspect-square bg-gray-50 border-b border-gray-100 overflow-hidden p-2 flex items-center justify-center">
+                        <img
+                          src={material.imageUrl}
                           alt={material.title}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-contain rounded-lg"
                         />
                       </div>
                     )}
@@ -1765,11 +1765,11 @@ export default function AdminAffiliatesPage() {
                   </div>
                   
                   {materialForm.imageUrl && (
-                    <div className="relative">
-                      <img 
-                        src={materialForm.imageUrl} 
+                    <div className="relative w-full max-w-[260px] aspect-square mx-auto bg-gray-50 rounded-xl border border-gray-200 p-2 flex items-center justify-center">
+                      <img
+                        src={materialForm.imageUrl}
                         alt="Preview"
-                        className="w-full h-40 object-cover rounded-lg border border-gray-200"
+                        className="w-full h-full object-contain rounded-lg"
                       />
                       <button
                         onClick={() => {
