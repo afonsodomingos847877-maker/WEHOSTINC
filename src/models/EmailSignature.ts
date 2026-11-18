@@ -11,6 +11,8 @@ export interface IEmailSignature extends Document {
   website?: string;
   logoUrl?: string;
   signatureImage?: string;
+  signatureGif?: string;
+  signatureGifLink?: string;
   signatureType?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -27,10 +29,15 @@ const EmailSignatureSchema = new Schema<IEmailSignature>({
   website: { type: String },
   logoUrl: { type: String },
   signatureImage: { type: String },
+  signatureGif: { type: String },
+  signatureGifLink: { type: String },
   signatureType: { type: String, default: 'image' },
   createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
+  updatedAt: { type: Date, default: Date.now },
 });
 
-export const EmailSignature = mongoose.models.EmailSignature || 
-  mongoose.model<IEmailSignature>('EmailSignature', EmailSignatureSchema);
+if (mongoose.models.EmailSignature) {
+  delete mongoose.models.EmailSignature;
+}
+
+export const EmailSignature = mongoose.model<IEmailSignature>('EmailSignature', EmailSignatureSchema);

@@ -16,17 +16,13 @@ export async function GET(request: NextRequest) {
     }
 
     if (!(await canAccessMailbox(request, email))) {
-      return NextResponse.json({ error: 'Não autorizado a alterar a assinatura desta conta' }, { status: 401 });
-    }
-
-    if (!(await canAccessMailbox(request, email))) {
       return NextResponse.json({ error: 'Não autorizado a aceder à assinatura desta conta' }, { status: 401 });
     }
 
     const signature = await EmailSignature.findOne({ email: email.toLowerCase().trim() });
     return NextResponse.json({
       success: true,
-      signature: signature || null
+      signature: signature || null,
     });
   } catch (error: any) {
     console.error('[Signature GET] Error:', error);
@@ -50,7 +46,9 @@ export async function POST(request: NextRequest) {
       website,
       logoUrl,
       signatureImage,
-      signatureType = 'image'
+      signatureGif,
+      signatureGifLink,
+      signatureType = 'image',
     } = body;
 
     if (!email) {
@@ -70,6 +68,14 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    let finalSignatureGif = signatureGif || '';
+    if (finalSignatureGif && finalSignatureGif.startsWith('data:image/')) {
+      const cdnGifUrl = await uploadDataUrlToCloudinary(finalSignatureGif);
+      if (cdnGifUrl) {
+        finalSignatureGif = cdnGifUrl;
+      }
+    }
+
     const updatedSignature = await EmailSignature.findOneAndUpdate(
       { email: email.toLowerCase().trim() },
       {
@@ -83,8 +89,10 @@ export async function POST(request: NextRequest) {
         website,
         logoUrl,
         signatureImage: finalSignatureImage,
+        signatureGif: finalSignatureGif,
+        signatureGifLink: signatureGifLink || '',
         signatureType: signatureType || 'image',
-        updatedAt: new Date()
+        updatedAt: new Date(),
       },
       { upsert: true, new: true }
     );
@@ -92,7 +100,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       signature: updatedSignature,
-      message: 'Assinatura salva com sucesso!'
+      message: 'Assinatura salva com sucesso!',
     });
   } catch (error: any) {
     console.error('[Signature POST] Error:', error);

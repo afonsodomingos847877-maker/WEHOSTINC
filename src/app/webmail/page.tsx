@@ -1093,12 +1093,15 @@ function WebmailContent() {
     website: '',
     logoUrl: '',
     signatureImage: '',
+    signatureGif: '',
+    signatureGifLink: '',
     signatureType: 'image' as 'image' | 'text',
     autoInsert: true,
     isEnabled: true
   });
   const [signatureActiveTab, setSignatureActiveTab] = useState<'image' | 'text'>('image');
   const [isSavingSignature, setIsSavingSignature] = useState(false);
+  const [uploadingSignatureGif, setUploadingSignatureGif] = useState(false);
 
   // Current date/time & Network connectivity
   const [currentDateTime, setCurrentDateTime] = useState<Date | null>(null);
@@ -1454,11 +1457,25 @@ function WebmailContent() {
 
   const getSignatureHtml = useCallback(() => {
     if (!signatureForm.isEnabled) return '';
+
+    const buildGifBlock = () => {
+      if (!signatureForm.signatureGif) return '';
+      const imgTag = `<img src="${signatureForm.signatureGif}" alt="Banner" style="max-width: 520px; width: auto; height: auto; display: block; border: 0; border-radius: 6px; margin-top: 10px;" />`;
+      const rawLink = (signatureForm.signatureGifLink || '').trim();
+      if (rawLink) {
+        const href = rawLink.startsWith('http://') || rawLink.startsWith('https://') ? rawLink : `https://${rawLink}`;
+        return `<p style="margin-top: 10px;"><a href="${href}" target="_blank" rel="noopener noreferrer" style="text-decoration: none; border: 0; display: inline-block;">${imgTag}</a></p>`;
+      }
+      return `<p style="margin-top: 10px;">${imgTag}</p>`;
+    };
+
+    const gifBlock = buildGifBlock();
+
     if (signatureForm.signatureType === 'image' && signatureForm.signatureImage) {
-      return `<p><br></p><p><br></p><p><img src="${signatureForm.signatureImage}" alt="Assinatura" style="max-width: 520px; width: auto; height: auto; display: block; border: 0; border-radius: 4px; margin-top: 16px;" /></p>`;
+      return `<p><br></p><p><br></p><p><img src="${signatureForm.signatureImage}" alt="Assinatura" style="max-width: 520px; width: auto; height: auto; display: block; border: 0; border-radius: 4px; margin-top: 16px;" /></p>${gifBlock}`;
     }
     if (signatureForm.signatureImage && !signatureForm.fullName) {
-      return `<p><br></p><p><br></p><p><img src="${signatureForm.signatureImage}" alt="Assinatura" style="max-width: 520px; width: auto; height: auto; display: block; border: 0; border-radius: 4px; margin-top: 16px;" /></p>`;
+      return `<p><br></p><p><br></p><p><img src="${signatureForm.signatureImage}" alt="Assinatura" style="max-width: 520px; width: auto; height: auto; display: block; border: 0; border-radius: 4px; margin-top: 16px;" /></p>${gifBlock}`;
     }
     if (signatureForm.fullName || signatureForm.companyName) {
       return `<p><br></p><div style="font-family: Arial, sans-serif; font-size: 13px; color: #222; border-left: 3px solid #7c3aed; padding-left: 10px; margin-top: 15px;">
@@ -1467,7 +1484,10 @@ function WebmailContent() {
         ${signatureForm.phone ? `<span style="color: #666; font-size: 12px;">📞 ${signatureForm.phone}</span><br/>` : ''}
         ${signatureForm.website ? `<a href="${signatureForm.website.startsWith('http') ? signatureForm.website : 'https://' + signatureForm.website}" target="_blank" style="color: #7c3aed; font-size: 12px; text-decoration: none;">🌐 ${signatureForm.website}</a><br/>` : ''}
         ${signatureForm.signatureImage ? `<br/><img src="${signatureForm.signatureImage}" alt="Assinatura" style="max-width: 450px; width: 100%; height: auto; margin-top: 8px; display: block;" />` : ''}
-      </div>`;
+      </div>${gifBlock}`;
+    }
+    if (gifBlock) {
+      return `<p><br></p>${gifBlock}`;
     }
     return '';
   }, [signatureForm]);
@@ -3281,6 +3301,8 @@ function WebmailContent() {
                 website: data.signature.website || prev.website || '',
                 logoUrl: data.signature.logoUrl || prev.logoUrl || '',
                 signatureImage: data.signature.signatureImage || prev.signatureImage || '',
+                signatureGif: data.signature.signatureGif || prev.signatureGif || '',
+                signatureGifLink: data.signature.signatureGifLink || prev.signatureGifLink || '',
                 signatureType: (data.signature.signatureType || (data.signature.signatureImage ? 'image' : prev.signatureType)) as 'image' | 'text',
                 isEnabled: data.signature.isEnabled !== false
               };
@@ -3868,6 +3890,50 @@ function WebmailContent() {
     }
   };
 
+  const handleSignatureGifUpload = async (file: File) => {
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      alert('O GIF / banner após a assinatura deve ter no máximo 5MB.');
+      return;
+    }
+
+    setUploadingSignatureGif(true);
+
+    // 1. Preview local imediato
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      if (result) {
+        setSignatureForm(prev => ({
+          ...prev,
+          signatureGif: result,
+        }));
+      }
+    };
+    reader.readAsDataURL(file);
+
+    // 2. Upload para CDN Cloudinary (mantém animação GIF para Gmail/Outlook)
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.success && data.url) {
+        setSignatureForm(prev => ({
+          ...prev,
+          signatureGif: data.url,
+        }));
+      }
+    } catch (uploadErr) {
+      console.warn('[Signature GIF Upload] Erro ao enviar para CDN Cloudinary:', uploadErr);
+    } finally {
+      setUploadingSignatureGif(false);
+    }
+  };
+
   const handleSaveSignature = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSavingSignature(true);
@@ -3879,28 +3945,17 @@ function WebmailContent() {
       } catch {}
     }
 
-    // Gerar HTML da assinatura para inserção imediata no campo de mensagem
-    let sigHtml = '';
-    if (signatureForm.signatureType === 'image' && signatureForm.signatureImage) {
-      sigHtml = `<p><br></p><p><br></p><p><img src="${signatureForm.signatureImage}" alt="Assinatura" style="max-width: 520px; width: auto; height: auto; display: block; border: 0; border-radius: 4px; margin-top: 16px;" /></p>`;
-    } else if (signatureForm.signatureImage && !signatureForm.fullName) {
-      sigHtml = `<p><br></p><p><br></p><p><img src="${signatureForm.signatureImage}" alt="Assinatura" style="max-width: 520px; width: auto; height: auto; display: block; border: 0; border-radius: 4px; margin-top: 16px;" /></p>`;
-    } else if (signatureForm.fullName || signatureForm.companyName) {
-      sigHtml = `<p><br></p><div style="font-family: Arial, sans-serif; font-size: 13px; color: #222; border-left: 3px solid #7c3aed; padding-left: 10px; margin-top: 15px;">
-        <strong style="color: #111; font-size: 14px;">${signatureForm.fullName || ''}</strong><br/>
-        <span style="color: #555;">${signatureForm.jobTitle ? signatureForm.jobTitle + ' • ' : ''}${signatureForm.companyName || ''}</span><br/>
-        ${signatureForm.phone ? `<span style="color: #666; font-size: 12px;">📞 ${signatureForm.phone}</span><br/>` : ''}
-        ${signatureForm.website ? `<a href="${signatureForm.website.startsWith('http') ? signatureForm.website : 'https://' + signatureForm.website}" target="_blank" style="color: #7c3aed; font-size: 12px; text-decoration: none;">🌐 ${signatureForm.website}</a><br/>` : ''}
-        ${signatureForm.signatureImage ? `<br/><img src="${signatureForm.signatureImage}" alt="Assinatura" style="max-width: 450px; width: 100%; height: auto; margin-top: 8px; display: block;" />` : ''}
-      </div>`;
-    }
+    // Gerar HTML da assinatura (incluindo GIF após assinatura se existir)
+    const sigHtml = getSignatureHtml();
 
     if (sigHtml) {
       setComposeBody(prev => {
         if (!prev || prev === '<p><br></p>' || prev.trim() === '') {
           return '<p><br></p>' + sigHtml;
         }
-        if (signatureForm.signatureImage && prev.includes(signatureForm.signatureImage)) {
+        const alreadyHasImage = signatureForm.signatureImage && prev.includes(signatureForm.signatureImage);
+        const alreadyHasGif = signatureForm.signatureGif && prev.includes(signatureForm.signatureGif);
+        if (alreadyHasImage && (!signatureForm.signatureGif || alreadyHasGif)) {
           return prev;
         }
         return prev + sigHtml;
@@ -3913,6 +3968,7 @@ function WebmailContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: selectedAccountEmail,
+          signatureHtml: sigHtml,
           ...signatureForm
         })
       });
@@ -8682,6 +8738,81 @@ function WebmailContent() {
                 </div>
               )}
 
+              {/* GIF / BANNER APÓS A ASSINATURA (OPCIONAL) */}
+              <div className="pt-2.5 border-t border-gray-100 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="font-bold text-gray-800 block text-xs">GIF / Banner após a Assinatura (Opcional)</span>
+                    <span className="text-[11px] text-gray-500">Aparece logo abaixo da sua assinatura (GIF animado, PNG ou JPG até 5MB)</span>
+                  </div>
+                  {signatureForm.signatureGif && (
+                    <button
+                      type="button"
+                      onClick={() => setSignatureForm(prev => ({ ...prev, signatureGif: '', signatureGifLink: '' }))}
+                      className="text-[11px] font-bold text-rose-600 hover:text-rose-700 cursor-pointer"
+                    >
+                      Remover
+                    </button>
+                  )}
+                </div>
+
+                {signatureForm.signatureGif ? (
+                  <div className="space-y-2 p-2.5 bg-gray-50 border border-gray-200 rounded-xl">
+                    <div className="flex items-center justify-center bg-white rounded-lg border border-gray-100 p-2 overflow-hidden">
+                      <img
+                        src={signatureForm.signatureGif}
+                        alt="GIF após assinatura"
+                        className="max-h-28 max-w-full object-contain rounded"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <label className="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold rounded-lg text-[11px] cursor-pointer border border-purple-200 transition shrink-0">
+                        <span>{uploadingSignatureGif ? 'A carregar...' : 'Trocar GIF'}</span>
+                        <input
+                          type="file"
+                          accept="image/gif,image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleSignatureGifUpload(file);
+                          }}
+                        />
+                      </label>
+                      <input
+                        type="text"
+                        value={signatureForm.signatureGifLink}
+                        onChange={(e) => setSignatureForm(prev => ({ ...prev, signatureGifLink: e.target.value }))}
+                        placeholder="Link ao clicar no GIF (opcional, ex: https://wehosthere.com)"
+                        className="flex-1 px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg text-[11px] outline-none focus:ring-2 focus:ring-purple-500"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <label className="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold rounded-xl text-[11px] cursor-pointer border border-purple-200 transition shrink-0">
+                      <ImageIcon className="w-3.5 h-3.5" />
+                      <span>{uploadingSignatureGif ? 'A carregar GIF...' : 'Carregar GIF / Banner'}</span>
+                      <input
+                        type="file"
+                        accept="image/gif,image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleSignatureGifUpload(file);
+                        }}
+                      />
+                    </label>
+                    <input
+                      type="text"
+                      value={signatureForm.signatureGif}
+                      onChange={(e) => setSignatureForm(prev => ({ ...prev, signatureGif: e.target.value }))}
+                      placeholder="Ou cole o link direto de um GIF (https://.../banner.gif)"
+                      className="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-[11px] outline-none focus:ring-2 focus:ring-purple-500"
+                    />
+                  </div>
+                )}
+              </div>
+
               {/* OPÇÕES: Inserir automaticamente */}
               <div className="pt-2 border-t border-gray-100 flex items-center justify-between">
                 <div>
@@ -8699,25 +8830,36 @@ function WebmailContent() {
               {/* Live Signature Preview */}
               <div className="pt-1">
                 <label className="block text-gray-700 font-bold mb-1 text-[11px]">Pré-visualização:</label>
-                {signatureForm.signatureType === 'image' && signatureForm.signatureImage ? (
-                  <div className="p-3 bg-gray-50 rounded-2xl border border-gray-200 flex justify-center overflow-hidden">
-                    <img
-                      src={signatureForm.signatureImage}
-                      alt="Pré-visualização"
-                      className="max-h-28 object-contain rounded"
-                    />
-                  </div>
-                ) : (
-                  <div className="p-3.5 bg-gray-50 rounded-2xl border border-gray-200 space-y-1 text-gray-800 font-sans border-l-4 border-l-purple-600">
-                    <div className="font-bold text-sm text-gray-900">{signatureForm.fullName || 'Seu Nome'}</div>
-                    <div className="text-gray-600 text-xs">
-                      {signatureForm.jobTitle ? `${signatureForm.jobTitle} • ` : ''}{signatureForm.companyName || 'Sua Empresa'}
+                <div className="p-3 bg-gray-50 rounded-2xl border border-gray-200 space-y-2.5 overflow-hidden">
+                  {signatureForm.signatureType === 'image' && signatureForm.signatureImage ? (
+                    <div className="flex justify-center">
+                      <img
+                        src={signatureForm.signatureImage}
+                        alt="Pré-visualização"
+                        className="max-h-28 object-contain rounded"
+                      />
                     </div>
-                    {signatureForm.phone && (
-                      <div className="text-gray-500 text-[11px]">📞 {signatureForm.phone}</div>
-                    )}
-                  </div>
-                )}
+                  ) : (
+                    <div className="pl-3 space-y-1 text-gray-800 font-sans border-l-4 border-l-purple-600">
+                      <div className="font-bold text-sm text-gray-900">{signatureForm.fullName || 'Seu Nome'}</div>
+                      <div className="text-gray-600 text-xs">
+                        {signatureForm.jobTitle ? `${signatureForm.jobTitle} • ` : ''}{signatureForm.companyName || 'Sua Empresa'}
+                      </div>
+                      {signatureForm.phone && (
+                        <div className="text-gray-500 text-[11px]">📞 {signatureForm.phone}</div>
+                      )}
+                    </div>
+                  )}
+                  {signatureForm.signatureGif && (
+                    <div className="pt-2 border-t border-gray-200/70 flex justify-center">
+                      <img
+                        src={signatureForm.signatureGif}
+                        alt="GIF após assinatura"
+                        className="max-h-24 object-contain rounded"
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
               
 
@@ -8731,7 +8873,7 @@ function WebmailContent() {
                 </button>
                 <button
                   type="submit"
-                  disabled={isSavingSignature || (!signatureForm.fullName && !signatureForm.signatureImage)}
+                  disabled={isSavingSignature || uploadingSignatureGif || (!signatureForm.fullName && !signatureForm.signatureImage && !signatureForm.signatureGif)}
                   className="flex-1 py-2.5 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-bold text-xs rounded-xl transition shadow-sm flex items-center justify-center space-x-1.5 cursor-pointer"
                 >
                   {isSavingSignature ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
