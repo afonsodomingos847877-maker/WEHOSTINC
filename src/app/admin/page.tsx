@@ -1550,21 +1550,39 @@ export default function AdminPage() {
     const m = (method || '').toLowerCase().replace(/[^a-z]/g, '');
     return m === 'emola' || m.includes('emola') || m.includes('movitel');
   };
-  const isCard = (method?: string) => {
+  const isCard = (method?: string, orderObj?: any) => {
     const m = (method || '').toLowerCase().replace(/[^a-z]/g, '');
-    return m === 'card' || m.includes('card') || m.includes('cartao') || m.includes('visa') || m.includes('master') || m.includes('stripe');
+    if (
+      m === 'card' ||
+      m.includes('card') ||
+      m.includes('cartao') ||
+      m.includes('visa') ||
+      m.includes('master') ||
+      m.includes('stripe') ||
+      m.includes('credit') ||
+      m.includes('debit')
+    ) {
+      return true;
+    }
+    if (orderObj) {
+      if (orderObj.stripeSessionId) return true;
+      const tx = String(orderObj.transactionId || orderObj.paymentReference || '');
+      if (tx.startsWith('cs_') || tx.startsWith('pi_')) return true;
+    }
+    return false;
   };
 
   // Faturamento por método considera pedidos pagos + pagamentos mensais confirmados no período
   const mpesaRevenue =
     paidPeriodOrders.filter(o => isMpesa(o.paymentMethod)).reduce((acc, o) => acc + getOrderAmount(o), 0) +
     paidMonthlyPaymentsInPeriod.filter(p => isMpesa(p.paymentMethod)).reduce((acc, p) => acc + getMonthlyPaidAmount(p), 0);
+  const cardRevenue =
+    paidPeriodOrders.filter(o => isCard(o.paymentMethod, o)).reduce((acc, o) => acc + getOrderAmount(o), 0) +
+    paidMonthlyPaymentsInPeriod.filter(p => isCard(p.paymentMethod, p)).reduce((acc, p) => acc + getMonthlyPaidAmount(p), 0);
   const emolaRevenue =
     paidPeriodOrders.filter(o => isEmola(o.paymentMethod)).reduce((acc, o) => acc + getOrderAmount(o), 0) +
     paidMonthlyPaymentsInPeriod.filter(p => isEmola(p.paymentMethod)).reduce((acc, p) => acc + getMonthlyPaidAmount(p), 0);
-  const cardRevenue =
-    paidPeriodOrders.filter(o => isCard(o.paymentMethod)).reduce((acc, o) => acc + getOrderAmount(o), 0) +
-    paidMonthlyPaymentsInPeriod.filter(p => isCard(p.paymentMethod)).reduce((acc, p) => acc + getMonthlyPaidAmount(p), 0);
+  const otherMethodsRevenue = Math.max(0, totalRevenue - mpesaRevenue - cardRevenue);
   const renderPaymentMethodBadge = (method?: string) => {
     if (isMpesa(method)) {
       return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">M-Pesa</span>;
@@ -1581,8 +1599,7 @@ export default function AdminPage() {
     }
     return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-neutral-100 text-neutral-700 border border-neutral-200">{method || 'Manual'}</span>;
   };
-  const paidMethodTotal = mpesaRevenue + emolaRevenue + cardRevenue;
-  const validOrdersTotal = paidMethodTotal > 0 ? paidMethodTotal : (completedOrdersRevenue > 0 ? completedOrdersRevenue : 1);
+  const validOrdersTotal = totalRevenue > 0 ? totalRevenue : 1;
 
   const getUserStatus = (user: User) => {
     // Respeitar decisão explícita do Administrador
@@ -2219,7 +2236,7 @@ export default function AdminPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6 pt-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 pt-2">
             {/* Ticket Médio */}
             <div className="p-3 sm:p-4 bg-gray-50 rounded-xl border border-gray-200">
               <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider block">Ticket Médio por Cliente</span>
@@ -2231,12 +2248,12 @@ export default function AdminPage() {
               ) : (
                 <span className="text-xl sm:text-2xl font-black text-gray-900 block mt-1">{formatSensitiveMoney(averageTicket)}</span>
               )}
-              <span className="text-[10px] sm:text-xs text-gray-500 mt-1 block">Média de gasto por contratação na plataforma</span>
+              <span className="text-[10px] sm:text-xs text-gray-500 mt-1 block">Média por venda confirmada</span>
             </div>
 
             {/* Faturamento M-Pesa */}
             <div className="p-3 sm:p-4 bg-red-50/70 border border-red-200 rounded-xl">
-              <span className="text-[10px] sm:text-xs font-bold text-red-900 uppercase tracking-wider block">Faturamento via M-Pesa (Vodacom)</span>
+              <span className="text-[10px] sm:text-xs font-bold text-red-900 uppercase tracking-wider block">M-Pesa (Vodacom)</span>
               {isSyncingData ? (
                 <div className="flex items-center space-x-2 text-red-600 mt-1 py-0.5">
                   <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
@@ -2246,26 +2263,43 @@ export default function AdminPage() {
                 <span className="text-xl sm:text-2xl font-black text-red-700 block mt-1">{formatSensitiveMoney(mpesaRevenue)}</span>
               )}
               <div className="w-full bg-red-200 h-1.5 sm:h-2 rounded-full mt-2 overflow-hidden">
-                <div className="bg-red-600 h-1.5 sm:h-2 rounded-full transition-all duration-700 animate-pulse" style={{ width: `${Math.round((mpesaRevenue / validOrdersTotal) * 100)}%` }}></div>
+                <div className="bg-red-600 h-1.5 sm:h-2 rounded-full transition-all duration-700" style={{ width: `${totalRevenue > 0 ? Math.round((mpesaRevenue / validOrdersTotal) * 100) : 0}%` }}></div>
               </div>
-              <span className="text-[10px] sm:text-[11px] font-semibold text-red-700 mt-1 block">{Math.round((mpesaRevenue / validOrdersTotal) * 100)}% do volume de vendas</span>
+              <span className="text-[10px] sm:text-[11px] font-semibold text-red-700 mt-1 block">{totalRevenue > 0 ? Math.round((mpesaRevenue / validOrdersTotal) * 100) : 0}% do volume confirmado</span>
             </div>
 
-            {/* Faturamento eMola / Cartão */}
+            {/* Faturamento Cartão (Stripe / Visa / Master) */}
+            <div className="p-3 sm:p-4 bg-indigo-50/70 border border-indigo-200 rounded-xl">
+              <span className="text-[10px] sm:text-xs font-bold text-indigo-900 uppercase tracking-wider block">Cartão (Stripe / Visa)</span>
+              {isSyncingData ? (
+                <div className="flex items-center space-x-2 text-indigo-600 mt-1 py-0.5">
+                  <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
+                  <span className="text-[10px] sm:text-xs font-semibold text-indigo-600">A processar...</span>
+                </div>
+              ) : (
+                <span className="text-xl sm:text-2xl font-black text-indigo-700 block mt-1">{formatSensitiveMoney(cardRevenue)}</span>
+              )}
+              <div className="w-full bg-indigo-200 h-1.5 sm:h-2 rounded-full mt-2 overflow-hidden">
+                <div className="bg-indigo-600 h-1.5 sm:h-2 rounded-full transition-all duration-700" style={{ width: `${totalRevenue > 0 ? Math.round((cardRevenue / validOrdersTotal) * 100) : 0}%` }}></div>
+              </div>
+              <span className="text-[10px] sm:text-[11px] font-semibold text-indigo-700 mt-1 block">{totalRevenue > 0 ? Math.round((cardRevenue / validOrdersTotal) * 100) : 0}% do volume confirmado</span>
+            </div>
+
+            {/* Faturamento eMola / Transferência / Outros */}
             <div className="p-3 sm:p-4 bg-orange-50/70 border border-orange-200 rounded-xl">
-              <span className="text-[10px] sm:text-xs font-bold text-orange-900 uppercase tracking-wider block">eMola (Movitel) & Cartão</span>
+              <span className="text-[10px] sm:text-xs font-bold text-orange-900 uppercase tracking-wider block">eMola & Transferência</span>
               {isSyncingData ? (
                 <div className="flex items-center space-x-2 text-orange-600 mt-1 py-0.5">
                   <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
                   <span className="text-[10px] sm:text-xs font-semibold text-orange-600">A processar...</span>
                 </div>
               ) : (
-                <span className="text-xl sm:text-2xl font-black text-orange-700 block mt-1">{formatSensitiveMoney(emolaRevenue + cardRevenue)}</span>
+                <span className="text-xl sm:text-2xl font-black text-orange-700 block mt-1">{formatSensitiveMoney(otherMethodsRevenue)}</span>
               )}
               <div className="w-full bg-orange-200 h-1.5 sm:h-2 rounded-full mt-2 overflow-hidden">
-                <div className="bg-orange-600 h-1.5 sm:h-2 rounded-full transition-all duration-700 animate-pulse" style={{ width: `${Math.round(((emolaRevenue + cardRevenue) / validOrdersTotal) * 100)}%` }}></div>
+                <div className="bg-orange-600 h-1.5 sm:h-2 rounded-full transition-all duration-700" style={{ width: `${totalRevenue > 0 ? Math.round((otherMethodsRevenue / validOrdersTotal) * 100) : 0}%` }}></div>
               </div>
-              <span className="text-[10px] sm:text-[11px] font-semibold text-orange-700 mt-1 block">{Math.round(((emolaRevenue + cardRevenue) / validOrdersTotal) * 100)}% do volume de vendas</span>
+              <span className="text-[10px] sm:text-[11px] font-semibold text-orange-700 mt-1 block">{totalRevenue > 0 ? Math.round((otherMethodsRevenue / validOrdersTotal) * 100) : 0}% do volume confirmado</span>
             </div>
           </div>
         </div>
