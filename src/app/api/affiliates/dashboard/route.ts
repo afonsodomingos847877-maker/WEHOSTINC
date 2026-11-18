@@ -127,11 +127,25 @@ export async function GET(request: NextRequest) {
         paidAmount: paidCommissions.reduce((sum, c) => sum + c.commissionAmount, 0),
       };
 
+      const MarketingMaterialModel = (await import('@/lib/models/MarketingMaterial')).default;
+      const rawMaterials = await MarketingMaterialModel.find({ isActive: { $ne: false } })
+        .sort({ createdAt: -1 })
+        .lean();
+      const baseAppUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://wehosthere.com';
+      const affLink = affiliate.affiliateLink || `${baseAppUrl}/ref/${affiliate.affiliateCode}`;
+      const materials = (rawMaterials as any[]).map((m) => ({
+        ...m,
+        content: String(m.content || '')
+          .replace(/\[AFFILIATE_LINK\]/g, affLink)
+          .replace(/\[AFFILIATE_CODE\]/g, affiliate.affiliateCode || ''),
+      }));
+
       return {
         affiliate,
         commissions,
         referredUsers,
         recentClicks,
+        materials,
         stats
       };
     };

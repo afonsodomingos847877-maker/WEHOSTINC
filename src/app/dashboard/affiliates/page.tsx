@@ -441,8 +441,23 @@ export default function AffiliatesPage() {
         setStats(dashboardData.stats);
         setCommissions(dashboardData.commissions || []);
         setReferredUsers(dashboardData.referredUsers || []);
-        setMaterials(dashboardData.materials || []);
-        
+        if (Array.isArray(dashboardData.materials) && dashboardData.materials.length > 0) {
+          setMaterials(dashboardData.materials);
+        }
+
+        // Buscar materiais de marketing atualizados (com link do afiliado preenchido)
+        const affCode = dashboardData.affiliate.affiliateCode || '';
+        fetch(`/api/affiliates/materials?affiliateCode=${encodeURIComponent(affCode)}&t=${Date.now()}`, {
+          cache: 'no-store',
+        })
+          .then((r) => (r.ok ? r.json() : null))
+          .then((matData) => {
+            if (matData?.success && Array.isArray(matData.materials)) {
+              setMaterials(matData.materials);
+            }
+          })
+          .catch(() => {});
+
         // Verificar se afiliado tem telefone configurado para pagamentos
         const affiliatePhone = dashboardData.affiliate.payoutDetails?.mpesaPhone;
         const isAlreadyActive = dashboardData.affiliate.status === 'active';
@@ -459,7 +474,6 @@ export default function AffiliatesPage() {
             setAffiliate(dashboardData.affiliate);
             setStats(dashboardData.stats);
             setCommissions(dashboardData.commissions || []);
-            setMaterials(dashboardData.materials || []);
             setErrorMessage(''); // Limpa mensagem de erro
           }
         }
