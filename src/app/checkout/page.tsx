@@ -399,7 +399,7 @@ function CheckoutContent() {
         metadata: { productId: selectedPlan.id, value: grandTotal, currency: 'MZN', durationMonths },
       });
     }
-  }, [analytics, domainParam, grandTotal, isAffiliateVerification, isCoursePayment, selectedPlan, siteTypeName, durationMonths]);
+  }, [domainParam, grandTotal, isAffiliateVerification, isCoursePayment, selectedPlan?.id, siteTypeName, durationMonths]);
 
   // Carregar dados de encomenda existente se continuePayment estiver presente
   useEffect(() => {
@@ -456,7 +456,7 @@ function CheckoutContent() {
         metadata: { productId: selectedPlan.id, value: grandTotal, currency: 'MZN', durationMonths },
       });
     }
-  }, [analytics, domainParam, grandTotal, isAffiliateVerification, isCoursePayment, selectedPlan, siteTypeName]);
+  }, [domainParam, grandTotal, isAffiliateVerification, isCoursePayment, selectedPlan?.id, siteTypeName]);
 
   const [pushModal, setPushModal] = useState(false);
   const [pushStatus, setPushStatus] = useState<'initiating' | 'waiting' | 'expired' | 'failed' | 'cancelled'>('waiting');
@@ -656,7 +656,7 @@ function CheckoutContent() {
         clearTimeout(timeout);
       };
     }
-  }, [isPollingPayment, currentReference, currentKivoraId, analytics, grandTotal, isAffiliateVerification, isCoursePayment, paymentMethod]);
+  }, [isPollingPayment, currentReference, currentKivoraId]);
 
 
   const handleRetryPush = async () => {

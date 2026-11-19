@@ -208,20 +208,21 @@ class AnalyticsManager {
 // Singleton instance
 export const analytics = new AnalyticsManager();
 
-// Hook React para usar analytics
-export const useAnalytics = () => {
-  return {
-    trackCheckoutView: analytics.trackCheckoutView.bind(analytics),
-    trackPaymentMethodSelected: analytics.trackPaymentMethodSelected.bind(analytics),
-    trackPaymentInitiated: analytics.trackPaymentInitiated.bind(analytics),
-    trackPaymentCompleted: analytics.trackPaymentCompleted.bind(analytics),
-    trackPaymentFailed: analytics.trackPaymentFailed.bind(analytics),
-    trackPaymentRetry: analytics.trackPaymentRetry.bind(analytics),
-    trackFormError: analytics.trackFormError.bind(analytics),
-    trackUserInteraction: analytics.trackUserInteraction.bind(analytics),
-    trackPageView: analytics.trackPageView.bind(analytics),
-    trackConversion: analytics.trackConversion.bind(analytics),
-    setUserId: analytics.setUserId.bind(analytics),
-    getSessionId: analytics.getSessionId.bind(analytics)
-  };
+// Referência estável para evitar re-execução infinita de useEffect em componentes React
+const stableAnalyticsApi = {
+  trackCheckoutView: analytics.trackCheckoutView.bind(analytics),
+  trackPaymentMethodSelected: analytics.trackPaymentMethodSelected.bind(analytics),
+  trackPaymentInitiated: analytics.trackPaymentInitiated.bind(analytics),
+  trackPaymentCompleted: analytics.trackPaymentCompleted.bind(analytics),
+  trackPaymentFailed: analytics.trackPaymentFailed.bind(analytics),
+  trackPaymentRetry: analytics.trackPaymentRetry.bind(analytics),
+  trackFormError: analytics.trackFormError.bind(analytics),
+  trackUserInteraction: analytics.trackUserInteraction.bind(analytics),
+  trackPageView: analytics.trackPageView.bind(analytics),
+  trackConversion: analytics.trackConversion.bind(analytics),
+  setUserId: analytics.setUserId.bind(analytics),
+  getSessionId: analytics.getSessionId.bind(analytics),
 };
+
+// Hook React para usar analytics (referência estável)
+export const useAnalytics = () => stableAnalyticsApi;
