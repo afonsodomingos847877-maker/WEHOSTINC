@@ -815,13 +815,22 @@ export default function AdminAffiliatesPage() {
                 </p>
               </div>
             </div>
-            <button
-              onClick={fetchData}
-              className="inline-flex items-center space-x-2 bg-white/80 backdrop-blur-sm border border-gray-200 px-6 py-3 rounded-xl hover:bg-white transition shadow-sm hover:shadow-md"
-            >
-              <RefreshCw className="h-5 w-5 text-gray-600" />
-              <span className="font-medium text-gray-700">Atualizar</span>
-            </button>
+            <div className="flex flex-wrap items-center gap-2.5">
+              <Link
+                href="/dashboard/affiliates"
+                className="inline-flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-5 py-3 rounded-xl transition shadow-sm hover:shadow-md text-sm font-semibold"
+              >
+                <Share2 className="h-4 w-4" />
+                <span>Meu Painel de Afiliado</span>
+              </Link>
+              <button
+                onClick={fetchData}
+                className="inline-flex items-center space-x-2 bg-white/80 backdrop-blur-sm border border-gray-200 px-5 py-3 rounded-xl hover:bg-white transition shadow-sm hover:shadow-md cursor-pointer"
+              >
+                <RefreshCw className="h-4 w-4 text-gray-600" />
+                <span className="font-medium text-gray-700 text-sm">Atualizar</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -919,7 +928,7 @@ export default function AdminAffiliatesPage() {
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="px-3.5 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
+                className="px-3.5 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white text-gray-900 font-medium cursor-pointer"
               >
                 <option value="">Todos os Status</option>
                 <option value="active">Ativos</option>
