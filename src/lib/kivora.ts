@@ -151,7 +151,8 @@ export const kivora = {
 
       const response = await fetch(`${KIVORA_BASE_URL}/v1/c2b/${paymentId}`, {
         method: 'GET',
-        headers: getHeaders()
+        headers: getHeaders(),
+        cache: 'no-store'
       });
 
       const responseText = await response.text();

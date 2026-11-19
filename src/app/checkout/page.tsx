@@ -707,7 +707,18 @@ function CheckoutContent() {
       console.log('[PUSH RETRY] Nova solicitação enviada:', data);
       
       if (response.ok) {
-        setCountdown(60);
+        const retryKivoraId = data?.kivoraPaymentId || data?.id || null;
+        setCurrentKivoraId(retryKivoraId);
+
+        const immediateRetryStatus = String(data?.status || '').toLowerCase();
+        if (immediateRetryStatus === 'paid' || immediateRetryStatus === 'completed' || immediateRetryStatus === 'success') {
+          setPushModal(false);
+          setIsPollingPayment(false);
+          await finalizeOrder();
+          return;
+        }
+
+        setCountdown(120);
         setPushStatus('waiting');
         setIsPollingPayment(true);
       } else {
