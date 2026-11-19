@@ -2,36 +2,49 @@ import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import OrderModel from '@/lib/models/Order';
 
+export const dynamic = 'force-dynamic';
+
+function mapKivoraStatus(rawStatus?: string): 'completed' | 'cancelled' | 'pending' {
+  const s = String(rawStatus || '').toLowerCase().trim();
+  if (s === 'paid' || s === 'completed' || s === 'success' || s === 'succeeded') {
+    return 'completed';
+  }
+  if (s === 'failed' || s === 'cancelled' || s === 'canceled' || s === 'rejected' || s === 'expired') {
+    return 'cancelled';
+  }
+  return 'pending';
+}
+
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const orderId = searchParams.get('orderId');
     const reference = searchParams.get('reference');
+    const kivoraPaymentIdParam = searchParams.get('kivoraPaymentId');
 
-    if (!orderId && !reference) {
+    if (!orderId && !reference && !kivoraPaymentIdParam) {
       return NextResponse.json(
-        { error: 'orderId ou reference é obrigatório' },
+        { error: 'orderId, reference ou kivoraPaymentId é obrigatório' },
         { status: 400 }
       );
     }
 
-    // 🔒 CORREÇÃO: Consultar MongoDB diretamente (fonte de verdade do webhook)
-    // Evita dependência de dataManager/localStorage no contexto server-side
     await connectDB();
 
-    // Construir query de busca flexível (mesmo critério usado pelo webhook)
     const queryConditions: any[] = [];
 
     if (orderId) {
       queryConditions.push({ id: orderId });
     }
 
+    if (kivoraPaymentIdParam) {
+      queryConditions.push({ kivoraPaymentId: kivoraPaymentIdParam });
+    }
+
     if (reference) {
       queryConditions.push({ reference });
       queryConditions.push({ kivoraPaymentId: reference });
-      // 🔒 SEGURANÇA: Sanitizar referência e prevenir Regex Injection / ReDoS
       const cleanRef = reference.replace(/^REF_|^ORDER_/i, '').trim();
-      // Apenas aceitar padrão alfanumérico seguro com pelo menos 3 caracteres
       if (cleanRef && cleanRef !== reference && /^[a-zA-Z0-9_-]{3,64}$/.test(cleanRef)) {
         const escapedRef = cleanRef.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         queryConditions.push({ reference: { $regex: new RegExp(escapedRef, 'i') } });
@@ -39,53 +52,86 @@ export async function GET(req: Request) {
       }
     }
 
-    const order = queryConditions.length > 0
-      ? await OrderModel.findOne({ $or: queryConditions }).lean()
-      : null;
+    const order: any =
+      queryConditions.length > 0
+        ? await OrderModel.findOne({ $or: queryConditions }).lean()
+        : null;
 
-    if (!order) {
-      console.log('[PAYMENT STATUS] Pedido não encontrado:', { orderId, reference });
-      // Retornar pending para continuar o polling (pedido pode ainda não ter sido criado)
-      return NextResponse.json(
-        { error: 'Pedido não encontrado', status: 'pending' },
-        { status: 404 }
-      );
-    }
+    const effectiveKivoraId = order?.kivoraPaymentId || kivoraPaymentIdParam || null;
 
-    // Se ainda estiver pending e tiver kivoraPaymentId, sincronizar com a Kivora em tempo real
-    if (order && (order as any).status === 'pending' && (order as any).kivoraPaymentId) {
+    // Se o pedido ainda não existe no MongoDB ou ainda está pending, consultar a Kivora diretamente em tempo real
+    if ((!order || order.status === 'pending') && effectiveKivoraId) {
       try {
         const { kivora } = await import('@/lib/kivora');
-        const liveKivora = await kivora.getC2BPayment((order as any).kivoraPaymentId);
+        const liveKivora = await kivora.getC2BPayment(effectiveKivoraId);
         if (liveKivora) {
-          if (liveKivora.status === 'paid') {
-            await OrderModel.findOneAndUpdate({ id: (order as any).id }, { status: 'completed' });
-            (order as any).status = 'completed';
-          } else if (liveKivora.status === 'failed') {
-            await OrderModel.findOneAndUpdate({ id: (order as any).id }, { status: 'cancelled' });
-            (order as any).status = 'cancelled';
+          const mapped = mapKivoraStatus(liveKivora.status);
+          if (mapped === 'completed') {
+            if (order?.id) {
+              await OrderModel.findOneAndUpdate(
+                { id: order.id },
+                {
+                  status: 'completed',
+                  valorFaturado: order.amount || liveKivora.amount || 0,
+                  valorPorFaturar: 0,
+                  paidAt: new Date().toISOString(),
+                }
+              );
+              order.status = 'completed';
+            } else {
+              return NextResponse.json({
+                orderId: orderId || reference || effectiveKivoraId,
+                reference: reference || liveKivora.reference || effectiveKivoraId,
+                status: 'completed',
+                failureReason: null,
+                amount: liveKivora.amount,
+                paymentMethod: 'mpesa',
+                createdAt: liveKivora.createdAt || new Date().toISOString(),
+              });
+            }
+          } else if (mapped === 'cancelled') {
+            if (order?.id) {
+              await OrderModel.findOneAndUpdate({ id: order.id }, { status: 'cancelled' });
+              order.status = 'cancelled';
+            } else {
+              return NextResponse.json({
+                orderId: orderId || reference || effectiveKivoraId,
+                reference: reference || liveKivora.reference || effectiveKivoraId,
+                status: 'cancelled',
+                failureReason: 'Pagamento recusado ou cancelado no telemóvel',
+                amount: liveKivora.amount,
+                paymentMethod: 'mpesa',
+              });
+            }
           }
         }
       } catch (kivoraErr) {
-        // consulta em background não bloqueante
+        console.warn('[PAYMENT STATUS] Consulta direta à Kivora falhou (vai tentar novamente):', kivoraErr);
       }
     }
 
-    console.log('[PAYMENT STATUS] Consulta:', { orderId, reference, status: (order as any).status });
+    if (!order) {
+      return NextResponse.json({
+        orderId: orderId || null,
+        reference: reference || effectiveKivoraId || null,
+        status: 'pending',
+        failureReason: null,
+      });
+    }
 
     return NextResponse.json({
-      orderId: (order as any).id,
-      reference: (order as any).reference,
-      status: (order as any).status,
-      failureReason: (order as any).failureReason || null,
-      amount: (order as any).amount,
-      paymentMethod: (order as any).paymentMethod,
-      createdAt: (order as any).createdAt
+      orderId: order.id,
+      reference: order.reference,
+      status: order.status,
+      failureReason: order.failureReason || null,
+      amount: order.amount,
+      paymentMethod: order.paymentMethod,
+      createdAt: order.createdAt,
     });
   } catch (error) {
     console.error('[PAYMENT STATUS] Erro:', error);
     return NextResponse.json(
-      { error: 'Erro ao consultar status do pagamento' },
+      { error: 'Erro ao consultar status do pagamento', status: 'pending' },
       { status: 500 }
     );
   }

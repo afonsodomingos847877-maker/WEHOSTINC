@@ -461,9 +461,10 @@ function CheckoutContent() {
   const [pushModal, setPushModal] = useState(false);
   const [pushStatus, setPushStatus] = useState<'initiating' | 'waiting' | 'expired' | 'failed' | 'cancelled'>('waiting');
   const [pushFailureReason, setPushFailureReason] = useState<string>('');
-  const [countdown, setCountdown] = useState(60); // Aumentado de 45 para 60 segundos
+  const [countdown, setCountdown] = useState(120); // 120 segundos para dar tempo ao push USSD da Vodacom
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
   const [currentReference, setCurrentReference] = useState<string | null>(null);
+  const [currentKivoraId, setCurrentKivoraId] = useState<string | null>(null);
   const [isPollingPayment, setIsPollingPayment] = useState(false);
   const [retryCount, setRetryCount] = useState(0); // Contador de tentativas de retry
 
@@ -507,36 +508,50 @@ function CheckoutContent() {
     return () => window.removeEventListener('keydown', handleEscape);
   }, [pushModal]);
 
-  // 🔒 SEGURANÇA: Polling de status de pagamento - verificar confirmação do webhook
+  // 🔒 SEGURANÇA: Polling de status de pagamento - verificar confirmação do webhook / Kivora em tempo real
   useEffect(() => {
-    let pollingInterval: NodeJS.Timeout;
-    let stopped = false; // 🔧 Flag para evitar race condition no primeiro poll imediato
+    let pollingTimer: ReturnType<typeof setTimeout> | null = null;
+    let stopped = false;
 
-    if (isPollingPayment && currentReference) {
-      console.log('[PAYMENT POLLING] Iniciando verificação de status para reference:', currentReference);
-      
-      // Exponential backoff: começa com 5s, aumenta gradualmente
-      const getPollingInterval = (attempt: number) => {
-        return Math.min(5000 * Math.pow(1.5, attempt), 15000); // Max 15s
+    if (isPollingPayment && (currentReference || currentKivoraId)) {
+      console.log('[PAYMENT POLLING] Iniciando verificação de status para reference:', currentReference, 'kivoraId:', currentKivoraId);
+
+      let pollCount = 0;
+      let consecutiveErrors = 0;
+
+      const scheduleNext = (delayMs: number) => {
+        if (stopped) return;
+        if (pollingTimer) clearTimeout(pollingTimer);
+        pollingTimer = setTimeout(pollWithRetry, delayMs);
       };
-      
-      let attempt = 0;
-      
+
       const pollWithRetry = async () => {
+        if (stopped) return;
         try {
-          const response = await fetch(apiEndpoint(`/api/payments/status?reference=${encodeURIComponent(currentReference)}`));
-          const data = await response.json();
-          
-          console.log('[PAYMENT POLLING] Status:', data.status, 'Attempt:', attempt + 1);
-          
-          if (data.status === 'completed') {
-            console.log('[PAYMENT POLLING] Pagamento confirmado pelo webhook!');
+          const qs = new URLSearchParams();
+          if (currentReference) qs.set('reference', currentReference);
+          if (currentKivoraId) qs.set('kivoraPaymentId', currentKivoraId);
+          qs.set('t', String(Date.now()));
+
+          const response = await fetch(apiEndpoint(`/api/payments/status?${qs.toString()}`), {
+            cache: 'no-store',
+          });
+          const data = await response.json().catch(() => ({ status: 'pending' }));
+
+          // Resposta HTTP recebida com sucesso — zerar contador de falhas consecutivas de rede
+          consecutiveErrors = 0;
+          pollCount++;
+          console.log('[PAYMENT POLLING] Status:', data.status, 'Poll:', pollCount);
+
+          if (data.status === 'completed' || data.status === 'paid') {
+            console.log('[PAYMENT POLLING] Pagamento confirmado!');
             stopped = true;
-            clearInterval(pollingInterval);
+            if (pollingTimer) clearTimeout(pollingTimer);
             setIsPollingPayment(false);
             setPushModal(false);
             setRetryCount(0);
-            
+            setError('');
+
             // Track successful payment
             const serviceType = isCoursePayment ? 'course' : (isAffiliateVerification ? 'affiliate' : 'hosting');
             analytics.trackPaymentCompleted(paymentMethod, grandTotal, currentReference || '');
@@ -570,13 +585,13 @@ function CheckoutContent() {
                 })
               }).catch(() => {});
             }
-            
+
             // Criar pedido com status completed e finalizar
             await finalizeOrder();
           } else if (data.status === 'cancelled' || data.status === 'failed') {
             console.log('[PAYMENT POLLING] Pagamento falhou/cancelado:', data.failureReason);
             stopped = true;
-            clearInterval(pollingInterval);
+            if (pollingTimer) clearTimeout(pollingTimer);
             setIsPollingPayment(false);
             setLoading(false);
             setPushStatus(data.status === 'cancelled' ? 'cancelled' : 'failed');
@@ -584,38 +599,25 @@ function CheckoutContent() {
             setRetryCount(0);
             setError(data.failureReason || 'Pagamento não foi confirmado. Por favor, tente novamente.');
           } else {
-            // Continua polling com exponential backoff
-            attempt++;
-            const nextInterval = getPollingInterval(attempt);
-            console.log('[PAYMENT POLLING] Próxima verificação em', nextInterval/1000, 'segundos');
-            
-            clearInterval(pollingInterval);
-            if (!stopped) {
-              pollingInterval = setInterval(pollWithRetry, nextInterval);
-            }
+            // Polling rápido constante a cada 3 segundos para confirmar logo após o cliente digitar o PIN
+            scheduleNext(3000);
           }
         } catch (err) {
-          console.error('[PAYMENT POLLING] Erro ao verificar status:', err);
-          attempt++;
-          
-          // Retry automático até 3 tentativas
-          if (attempt < 3) {
-            const nextInterval = getPollingInterval(attempt);
-            console.log('[PAYMENT POLLING] Retry', attempt, 'em', nextInterval/1000, 'segundos');
-            
-            clearInterval(pollingInterval);
-            if (!stopped) {
-              pollingInterval = setInterval(pollWithRetry, nextInterval);
-            }
+          console.error('[PAYMENT POLLING] Erro transitório ao verificar status:', err);
+          consecutiveErrors++;
+
+          // Tolerar até 8 falhas consecutivas de rede antes de desistir
+          if (consecutiveErrors < 8) {
+            scheduleNext(3500);
           } else {
-            console.error('[PAYMENT POLLING] Máximo de retries atingido');
+            console.error('[PAYMENT POLLING] Máximo de falhas consecutivas de rede atingido');
             stopped = true;
-            clearInterval(pollingInterval);
+            if (pollingTimer) clearTimeout(pollingTimer);
             setIsPollingPayment(false);
-            setLoading(false); // 🔧 CORREÇÃO: desbloquear botão após máximo de retries
+            setLoading(false);
             setPushStatus('expired');
             setRetryCount(0);
-            setError('Erro de conexão. Verifique sua internet e tente novamente.');
+            setError('Erro de conexão ao verificar o estado do pagamento. Se já introduziu o PIN, clique em "Já paguei — Verificar novamente".');
             fetch(apiEndpoint('/api/payments/notify-failure'), {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -633,33 +635,28 @@ function CheckoutContent() {
           }
         }
       };
-      
-      // Iniciar polling - primeira verificação imediata, depois de 5s em diante
-      pollWithRetry().then(() => {
-        // Só inicia o intervalo se o primeiro poll não resolveu o pagamento
-        if (!stopped) {
-          pollingInterval = setInterval(pollWithRetry, 5000);
-        }
-      });
-      
-      // Parar polling após 3 minutos (timeout aumentado)
+
+      // Primeira verificação após 1.5s
+      scheduleNext(1500);
+
+      // Parar polling após 3 minutos (timeout de segurança)
       const timeout = setTimeout(() => {
-        clearInterval(pollingInterval);
+        if (pollingTimer) clearTimeout(pollingTimer);
         stopped = true;
         setIsPollingPayment(false);
-        setLoading(false); // 🔧 CORREÇÃO: desbloquear botão após timeout
+        setLoading(false);
         setPushStatus('expired');
         setRetryCount(0);
-        setError('Tempo de verificação expirado. Se você pagou, aguarde o e-mail de confirmação.');
-      }, 180000); // 3 minutos
-      
+        setError('Tempo de verificação expirado. Se você já pagou, clique em "Já paguei — Verificar novamente".');
+      }, 180000);
+
       return () => {
         stopped = true;
-        clearInterval(pollingInterval);
+        if (pollingTimer) clearTimeout(pollingTimer);
         clearTimeout(timeout);
       };
     }
-  }, [isPollingPayment, currentReference, analytics, grandTotal, isAffiliateVerification, isCoursePayment, paymentMethod]);
+  }, [isPollingPayment, currentReference, currentKivoraId, analytics, grandTotal, isAffiliateVerification, isCoursePayment, paymentMethod]);
 
 
   const handleRetryPush = async () => {
@@ -1369,9 +1366,21 @@ function CheckoutContent() {
             throw new Error(payData.error || 'Falha ao iniciar cobrança junto da operadora');
           }
 
-          // 🔒 SEGURANÇA: Salvar reference para polling - transição suave para PIN
+          // 🔒 SEGURANÇA: Salvar reference e kivoraPaymentId para polling direto
+          const kivoraId = payData?.kivoraPaymentId || payData?.id || null;
           setCurrentReference(paymentReference);
-          setCountdown(60);
+          setCurrentKivoraId(kivoraId);
+
+          // Se a Kivora já confirmou o pagamento de forma síncrona na resposta, finalizar de imediato!
+          const immediateStatus = String(payData?.status || '').toLowerCase();
+          if (immediateStatus === 'paid' || immediateStatus === 'completed' || immediateStatus === 'success') {
+            setPushModal(false);
+            setIsPollingPayment(false);
+            await finalizeOrder();
+            return;
+          }
+
+          setCountdown(120);
           setPushStatus('waiting');
           setIsPollingPayment(true);
         } catch (payErr: any) {
@@ -1923,6 +1932,23 @@ function CheckoutContent() {
                       )}
 
                       <div className="space-y-2 mt-2">
+                        {pushStatus === 'expired' && (currentReference || currentKivoraId) && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setError('');
+                              setPushFailureReason('');
+                              setCountdown(90);
+                              setPushStatus('waiting');
+                              setLoading(true);
+                              setIsPollingPayment(true);
+                            }}
+                            className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl text-xs sm:text-sm shadow-sm transition flex items-center justify-center gap-2 cursor-pointer"
+                          >
+                            <CheckCircle2 className="h-4 w-4" />
+                            <span>Já paguei — Verificar novamente</span>
+                          </button>
+                        )}
                         <button
                           type="button"
                           onClick={handleRetryPush}
